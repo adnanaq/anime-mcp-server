@@ -1,443 +1,392 @@
-"""Unit tests for QdrantClient."""
+"""Unit tests for QdrantClient with FastEmbed integration."""
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
+import numpy as np
 
 from src.vector.qdrant_client import QdrantClient
 
 
 class TestQdrantClient:
-    """Test cases for QdrantClient."""
+    """Test cases for QdrantClient with FastEmbed."""
 
     @pytest.fixture
-    def client(self):
-        """Create QdrantClient instance."""
-        return QdrantClient(url="http://test-marqo:8882", index_name="test_anime")
+    def mock_fastembed(self):
+        """Mock FastEmbed encoder."""
+        mock_encoder = MagicMock()
+        # Mock embedding generation
+        mock_encoder.embed.return_value = [np.array([0.1, 0.2, 0.3] * 128)]  # 384 dimensions
+        return mock_encoder
 
     @pytest.fixture
-    def mock_marqo_instance(self):
-        """Mock marqo client instance.""" 
+    def mock_qdrant_sdk(self):
+        """Mock Qdrant SDK client."""
         mock_client = MagicMock()
-        mock_client.index.return_value = MagicMock()
+        mock_client.get_collections.return_value.collections = []
+        mock_client.create_collection.return_value = True
+        mock_client.get_collection.return_value = MagicMock()
+        mock_client.count.return_value.count = 100
         return mock_client
 
+    @pytest.fixture
+    def client(self, mock_fastembed, mock_qdrant_sdk):
+        """Create QdrantClient instance with mocked dependencies."""
+        with patch('src.vector.qdrant_client.TextEmbedding', return_value=mock_fastembed), \
+             patch('src.vector.qdrant_client.QdrantSDK', return_value=mock_qdrant_sdk):
+            return QdrantClient(url="http://test-qdrant:6333", collection_name="test_anime")
+
     @pytest.mark.asyncio
-    async def test_health_check_success(self, client: QdrantClient, mock_marqo_instance):
+    async def test_health_check_success(self, client, mock_qdrant_sdk):
         """Test successful health check."""
-        mock_marqo_instance.health.return_value = {"status": "green"}
+        mock_qdrant_sdk.get_collections.return_value = MagicMock()
         
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.health_check()
-            
-            assert result is True
-            mock_marqo_instance.health.assert_called_once()
+        result = await client.health_check()
+        assert result is True
 
     @pytest.mark.asyncio
-    async def test_health_check_failure(self, client: QdrantClient):
+    async def test_health_check_failure(self, client, mock_qdrant_sdk):
         """Test health check failure."""
-        with patch('marqo.Client') as mock_client_class:
-            mock_client_class.side_effect = Exception("Connection failed")
-            
-            result = await client.health_check()
-            
-            assert result is False
-
-    @pytest.mark.asyncio
-    async def test_health_check_unhealthy_status(self, client: QdrantClient, mock_marqo_instance):
-        """Test health check with unhealthy status."""
-        mock_marqo_instance.health.return_value = {"status": "red"}
+        mock_qdrant_sdk.get_collections.side_effect = Exception("Connection failed")
         
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.health_check()
-            
-            assert result is False
+        result = await client.health_check()
+        assert result is False
 
-    @pytest.mark.asyncio
-    async def test_create_index_success(self, client: QdrantClient, mock_marqo_instance):
-        """Test successful index creation."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.get_stats.side_effect = Exception("Index doesn't exist")  # First call fails
-        mock_marqo_instance.create_index.return_value = {"status": "created"}
+    def test_create_embedding_success(self, client, mock_fastembed):
+        """Test successful embedding creation with FastEmbed."""
+        text = "action adventure anime with robots"
         
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.create_index()
-            
-            assert result is True
-            mock_marqo_instance.create_index.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_create_index_already_exists(self, client: QdrantClient, mock_marqo_instance):
-        """Test index creation when index already exists."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.get_stats.return_value = {"numberOfDocuments": 100}  # Index exists
+        embedding = client._create_embedding(text)
         
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.create_index()
-            
-            assert result is True
-            mock_marqo_instance.create_index.assert_not_called()
+        assert len(embedding) == 384
+        assert all(isinstance(val, float) for val in embedding)
+        mock_fastembed.embed.assert_called_once_with([text])
 
-    @pytest.mark.asyncio
-    async def test_create_index_failure(self, client: QdrantClient, mock_marqo_instance):
-        """Test index creation failure."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.get_stats.side_effect = Exception("Index doesn't exist")
-        mock_marqo_instance.create_index.side_effect = Exception("Creation failed")
+    def test_create_embedding_empty_text(self, client):
+        """Test embedding creation with empty text."""
+        embedding = client._create_embedding("")
         
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.create_index()
-            
-            assert result is False
+        assert len(embedding) == 384
+        assert all(val == 0.0 for val in embedding)
+
+    def test_create_embedding_whitespace_only(self, client):
+        """Test embedding creation with whitespace only."""
+        embedding = client._create_embedding("   \n\t   ")
+        
+        assert len(embedding) == 384
+        assert all(val == 0.0 for val in embedding)
+
+    def test_create_embedding_none_text(self, client):
+        """Test embedding creation with None text."""
+        embedding = client._create_embedding(None)
+        
+        assert len(embedding) == 384
+        assert all(val == 0.0 for val in embedding)
+
+    def test_create_embedding_fastembed_failure(self, client, mock_fastembed):
+        """Test embedding creation when FastEmbed fails."""
+        mock_fastembed.embed.side_effect = Exception("FastEmbed error")
+        
+        embedding = client._create_embedding("test text")
+        
+        # Should return zero vector on error
+        assert len(embedding) == 384
+        assert all(val == 0.0 for val in embedding)
+
+    def test_create_embedding_wrong_dimensions(self, client, mock_fastembed):
+        """Test embedding creation with wrong dimensions from FastEmbed."""
+        # Mock FastEmbed returning wrong size
+        mock_fastembed.embed.return_value = [np.array([0.1, 0.2])]  # Only 2 dimensions
+        
+        embedding = client._create_embedding("test text")
+        
+        # Should pad to correct size
+        assert len(embedding) == 384
+        assert embedding[0] == 0.1
+        assert embedding[1] == 0.2
+        assert all(val == 0.0 for val in embedding[2:])
+
+    def test_create_embedding_too_large_dimensions(self, client, mock_fastembed):
+        """Test embedding creation with too many dimensions from FastEmbed."""
+        # Mock FastEmbed returning too many dimensions
+        large_embedding = np.array([0.1] * 500)  # 500 dimensions
+        mock_fastembed.embed.return_value = [large_embedding]
+        
+        embedding = client._create_embedding("test text")
+        
+        # Should truncate to correct size
+        assert len(embedding) == 384
+        assert all(val == 0.1 for val in embedding)
 
     @pytest.mark.asyncio
-    async def test_add_documents_success(self, client: QdrantClient, mock_marqo_instance):
+    async def test_add_documents_success(self, client, mock_qdrant_sdk):
         """Test successful document addition."""
         documents = [
             {
                 "anime_id": "test123",
                 "title": "Test Anime",
-                "embedding_text": "Test anime about testing",
-                "myanimelist_id": 123,
-                "anilist_id": 456
+                "embedding_text": "action adventure anime",
+                "synopsis": "A test anime",
+                "tags": ["action", "adventure"]
+            },
+            {
+                "anime_id": "test456", 
+                "title": "Another Anime",
+                "embedding_text": "romance comedy school",
+                "synopsis": "A romantic comedy",
+                "tags": ["romance", "comedy"]
             }
         ]
         
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.add_documents.return_value = {
-            "errors": [],
-            "processingTimeMs": 100,
-            "index_name": "test_anime",
-            "items": [{"_id": "test123", "status": 201}]
-        }
+        mock_qdrant_sdk.upsert.return_value = True
         
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.add_documents(documents)
-            
-            assert result is True
-            mock_index.add_documents.assert_called_once_with(
-                documents, tensor_fields=["embedding_text"]
-            )
+        result = await client.add_documents(documents)
+        
+        assert result is True
+        mock_qdrant_sdk.upsert.assert_called()
 
     @pytest.mark.asyncio
-    async def test_add_documents_with_errors(self, client: QdrantClient, mock_marqo_instance):
-        """Test document addition with some errors."""
-        documents = [{"anime_id": "test123", "title": "Test"}]
-        
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.add_documents.return_value = {
-            "errors": [{"error": "Invalid document", "id": "test123"}],
-            "processingTimeMs": 100
-        }
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.add_documents(documents)
-            
-            assert result is False
-
-    @pytest.mark.asyncio
-    async def test_add_documents_empty_list(self, client: QdrantClient, mock_marqo_instance):
+    async def test_add_documents_empty_list(self, client):
         """Test adding empty document list."""
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.add_documents([])
-            
-            assert result is True  # Empty list should succeed trivially
-
-    @pytest.mark.asyncio
-    async def test_add_documents_exception(self, client: QdrantClient, mock_marqo_instance):
-        """Test document addition with exception."""
-        documents = [{"anime_id": "test123"}]
-        
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.add_documents.side_effect = Exception("Network error")
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.add_documents(documents)
-            
-            assert result is False
-
-    @pytest.mark.asyncio
-    async def test_search_success(self, client: QdrantClient, mock_marqo_instance):
-        """Test successful search."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.search.return_value = {
-            "hits": [
-                {
-                    "anime_id": "test123",
-                    "title": "Test Anime",
-                    "myanimelist_id": 123,
-                    "anilist_id": 456,
-                    "_score": 0.95,
-                    "_highlights": {}
-                }
-            ],
-            "processingTimeMs": 50,
-            "query": "test anime"
-        }
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            results = await client.search("test anime", limit=10)
-            
-            assert len(results) == 1
-            assert results[0]["anime_id"] == "test123"
-            assert results[0]["_score"] == 0.95
-            assert results[0]["processing_time_ms"] == 50
-            
-            mock_index.search.assert_called_once_with(
-                q="test anime", limit=10
-            )
-
-    @pytest.mark.asyncio
-    async def test_search_no_results(self, client: QdrantClient, mock_marqo_instance):
-        """Test search with no results."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.search.return_value = {
-            "hits": [],
-            "processingTimeMs": 25,
-            "query": "nonexistent"
-        }
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            results = await client.search("nonexistent", limit=10)
-            
-            assert results == []
-
-    @pytest.mark.asyncio
-    async def test_search_exception(self, client: QdrantClient, mock_marqo_instance):
-        """Test search with exception."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.search.side_effect = Exception("Search failed")
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            results = await client.search("test", limit=10)
-            
-            assert results == []
-
-    @pytest.mark.asyncio
-    async def test_search_with_filters(self, client: QdrantClient, mock_marqo_instance):
-        """Test search with filters."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.search.return_value = {
-            "hits": [],
-            "processingTimeMs": 30,
-            "query": "test"
-        }
-        
-        filters = {"type": "TV", "year": 2023}
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            await client.search("test", limit=5, filters=filters)
-            
-            mock_index.search.assert_called_once_with(
-                q="test", limit=5, filter_string="type:TV AND year:2023"
-            )
-
-    @pytest.mark.asyncio
-    async def test_get_similar_anime_success(self, client: QdrantClient, mock_marqo_instance):
-        """Test successful similar anime retrieval."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        
-        # Mock get document by ID
-        mock_index.get_document.return_value = {
-            "anime_id": "target123",
-            "title": "Target Anime",
-            "embedding_text": "Target anime description"
-        }
-        
-        # Mock search for similar
-        mock_index.search.return_value = {
-            "hits": [
-                {
-                    "anime_id": "similar123",
-                    "title": "Similar Anime",
-                    "_score": 0.85
-                }
-            ],
-            "processingTimeMs": 75
-        }
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            results = await client.get_similar_anime("target123", limit=5)
-            
-            assert len(results) == 1
-            assert results[0]["anime_id"] == "similar123"
-            assert results[0]["_score"] == 0.85
-
-    @pytest.mark.asyncio
-    async def test_get_similar_anime_document_not_found(self, client: QdrantClient, mock_marqo_instance):
-        """Test similar anime when target document not found."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.get_document.side_effect = Exception("Document not found")
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            results = await client.get_similar_anime("nonexistent123", limit=5)
-            
-            assert results == []
-
-    @pytest.mark.asyncio
-    async def test_get_stats_success(self, client: QdrantClient, mock_marqo_instance):
-        """Test successful stats retrieval."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.get_stats.return_value = {
-            "numberOfDocuments": 38894,
-            "numberOfVectors": 38894,
-            "backend": {
-                "memoryUsage": "2.1GB",
-                "storageUsage": "5.4GB"
-            }
-        }
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            stats = await client.get_stats()
-            
-            assert stats.total_anime == 38894
-            assert stats.indexed_anime == 38894
-            assert stats.index_health == "green"
-            assert isinstance(stats.last_updated, datetime)
-
-    @pytest.mark.asyncio
-    async def test_get_stats_partial_index(self, client: QdrantClient, mock_marqo_instance):
-        """Test stats with partial indexing."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.get_stats.return_value = {
-            "numberOfDocuments": 17931,
-            "numberOfVectors": 17931
-        }
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            stats = await client.get_stats()
-            
-            assert stats.total_anime == 17931  # Only what's indexed
-            assert stats.indexed_anime == 17931
-            assert stats.index_health == "yellow"  # Partial index
-
-    @pytest.mark.asyncio
-    async def test_get_stats_exception(self, client: QdrantClient, mock_marqo_instance):
-        """Test stats retrieval with exception."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.get_stats.side_effect = Exception("Stats unavailable")
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            stats = await client.get_stats()
-            
-            assert stats.total_anime == 0
-            assert stats.indexed_anime == 0
-            assert stats.index_health == "red"
-
-    @pytest.mark.asyncio
-    async def test_delete_documents_success(self, client: QdrantClient, mock_marqo_instance):
-        """Test successful document deletion."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.delete_documents.return_value = {
-            "errors": [],
-            "items": [
-                {"_id": "doc1", "status": 200},
-                {"_id": "doc2", "status": 200}
-            ]
-        }
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.delete_documents(["doc1", "doc2"])
-            
-            assert result is True
-            mock_index.delete_documents.assert_called_once_with(
-                ids=["doc1", "doc2"]
-            )
-
-    @pytest.mark.asyncio
-    async def test_delete_documents_with_errors(self, client: QdrantClient, mock_marqo_instance):
-        """Test document deletion with errors."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.delete_documents.return_value = {
-            "errors": [{"error": "Document not found", "id": "doc1"}],
-            "items": [{"_id": "doc2", "status": 200}]
-        }
-        
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.delete_documents(["doc1", "doc2"])
-            
-            assert result is False
-
-    @pytest.mark.asyncio
-    async def test_delete_documents_empty_list(self, client: QdrantClient):
-        """Test deleting empty document list."""
-        result = await client.delete_documents([])
+        result = await client.add_documents([])
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_delete_documents_exception(self, client: QdrantClient, mock_marqo_instance):
-        """Test document deletion with exception."""
-        mock_index = MagicMock()
-        mock_marqo_instance.index.return_value = mock_index
-        mock_index.delete_documents.side_effect = Exception("Deletion failed")
+    async def test_add_documents_missing_embedding_text(self, client, mock_qdrant_sdk):
+        """Test adding documents with missing embedding_text."""
+        documents = [
+            {
+                "anime_id": "test123",
+                "title": "Test Anime",
+                # Missing embedding_text
+                "synopsis": "A test anime"
+            }
+        ]
         
-        with patch('marqo.Client', return_value=mock_marqo_instance):
-            result = await client.delete_documents(["doc1"])
+        mock_qdrant_sdk.upsert.return_value = True
+        
+        result = await client.add_documents(documents)
+        
+        # Should still succeed but skip documents without embedding_text
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_add_documents_qdrant_failure(self, client, mock_qdrant_sdk):
+        """Test document addition when Qdrant fails."""
+        documents = [{"anime_id": "test123", "embedding_text": "test"}]
+        
+        mock_qdrant_sdk.upsert.side_effect = Exception("Qdrant error")
+        
+        result = await client.add_documents(documents)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_search_success(self, client, mock_qdrant_sdk):
+        """Test successful search."""
+        # Mock search results
+        mock_hit = MagicMock()
+        mock_hit.payload = {"anime_id": "test123", "title": "Test Anime"}
+        mock_hit.score = 0.95
+        mock_hit.id = "point123"
+        
+        mock_qdrant_sdk.search.return_value = [mock_hit]
+        
+        results = await client.search("action anime", limit=5)
+        
+        assert len(results) == 1
+        assert results[0]["title"] == "Test Anime"
+        assert results[0]["_score"] == 0.95
+        assert results[0]["_id"] == "point123"
+
+    @pytest.mark.asyncio
+    async def test_search_no_results(self, client, mock_qdrant_sdk):
+        """Test search with no results."""
+        mock_qdrant_sdk.search.return_value = []
+        
+        results = await client.search("nonexistent anime")
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_search_with_filters(self, client, mock_qdrant_sdk):
+        """Test search with metadata filters."""
+        mock_qdrant_sdk.search.return_value = []
+        
+        filters = {"type": "TV", "year": 2023}
+        await client.search("test query", filters=filters)
+        
+        # Verify search was called with filters
+        mock_qdrant_sdk.search.assert_called()
+        call_args = mock_qdrant_sdk.search.call_args
+        assert call_args[1]["query_filter"] is not None
+
+    @pytest.mark.asyncio
+    async def test_search_qdrant_failure(self, client, mock_qdrant_sdk):
+        """Test search when Qdrant fails."""
+        mock_qdrant_sdk.search.side_effect = Exception("Search failed")
+        
+        results = await client.search("test query")
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_get_similar_anime_success(self, client, mock_qdrant_sdk):
+        """Test successful similar anime retrieval."""
+        # Mock retrieve result
+        mock_point = MagicMock()
+        mock_point.vector = [0.1] * 384
+        mock_qdrant_sdk.retrieve.return_value = [mock_point]
+        
+        # Mock search results for similar anime
+        mock_hit = MagicMock()
+        mock_hit.payload = {"anime_id": "similar123", "title": "Similar Anime"}
+        mock_hit.score = 0.85
+        mock_qdrant_sdk.search.return_value = [mock_hit]
+        
+        results = await client.get_similar_anime("test123", limit=5)
+        
+        assert len(results) == 1
+        assert results[0]["title"] == "Similar Anime"
+        assert results[0]["similarity_score"] == 0.85
+
+    @pytest.mark.asyncio
+    async def test_get_similar_anime_not_found(self, client, mock_qdrant_sdk):
+        """Test similar anime when target anime not found."""
+        mock_qdrant_sdk.retrieve.return_value = []
+        
+        results = await client.get_similar_anime("nonexistent123")
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_get_similar_anime_qdrant_failure(self, client, mock_qdrant_sdk):
+        """Test similar anime when Qdrant fails."""
+        mock_qdrant_sdk.retrieve.side_effect = Exception("Retrieve failed")
+        
+        results = await client.get_similar_anime("test123")
+        assert results == []
+
+    @pytest.mark.asyncio
+    async def test_get_stats_success(self, client, mock_qdrant_sdk):
+        """Test successful stats retrieval."""
+        # Mock collection info
+        mock_collection = MagicMock()
+        mock_collection.status = "green"
+        mock_collection.optimizer_status = "ok" 
+        mock_collection.indexed_vectors_count = 1000
+        mock_collection.points_count = 1000
+        mock_qdrant_sdk.get_collection.return_value = mock_collection
+        
+        # Mock count result
+        mock_count = MagicMock()
+        mock_count.count = 1000
+        mock_qdrant_sdk.count.return_value = mock_count
+        
+        stats = await client.get_stats()
+        
+        assert stats["collection_name"] == "test_anime"
+        assert stats["total_documents"] == 1000
+        assert stats["vector_size"] == 384
+        assert stats["distance_metric"] == "cosine"
+
+    @pytest.mark.asyncio
+    async def test_get_stats_failure(self, client, mock_qdrant_sdk):
+        """Test stats retrieval failure."""
+        mock_qdrant_sdk.get_collection.side_effect = Exception("Stats failed")
+        
+        stats = await client.get_stats()
+        assert "error" in stats
+
+    def test_build_filter_simple(self, client):
+        """Test building simple filters."""
+        filters = {"type": "TV", "year": 2023}
+        
+        qdrant_filter = client._build_filter(filters)
+        
+        assert qdrant_filter is not None
+        assert len(qdrant_filter.must) == 2
+
+    def test_build_filter_range(self, client):
+        """Test building range filters."""
+        filters = {"year": {"gte": 2020, "lte": 2023}}
+        
+        qdrant_filter = client._build_filter(filters)
+        
+        assert qdrant_filter is not None
+        assert len(qdrant_filter.must) == 1
+
+    def test_build_filter_list_values(self, client):
+        """Test building filters with list values."""
+        filters = {"tags": ["action", "adventure"]}
+        
+        qdrant_filter = client._build_filter(filters)
+        
+        assert qdrant_filter is not None
+        assert len(qdrant_filter.must) == 1
+
+    def test_build_filter_empty(self, client):
+        """Test building empty filters."""
+        qdrant_filter = client._build_filter({})
+        assert qdrant_filter is None
+        
+        qdrant_filter = client._build_filter(None)
+        assert qdrant_filter is None
+
+    @pytest.mark.asyncio
+    async def test_clear_index_success(self, client, mock_qdrant_sdk):
+        """Test successful index clearing."""
+        mock_qdrant_sdk.delete_collection.return_value = True
+        
+        result = await client.clear_index()
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_clear_index_failure(self, client, mock_qdrant_sdk):
+        """Test index clearing failure."""
+        mock_qdrant_sdk.delete_collection.side_effect = Exception("Delete failed")
+        
+        result = await client.clear_index()
+        assert result is False
+
+    def test_generate_point_id_consistency(self, client):
+        """Test that point ID generation is consistent."""
+        anime_id = "test123"
+        
+        id1 = client._generate_point_id(anime_id)
+        id2 = client._generate_point_id(anime_id)
+        
+        assert id1 == id2
+        assert len(id1) == 32  # MD5 hash length
+
+    def test_generate_point_id_uniqueness(self, client):
+        """Test that different anime IDs generate different point IDs."""
+        id1 = client._generate_point_id("anime1")
+        id2 = client._generate_point_id("anime2")
+        
+        assert id1 != id2
+
+    def test_client_initialization_default(self):
+        """Test client initialization with default parameters."""
+        with patch('src.vector.qdrant_client.TextEmbedding'), \
+             patch('src.vector.qdrant_client.QdrantSDK'):
+            client = QdrantClient()
             
-            assert result is False
+            assert client.url == "http://localhost:6333"
+            assert client.collection_name == "anime_database"
+            assert client._vector_size == 384
 
-    def test_client_initialization(self):
-        """Test client initialization with different parameters."""
-        # Default initialization
-        client1 = QdrantClient()
-        assert client1.url == "http://localhost:8882"
-        assert client1.index_name == "anime_database"
-        
-        # Custom initialization
-        client2 = QdrantClient(url="http://custom:9999", index_name="custom_index")
-        assert client2.url == "http://custom:9999"
-        assert client2.index_name == "custom_index"
+    def test_client_initialization_custom(self):
+        """Test client initialization with custom parameters."""
+        with patch('src.vector.qdrant_client.TextEmbedding'), \
+             patch('src.vector.qdrant_client.QdrantSDK'):
+            client = QdrantClient(
+                url="http://custom:6333", 
+                collection_name="custom_collection"
+            )
+            
+            assert client.url == "http://custom:6333"
+            assert client.collection_name == "custom_collection"
 
-    def test_build_filter_string(self, client: QdrantClient):
-        """Test filter string building."""
-        # Single filter
-        filters = {"type": "TV"}
-        filter_string = client._build_filter_string(filters)
-        assert filter_string == "type:TV"
-        
-        # Multiple filters
-        filters = {"type": "TV", "year": 2023, "status": "FINISHED"}
-        filter_string = client._build_filter_string(filters)
-        # Should combine with AND
-        assert "type:TV" in filter_string
-        assert "year:2023" in filter_string
-        assert "status:FINISHED" in filter_string
-        assert " AND " in filter_string
-        
-        # Empty filters
-        assert client._build_filter_string({}) == ""
-        assert client._build_filter_string(None) == ""
-
-    def test_build_filter_string_special_values(self, client: QdrantClient):
-        """Test filter string with special values."""
-        # String values with spaces
-        filters = {"studio": "Studio Ghibli"}
-        filter_string = client._build_filter_string(filters)
-        assert 'studio:"Studio Ghibli"' in filter_string
-        
-        # Numeric values
-        filters = {"episodes": 12, "year": 2023}
-        filter_string = client._build_filter_string(filters)
-        assert "episodes:12" in filter_string
-        assert "year:2023" in filter_string
-        
-        # Boolean values
-        filters = {"completed": True}
-        filter_string = client._build_filter_string(filters)
-        assert "completed:true" in filter_string
+    def test_encoder_initialization_failure(self):
+        """Test behavior when FastEmbed initialization fails."""
+        with patch('src.vector.qdrant_client.TextEmbedding') as mock_text_embedding:
+            mock_text_embedding.side_effect = Exception("FastEmbed init failed")
+            
+            with pytest.raises(Exception):
+                QdrantClient()

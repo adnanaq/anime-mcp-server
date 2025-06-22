@@ -23,7 +23,7 @@ def sample_anime_data() -> Dict[str, Any]:
         "sources": [
             "https://myanimelist.net/anime/1",
             "https://anilist.co/anime/1",
-            "https://kitsu.io/anime/1",
+            "https://kitsu.app/anime/1",
             "https://anidb.net/anime/1"
         ],
         "title": "Test Anime",
@@ -51,7 +51,7 @@ def complex_anime_data() -> Dict[str, Any]:
         "sources": [
             "https://myanimelist.net/anime/12345",
             "https://anilist.co/anime/67890", 
-            "https://kitsu.io/anime/111",
+            "https://kitsu.app/anime/111",
             "https://anidb.net/anime/222",
             "https://anisearch.com/anime/333",
             "https://simkl.com/anime/444",

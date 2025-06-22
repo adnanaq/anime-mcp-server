@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 async def main():
-    """Download anime data and index in Marqo"""
+    """Download anime data and index in Qdrant"""
     
     # Initialize services
     data_service = AnimeDataService()
@@ -48,12 +48,11 @@ async def main():
         # Step 3: Index in Qdrant
         logger.info("📚 Indexing data in Qdrant vector database...")
         
-        # Ensure index exists
-        await qdrant_client.create_index()
+        # Ensure collection exists (already done in constructor)
+        # await qdrant_client.create_collection()  # Already handled in __init__
         
-        # Index documents with tensor fields for vector embedding
-        tensor_fields = ["embedding_text", "search_text"]
-        success = await qdrant_client.add_documents(processed_data, tensor_fields)
+        # Index documents (tensor_fields not needed for Qdrant FastEmbed)
+        success = await qdrant_client.add_documents(processed_data)
         
         if success:
             logger.info("✅ Successfully indexed all anime data!")

@@ -13,7 +13,7 @@ from qdrant_client.models import (
     Filter, FieldCondition, MatchValue, MatchAny, Range,
     SearchRequest, CountRequest, UpdateStatus
 )
-# from sentence_transformers import SentenceTransformer  # Will add later for production
+from fastembed import TextEmbedding
 import asyncio
 import hashlib
 
@@ -24,7 +24,7 @@ class QdrantClient:
     """Qdrant client wrapper optimized for anime search operations."""
     
     def __init__(self, url: str = "http://localhost:6333", collection_name: str = "anime_database"):
-        """Initialize Qdrant client.
+        """Initialize Qdrant client with FastEmbed.
         
         Args:
             url: Qdrant server URL
@@ -34,24 +34,24 @@ class QdrantClient:
         self.collection_name = collection_name
         self.client = QdrantSDK(url=url)
         self.encoder = None
-        self._vector_size = 768  # e5-base-v2 model dimensions
+        self._vector_size = 384  # BAAI/bge-small-en-v1.5 model dimensions
         
-        # Initialize the sentence transformer for embeddings
+        # Initialize FastEmbed encoder
         self._init_encoder()
         
         # Create collection if it doesn't exist
         self._ensure_collection_exists()
     
     def _init_encoder(self):
-        """Initialize a simple embedding function for now."""
+        """Initialize FastEmbed encoder for semantic embeddings."""
         try:
-            # For now, use a simple embedding function to avoid heavy ML dependencies
-            # In production, we'll use proper sentence transformers
-            self.encoder = None
-            self._vector_size = 384  # Standard embedding size
-            logger.info(f"Initialized simple encoder with vector size: {self._vector_size}")
+            # Initialize FastEmbed with BAAI/bge-small-en-v1.5 model
+            # This model provides excellent semantic understanding for anime content
+            self.encoder = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+            self._vector_size = 384  # BAAI/bge-small-en-v1.5 dimensions
+            logger.info(f"Initialized FastEmbed encoder (BAAI/bge-small-en-v1.5) with vector size: {self._vector_size}")
         except Exception as e:
-            logger.error(f"Failed to initialize encoder: {e}")
+            logger.error(f"Failed to initialize FastEmbed encoder: {e}")
             raise
     
     def _ensure_collection_exists(self):
@@ -130,31 +130,37 @@ class QdrantClient:
             return {"error": str(e)}
     
     def _create_embedding(self, text: str) -> List[float]:
-        """Create embedding vector from text using simple hash-based approach."""
+        """Create semantic embedding vector from text using FastEmbed."""
         try:
-            # Simple embedding using character frequencies (for testing)
-            # In production, this would use a proper transformer model
-            import hashlib
+            if not text or not text.strip():
+                logger.warning("Empty text provided for embedding")
+                # Return zero vector for empty text
+                return [0.0] * self._vector_size
             
-            # Create deterministic vector from text hash
-            text_hash = hashlib.sha256(text.encode()).hexdigest()
+            # Use FastEmbed to generate semantic embeddings
+            embeddings = list(self.encoder.embed([text.strip()]))
+            if not embeddings:
+                logger.warning(f"No embedding generated for text: {text[:100]}...")
+                return [0.0] * self._vector_size
             
-            # Convert hex to float values between -1 and 1
-            embedding = []
-            for i in range(0, min(len(text_hash), self._vector_size * 2), 2):
-                hex_val = text_hash[i:i+2]
-                float_val = (int(hex_val, 16) - 128) / 128.0  # Normalize to [-1, 1]
-                embedding.append(float_val)
+            # FastEmbed returns numpy arrays, convert to list
+            embedding = embeddings[0].tolist()
             
-            # Pad or truncate to exact size
-            while len(embedding) < self._vector_size:
-                embedding.append(0.0)
+            # Ensure correct dimensions
+            if len(embedding) != self._vector_size:
+                logger.warning(f"Embedding size mismatch: got {len(embedding)}, expected {self._vector_size}")
+                # Pad or truncate to match expected size
+                if len(embedding) < self._vector_size:
+                    embedding.extend([0.0] * (self._vector_size - len(embedding)))
+                else:
+                    embedding = embedding[:self._vector_size]
             
-            return embedding[:self._vector_size]
+            return embedding
             
         except Exception as e:
-            logger.error(f"Failed to create embedding: {e}")
-            raise
+            logger.error(f"Failed to create embedding for text '{text[:100]}...': {e}")
+            # Return zero vector on error to prevent pipeline failure
+            return [0.0] * self._vector_size
     
     def _generate_point_id(self, anime_id: str) -> str:
         """Generate unique point ID from anime ID."""

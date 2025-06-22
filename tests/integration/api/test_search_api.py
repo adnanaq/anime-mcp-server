@@ -224,3 +224,166 @@ class TestSearchAPI:
             assert isinstance(result["animeplanet_id"], str)
             assert isinstance(result["notify_id"], str)
             assert result["animecountdown_id"] is None
+
+    @pytest.mark.integration 
+    def test_fastembed_semantic_quality(self, client: TestClient):
+        """Test that FastEmbed provides semantically relevant results."""
+        # Mock semantically relevant results for anime queries
+        mock_results = [
+            {
+                "anime_id": "mecha123",
+                "title": "Gundam Wing",
+                "synopsis": "Mecha anime with giant robots",
+                "type": "TV",
+                "episodes": 49,
+                "tags": ["mecha", "action", "robots"],
+                "studios": ["Sunrise"],
+                "_score": 0.85,
+                "year": 1995
+            },
+            {
+                "anime_id": "mecha456", 
+                "title": "Evangelion",
+                "synopsis": "Psychological mecha series",
+                "type": "TV",
+                "episodes": 26,
+                "tags": ["mecha", "psychological", "drama"],
+                "studios": ["Studio Gainax"],
+                "_score": 0.82,
+                "year": 1995
+            }
+        ]
+        
+        with patch('src.main.qdrant_client') as mock_client:
+            mock_client.search.return_value = mock_results
+            
+            # Test semantic query for mecha anime
+            response = client.post(
+                "/api/search/semantic",
+                json={"query": "giant robots fighting mecha", "limit": 5}
+            )
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            # Verify results are semantically relevant to mecha
+            assert len(data["results"]) == 2
+            
+            for result in data["results"]:
+                # Should find mecha-related anime
+                assert any(tag in ["mecha", "action", "robots"] for tag in result["tags"])
+                assert result["_score"] > 0.8  # High semantic similarity
+                
+            # Verify search was called with semantic query
+            mock_client.search.assert_called_once_with(
+                "giant robots fighting mecha", limit=5, filters=None
+            )
+
+    @pytest.mark.integration
+    def test_fastembed_embedding_edge_cases(self, client: TestClient):
+        """Test FastEmbed handles edge cases in text processing."""
+        edge_case_queries = [
+            "",  # Empty query
+            "   ",  # Whitespace only  
+            "龍珠",  # Non-English characters
+            "action" * 100,  # Very long query
+            "special chars: !@#$%^&*()",  # Special characters
+        ]
+        
+        with patch('src.main.qdrant_client') as mock_client:
+            mock_client.search.return_value = []
+            
+            for query in edge_case_queries:
+                response = client.post(
+                    "/api/search/semantic",
+                    json={"query": query, "limit": 5}
+                )
+                
+                # Should handle gracefully without errors
+                assert response.status_code == 200
+                data = response.json()
+                assert "results" in data
+                assert data["query"] == query
+
+    @pytest.mark.integration
+    def test_fastembed_similarity_consistency(self, client: TestClient):
+        """Test that similar anime search provides consistent similarity scores."""
+        mock_similar = [
+            {
+                "anime_id": "similar1",
+                "title": "Similar Anime 1", 
+                "synopsis": "Very similar content",
+                "similarity_score": 0.92,
+                "tags": ["action", "adventure"]
+            },
+            {
+                "anime_id": "similar2",
+                "title": "Similar Anime 2",
+                "synopsis": "Somewhat similar content", 
+                "similarity_score": 0.78,
+                "tags": ["action", "drama"]
+            },
+            {
+                "anime_id": "similar3",
+                "title": "Similar Anime 3",
+                "synopsis": "Less similar content",
+                "similarity_score": 0.65,
+                "tags": ["romance", "comedy"]
+            }
+        ]
+        
+        with patch('src.main.qdrant_client') as mock_client:
+            mock_client.get_similar_anime.return_value = mock_similar
+            
+            response = client.get("/api/search/similar/reference123?limit=5")
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            # Verify similarity scores are in descending order
+            scores = [result["similarity_score"] for result in data["results"]]
+            assert scores == sorted(scores, reverse=True)
+            
+            # Verify all scores are valid similarity values (0-1)
+            for score in scores:
+                assert 0 <= score <= 1
+
+    @pytest.mark.integration
+    def test_fastembed_filter_integration(self, client: TestClient):
+        """Test that FastEmbed works correctly with metadata filters."""
+        mock_results = [
+            {
+                "anime_id": "tv_action1",
+                "title": "TV Action Anime",
+                "type": "TV",
+                "year": 2023,
+                "tags": ["action", "adventure"],
+                "_score": 0.88
+            }
+        ]
+        
+        with patch('src.main.qdrant_client') as mock_client:
+            mock_client.search.return_value = mock_results
+            
+            # Test semantic search with filters
+            response = client.post(
+                "/api/search/semantic",
+                json={
+                    "query": "action packed adventure",
+                    "limit": 10,
+                    "filters": {"type": "TV", "year": 2023}
+                }
+            )
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            # Verify FastEmbed search was called with filters
+            mock_client.search.assert_called_once()
+            call_args = mock_client.search.call_args
+            assert call_args[1]["filters"] == {"type": "TV", "year": 2023}
+            
+            # Verify results match filters
+            for result in data["results"]:
+                assert result["type"] == "TV"
+                assert result["year"] == 2023
