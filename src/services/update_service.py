@@ -27,11 +27,11 @@ class UpdateService:
             self.qdrant_client = qdrant_client
             logger.info(f"🔧 UpdateService using provided QdrantClient")
         else:
-            # Use Docker service name when running in container
-            qdrant_url = os.getenv("QDRANT_URL", "http://qdrant:6333")
-            collection_name = os.getenv("QDRANT_COLLECTION_NAME", "anime_database")
-            logger.info(f"🔧 UpdateService creating new QdrantClient with URL: {qdrant_url}")
-            self.qdrant_client = QdrantClient(url=qdrant_url, collection_name=collection_name)
+            # Create new QdrantClient with centralized configuration
+            from ..config import get_settings
+            settings = get_settings()
+            logger.info(f"🔧 UpdateService creating new QdrantClient with URL: {settings.qdrant_url}")
+            self.qdrant_client = QdrantClient(settings=settings)
         self.data_dir = Path("data")
         self.metadata_file = self.data_dir / "update_metadata.json"
         
@@ -239,11 +239,86 @@ class UpdateService:
         content = {k: entry.get(k) for k in key_fields}
         return hashlib.md5(json.dumps(content, sort_keys=True).encode()).hexdigest()
     
-    async def remove_entries(self, entries: List[Dict]):
-        """Remove entries from vector database"""
-        # TODO: Implement entry removal from Qdrant
-        # This would require tracking anime_ids and using delete operations
-        logger.info(f"🗑️ Would remove {len(entries)} entries (not yet implemented)")
+    async def remove_entries(self, entries: List[Dict]) -> bool:
+        """Remove entries from vector database.
+        
+        Args:
+            entries: List of anime entries to remove
+            
+        Returns:
+            bool: True if removal was successful, False otherwise
+        """
+        if not entries:
+            logger.info("No entries to remove")
+            return True
+            
+        try:
+            # Extract anime IDs from entries to remove
+            anime_ids_to_remove = []
+            for entry in entries:
+                anime_id = entry.get('anime_id')
+                if anime_id:
+                    anime_ids_to_remove.append(anime_id)
+                else:
+                    logger.warning(f"Entry missing anime_id: {entry.get('title', 'unknown')}")
+            
+            if not anime_ids_to_remove:
+                logger.warning("No valid anime_ids found in entries to remove")
+                return False
+            
+            logger.info(f"🗑️ Removing {len(anime_ids_to_remove)} entries from Qdrant...")
+            
+            # Remove entries in batches to avoid overwhelming Qdrant
+            batch_size = 100
+            successful_removals = 0
+            failed_removals = 0
+            
+            for i in range(0, len(anime_ids_to_remove), batch_size):
+                batch_ids = anime_ids_to_remove[i:i + batch_size]
+                
+                try:
+                    # Generate point IDs for the anime IDs (using same method as add)
+                    point_ids = [self.qdrant_client._generate_point_id(anime_id) for anime_id in batch_ids]
+                    
+                    # Delete points from Qdrant
+                    delete_result = self.qdrant_client.client.delete(
+                        collection_name=self.qdrant_client.collection_name,
+                        points_selector={"points": point_ids}
+                    )
+                    
+                    if delete_result.status == "completed":
+                        successful_removals += len(batch_ids)
+                        logger.info(f"✅ Removed batch of {len(batch_ids)} entries")
+                    else:
+                        failed_removals += len(batch_ids)
+                        logger.error(f"❌ Failed to remove batch: {delete_result}")
+                        
+                except Exception as batch_error:
+                    failed_removals += len(batch_ids)
+                    logger.error(f"❌ Error removing batch: {batch_error}")
+            
+            # Log final results
+            total_attempted = len(anime_ids_to_remove)
+            success_rate = (successful_removals / total_attempted) * 100 if total_attempted > 0 else 0
+            
+            logger.info(
+                f"🗑️ Removal completed: {successful_removals}/{total_attempted} entries "
+                f"({success_rate:.1f}% success rate)"
+            )
+            
+            if failed_removals > 0:
+                logger.warning(f"⚠️ {failed_removals} entries failed to remove")
+            
+            # Consider it successful if at least 80% of entries were removed
+            return success_rate >= 80.0
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to remove entries: {e}")
+            # Import our custom exceptions
+            from ..exceptions import VectorDatabaseError
+            raise VectorDatabaseError(f"Entry removal failed: {str(e)}")
+            
+        return False
     
     def load_metadata(self) -> Dict:
         """Load update metadata"""

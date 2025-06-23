@@ -1,6 +1,6 @@
 # src/api/recommendations.py - Recommendation API Endpoints
 from fastapi import APIRouter, HTTPException
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import logging
 
 router = APIRouter()
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 async def get_recommendations(
     anime_id: str,
     limit: int = 10
-):
+) -> Dict[str, Any]:
     """Get recommendations based on anime ID"""
     # TODO: Implement recommendation logic
     return {
@@ -20,7 +20,7 @@ async def get_recommendations(
     }
 
 @router.post("/based-on-preferences")
-async def get_preference_recommendations():
+async def get_preference_recommendations() -> Dict[str, Any]:
     """Get recommendations based on user preferences"""
     # TODO: Implement preference-based recommendations
     return {

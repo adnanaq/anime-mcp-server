@@ -73,6 +73,9 @@ curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
 
 # Stats
 curl http://localhost:8000/stats
+
+# Test MCP server
+python scripts/test_mcp.py
 ```
 
 ## Code Architecture

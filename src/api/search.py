@@ -1,6 +1,6 @@
 # src/api/search.py - Search API Endpoints
 from fastapi import APIRouter, HTTPException, Query
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import logging
 from ..models.anime import SearchRequest, SearchResponse, SearchResult
 from ..vector.qdrant_client import QdrantClient
@@ -70,7 +70,7 @@ async def semantic_search(request: SearchRequest):
 async def search_anime(
     q: str = Query(..., description="Search query"),
     limit: int = Query(20, ge=1, le=100, description="Number of results")
-):
+) -> SearchResponse:
     """Simple GET search endpoint"""
     request = SearchRequest(query=q, limit=limit)
     return await semantic_search(request)
@@ -79,7 +79,7 @@ async def search_anime(
 async def get_similar_anime(
     anime_id: str,
     limit: int = Query(10, ge=1, le=50, description="Number of similar anime")
-):
+) -> Dict[str, Any]:
     """Get similar anime based on vector similarity"""
     try:
         from ..main import qdrant_client

@@ -4,7 +4,6 @@ Provides high-performance vector search capabilities optimized for anime data
 with advanced filtering, cross-platform ID lookups, and hybrid search.
 """
 
-import os
 import logging
 from typing import List, Dict, Any, Optional, Union
 from qdrant_client import QdrantClient as QdrantSDK
@@ -16,6 +15,7 @@ from qdrant_client.models import (
 from fastembed import TextEmbedding
 import asyncio
 import hashlib
+from ..config import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,18 +23,27 @@ logger = logging.getLogger(__name__)
 class QdrantClient:
     """Qdrant client wrapper optimized for anime search operations."""
     
-    def __init__(self, url: str = "http://localhost:6333", collection_name: str = "anime_database"):
-        """Initialize Qdrant client with FastEmbed.
+    def __init__(self, url: Optional[str] = None, collection_name: Optional[str] = None, settings: Optional[Settings] = None):
+        """Initialize Qdrant client with FastEmbed and configuration.
         
         Args:
-            url: Qdrant server URL
-            collection_name: Name of the anime collection
+            url: Qdrant server URL (optional, uses settings if not provided)
+            collection_name: Name of the anime collection (optional, uses settings if not provided)
+            settings: Configuration settings instance (optional, will import default if not provided)
         """
-        self.url = url
-        self.collection_name = collection_name
-        self.client = QdrantSDK(url=url)
+        # Use provided settings or import default settings
+        if settings is None:
+            from ..config import get_settings
+            settings = get_settings()
+        
+        self.settings = settings
+        self.url = url or settings.qdrant_url
+        self.collection_name = collection_name or settings.qdrant_collection_name
+        self.client = QdrantSDK(url=self.url)
         self.encoder = None
-        self._vector_size = 384  # BAAI/bge-small-en-v1.5 model dimensions
+        self._vector_size = settings.qdrant_vector_size
+        self._distance_metric = settings.qdrant_distance_metric
+        self._fastembed_model = settings.fastembed_model
         
         # Initialize FastEmbed encoder
         self._init_encoder()
@@ -45,13 +54,16 @@ class QdrantClient:
     def _init_encoder(self):
         """Initialize FastEmbed encoder for semantic embeddings."""
         try:
-            # Initialize FastEmbed with BAAI/bge-small-en-v1.5 model
-            # This model provides excellent semantic understanding for anime content
-            self.encoder = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-            self._vector_size = 384  # BAAI/bge-small-en-v1.5 dimensions
-            logger.info(f"Initialized FastEmbed encoder (BAAI/bge-small-en-v1.5) with vector size: {self._vector_size}")
+            # Initialize FastEmbed with configured model
+            cache_dir = getattr(self.settings, 'fastembed_cache_dir', None)
+            init_kwargs = {"model_name": self._fastembed_model}
+            if cache_dir:
+                init_kwargs["cache_dir"] = cache_dir
+                
+            self.encoder = TextEmbedding(**init_kwargs)
+            logger.info(f"Initialized FastEmbed encoder ({self._fastembed_model}) with vector size: {self._vector_size}")
         except Exception as e:
-            logger.error(f"Failed to initialize FastEmbed encoder: {e}")
+            logger.error(f"Failed to initialize FastEmbed encoder with model {self._fastembed_model}: {e}")
             raise
     
     def _ensure_collection_exists(self):
@@ -62,12 +74,20 @@ class QdrantClient:
             collection_exists = any(col.name == self.collection_name for col in collections)
             
             if not collection_exists:
-                logger.info(f"Creating collection: {self.collection_name}")
+                # Map distance metric string to Qdrant Distance enum
+                distance_mapping = {
+                    "cosine": Distance.COSINE,
+                    "euclid": Distance.EUCLID,
+                    "dot": Distance.DOT
+                }
+                distance = distance_mapping.get(self._distance_metric, Distance.COSINE)
+                
+                logger.info(f"Creating collection: {self.collection_name} with distance metric: {self._distance_metric}")
                 self.client.create_collection(
                     collection_name=self.collection_name,
                     vectors_config=VectorParams(
                         size=self._vector_size,
-                        distance=Distance.COSINE
+                        distance=distance
                     )
                 )
                 logger.info(f"Created collection: {self.collection_name}")
@@ -394,6 +414,100 @@ class QdrantClient:
                 )
         
         return Filter(must=conditions) if conditions else None
+    
+    async def get_by_id(self, anime_id: str) -> Optional[Dict[str, Any]]:
+        """Get anime by ID.
+        
+        Args:
+            anime_id: The anime ID to retrieve
+            
+        Returns:
+            Anime data dictionary or None if not found
+        """
+        try:
+            loop = asyncio.get_event_loop()
+            point_id = self._generate_point_id(anime_id)
+            
+            # Retrieve point by ID
+            points = await loop.run_in_executor(
+                None,
+                lambda: self.client.retrieve(
+                    collection_name=self.collection_name,
+                    ids=[point_id],
+                    with_payload=True,
+                    with_vectors=False
+                )
+            )
+            
+            if points:
+                return dict(points[0].payload)
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to get anime by ID {anime_id}: {e}")
+            return None
+    
+    async def find_similar(self, anime_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Find similar anime using vector similarity.
+        
+        Args:
+            anime_id: Reference anime ID
+            limit: Number of similar anime to return
+            
+        Returns:
+            List of similar anime with similarity scores
+        """
+        try:
+            # First get the reference anime
+            reference_anime = await self.get_by_id(anime_id)
+            if not reference_anime:
+                logger.warning(f"Reference anime not found: {anime_id}")
+                return []
+            
+            # Use the title and tags for similarity search
+            search_text = reference_anime.get("title", "")
+            if reference_anime.get("tags"):
+                search_text += " " + " ".join(reference_anime["tags"][:5])  # Limit tags
+            
+            # Perform similarity search
+            loop = asyncio.get_event_loop()
+            embedding = self._create_embedding(search_text)
+            point_id = self._generate_point_id(anime_id)
+            
+            # Filter to exclude the reference anime itself
+            filter_out_self = Filter(
+                must_not=[
+                    FieldCondition(
+                        key="anime_id",
+                        match=MatchValue(value=anime_id)
+                    )
+                ]
+            )
+            
+            search_result = await loop.run_in_executor(
+                None,
+                lambda: self.client.search(
+                    collection_name=self.collection_name,
+                    query_vector=embedding,
+                    query_filter=filter_out_self,
+                    limit=limit,
+                    with_payload=True,
+                    with_vectors=False
+                )
+            )
+            
+            # Format results
+            results = []
+            for hit in search_result:
+                result = dict(hit.payload)
+                result["similarity_score"] = hit.score
+                results.append(result)
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Failed to find similar anime for {anime_id}: {e}")
+            return []
     
     async def clear_index(self) -> bool:
         """Clear all points from the collection (for fresh re-indexing)."""

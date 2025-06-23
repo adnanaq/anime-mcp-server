@@ -2,80 +2,99 @@
 
 ## 📋 What We're Building
 
-A FastAPI-based MCP (Model Context Protocol) server with embedded vector database for anime search and recommendations.
+A FastAPI-based MCP (Model Context Protocol) server with Qdrant vector database for semantic anime search and AI assistant integration.
 
 ## 🎯 Current Progress
 
 - ✅ Project structure created in `/home/dani/code/anime-mcp-server/`
-- ✅ Architecture decided: Embedded Marqo vector DB in FastAPI server
-- ✅ Data source confirmed: anime-offline-database (38K+ entries) https://github.com/manami-project/anime-offline-database?tab=readme-ov-file
-- ✅ **Phase 1 COMPLETED**: Full vector database foundation with smart automation
-- 🚀 Ready for Phase 2: Enhanced data pipeline and MCP integration
+- ✅ Architecture: FastAPI + Qdrant vector database + FastMCP protocol
+- ✅ Data source: anime-offline-database (38,894 entries) https://github.com/manami-project/anime-offline-database
+- ✅ **Phase 1 COMPLETED**: FastAPI foundation with vector database
+- ✅ **Phase 2 COMPLETED**: Marqo → Qdrant migration with FastEmbed
+- ✅ **Phase 3 COMPLETED**: FastMCP integration with 5 tools + 2 resources
+- 🚀 Ready for Phase 4: Enhanced features and production optimization
 
 ## 🏗️ Architecture Overview
 
 ```
 anime-mcp-server/
 ├── src/
-│   ├── main.py                    # FastAPI application
-│   ├── vector/                    # Vector database integration
-│   │   ├── marqo_client.py       # Marqo operations
-│   │   ├── embeddings.py         # Embedding generation
-│   │   └── search_service.py     # Search business logic
+│   ├── main.py                    # FastAPI application entry point
+│   ├── config.py                  # Centralized configuration management
+│   ├── vector/
+│   │   └── qdrant_client.py      # Qdrant vector database operations
 │   ├── api/                       # REST API endpoints
-│   ├── mcp/                       # MCP protocol implementation
-│   ├── models/                    # Pydantic models
-│   └── services/                  # Business logic
-├── data/                          # Anime database files
-├── docker-compose.yml             # Marqo + FastAPI services
-└── requirements.txt               # Python dependencies
+│   │   ├── search.py             # Search endpoints
+│   │   ├── admin.py              # Admin endpoints
+│   │   └── recommendations.py    # Recommendation endpoints
+│   ├── mcp/
+│   │   ├── server.py             # FastMCP server implementation
+│   │   └── tools.py              # MCP utility functions
+│   ├── models/
+│   │   └── anime.py              # Pydantic data models
+│   ├── services/
+│   │   └── data_service.py       # Data processing pipeline
+│   └── exceptions.py             # Custom exception classes
+├── scripts/
+│   └── test_mcp.py               # MCP server testing client
+├── data/                         # Anime database files
+├── docker-compose.yml            # Qdrant + FastAPI services
+└── requirements.txt              # Python dependencies
 ```
 
 ## 🔧 Technology Stack
 
 - **FastAPI** - High-performance Python web framework
-- **Marqo 3.13.0** - Vector database with latest API patterns
-- **Pydantic** - Data validation and serialization
-- **Docker** - Marqo containerization
+- **Qdrant 1.14.1** - Vector database with FastEmbed integration
+- **FastMCP 2.8.1** - Model Context Protocol implementation
+- **Pydantic v2** - Data validation and serialization
+- **Docker** - Container orchestration for services
 
 ## 📊 Current System Status
 
-- ✅ Vector database: Fully operational with Docker infrastructure 
-- ✅ Data ingestion: Complete pipeline with 38,894 entries processed
-- ✅ Indexing: Full indexing in progress (~3-4 hours) with optimized batch processing
-- ⏳ MCP protocol: Ready for Phase 2 implementation
-- ✅ Search API: 14 endpoints across 5 categories operational
-- ✅ Infrastructure: Docker networking and background task issues resolved
+- ✅ **Qdrant Vector Database**: Fully operational with 38,894 anime entries indexed
+- ✅ **FastEmbed Integration**: BAAI/bge-small-en-v1.5 model for semantic embeddings  
+- ✅ **FastMCP Server**: 5 tools + 2 resources implemented and tested
+- ✅ **FastAPI Endpoints**: Complete REST API for search and administration
+- ✅ **Docker Infrastructure**: Containerized deployment with docker-compose
+- ✅ **Testing Pipeline**: Automated MCP testing and manual validation
 
-## 🎯 Next Steps (Phase 2 & 3)
+## 🎯 Next Steps (Phase 4)
 
-### Phase 2: Enhanced Data Pipeline  
-1. Synopsis extraction from multiple anime sources
-2. Improved vector embeddings with richer content
-3. Advanced recommendation algorithms
-4. Performance optimization and caching
+### Enhanced Search & Recommendations
+1. Multi-filter search capabilities (genre + year + studio)
+2. Hybrid search (semantic + keyword + metadata)
+3. Advanced recommendation algorithms with user preferences
+4. Cross-platform ID resolution and linking
 
-### Phase 3: MCP Integration
-1. MCP protocol implementation
-2. AI assistant tool definitions  
-3. Natural language query processing
-4. Claude/GPT integration and testing
+### Production Optimization
+1. Response caching for improved performance
+2. Rate limiting and authentication mechanisms
+3. Monitoring, observability, and performance profiling
+4. Load testing and scalability improvements
 
 ## 📚 Key Resources
 
-- Marqo API patterns from `/home/dani/code/anime-mcp-server/.claude/commands/marqo_doc_cmd.md`
-- MCP plan from `/home/dani/code/anime-mcp-server/MCP_SERVER_INTEGRATION_PLAN.md`
-- Original frontend at `/home/dani/code/anime_tracker/`
+- FastMCP documentation in `/home/dani/code/anime-mcp-server/.claude/commands/fastmcp_doc.md`
+- Qdrant client implementation in `src/vector/qdrant_client.py`
+- MCP server implementation in `src/mcp/server.py`
+- Test suite in `scripts/test_mcp.py`
 
-## 🎮 Goal - ✅ ACHIEVED!
+## 🎮 Current Achievement - ✅ MAJOR MILESTONE!
 
-✅ **Phase 1 Complete**: Working anime vector search with full Docker infrastructure, optimized batch processing, and 38,894 entries being indexed via 14 FastAPI endpoints with smart automation.
+✅ **Phase 1-3 Complete**: Production-ready anime MCP server with:
+- **38,894 anime entries** with semantic search capabilities
+- **FastMCP integration** with 5 tools for AI assistant interaction
+- **Sub-second response times** with Qdrant vector database
+- **Comprehensive testing** and validated functionality
+- **Docker deployment** ready for production hosting
 
-🚀 **Next Goal**: Enhanced data pipeline with synopsis extraction and MCP protocol integration for AI assistant tools.
+🚀 **Next Goal**: Enhanced features, production optimization, and advanced recommendation algorithms.
 
-## 🔧 Recent Infrastructure Improvements
+## 🔧 Recent Major Achievements
 
-- **Docker Networking**: Fixed background task connectivity issues in containerized environment
-- **Batch Optimization**: Implemented proper `client_batch_size=32` with model preloading
-- **Background Tasks**: Resolved FastAPI BackgroundTasks context issues for reliable indexing
-- **Performance**: Model preloading and batch APIs for improved indexing efficiency
+- **Qdrant Migration**: Successful migration from Marqo to Qdrant with FastEmbed
+- **FastMCP Integration**: Complete MCP protocol implementation with working tools
+- **Library Fix**: Replaced broken `mcp==1.1.1` with working `fastmcp==2.8.1`
+- **End-to-End Testing**: Live validation of entire MCP→API→Database pipeline
+- **Documentation**: Updated README with accurate, tested instructions

@@ -17,8 +17,8 @@ COPY src/ ./src/
 COPY data/ ./data/
 
 # Create .env file with default values
-RUN echo "MARQO_URL=http://marqo:8882" > .env && \
-    echo "MARQO_INDEX_NAME=anime_database" >> .env && \
+RUN echo "QDRANT_URL=http://qdrant:6333" > .env && \
+    echo "QDRANT_COLLECTION_NAME=anime_database" >> .env && \
     echo "HOST=0.0.0.0" >> .env && \
     echo "PORT=8000" >> .env && \
     echo "DEBUG=True" >> .env

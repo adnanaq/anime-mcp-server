@@ -1,21 +1,23 @@
 # src/api/admin.py - Admin Endpoints for Database Management
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import logging
 
 from ..services.update_service import UpdateService
 from ..services.smart_scheduler import SmartScheduler
+from ..vector.qdrant_client import QdrantClient
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Access global qdrant client
-def get_qdrant_client():
+def get_qdrant_client() -> Optional[QdrantClient]:
+    """Get the global Qdrant client instance."""
     from .. import main
     return main.qdrant_client
 
 @router.post("/check-updates")
-async def check_for_updates():
+async def check_for_updates() -> Dict[str, Any]:
     """Check if anime database has updates available"""
     try:
         qdrant_client = get_qdrant_client()
@@ -37,7 +39,7 @@ async def check_for_updates():
         raise HTTPException(status_code=500, detail=f"Update check failed: {str(e)}")
 
 @router.post("/update-incremental")
-async def perform_incremental_update(background_tasks: BackgroundTasks):
+async def perform_incremental_update(background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Perform incremental database update"""
     try:
         qdrant_client = get_qdrant_client()
@@ -56,7 +58,7 @@ async def perform_incremental_update(background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
 
 @router.post("/update-full")
-async def perform_full_update(background_tasks: BackgroundTasks):
+async def perform_full_update(background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Perform full database refresh"""
     try:
         # Use global qdrant client with correct Docker networking
@@ -68,7 +70,8 @@ async def perform_full_update(background_tasks: BackgroundTasks):
         
         # Run in background to avoid timeout
         # Create a simple background task that maintains the client context
-        def run_full_update():
+        def run_full_update() -> None:
+            """Run full update in background thread."""
             import asyncio
             # Use the working client in a new event loop
             loop = asyncio.new_event_loop()
@@ -91,7 +94,7 @@ async def perform_full_update(background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
 
 @router.get("/update-status")
-async def get_update_status():
+async def get_update_status() -> Dict[str, Any]:
     """Get current update status and metadata"""
     try:
         qdrant_client = get_qdrant_client()
@@ -114,7 +117,7 @@ async def get_update_status():
         raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}")
 
 @router.post("/schedule-weekly-update")
-async def schedule_weekly_update(background_tasks: BackgroundTasks):
+async def schedule_weekly_update(background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Manually trigger weekly update process"""
     try:
         qdrant_client = get_qdrant_client()
@@ -133,7 +136,7 @@ async def schedule_weekly_update(background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=f"Weekly update failed: {str(e)}")
 
 @router.get("/smart-schedule-analysis")
-async def analyze_optimal_schedule():
+async def analyze_optimal_schedule() -> Dict[str, Any]:
     """Analyze release patterns and suggest optimal update schedule"""
     try:
         scheduler = SmartScheduler()
@@ -146,7 +149,7 @@ async def analyze_optimal_schedule():
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @router.get("/update-safety-check")
-async def check_update_safety():
+async def check_update_safety() -> Dict[str, Any]:
     """Check if it's currently safe to update based on recent activity"""
     try:
         scheduler = SmartScheduler()
@@ -159,7 +162,7 @@ async def check_update_safety():
         raise HTTPException(status_code=500, detail=f"Safety check failed: {str(e)}")
 
 @router.post("/smart-update")
-async def smart_update(background_tasks: BackgroundTasks):
+async def smart_update(background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Perform update only if it's safe to do so"""
     try:
         scheduler = SmartScheduler()

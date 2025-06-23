@@ -4,18 +4,47 @@ import asyncio
 import json
 import logging
 import time
-from typing import List, Dict, Any
-from ..models.anime import AnimeEntry
 import hashlib
 import re
+from typing import List, Dict, Any, Optional
+
+from ..models.anime import AnimeEntry
+from ..config import get_settings, Settings
+from ..exceptions import (
+    AnimeDataDownloadError, AnimeDataValidationError,
+    PlatformIDExtractionError, DataProcessingError,
+    handle_exception_safely
+)
 
 logger = logging.getLogger(__name__)
 
-class AnimeDataService:
-    """Service for downloading and processing anime data"""
+
+class ProcessingConfig:
+    """Configuration for anime data processing operations."""
     
-    def __init__(self):
-        self.anime_db_url = "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json"
+    def __init__(self, batch_size: int, max_concurrent_batches: int, processing_timeout: int):
+        """Initialize processing configuration.
+        
+        Args:
+            batch_size: Number of entries per batch
+            max_concurrent_batches: Maximum concurrent batch operations
+            processing_timeout: Timeout for processing operations in seconds
+        """
+        self.batch_size = batch_size
+        self.max_concurrent_batches = max_concurrent_batches
+        self.processing_timeout = processing_timeout
+
+class AnimeDataService:
+    """Service for downloading and processing anime data with centralized configuration."""
+    
+    def __init__(self, settings: Optional[Settings] = None):
+        """Initialize data service with configuration.
+        
+        Args:
+            settings: Optional settings instance. If not provided, uses default settings.
+        """
+        self.settings = settings or get_settings()
+        self.anime_db_url = self.settings.anime_database_url
         
         # Platform configurations for ID extraction
         self.platform_configs = {
@@ -155,72 +184,240 @@ class AnimeDataService:
             logger.error(f"❌ Failed to process anime entry: {e}")
             return None
     
+    @handle_exception_safely
     async def process_all_anime(self, raw_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Process all anime entries with optimized async processing"""
+        """Process all anime entries with optimized async processing.
+        
+        Args:
+            raw_data: Raw anime database data containing 'data' list
+            
+        Returns:
+            List of processed anime entries
+            
+        Raises:
+            DataProcessingError: When processing fails
+        """
         anime_list = raw_data.get("data", [])
+        if not anime_list:
+            raise DataProcessingError("No anime data found in raw_data")
         
         logger.info(f"🔄 Processing {len(anime_list)} anime entries...")
         start_time = time.time()
         
-        # Process in larger batches with async processing
-        batch_size = 2000  # Increased batch size
-        max_concurrent_workers = 8  # Process multiple entries concurrently
-        semaphore = asyncio.Semaphore(max_concurrent_workers)
+        try:
+            # Create processing configuration
+            processing_config = self._create_processing_config()
+            
+            # Create processing batches
+            batches = self._create_batches(anime_list, processing_config.batch_size)
+            
+            # Process all batches concurrently
+            batch_results = await self._process_batches_concurrently(batches, processing_config)
+            
+            # Aggregate and analyze results
+            all_processed = self._aggregate_results(batch_results)
+            
+            # Log final metrics
+            self._log_processing_metrics(start_time, len(anime_list), len(all_processed))
+            
+            return all_processed
+            
+        except Exception as e:
+            logger.error(f"Failed to process anime data: {e}")
+            raise DataProcessingError(f"Anime processing failed: {str(e)}")
+    
+    def _create_processing_config(self) -> 'ProcessingConfig':
+        """Create processing configuration from settings."""
+        return ProcessingConfig(
+            batch_size=self.settings.batch_size,
+            max_concurrent_batches=self.settings.max_concurrent_batches,
+            processing_timeout=self.settings.processing_timeout
+        )
+    
+    def _create_batches(self, anime_list: List[Dict[str, Any]], batch_size: int) -> List[List[Dict[str, Any]]]:
+        """Split anime list into processing batches.
         
-        async def process_entry_async(entry):
-            """Process single entry asynchronously"""
-            async with semaphore:
-                return await asyncio.to_thread(self.process_anime_entry, entry)
-        
-        async def process_batch_async(batch, batch_num):
-            """Process a batch of entries concurrently"""
-            batch_start = time.time()
+        Args:
+            anime_list: List of anime entries to process
+            batch_size: Size of each batch
             
-            # Create tasks for concurrent processing
-            tasks = [process_entry_async(entry) for entry in batch]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            # Filter successful results
-            batch_processed = []
-            error_count = 0
-            for result in results:
-                if isinstance(result, dict):
-                    batch_processed.append(result)
-                elif result is not None:  # Exception occurred
-                    error_count += 1
-            
-            batch_duration = time.time() - batch_start
-            entries_per_second = len(batch) / batch_duration if batch_duration > 0 else 0
-            
-            logger.info(f"📝 Batch {batch_num}: {len(batch_processed)}/{len(batch)} entries ({entries_per_second:.1f} entries/s)")
-            if error_count > 0:
-                logger.warning(f"⚠️ Batch {batch_num} had {error_count} processing errors")
-            
-            return batch_processed
-        
-        # Process all batches
-        all_processed = []
-        batch_tasks = []
-        
+        Returns:
+            List of batches
+        """
+        batches = []
         for i in range(0, len(anime_list), batch_size):
             batch = anime_list[i:i + batch_size]
-            batch_num = i // batch_size + 1
-            task = process_batch_async(batch, batch_num)
-            batch_tasks.append(task)
+            batches.append(batch)
+        return batches
+    
+    async def _process_batches_concurrently(
+        self, 
+        batches: List[List[Dict[str, Any]]], 
+        config: 'ProcessingConfig'
+    ) -> List[List[Dict[str, Any]]]:
+        """Process multiple batches concurrently.
         
-        # Execute all batch tasks concurrently
-        batch_results = await asyncio.gather(*batch_tasks)
+        Args:
+            batches: List of anime entry batches
+            config: Processing configuration
+            
+        Returns:
+            List of processed batch results
+        """
+        # Create semaphore for concurrent batch processing
+        semaphore = asyncio.Semaphore(config.max_concurrent_batches)
         
-        # Flatten results
+        async def process_single_batch(batch: List[Dict[str, Any]], batch_num: int) -> List[Dict[str, Any]]:
+            """Process a single batch with concurrency control."""
+            async with semaphore:
+                return await self._process_batch(batch, batch_num, config)
+        
+        # Create tasks for all batches
+        batch_tasks = [
+            process_single_batch(batch, batch_num + 1)
+            for batch_num, batch in enumerate(batches)
+        ]
+        
+        # Execute all batch tasks with timeout
+        try:
+            batch_results = await asyncio.wait_for(
+                asyncio.gather(*batch_tasks, return_exceptions=True),
+                timeout=config.processing_timeout
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"Batch processing timed out after {config.processing_timeout}s")
+            raise DataProcessingError(f"Processing timed out after {config.processing_timeout} seconds")
+        
+        # Handle any batch processing exceptions
+        successful_results = []
+        for i, result in enumerate(batch_results):
+            if isinstance(result, Exception):
+                logger.error(f"Batch {i+1} failed: {result}")
+                # Continue with other batches rather than failing completely
+                successful_results.append([])
+            else:
+                successful_results.append(result)
+        
+        return successful_results
+    
+    async def _process_batch(
+        self, 
+        batch: List[Dict[str, Any]], 
+        batch_num: int, 
+        config: 'ProcessingConfig'
+    ) -> List[Dict[str, Any]]:
+        """Process a single batch of anime entries.
+        
+        Args:
+            batch: Batch of anime entries to process
+            batch_num: Batch number for logging
+            config: Processing configuration
+            
+        Returns:
+            List of successfully processed anime entries
+        """
+        batch_start = time.time()
+        
+        # Create tasks for concurrent entry processing within batch
+        entry_semaphore = asyncio.Semaphore(min(8, len(batch)))  # Limit concurrent entries per batch
+        
+        async def process_entry_async(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+            """Process single entry asynchronously with error handling."""
+            async with entry_semaphore:
+                try:
+                    # Run CPU-intensive processing in thread pool
+                    return await asyncio.to_thread(self.process_anime_entry, entry)
+                except Exception as e:
+                    logger.debug(f"Failed to process entry {entry.get('title', 'unknown')}: {e}")
+                    return None
+        
+        # Process all entries in the batch concurrently
+        tasks = [process_entry_async(entry) for entry in batch]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Filter successful results and count errors
+        batch_processed = []
+        error_count = 0
+        
+        for result in results:
+            if isinstance(result, dict):
+                batch_processed.append(result)
+            elif isinstance(result, Exception):
+                error_count += 1
+            elif result is None:
+                error_count += 1
+        
+        # Log batch metrics
+        self._log_batch_metrics(batch_num, batch_start, len(batch), len(batch_processed), error_count)
+        
+        return batch_processed
+    
+    def _aggregate_results(self, batch_results: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        """Aggregate results from all processed batches.
+        
+        Args:
+            batch_results: List of batch processing results
+            
+        Returns:
+            Flattened list of all processed anime entries
+        """
+        all_processed = []
         for batch_result in batch_results:
-            all_processed.extend(batch_result)
-        
-        end_time = time.time()
-        duration = end_time - start_time
-        total_entries_per_second = len(all_processed) / duration if duration > 0 else 0
-        
-        logger.info(f"✅ Processed {len(all_processed)}/{len(anime_list)} entries in {duration:.2f}s ({total_entries_per_second:.1f} entries/s)")
+            if isinstance(batch_result, list):
+                all_processed.extend(batch_result)
         return all_processed
+    
+    def _log_batch_metrics(
+        self, 
+        batch_num: int, 
+        batch_start: float, 
+        total_entries: int, 
+        processed_entries: int, 
+        error_count: int
+    ) -> None:
+        """Log metrics for a completed batch.
+        
+        Args:
+            batch_num: Batch number
+            batch_start: Batch start time
+            total_entries: Total entries in batch
+            processed_entries: Successfully processed entries
+            error_count: Number of processing errors
+        """
+        batch_duration = time.time() - batch_start
+        entries_per_second = total_entries / batch_duration if batch_duration > 0 else 0
+        
+        logger.info(
+            f"📝 Batch {batch_num}: {processed_entries}/{total_entries} entries "
+            f"({entries_per_second:.1f} entries/s)"
+        )
+        
+        if error_count > 0:
+            error_rate = (error_count / total_entries) * 100
+            logger.warning(f"⚠️ Batch {batch_num} had {error_count} errors ({error_rate:.1f}% error rate)")
+    
+    def _log_processing_metrics(
+        self, 
+        start_time: float, 
+        total_entries: int, 
+        processed_entries: int
+    ) -> None:
+        """Log final processing metrics.
+        
+        Args:
+            start_time: Processing start time
+            total_entries: Total entries to process
+            processed_entries: Successfully processed entries
+        """
+        duration = time.time() - start_time
+        total_entries_per_second = processed_entries / duration if duration > 0 else 0
+        success_rate = (processed_entries / total_entries) * 100 if total_entries > 0 else 0
+        
+        logger.info(
+            f"✅ Processed {processed_entries}/{total_entries} entries "
+            f"({success_rate:.1f}% success rate) in {duration:.2f}s "
+            f"({total_entries_per_second:.1f} entries/s)"
+        )
     
     def _generate_anime_id(self, title: str, sources: List[str]) -> str:
         """Generate unique anime ID"""
