@@ -9,7 +9,7 @@ An AI-powered anime search and recommendation system built with **FastAPI**, **Q
 - 📊 **Comprehensive Database**: 38,894 anime entries with rich metadata
 - 🤖 **MCP Protocol Integration**: FastMCP server for AI assistant communication
 - 🎯 **Real-time Vector Search**: Qdrant-powered semantic search
-- 🖼️ **Image Search** (Phase 4): Visual similarity search with CLIP embeddings *[In Development]*
+- 🖼️ **Multi-Modal Search**: Visual similarity and combined text+image search with CLIP embeddings
 - 🐳 **Docker Support**: Easy deployment with containerized services
 
 ## 🏗️ Architecture
@@ -27,14 +27,18 @@ anime-mcp-server/
 │   │   ├── server.py            # FastMCP server implementation
 │   │   └── tools.py             # MCP utility functions
 │   ├── vector/
-│   │   └── qdrant_client.py     # Vector database operations
+│   │   ├── qdrant_client.py     # Vector database operations  
+│   │   └── vision_processor.py  # CLIP image processing
 │   ├── models/
 │   │   └── anime.py             # Pydantic data models
 │   ├── services/
 │   │   └── data_service.py      # Data processing pipeline
 │   └── exceptions.py            # Custom exception classes
 ├── scripts/
-│   └── test_mcp.py              # MCP server testing client
+│   ├── test_mcp.py              # MCP server testing client
+│   ├── migrate_to_multivector.py # Collection migration script
+│   ├── add_image_embeddings.py  # Image processing pipeline
+│   └── verify_mcp_server.py     # MCP functionality verification
 ├── data/
 │   ├── raw/                     # Original anime database JSON
 │   └── qdrant_storage/          # Qdrant vector database files
@@ -92,6 +96,7 @@ QDRANT_COLLECTION_NAME=anime_database
 HOST=0.0.0.0
 PORT=8000
 DEBUG=True
+ENABLE_MULTI_VECTOR=true
 EOF
 
 # Start FastAPI server
@@ -137,10 +142,9 @@ python scripts/test_mcp.py
 | `find_similar_anime` | Find similar anime           | `anime_id` (string), `limit` (int)      |
 | `get_anime_stats`    | Database statistics          | None                                    |
 | `recommend_anime`    | Personalized recommendations | `genres`, `year`, `anime_type`, `limit` |
-| *`search_anime_by_image`* | *Image similarity search* | *`image_data` (base64), `limit` (int)* |
-| *`search_multimodal_anime`* | *Text + image search* | *`query`, `image_data`, `text_weight`* |
-
-> **Note**: Image search tools (*italicized*) are implemented but require multi-vector collection setup. See Phase 4 development section below.
+| `search_anime_by_image` | Image similarity search | `image_data` (base64), `limit` (int) |
+| `find_visually_similar_anime` | Visual similarity | `anime_id` (string), `limit` (int) |
+| `search_multimodal_anime` | Text + image search | `query`, `image_data`, `text_weight` |
 
 ### MCP Resources
 
@@ -163,6 +167,16 @@ python scripts/test_mcp.py
 | ---------------------- | ------ | --------------- | ------------------------------------------------------------------ |
 | `/api/search/`         | GET    | Basic search    | `curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"` |
 | `/api/search/semantic` | POST   | Advanced search | See examples below                                                 |
+| `/api/search/similar/{anime_id}` | GET | Find similar anime | `curl "http://localhost:8000/api/search/similar/cac1eeaeddf7?limit=5"` |
+
+### 🖼️ Image Search Endpoints
+
+| Endpoint               | Method | Purpose         | Example                                                            |
+| ---------------------- | ------ | --------------- | ------------------------------------------------------------------ |
+| `/api/search/by-image` | POST   | Image upload search | Upload image file for visual similarity |
+| `/api/search/by-image-base64` | POST | Base64 image search | Send base64 encoded image data |
+| `/api/search/visually-similar/{anime_id}` | GET | Visual similarity | Find anime with similar poster images |
+| `/api/search/multimodal` | POST | Combined search | Text query + image for enhanced results |
 
 **Basic Search Examples:**
 
@@ -188,11 +202,38 @@ curl -X POST http://localhost:8000/api/search/semantic \
   }'
 ```
 
+**Image Search Examples:**
+
+```bash
+# Upload image file for visual similarity search
+curl -X POST http://localhost:8000/api/search/by-image \
+  -F "image=@anime_poster.jpg" \
+  -F "limit=5"
+
+# Search with base64 encoded image data
+curl -X POST http://localhost:8000/api/search/by-image-base64 \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "image_data=iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB..." \
+  -d "limit=5"
+
+# Find visually similar anime by ID
+curl "http://localhost:8000/api/search/visually-similar/cac1eeaeddf7?limit=5"
+
+# Multimodal search (text + image)
+curl -X POST http://localhost:8000/api/search/multimodal \
+  -F "query=mecha anime" \
+  -F "image=@robot_poster.jpg" \
+  -F "limit=10" \
+  -F "text_weight=0.7"
+```
+
 ### ⚙️ Admin Endpoints
 
 | Endpoint                   | Method | Purpose           | Example                                                      |
 | -------------------------- | ------ | ----------------- | ------------------------------------------------------------ |
 | `/api/admin/check-updates` | POST   | Check for updates | `curl -X POST http://localhost:8000/api/admin/check-updates` |
+| `/api/admin/download-data` | POST   | Download latest anime data | `curl -X POST http://localhost:8000/api/admin/download-data` |
+| `/api/admin/process-data`  | POST   | Process and index data | `curl -X POST http://localhost:8000/api/admin/process-data` |
 
 ### 🎯 Response Format
 
@@ -246,7 +287,7 @@ python scripts/test_mcp.py
 
 # Expected output:
 # ✅ MCP session initialized
-# ✅ Available tools: ['search_anime', 'get_anime_details', 'find_similar_anime', 'get_anime_stats', 'recommend_anime']
+# ✅ Available tools: ['search_anime', 'get_anime_details', 'find_similar_anime', 'get_anime_stats', 'recommend_anime', 'search_anime_by_image', 'find_visually_similar_anime', 'search_multimodal_anime']
 # ✅ Search result: Found Dragon Ball Z & Dragon Ball with full metadata
 # ✅ Stats result: 38,894 documents, healthy database
 # ✅ Available resources: ['anime://database/stats', 'anime://database/schema']
@@ -296,6 +337,11 @@ FASTEMBED_MODEL=BAAI/bge-small-en-v1.5    # Embedding model
 QDRANT_VECTOR_SIZE=384                    # Vector dimensions
 QDRANT_DISTANCE_METRIC=cosine             # Distance function
 
+# Multi-Vector Configuration (Image Search)
+ENABLE_MULTI_VECTOR=true                  # Enable image search features
+IMAGE_VECTOR_SIZE=512                     # CLIP embedding dimensions
+CLIP_MODEL=ViT-B/32                       # CLIP model for image processing
+
 # API Configuration
 API_TITLE=Anime MCP Server                # API title
 API_VERSION=1.0.0                         # API version
@@ -319,12 +365,14 @@ services:
 
 ## 📊 Performance
 
-- **Search Speed**: Sub-second response times
-- **Vector Model**: BAAI/bge-small-en-v1.5 (384-dimensional embeddings)
-- **Database Size**: 38,894 anime entries when fully indexed
-- **Memory Usage**: ~2-3GB for full dataset
+- **Search Speed**: Sub-200ms text search, ~1s image search response times
+- **Vector Models**: 
+  - Text: BAAI/bge-small-en-v1.5 (384-dimensional embeddings)
+  - Image: CLIP ViT-B/32 (512-dimensional embeddings)
+- **Database Size**: 38,894 anime entries with multi-vector support
+- **Memory Usage**: ~3-4GB for full dataset with image embeddings
 - **Concurrency**: Supports multiple simultaneous searches
-- **MCP Protocol**: Full FastMCP 2.8.1 integration
+- **MCP Protocol**: Full FastMCP 2.8.1 integration with 8 tools
 
 ## 🔄 Data Pipeline
 
@@ -340,17 +388,19 @@ services:
 1. **Download**: Fetch latest anime-offline-database JSON
 2. **Validation**: Parse and validate entries with Pydantic models
 3. **Enhancement**: Extract platform IDs, calculate quality scores
-4. **Vectorization**: Create embeddings from title + synopsis + tags + studios
-5. **Indexing**: Store in Qdrant with optimized batch processing
+4. **Text Vectorization**: Create embeddings from title + synopsis + tags + studios
+5. **Image Processing**: Download poster images and generate CLIP embeddings
+6. **Indexing**: Store in Qdrant multi-vector collection with optimized batch processing
 
 ### Database Schema
 
 Each anime entry contains:
 
 - **Basic Info**: title, type, episodes, status, year, season
-- **Metadata**: synopsis, tags, studios, producers
+- **Metadata**: synopsis, tags, studios, producers, picture URLs
 - **Platform IDs**: MyAnimeList, AniList, Kitsu, AniDB, etc.
 - **Search Fields**: embedding_text, search_text
+- **Vector Embeddings**: text (384-dim) + image (512-dim) in multi-vector collection
 - **Quality Score**: Data completeness rating (0-1)
 
 ## 🎮 Interactive Testing
@@ -375,6 +425,24 @@ python -m src.mcp.server
 
 ## 🛠️ Development
 
+### Important Scripts
+
+```bash
+# Data Management
+python scripts/migrate_to_multivector.py --dry-run    # Test collection migration
+python scripts/migrate_to_multivector.py             # Migrate to multi-vector
+python scripts/add_image_embeddings.py --batch-size 100  # Process image embeddings
+
+# Testing & Verification
+python scripts/test_mcp.py                          # Test MCP server functionality
+python scripts/verify_mcp_server.py                 # Verify MCP server status
+python run_tests.py                                 # Run full test suite
+
+# Data Pipeline
+curl -X POST http://localhost:8000/api/admin/download-data  # Download latest data
+curl -X POST http://localhost:8000/api/admin/process-data   # Process and index
+```
+
 ### Code Quality
 
 ```bash
@@ -392,17 +460,20 @@ pytest tests/ -v
 ### Project Structure
 
 - **`src/main.py`**: FastAPI application entry point
-- **`src/mcp/server.py`**: FastMCP server with 5 tools + 2 resources
-- **`src/vector/qdrant_client.py`**: Vector database operations
+- **`src/mcp/server.py`**: FastMCP server with 8 tools + 2 resources
+- **`src/vector/qdrant_client.py`**: Multi-vector database operations with CLIP
+- **`src/vector/vision_processor.py`**: CLIP image processing pipeline
 - **`src/config.py`**: Centralized configuration management
 - **`scripts/test_mcp.py`**: MCP server testing client
 
 ## 🔮 Technology Stack
 
 - **Backend**: FastAPI + Python 3.12
-- **Vector Database**: Qdrant 1.14.1
-- **Embeddings**: FastEmbed (BAAI/bge-small-en-v1.5)
+- **Vector Database**: Qdrant 1.11.3 (multi-vector support)
+- **Text Embeddings**: FastEmbed (BAAI/bge-small-en-v1.5)
+- **Image Embeddings**: CLIP (ViT-B/32)
 - **MCP Integration**: FastMCP 2.8.1
+- **Image Processing**: PIL + torch + CLIP
 - **Containerization**: Docker + Docker Compose
 - **Data Validation**: Pydantic v2
 - **Testing**: pytest + httpx
@@ -427,44 +498,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-## 🚧 Phase 4: Image Search Development
-
-### Current Implementation Status
-
-**🔧 Infrastructure**: ✅ Complete
-- Multi-vector Qdrant client with CLIP integration
-- Vision processor with ViT-B/32 model  
-- MCP tools for image search functionality
-- Environment configuration (`ENABLE_MULTI_VECTOR=true`)
-
-**🗄️ Database State**: ❌ Requires Setup
-- Current: Single-vector collection (text embeddings only)
-- Required: Multi-vector collection (text + image vectors)
-- Action needed: Collection migration + image processing
-
-**🔗 API Availability**: ⚠️ MCP Only
-- Image search available through MCP protocol
-- REST API endpoints not yet implemented
-- MCP tools ready: `search_anime_by_image`, `search_multimodal_anime`
-
-### Quick Setup for Image Search Testing
-
-```bash
-# Enable multi-vector support
-echo "ENABLE_MULTI_VECTOR=true" >> .env
-
-# Restart server to load CLIP model
-docker-compose restart
-
-# Migrate collection to multi-vector (TODO: implement)
-python scripts/migrate_to_multivector.py
-
-# Process anime images (TODO: implement) 
-python scripts/add_image_embeddings.py
-```
-
-**Note**: Image search is architecturally complete but requires database migration and image processing to become functional.
-
----
-
-**Status**: ✅ **Production Ready** - Fully functional anime search with vector database, FastMCP integration, and comprehensive API. Image search infrastructure ready for Phase 4 completion.
+**Status**: ✅ **Production Ready** - Complete anime search system with multi-modal capabilities, vector database, FastMCP integration, and comprehensive REST API.

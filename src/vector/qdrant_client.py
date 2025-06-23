@@ -393,18 +393,33 @@ class QdrantClient:
             
             loop = asyncio.get_event_loop()
             
-            # Perform search
-            search_result = await loop.run_in_executor(
-                None,
-                lambda: self.client.search(
-                    collection_name=self.collection_name,
-                    query_vector=query_embedding,
-                    query_filter=qdrant_filter,
-                    limit=limit,
-                    with_payload=True,
-                    with_vectors=False
+            # Perform search (handle multi-vector vs single-vector)
+            if self._supports_multi_vector:
+                # Use named vector for multi-vector collection
+                search_result = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.search(
+                        collection_name=self.collection_name,
+                        query_vector=NamedVector(name="text", vector=query_embedding),
+                        query_filter=qdrant_filter,
+                        limit=limit,
+                        with_payload=True,
+                        with_vectors=False
+                    )
                 )
-            )
+            else:
+                # Use regular vector for single-vector collection
+                search_result = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.search(
+                        collection_name=self.collection_name,
+                        query_vector=query_embedding,
+                        query_filter=qdrant_filter,
+                        limit=limit,
+                        with_payload=True,
+                        with_vectors=False
+                    )
+                )
             
             # Format results
             results = []
@@ -463,11 +478,18 @@ class QdrantClient:
                 ]
             )
             
+            # Use named vector for multi-vector collection
+            if self._supports_multi_vector and isinstance(reference_vector, dict):
+                # Use text vector for similarity search  
+                query_vector = NamedVector(name="text", vector=reference_vector.get("text", reference_vector.get("image", [])))
+            else:
+                query_vector = reference_vector
+            
             search_result = await loop.run_in_executor(
                 None,
                 lambda: self.client.search(
                     collection_name=self.collection_name,
-                    query_vector=reference_vector,
+                    query_vector=query_vector,
                     query_filter=filter_out_self,
                     limit=limit,
                     with_payload=True,
@@ -733,47 +755,70 @@ class QdrantClient:
                 # Fallback to text-only search
                 return await self.search(query, limit)
             
+            # If no image provided, just do text search
+            if not image_data:
+                logger.info("No image provided, performing text-only search")
+                return await self.search(query, limit)
+            
             # Get text results
             text_results = await self.search(query, limit * 2)  # Get more for fusion
-            text_scores = {r["anime_id"]: r["_score"] for r in text_results}
+            text_scores = {r.get("anime_id", r.get("_id", "")): r.get("_score", 0.0) for r in text_results}
             
-            image_scores = {}
-            if image_data:
-                # Get image results
-                image_results = await self.search_by_image(image_data, limit * 2)
-                image_scores = {r["anime_id"]: r["visual_similarity_score"] for r in image_results}
+            # Get image results
+            image_results = await self.search_by_image(image_data, limit * 2)
+            image_scores = {r.get("anime_id", r.get("_id", "")): r.get("visual_similarity_score", r.get("score", 0.0)) for r in image_results}
+            
+            # Debug logging
+            logger.info(f"Text search returned {len(text_results)} results")
+            logger.info(f"Image search returned {len(image_results)} results")
             
             # Combine results with weighted scoring
             combined_results = {}
             all_anime_ids = set(text_scores.keys()) | set(image_scores.keys())
+            all_anime_ids.discard("")  # Remove empty IDs
             
             for anime_id in all_anime_ids:
                 text_score = text_scores.get(anime_id, 0.0)
                 image_score = image_scores.get(anime_id, 0.0)
                 
-                # Weighted combination
-                if image_data:
+                # Weighted combination - ensure at least one score exists
+                if text_score > 0 or image_score > 0:
                     combined_score = (text_weight * text_score + 
                                     (1 - text_weight) * image_score)
-                else:
-                    combined_score = text_score
-                
-                combined_results[anime_id] = combined_score
+                    combined_results[anime_id] = combined_score
+            
+            logger.info(f"Combined {len(combined_results)} unique results")
             
             # Sort by combined score and get top results
+            if not combined_results:
+                logger.warning("No combined results, falling back to text search")
+                return await self.search(query, limit)
+            
             sorted_anime_ids = sorted(combined_results.keys(), 
                                     key=lambda x: combined_results[x], reverse=True)[:limit]
             
             # Fetch full anime data for top results
             final_results = []
             for anime_id in sorted_anime_ids:
-                anime_data = await self.get_by_id(anime_id)
+                # Try to get data from existing results first to avoid extra queries
+                anime_data = None
+                for result in text_results + image_results:
+                    if result.get("anime_id") == anime_id or result.get("_id") == anime_id:
+                        anime_data = dict(result)
+                        break
+                
+                # If not found in results, query directly
+                if not anime_data:
+                    anime_data = await self.get_by_id(anime_id)
+                
                 if anime_data:
                     anime_data["multimodal_score"] = combined_results[anime_id]
                     anime_data["text_score"] = text_scores.get(anime_id, 0.0)
                     anime_data["image_score"] = image_scores.get(anime_id, 0.0)
+                    anime_data["_score"] = combined_results[anime_id]  # For consistency
                     final_results.append(anime_data)
             
+            logger.info(f"Returning {len(final_results)} multimodal results")
             return final_results
             
         except Exception as e:
@@ -819,6 +864,10 @@ class QdrantClient:
             reference_vectors = reference_point[0].vector
             if isinstance(reference_vectors, dict) and "image" in reference_vectors:
                 image_vector = reference_vectors["image"]
+                # Check if image vector is all zeros (no image processed)
+                if all(v == 0.0 for v in image_vector):
+                    logger.warning(f"No image embeddings available for anime: {anime_id} (all zeros)")
+                    return []
             else:
                 logger.warning(f"No image vector found for anime: {anime_id}")
                 return []
