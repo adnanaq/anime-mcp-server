@@ -5,9 +5,11 @@
 This document presents a refined, iterative strategy for building an AnimeTrackr MCP server ecosystem, starting with vector database foundation and evolving to full AI assistant integration. The approach prioritizes rapid iteration, proven foundations, and gradual enhancement.
 
 ### 🎯 Vision Statement
+
 Create a world-class MCP server that allows AI assistants (Claude, GPT, etc.) to naturally interact with anime data through semantic search and intelligent recommendations, while providing the frontend with enhanced discovery capabilities through advanced vector search.
 
 ### 🌟 Key Objectives
+
 1. **Vector-First Foundation**: Start with robust vector database using anime-offline-database (38K+ entries)
 2. **Iterative Development**: Build and validate each component before proceeding
 3. **Enhanced Data Pipeline**: Fork and enhance modb-app for synopsis inclusion
@@ -17,6 +19,7 @@ Create a world-class MCP server that allows AI assistants (Claude, GPT, etc.) to
 ## 🔄 **UPDATED APPROACH: Iterative Vector-First Strategy**
 
 ### **📁 New Repository Structure**
+
 ```
 ../anime-mcp-server/
 ├── plan.md                 # This comprehensive plan
@@ -32,9 +35,11 @@ Create a world-class MCP server that allows AI assistants (Claude, GPT, etc.) to
 ## 🏗️ **REFINED DEVELOPMENT PHASES**
 
 ### **Phase 1: Vector Database Foundation (Week 1-2)**
+
 **Objective**: Build searchable anime database with vector embeddings
 
 **Deliverables**:
+
 1. FastAPI server setup with basic structure
 2. Anime-offline-database integration (38K+ entries)
 3. Marqo vector database setup and configuration
@@ -43,15 +48,18 @@ Create a world-class MCP server that allows AI assistants (Claude, GPT, etc.) to
 6. Basic recommendation algorithms
 
 **Success Criteria**:
+
 - ✅ All 38K anime entries indexed in Marqo
 - ✅ Semantic search returning relevant results
 - ✅ API response times < 200ms
 - ✅ Basic similarity recommendations working
 
 ### **Phase 2: Enhanced Data Pipeline (Week 3)**
+
 **Objective**: Fork modb-app and add synopsis extraction
 
 **Deliverables**:
+
 1. Fork manami-project/modb-app repository
 2. Add synopsis field to Anime data model
 3. Implement synopsis extraction for all 11 sources
@@ -60,15 +68,18 @@ Create a world-class MCP server that allows AI assistants (Claude, GPT, etc.) to
 6. Update vector embeddings with synopsis content
 
 **Success Criteria**:
+
 - ✅ 95%+ anime entries have synopsis data
 - ✅ Enhanced embeddings show improved search quality
 - ✅ Automated weekly sync pipeline working
 - ✅ Backward compatibility maintained
 
 ### **Phase 3: MCP Server Integration (Week 4-5)**
+
 **Objective**: Layer MCP protocol on vector foundation
 
 **Deliverables**:
+
 1. MCP protocol implementation
 2. AI assistant tool definitions
 3. Natural language query processing
@@ -77,15 +88,18 @@ Create a world-class MCP server that allows AI assistants (Claude, GPT, etc.) to
 6. Contextual search capabilities
 
 **Success Criteria**:
+
 - ✅ Claude can search and recommend anime
 - ✅ Natural language queries working
 - ✅ MCP tools respond accurately
 - ✅ Integration with existing frontend
 
 ### **Phase 4: Production Optimization (Week 6+)**
+
 **Objective**: Performance, monitoring, and deployment
 
 **Deliverables**:
+
 1. Performance optimization and caching
 2. Monitoring and logging setup
 3. Production deployment pipeline
@@ -98,18 +112,21 @@ Create a world-class MCP server that allows AI assistants (Claude, GPT, etc.) to
 ## 🎯 **KEY ARCHITECTURAL DECISIONS**
 
 ### **✅ Data Strategy**
+
 - **Primary Source**: anime-offline-database (38K+ entries with 11 source cross-references)
 - **Enhancement**: Fork modb-app to add synopsis extraction for richer embeddings
 - **No User Storage**: Stateless architecture - API calls for user modifications
 - **Weekly Sync**: Automated updates from upstream anime-offline-database
 
 ### **✅ Technology Stack**
+
 - **Backend**: FastAPI (Python) for performance and type safety
 - **Vector DB**: Marqo for semantic search and embeddings
 - **MCP**: Model Context Protocol for AI assistant integration
 - **Data Processing**: Enhanced modb-app (Kotlin) for comprehensive data collection
 
 ### **✅ Vector Strategy**
+
 ```python
 # Phase 1: Basic embeddings with available data
 embedding_text = f"{title} {' '.join(synonyms)} {' '.join(tags)} {' '.join(studios)}"
@@ -119,6 +136,7 @@ enhanced_text = f"{title} {synopsis} {' '.join(tags)} {' '.join(studios)} {' '.j
 ```
 
 ### **✅ Integration Approach**
+
 - **Frontend Compatibility**: Maintain existing API endpoints during transition
 - **Gradual Migration**: Layer new capabilities without breaking existing functionality
 - **AI Assistant Ready**: MCP tools designed for natural language interaction
@@ -130,6 +148,7 @@ enhanced_text = f"{title} {synopsis} {' '.join(tags)} {' '.join(studios)} {' '.j
 ### 📊 Existing Architecture Assessment
 
 #### **Frontend Excellence (React + TypeScript)**
+
 - **Technology Stack**: React 18, TypeScript, Vite, Tailwind CSS
 - **State Management**: Zustand with devtools (95% TypeScript coverage)
 - **Animation System**: Anime.js v4 + Three.js + Framer Motion
@@ -140,6 +159,7 @@ enhanced_text = f"{title} {synopsis} {' '.join(tags)} {' '.join(studios)} {' '.j
 ## 🚀 **IMMEDIATE NEXT STEPS**
 
 ### **Step 1: Create New Repository Structure**
+
 ```bash
 cd /home/dani/code
 mkdir anime-mcp-server
@@ -151,6 +171,7 @@ touch {plan.md,tasks.md,current_sprint.md}
 ```
 
 ### **Step 2: Initialize FastAPI Project**
+
 ```bash
 # Setup Python environment
 python -m venv venv
@@ -163,6 +184,7 @@ mkdir -p src/{api,core,models,services}
 ```
 
 ### **Step 3: Start Vector Database Implementation**
+
 - Download anime-offline-database JSON
 - Setup Marqo vector database
 - Implement basic data ingestion pipeline
@@ -173,18 +195,21 @@ mkdir -p src/{api,core,models,services}
 ## 📋 **PROJECT TRACKING FILES**
 
 ### **plan.md**
+
 - Complete technical architecture
 - Phase-by-phase implementation guide
 - Success criteria and milestones
 - Technology stack decisions
 
 ### **tasks.md**
+
 - Detailed task breakdown for each phase
 - Dependencies and blockers
 - Estimated effort and priority
 - Assignment and status tracking
 
 ### **current_sprint.md**
+
 - Current sprint objectives
 - Daily progress tracking
 - Blockers and decisions needed
@@ -195,24 +220,28 @@ mkdir -p src/{api,core,models,services}
 ## 🎯 **SUCCESS METRICS**
 
 ### **Phase 1 Metrics**
+
 - Vector database performance: < 200ms search response
 - Data coverage: 100% of 38K anime entries indexed
 - Search quality: Relevant results for common anime queries
 - API reliability: 99%+ uptime during testing
 
 ### **Phase 2 Metrics**
+
 - Synopsis coverage: 95%+ anime entries with synopsis
 - Enhanced search quality: Improved relevance scores
 - Data freshness: Weekly automated updates working
 - Pipeline reliability: Zero data corruption incidents
 
 ### **Phase 3 Metrics**
+
 - MCP functionality: All defined tools working correctly
 - AI integration: Claude can successfully find and recommend anime
 - Natural language: Complex queries processed accurately
 - Response quality: Contextually appropriate recommendations
 
 ### **Phase 4 Metrics**
+
 - Production readiness: Monitoring, logging, error handling
 - Performance: < 100ms API response times at scale
 - Documentation: Complete API guides and integration docs
@@ -221,20 +250,25 @@ mkdir -p src/{api,core,models,services}
 - **Performance**: 60-80% cache hit rates with multi-tiered caching
 
 #### **Current Backend Limitations (Express.js Proxy)**
+
 ```javascript
 // Current proxy-server.js (limited scope)
-const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const express = require("express");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 
 // Basic CORS proxy - needs evolution to full MCP server
-app.use('/api/mal', createProxyMiddleware({
-  target: 'https://api.myanimelist.net',
-  changeOrigin: true,
-  pathRewrite: { '^/api/mal': '' }
-}));
+app.use(
+  "/api/mal",
+  createProxyMiddleware({
+    target: "https://api.myanimelist.net",
+    changeOrigin: true,
+    pathRewrite: { "^/api/mal": "" },
+  }),
+);
 ```
 
 **Limitations**:
+
 - No persistent data storage
 - Limited to CORS proxying
 - No AI/ML capabilities
@@ -242,23 +276,26 @@ app.use('/api/mal', createProxyMiddleware({
 - No MCP protocol support
 
 #### **API Integration Analysis**
+
 ```typescript
 // Current triple-source integration
 interface ServiceArchitecture {
-  sources: ['MyAnimeList', 'AniList', 'Jikan']
-  authentication: ['OAuth 2.0 PKCE', 'OAuth 2.0 S256']
-  caching: 'Multi-tiered (Memory + IndexedDB + Request deduplication)'
-  normalization: 'Unified AnimeBase interface'
+  sources: ["MyAnimeList", "AniList", "Jikan"];
+  authentication: ["OAuth 2.0 PKCE", "OAuth 2.0 S256"];
+  caching: "Multi-tiered (Memory + IndexedDB + Request deduplication)";
+  normalization: "Unified AnimeBase interface";
 }
 ```
 
 **Strengths to Preserve**:
+
 - Excellent OAuth authentication flows
 - Robust caching system (60-80% hit rates)
 - Comprehensive data normalization
 - Strong error handling and fallbacks
 
 #### **Data Flow Mapping**
+
 ```mermaid
 graph TD
     A[Frontend React App] --> B[Express.js Proxy]
@@ -270,6 +307,7 @@ graph TD
 ```
 
 **Current Limitations**:
+
 - No persistent user data storage
 - No recommendation engine
 - No semantic search capabilities
@@ -289,7 +327,7 @@ graph TB
         B[Zustand Store]
         C[Multi-tier Cache]
     end
-    
+
     subgraph "MCP Server Layer (FastAPI)"
         D[MCP Protocol Handler]
         E[Authentication Service]
@@ -297,26 +335,26 @@ graph TB
         G[Recommendation Engine]
         H[Vector Search Service]
     end
-    
+
     subgraph "Data Layer"
         I[PostgreSQL User Data]
         J[Marqo Vector Database]
         K[Anime Offline Database]
         L[Redis Cache]
     end
-    
+
     subgraph "External APIs"
         M[MyAnimeList API]
         N[AniList GraphQL]
         O[Jikan API]
     end
-    
+
     subgraph "AI Assistants"
         P[Claude via MCP]
         Q[GPT via MCP]
         R[Custom AI Agents]
     end
-    
+
     A --> D
     D --> E
     D --> F
@@ -336,6 +374,7 @@ graph TB
 ### 🛠️ FastAPI MCP Server Core Architecture
 
 #### **Project Structure**
+
 ```
 anime_mcp_server/
 ├── app/
@@ -421,16 +460,16 @@ class AnimeTrackrMCPServer:
         self.server = Server("anime-trackr")
         self.setup_tools()
         self.setup_resources()
-        
+
     def setup_tools(self):
         """Register all MCP tools for AI assistants"""
-        
+
         @self.server.call_tool()
         async def search_anime(arguments: Dict[str, Any]) -> List[Dict]:
             """Search for anime across multiple sources with semantic understanding"""
             query = arguments.get("query", "")
             filters = arguments.get("filters", {})
-            
+
             # Implement multi-source search with vector similarity
             results = await self.anime_service.semantic_search(
                 query=query,
@@ -438,20 +477,20 @@ class AnimeTrackrMCPServer:
                 limit=arguments.get("limit", 20)
             )
             return results
-            
+
         @self.server.call_tool()
         async def get_recommendations(arguments: Dict[str, Any]) -> List[Dict]:
             """Get personalized anime recommendations using vector similarity"""
             user_id = arguments.get("user_id")
             context = arguments.get("context", "")
-            
+
             recommendations = await self.recommendation_service.get_contextual_recommendations(
                 user_id=user_id,
                 context=context,
                 limit=arguments.get("limit", 10)
             )
             return recommendations
-            
+
         @self.server.call_tool()
         async def update_watchlist(arguments: Dict[str, Any]) -> Dict:
             """Add or update anime in user's watchlist"""
@@ -459,7 +498,7 @@ class AnimeTrackrMCPServer:
             anime_id = arguments.get("anime_id")
             status = arguments.get("status")
             score = arguments.get("score")
-            
+
             result = await self.anime_service.update_user_anime(
                 user_id=user_id,
                 anime_id=anime_id,
@@ -467,23 +506,23 @@ class AnimeTrackrMCPServer:
                 score=score
             )
             return result
-            
+
         @self.server.call_tool()
         async def analyze_user_preferences(arguments: Dict[str, Any]) -> Dict:
             """Analyze user's anime preferences and provide insights"""
             user_id = arguments.get("user_id")
-            
+
             analysis = await self.analytics_service.analyze_user_preferences(
                 user_id=user_id
             )
             return analysis
-            
+
         @self.server.call_tool()
         async def natural_language_query(arguments: Dict[str, Any]) -> List[Dict]:
             """Process natural language queries about anime"""
             query = arguments.get("query")
             user_context = arguments.get("user_context", {})
-            
+
             # Use LangChain + Marqo for semantic understanding
             results = await self.langchain_service.process_natural_query(
                 query=query,
@@ -530,17 +569,17 @@ async def lifespan(app: FastAPI):
     """Initialize services on startup"""
     # Initialize database
     await init_db()
-    
+
     # Initialize Marqo vector database
     marqo_client = MarqoClient(settings.MARQO_URL)
     await marqo_client.initialize_indexes()
-    
+
     # Start MCP server in background
     mcp_server = AnimeTrackrMCPServer()
     mcp_task = asyncio.create_task(mcp_server.run())
-    
+
     yield
-    
+
     # Cleanup
     mcp_task.cancel()
 
@@ -639,12 +678,14 @@ async def mcp_capabilities():
 ### 🎯 Integration Architecture
 
 #### **Data Source Analysis**
+
 - **Size**: 38,804 anime entries (70% reviewed)
 - **Format**: Structured JSON with comprehensive metadata
 - **Update Frequency**: Weekly updates (current: week 24, 2025)
 - **Coverage**: Multi-source aggregation (MAL, Anime-Planet, Kitsu, etc.)
 
 #### **Data Schema Mapping**
+
 ```python
 # app/models/anime_offline_db.py
 from pydantic import BaseModel, Field
@@ -670,22 +711,22 @@ class EnrichedAnimeEntry(BaseModel):
     """Enhanced anime entry with vector embeddings"""
     # Original offline DB data
     offline_db_data: AnimeOfflineDBEntry
-    
+
     # Enhanced fields
     mal_id: Optional[int] = None
     anilist_id: Optional[int] = None
     jikan_id: Optional[int] = None
-    
+
     # Vector embeddings for recommendations
     content_embedding: Optional[List[float]] = None
     genre_embedding: Optional[List[float]] = None
     description_embedding: Optional[List[float]] = None
-    
+
     # Computed fields
     popularity_score: Optional[float] = None
     recommendation_tags: List[str] = Field(default_factory=list)
     similarity_cluster: Optional[int] = None
-    
+
     # Metadata
     last_updated: datetime = Field(default_factory=datetime.utcnow)
     data_quality_score: float = Field(default=0.0)
@@ -707,7 +748,7 @@ class OfflineDBIntegrator:
         self.marqo_client = marqo_client
         self.vector_service = vector_service
         self.base_url = "https://raw.githubusercontent.com/manami-project/anime-offline-database/master"
-        
+
     async def download_latest_database(self) -> Dict[str, Any]:
         """Download the latest anime offline database"""
         async with aiohttp.ClientSession() as session:
@@ -716,44 +757,44 @@ class OfflineDBIntegrator:
                     return await response.json()
                 else:
                     raise Exception(f"Failed to download database: {response.status}")
-    
+
     async def process_and_enrich_data(self, raw_data: Dict[str, Any]) -> List[EnrichedAnimeEntry]:
         """Process raw database and enrich with vector embeddings"""
         anime_list = raw_data.get("data", [])
         enriched_entries = []
-        
+
         # Process in batches for memory efficiency
         batch_size = 100
         for i in range(0, len(anime_list), batch_size):
             batch = anime_list[i:i + batch_size]
             enriched_batch = await self._process_batch(batch)
             enriched_entries.extend(enriched_batch)
-            
+
             # Progress logging
             print(f"Processed {min(i + batch_size, len(anime_list))}/{len(anime_list)} entries")
-        
+
         return enriched_entries
-    
+
     async def _process_batch(self, batch: List[Dict]) -> List[EnrichedAnimeEntry]:
         """Process a batch of anime entries"""
         tasks = [self._enrich_single_entry(entry) for entry in batch]
         return await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     async def _enrich_single_entry(self, entry: Dict) -> EnrichedAnimeEntry:
         """Enrich a single anime entry with embeddings and metadata"""
         # Create base entry
         offline_db_entry = AnimeOfflineDBEntry(**entry)
-        
+
         # Extract IDs from sources
         mal_id = self._extract_mal_id(offline_db_entry.sources)
         anilist_id = self._extract_anilist_id(offline_db_entry.sources)
-        
+
         # Generate text for embedding
         embedding_text = self._create_embedding_text(offline_db_entry)
-        
+
         # Generate embeddings using Marqo
         embeddings = await self.vector_service.generate_embeddings(embedding_text)
-        
+
         # Create enriched entry
         enriched = EnrichedAnimeEntry(
             offline_db_data=offline_db_entry,
@@ -764,9 +805,9 @@ class OfflineDBIntegrator:
             description_embedding=embeddings.get("description"),
             data_quality_score=self._calculate_quality_score(offline_db_entry)
         )
-        
+
         return enriched
-    
+
     def _create_embedding_text(self, entry: AnimeOfflineDBEntry) -> Dict[str, str]:
         """Create text representations for different embedding types"""
         return {
@@ -774,7 +815,7 @@ class OfflineDBIntegrator:
             "genre": " ".join(entry.tags),
             "description": f"{entry.title} is a {entry.type} anime with {entry.episodes} episodes. Genres: {', '.join(entry.tags)}"
         }
-    
+
     async def populate_vector_database(self, enriched_entries: List[EnrichedAnimeEntry]):
         """Populate Marqo with enriched anime data"""
         # Prepare documents for Marqo
@@ -793,32 +834,32 @@ class OfflineDBIntegrator:
                 "quality_score": entry.data_quality_score
             }
             documents.append(doc)
-        
+
         # Batch insert into Marqo
         await self.marqo_client.add_documents("anime_database", documents, tensor_fields=["content_text"])
-        
+
     async def full_integration_pipeline(self):
         """Complete integration pipeline from download to vector database"""
         print("Starting anime offline database integration...")
-        
+
         # Step 1: Download latest data
         print("Downloading latest database...")
         raw_data = await self.download_latest_database()
-        
+
         # Step 2: Process and enrich
         print("Processing and enriching data...")
         enriched_entries = await self.process_and_enrich_data(raw_data)
-        
+
         # Step 3: Populate vector database
         print("Populating vector database...")
         await self.populate_vector_database(enriched_entries)
-        
+
         # Step 4: Create indexes and optimizations
         print("Creating search indexes...")
         await self.marqo_client.optimize_indexes()
-        
+
         print(f"Integration complete! Processed {len(enriched_entries)} anime entries.")
-        
+
         return {
             "total_entries": len(enriched_entries),
             "successful_embeddings": sum(1 for e in enriched_entries if e.content_embedding),
@@ -838,7 +879,7 @@ class DataSyncService:
     def __init__(self, integrator: OfflineDBIntegrator):
         self.integrator = integrator
         self.scheduler = AsyncIOScheduler()
-        
+
     def start_sync_scheduler(self):
         """Start automated data synchronization"""
         # Weekly sync on Sundays at 2 AM
@@ -850,27 +891,27 @@ class DataSyncService:
             minute=0
         )
         self.scheduler.start()
-        
+
     async def sync_anime_database(self):
         """Perform incremental database sync"""
         try:
             # Check for updates
             latest_version = await self._check_database_version()
             current_version = await self._get_current_version()
-            
+
             if latest_version != current_version:
                 print(f"Database update detected: {current_version} -> {latest_version}")
-                
+
                 # Perform incremental update
                 result = await self.integrator.full_integration_pipeline()
-                
+
                 # Update version tracking
                 await self._update_version_tracking(latest_version)
-                
+
                 print(f"Database sync completed: {result}")
             else:
                 print("Database is up to date")
-                
+
         except Exception as e:
             print(f"Database sync failed: {e}")
             # Send notification to monitoring system
@@ -922,7 +963,7 @@ class MarqoClient:
                 }
             }
         }
-    
+
     async def initialize_indexes(self):
         """Initialize all required Marqo indexes"""
         for index_name, config in self.indexes.items():
@@ -936,7 +977,7 @@ class MarqoClient:
                     print(f"Index already exists: {index_name}")
             except Exception as e:
                 print(f"Error initializing index {index_name}: {e}")
-    
+
     async def _create_index(self, index_name: str, config: Dict):
         """Create a Marqo index with specific configuration"""
         self.client.create_index(
@@ -947,7 +988,7 @@ class MarqoClient:
             image_preprocessing=config.get("image_preprocessing", {}),
             video_preprocessing=config.get("video_preprocessing", {})
         )
-    
+
     async def add_documents(self, index_name: str, documents: List[Dict], tensor_fields: List[str]):
         """Add documents to a Marqo index with specified tensor fields"""
         try:
@@ -960,11 +1001,11 @@ class MarqoClient:
         except Exception as e:
             print(f"Error adding documents to {index_name}: {e}")
             raise
-    
+
     async def semantic_search(
-        self, 
-        index_name: str, 
-        query: str, 
+        self,
+        index_name: str,
+        query: str,
         filter_string: Optional[str] = None,
         limit: int = 20,
         search_method: str = "TENSOR"
@@ -976,16 +1017,16 @@ class MarqoClient:
                 "limit": limit,
                 "search_method": search_method
             }
-            
+
             if filter_string:
                 search_params["filter_string"] = filter_string
-            
+
             response = self.client.index(index_name).search(**search_params)
             return response["hits"]
         except Exception as e:
             print(f"Error performing search on {index_name}: {e}")
             return []
-    
+
     async def multimodal_search(
         self,
         index_name: str,
@@ -1003,7 +1044,7 @@ class MarqoClient:
         except Exception as e:
             print(f"Error performing multimodal search: {e}")
             return []
-    
+
     async def get_similar_anime(
         self,
         anime_id: str,
@@ -1016,26 +1057,26 @@ class MarqoClient:
             anime_doc = await self.get_document("anime_database", anime_id)
             if not anime_doc:
                 return []
-            
+
             # Use the anime's content as query for similarity search
             query_text = anime_doc.get("content_text", anime_doc.get("title", ""))
-            
+
             similar = await self.semantic_search(
                 index_name="anime_database",
                 query=query_text,
                 filter_string=f"anime_id != '{anime_id}'",  # Exclude the original anime
                 limit=limit
             )
-            
+
             # Filter by similarity score
             return [
-                result for result in similar 
+                result for result in similar
                 if result.get("_score", 0) >= similarity_threshold
             ]
         except Exception as e:
             print(f"Error finding similar anime: {e}")
             return []
-    
+
     async def hybrid_search(
         self,
         query: str,
@@ -1046,24 +1087,24 @@ class MarqoClient:
         try:
             # Build dynamic filter based on user preferences
             filters = []
-            
+
             if user_preferences.get("preferred_genres"):
                 genre_filter = " OR ".join([
                     f"tags:'{genre}'" for genre in user_preferences["preferred_genres"]
                 ])
                 filters.append(f"({genre_filter})")
-            
+
             if user_preferences.get("min_episodes"):
                 filters.append(f"episodes >= {user_preferences['min_episodes']}")
-            
+
             if user_preferences.get("anime_types"):
                 type_filter = " OR ".join([
                     f"type:'{anime_type}'" for anime_type in user_preferences["anime_types"]
                 ])
                 filters.append(f"({type_filter})")
-            
+
             filter_string = " AND ".join(filters) if filters else None
-            
+
             # Perform search with combined semantic + preference filtering
             results = await self.semantic_search(
                 index_name="anime_database",
@@ -1071,12 +1112,12 @@ class MarqoClient:
                 filter_string=filter_string,
                 limit=limit
             )
-            
+
             return results
         except Exception as e:
             print(f"Error in hybrid search: {e}")
             return []
-    
+
     async def optimize_indexes(self):
         """Optimize all indexes for better performance"""
         for index_name in self.indexes.keys():
@@ -1102,11 +1143,11 @@ class VectorService:
     def __init__(self, marqo_client: MarqoClient, user_service: UserPreferenceService):
         self.marqo = marqo_client
         self.user_service = user_service
-    
+
     async def generate_embeddings(self, text_dict: Dict[str, str]) -> Dict[str, List[float]]:
         """Generate embeddings for different text types"""
         embeddings = {}
-        
+
         for text_type, text in text_dict.items():
             try:
                 # Use appropriate index/model for each text type
@@ -1116,7 +1157,7 @@ class VectorService:
                     index_name = "user_preferences"
                 else:
                     index_name = "anime_descriptions"
-                
+
                 # Add temporary document to get embedding
                 temp_doc = {"text": text, "temp_id": "embedding_gen"}
                 result = await self.marqo.add_documents(
@@ -1124,7 +1165,7 @@ class VectorService:
                     documents=[temp_doc],
                     tensor_fields=["text"]
                 )
-                
+
                 # Extract embedding (this would need to be adapted based on Marqo's API)
                 # For now, we'll use the search similarity approach
                 search_result = await self.marqo.semantic_search(
@@ -1132,16 +1173,16 @@ class VectorService:
                     query=text,
                     limit=1
                 )
-                
+
                 if search_result:
                     embeddings[text_type] = search_result[0].get("_tensor", [])
-                
+
             except Exception as e:
                 print(f"Error generating embedding for {text_type}: {e}")
                 embeddings[text_type] = []
-        
+
         return embeddings
-    
+
     async def contextual_anime_search(
         self,
         query: str,
@@ -1150,160 +1191,160 @@ class VectorService:
         limit: int = 20
     ) -> List[Dict]:
         """Perform contextual anime search considering user preferences and context"""
-        
+
         # Get user preferences if user_id provided
         user_preferences = {}
         if user_id:
             user_preferences = await self.user_service.get_user_preferences(user_id)
-        
+
         # Enhance query with context
         enhanced_query = self._enhance_query_with_context(query, context, user_preferences)
-        
+
         # Perform hybrid search
         results = await self.marqo.hybrid_search(
             query=enhanced_query,
             user_preferences=user_preferences,
             limit=limit
         )
-        
+
         # Re-rank results based on user history and preferences
         if user_id:
             results = await self._rerank_with_user_preferences(results, user_id)
-        
+
         return results
-    
+
     def _enhance_query_with_context(
-        self, 
-        query: str, 
-        context: Optional[str], 
+        self,
+        query: str,
+        context: Optional[str],
         user_preferences: Dict
     ) -> str:
         """Enhance search query with context and user preferences"""
         enhanced_parts = [query]
-        
+
         if context:
             enhanced_parts.append(context)
-        
+
         # Add implicit preferences
         if user_preferences.get("preferred_genres"):
             genre_boost = " ".join(user_preferences["preferred_genres"][:3])  # Top 3 genres
             enhanced_parts.append(genre_boost)
-        
+
         return " ".join(enhanced_parts)
-    
+
     async def _rerank_with_user_preferences(
-        self, 
-        results: List[Dict], 
+        self,
+        results: List[Dict],
         user_id: str
     ) -> List[Dict]:
         """Re-rank search results based on user preferences and history"""
         user_history = await self.user_service.get_user_watch_history(user_id)
         user_preferences = await self.user_service.get_user_preferences(user_id)
-        
+
         for result in results:
             score_adjustments = []
-            
+
             # Boost based on preferred genres
             anime_genres = result.get("tags", [])
             preferred_genres = user_preferences.get("preferred_genres", [])
             genre_overlap = len(set(anime_genres) & set(preferred_genres))
             if genre_overlap > 0:
                 score_adjustments.append(genre_overlap * 0.1)
-            
+
             # Boost based on similar anime in watch history
             similar_anime_boost = await self._calculate_similarity_boost(
                 result, user_history
             )
             score_adjustments.append(similar_anime_boost)
-            
+
             # Penalize if already watched
             anime_id = result.get("anime_id")
             if anime_id in [item["anime_id"] for item in user_history]:
                 score_adjustments.append(-0.5)
-            
+
             # Apply adjustments
             original_score = result.get("_score", 0)
             adjustment = sum(score_adjustments)
             result["_score"] = max(0, original_score + adjustment)
             result["_score_adjustment"] = adjustment
-        
+
         # Re-sort by adjusted score
         return sorted(results, key=lambda x: x.get("_score", 0), reverse=True)
-    
+
     async def _calculate_similarity_boost(
-        self, 
-        anime_result: Dict, 
+        self,
+        anime_result: Dict,
         user_history: List[Dict]
     ) -> float:
         """Calculate similarity boost based on user's watch history"""
         if not user_history:
             return 0.0
-        
+
         # Get embeddings for current anime
         current_anime_text = anime_result.get("content_text", "")
-        
+
         similarity_scores = []
         for watched_anime in user_history[-10:]:  # Consider last 10 watched
             if watched_anime.get("score", 0) >= 7:  # Only consider well-rated anime
                 watched_text = watched_anime.get("content_text", "")
-                
+
                 # Calculate similarity (simplified - in real implementation, use vector similarity)
                 similarity = self._calculate_text_similarity(current_anime_text, watched_text)
                 similarity_scores.append(similarity * (watched_anime.get("score", 5) / 10.0))
-        
+
         if similarity_scores:
             return max(similarity_scores) * 0.2  # Max 0.2 boost
         return 0.0
-    
+
     def _calculate_text_similarity(self, text1: str, text2: str) -> float:
         """Calculate simple text similarity (placeholder for vector similarity)"""
         # This is a simplified implementation
         # In practice, use vector cosine similarity
         words1 = set(text1.lower().split())
         words2 = set(text2.lower().split())
-        
+
         if not words1 or not words2:
             return 0.0
-        
+
         intersection = len(words1 & words2)
         union = len(words1 | words2)
-        
+
         return intersection / union if union > 0 else 0.0
-    
+
     async def generate_user_preference_vector(self, user_id: str) -> List[float]:
         """Generate a vector representation of user preferences"""
         user_history = await self.user_service.get_user_watch_history(user_id)
-        
+
         if not user_history:
             return []
-        
+
         # Collect text from highly-rated anime
         preference_texts = []
         for anime in user_history:
             if anime.get("score", 0) >= 7:
                 preference_texts.append(anime.get("content_text", ""))
-        
+
         if not preference_texts:
             return []
-        
+
         # Generate embedding for combined preference text
         combined_text = " ".join(preference_texts)
         embeddings = await self.generate_embeddings({"preference": combined_text})
-        
+
         return embeddings.get("preference", [])
-    
+
     async def find_anime_clusters(self, limit: int = 1000) -> Dict[str, List[str]]:
         """Find anime clusters based on vector similarity"""
         # This would involve more complex clustering algorithms
         # For now, return a simplified version
-        
+
         # Get all anime from database
         all_anime = await self.marqo.semantic_search(
             index_name="anime_database",
             query="*",  # Get all
             limit=limit
         )
-        
+
         # Simple clustering based on genres (placeholder for vector clustering)
         clusters = {}
         for anime in all_anime:
@@ -1311,7 +1352,7 @@ class VectorService:
             if primary_genre not in clusters:
                 clusters[primary_genre] = []
             clusters[primary_genre].append(anime.get("anime_id"))
-        
+
         return clusters
 ```
 
@@ -1342,34 +1383,34 @@ class AnimeTrackrLangChainService:
             temperature=0.7,
             openai_api_key=openai_api_key
         )
-        
+
         self.mcp_client = MultiServerMCPClient({
             "anime_trackr": {
                 "transport": "streamable_http",
                 "url": mcp_server_url
             }
         })
-        
+
         self.memory = ConversationBufferWindowMemory(
             k=10,  # Remember last 10 exchanges
             return_messages=True,
             output_key="output"
         )
-        
+
         self.tools = []
         self.agent = None
-    
+
     async def initialize(self):
         """Initialize LangChain agent with MCP tools"""
         # Get MCP tools
         mcp_tools = await self.mcp_client.get_tools()
-        
+
         # Convert MCP tools to LangChain tools
         self.tools = await self._convert_mcp_tools_to_langchain(mcp_tools)
-        
+
         # Add custom tools
         self.tools.extend(self._create_custom_tools())
-        
+
         # Initialize agent
         self.agent = initialize_agent(
             tools=self.tools,
@@ -1379,11 +1420,11 @@ class AnimeTrackrLangChainService:
             verbose=True,
             handle_parsing_errors=True
         )
-    
+
     async def _convert_mcp_tools_to_langchain(self, mcp_tools: List[Dict]) -> List[Tool]:
         """Convert MCP tools to LangChain Tool format"""
         langchain_tools = []
-        
+
         for mcp_tool in mcp_tools:
             tool = Tool(
                 name=mcp_tool["name"],
@@ -1391,26 +1432,26 @@ class AnimeTrackrLangChainService:
                 func=self._create_mcp_tool_wrapper(mcp_tool["name"])
             )
             langchain_tools.append(tool)
-        
+
         return langchain_tools
-    
+
     def _create_mcp_tool_wrapper(self, tool_name: str):
         """Create a wrapper function for MCP tool calls"""
         async def wrapper(input_str: str) -> str:
             try:
                 # Parse input (simplified - would need better parsing)
                 args = {"query": input_str}
-                
+
                 # Call MCP tool
                 result = await self.mcp_client.call_tool(tool_name, args)
-                
+
                 # Format result for LangChain
                 return str(result)
             except Exception as e:
                 return f"Error calling {tool_name}: {str(e)}"
-        
+
         return wrapper
-    
+
     def _create_custom_tools(self) -> List[Tool]:
         """Create custom LangChain tools for enhanced functionality"""
         return [
@@ -1435,20 +1476,20 @@ class AnimeTrackrLangChainService:
                 func=self._curate_seasonal_anime
             )
         ]
-    
+
     async def process_natural_query(
-        self, 
-        query: str, 
+        self,
+        query: str,
         user_context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process natural language query about anime"""
         try:
             # Enhance query with user context
             enhanced_query = self._enhance_query_with_user_context(query, user_context)
-            
+
             # Run agent
             response = await self.agent.arun(enhanced_query)
-            
+
             return {
                 "response": response,
                 "query": query,
@@ -1463,48 +1504,48 @@ class AnimeTrackrLangChainService:
                 "error": str(e),
                 "success": False
             }
-    
+
     def _enhance_query_with_user_context(self, query: str, user_context: Dict) -> str:
         """Enhance query with user context for better results"""
         context_parts = [f"User query: {query}"]
-        
+
         if user_context.get("user_id"):
             context_parts.append(f"User ID: {user_context['user_id']}")
-        
+
         if user_context.get("current_watching"):
             watching_list = ", ".join(user_context["current_watching"][:5])
             context_parts.append(f"Currently watching: {watching_list}")
-        
+
         if user_context.get("favorite_genres"):
             genres = ", ".join(user_context["favorite_genres"][:3])
             context_parts.append(f"Favorite genres: {genres}")
-        
+
         if user_context.get("recent_ratings"):
             ratings = user_context["recent_ratings"][:3]
             rating_info = ", ".join([f"{r['title']} ({r['score']}/10)" for r in ratings])
             context_parts.append(f"Recent ratings: {rating_info}")
-        
+
         return "\n".join(context_parts)
-    
+
     async def _explain_recommendations(self, input_str: str) -> str:
         """Explain anime recommendations"""
         # This would integrate with the recommendation service
         # For now, return a placeholder
         return f"Analyzing recommendations for: {input_str}"
-    
+
     async def _compare_anime(self, input_str: str) -> str:
         """Compare multiple anime"""
         # Parse anime titles from input
         # Get anime details from MCP server
         # Generate comparison
         return f"Comparing anime: {input_str}"
-    
+
     async def _analyze_user_taste(self, input_str: str) -> str:
         """Analyze user's anime taste"""
         # Get user watch history and ratings
         # Perform taste analysis
         return f"Analyzing taste for user: {input_str}"
-    
+
     async def _curate_seasonal_anime(self, input_str: str) -> str:
         """Curate seasonal anime"""
         # Get current season anime
@@ -1515,18 +1556,18 @@ class ConversationalAnimeAgent:
     def __init__(self, langchain_service: AnimeTrackrLangChainService):
         self.langchain_service = langchain_service
         self.conversation_history = []
-    
+
     async def chat(self, message: str, user_id: str) -> Dict[str, Any]:
         """Handle conversational anime queries"""
         # Get user context
         user_context = await self._get_user_context(user_id)
-        
+
         # Process with LangChain
         result = await self.langchain_service.process_natural_query(
             query=message,
             user_context=user_context
         )
-        
+
         # Store conversation
         self.conversation_history.append({
             "user_message": message,
@@ -1534,9 +1575,9 @@ class ConversationalAnimeAgent:
             "timestamp": datetime.utcnow(),
             "user_id": user_id
         })
-        
+
         return result
-    
+
     async def _get_user_context(self, user_id: str) -> Dict[str, Any]:
         """Get comprehensive user context for conversation"""
         # This would integrate with user service
@@ -1565,7 +1606,7 @@ class QueryProcessingService:
         self.langchain_service = langchain_service
         self.query_patterns = self._initialize_query_patterns()
         self.intent_classifier = self._initialize_intent_classifier()
-    
+
     def _initialize_query_patterns(self) -> Dict[str, List[str]]:
         """Initialize regex patterns for different query types"""
         return {
@@ -1603,21 +1644,21 @@ class QueryProcessingService:
                 r"vs\\.?"
             ]
         }
-    
+
     def _initialize_intent_classifier(self):
         """Initialize intent classification model"""
         # In a real implementation, this would be a trained model
         # For now, we'll use pattern matching
         pass
-    
+
     async def process_query(self, query: str, user_context: Dict) -> Dict[str, Any]:
         """Process user query and route to appropriate handler"""
         # Step 1: Classify intent
         intent = self._classify_intent(query)
-        
+
         # Step 2: Extract entities
         entities = await self._extract_entities(query)
-        
+
         # Step 3: Route to appropriate handler
         if intent == "recommendation":
             result = await self._handle_recommendation_query(query, entities, user_context)
@@ -1632,25 +1673,25 @@ class QueryProcessingService:
         else:
             # Fallback to general LangChain processing
             result = await self.langchain_service.process_natural_query(query, user_context)
-        
+
         return {
             **result,
             "intent": intent,
             "entities": entities,
             "processing_method": f"handle_{intent}_query"
         }
-    
+
     def _classify_intent(self, query: str) -> str:
         """Classify the intent of the user query"""
         query_lower = query.lower()
-        
+
         for intent, patterns in self.query_patterns.items():
             for pattern in patterns:
                 if re.search(pattern, query_lower):
                     return intent
-        
+
         return "general"
-    
+
     async def _extract_entities(self, query: str) -> Dict[str, List[str]]:
         """Extract entities from the query"""
         entities = {
@@ -1660,79 +1701,79 @@ class QueryProcessingService:
             "ratings": [],
             "statuses": []
         }
-        
+
         # Extract anime titles (this would use NER in production)
         # For now, simple pattern matching
         anime_title_patterns = [
             r"(?:anime|series|show)?\s*[\"']([^\"']+)[\"']",
             r"(?:Attack on Titan|Naruto|One Piece|Death Note)",  # Common anime names
         ]
-        
+
         for pattern in anime_title_patterns:
             matches = re.findall(pattern, query, re.IGNORECASE)
             entities["anime_titles"].extend(matches)
-        
+
         # Extract genres
         genre_keywords = [
             "action", "adventure", "comedy", "drama", "fantasy", "horror",
             "mystery", "romance", "sci-fi", "slice of life", "sports", "thriller"
         ]
-        
+
         for genre in genre_keywords:
             if genre in query.lower():
                 entities["genres"].append(genre)
-        
+
         # Extract years
         year_matches = re.findall(r"\b(19|20)\d{2}\b", query)
         entities["years"] = [int(year) for year in year_matches]
-        
+
         # Extract ratings
         rating_matches = re.findall(r"\b(\d+(?:\.\d+)?)\s*(?:out of|/)\s*10\b", query)
         entities["ratings"] = [float(rating) for rating in rating_matches]
-        
+
         # Extract status keywords
         status_keywords = ["watching", "completed", "dropped", "plan to watch", "on hold"]
         for status in status_keywords:
             if status in query.lower():
                 entities["statuses"].append(status)
-        
+
         return entities
-    
+
     async def _handle_recommendation_query(
-        self, 
-        query: str, 
-        entities: Dict, 
+        self,
+        query: str,
+        entities: Dict,
         user_context: Dict
     ) -> Dict[str, Any]:
         """Handle recommendation-specific queries"""
-        
+
         # Build recommendation request
         recommendation_params = {
             "user_id": user_context.get("user_id"),
             "context": query,
             "limit": 10
         }
-        
+
         # Add entity-based filters
         if entities["genres"]:
             recommendation_params["preferred_genres"] = entities["genres"]
-        
+
         if entities["anime_titles"]:
             recommendation_params["similar_to"] = entities["anime_titles"][0]
-        
+
         # Use MCP tool for recommendations
         recommendations = await self.langchain_service.mcp_client.call_tool(
-            "get_recommendations", 
+            "get_recommendations",
             recommendation_params
         )
-        
+
         # Format response
         if recommendations:
             response_parts = [
                 f"Based on your query '{query}', here are my recommendations:",
                 ""
             ]
-            
+
             for i, anime in enumerate(recommendations[:5], 1):
                 response_parts.append(
                     f"{i}. **{anime.get('title', 'Unknown Title')}** "
@@ -1743,7 +1784,7 @@ class QueryProcessingService:
                 if anime.get('similarity_score'):
                     response_parts.append(f"   Match: {anime['similarity_score']:.1%}")
                 response_parts.append("")
-            
+
             return {
                 "response": "\n".join(response_parts),
                 "recommendations": recommendations,
@@ -1755,42 +1796,42 @@ class QueryProcessingService:
                 "recommendations": [],
                 "success": False
             }
-    
+
     async def _handle_search_query(
-        self, 
-        query: str, 
-        entities: Dict, 
+        self,
+        query: str,
+        entities: Dict,
         user_context: Dict
     ) -> Dict[str, Any]:
         """Handle search-specific queries"""
-        
+
         # Build search parameters
         search_params = {
             "query": query,
             "limit": 20
         }
-        
+
         # Add filters from entities
         if entities["genres"]:
             search_params["filters"] = {"genres": entities["genres"]}
-        
+
         if entities["years"]:
             search_params["filters"] = search_params.get("filters", {})
             search_params["filters"]["year"] = entities["years"][0]
-        
+
         # Use MCP tool for search
         search_results = await self.langchain_service.mcp_client.call_tool(
             "search_anime",
             search_params
         )
-        
+
         # Format response
         if search_results:
             response_parts = [
                 f"I found {len(search_results)} anime matching '{query}':",
                 ""
             ]
-            
+
             for i, anime in enumerate(search_results[:10], 1):
                 response_parts.append(
                     f"{i}. **{anime.get('title', 'Unknown Title')}** "
@@ -1800,7 +1841,7 @@ class QueryProcessingService:
                     synopsis = anime['synopsis'][:100] + "..." if len(anime['synopsis']) > 100 else anime['synopsis']
                     response_parts.append(f"   {synopsis}")
                 response_parts.append("")
-            
+
             return {
                 "response": "\n".join(response_parts),
                 "search_results": search_results,
@@ -1812,40 +1853,40 @@ class QueryProcessingService:
                 "search_results": [],
                 "success": False
             }
-    
+
     async def _handle_status_update_query(
-        self, 
-        query: str, 
-        entities: Dict, 
+        self,
+        query: str,
+        entities: Dict,
         user_context: Dict
     ) -> Dict[str, Any]:
         """Handle status update queries"""
-        
+
         if not entities["anime_titles"]:
             return {
                 "response": "I need to know which anime you want to update. Could you specify the anime title?",
                 "success": False
             }
-        
+
         anime_title = entities["anime_titles"][0]
         status = entities["statuses"][0] if entities["statuses"] else "watching"
         score = entities["ratings"][0] if entities["ratings"] else None
-        
+
         # Use MCP tool for status update
         update_params = {
             "user_id": user_context.get("user_id"),
             "anime_title": anime_title,
             "status": status
         }
-        
+
         if score:
             update_params["score"] = score
-        
+
         result = await self.langchain_service.mcp_client.call_tool(
             "update_watchlist",
             update_params
         )
-        
+
         if result.get("success"):
             response = f"✅ Updated '{anime_title}' to '{status}'"
             if score:
@@ -1861,30 +1902,30 @@ class QueryProcessingService:
                 "update_result": result,
                 "success": False
             }
-    
+
     async def _handle_information_query(
-        self, 
-        query: str, 
-        entities: Dict, 
+        self,
+        query: str,
+        entities: Dict,
         user_context: Dict
     ) -> Dict[str, Any]:
         """Handle information requests about anime"""
-        
+
         if not entities["anime_titles"]:
             # General information query - use LangChain
             return await self.langchain_service.process_natural_query(query, user_context)
-        
+
         anime_title = entities["anime_titles"][0]
-        
+
         # Search for the anime first
         search_result = await self.langchain_service.mcp_client.call_tool(
             "search_anime",
             {"query": anime_title, "limit": 1}
         )
-        
+
         if search_result:
             anime = search_result[0]
-            
+
             response_parts = [
                 f"**{anime.get('title', 'Unknown Title')}**",
                 f"Type: {anime.get('type', 'Unknown')}",
@@ -1892,13 +1933,13 @@ class QueryProcessingService:
                 f"Status: {anime.get('status', 'Unknown')}",
                 f"Year: {anime.get('year', 'Unknown')}",
             ]
-            
+
             if anime.get('genres'):
                 response_parts.append(f"Genres: {', '.join(anime['genres'])}")
-            
+
             if anime.get('synopsis'):
                 response_parts.append(f"\nSynopsis: {anime['synopsis']}")
-            
+
             return {
                 "response": "\n".join(response_parts),
                 "anime_info": anime,
@@ -1909,23 +1950,23 @@ class QueryProcessingService:
                 "response": f"I couldn't find information about '{anime_title}'. Please check the spelling or try a different title.",
                 "success": False
             }
-    
+
     async def _handle_comparison_query(
-        self, 
-        query: str, 
-        entities: Dict, 
+        self,
+        query: str,
+        entities: Dict,
         user_context: Dict
     ) -> Dict[str, Any]:
         """Handle anime comparison queries"""
-        
+
         if len(entities["anime_titles"]) < 2:
             return {
                 "response": "I need at least two anime titles to make a comparison. Could you specify which anime you'd like to compare?",
                 "success": False
             }
-        
+
         anime_titles = entities["anime_titles"][:2]  # Compare first two
-        
+
         # Get information for both anime
         comparison_data = []
         for title in anime_titles:
@@ -1935,10 +1976,10 @@ class QueryProcessingService:
             )
             if search_result:
                 comparison_data.append(search_result[0])
-        
+
         if len(comparison_data) == 2:
             anime1, anime2 = comparison_data
-            
+
             response_parts = [
                 f"**Comparison: {anime1.get('title')} vs {anime2.get('title')}**",
                 "",
@@ -1956,21 +1997,21 @@ class QueryProcessingService:
                 "",
                 "**Key Differences:**"
             ]
-            
+
             # Compare genres
             genres1 = set(anime1.get('genres', []))
             genres2 = set(anime2.get('genres', []))
             common_genres = genres1 & genres2
             unique_genres1 = genres1 - genres2
             unique_genres2 = genres2 - genres1
-            
+
             if common_genres:
                 response_parts.append(f"• Common genres: {', '.join(common_genres)}")
             if unique_genres1:
                 response_parts.append(f"• {anime1.get('title')} unique genres: {', '.join(unique_genres1)}")
             if unique_genres2:
                 response_parts.append(f"• {anime2.get('title')} unique genres: {', '.join(unique_genres2)}")
-            
+
             return {
                 "response": "\n".join(response_parts),
                 "comparison_data": comparison_data,
@@ -1990,6 +2031,7 @@ class QueryProcessingService:
 ### 🎯 Migration Philosophy: Zero-Downtime Transition
 
 #### **Parallel Development Approach**
+
 ```mermaid
 graph TD
     subgraph "Phase 1: Parallel Development"
@@ -1997,13 +2039,13 @@ graph TD
         C[New FastAPI Server] --> D[MCP Protocol Layer]
         E[Shared Database Layer]
     end
-    
+
     subgraph "Phase 2: Gradual Migration"
         F[Express.js Proxy] --> G[Traffic Router]
         G --> H[FastAPI Server]
         G --> I[Legacy Endpoints]
     end
-    
+
     subgraph "Phase 3: Complete Migration"
         J[FastAPI MCP Server] --> K[Frontend + AI Assistants]
         L[Enhanced Features]
@@ -2016,7 +2058,7 @@ graph TD
 # Migration configuration management
 class MigrationConfig:
     """Configuration for managing the migration process"""
-    
+
     def __init__(self):
         self.phases = {
             "phase_1_parallel": {
@@ -2026,7 +2068,7 @@ class MigrationConfig:
                 "risk_level": "low"
             },
             "phase_2_gradual": {
-                "duration": "3 weeks", 
+                "duration": "3 weeks",
                 "description": "Gradual migration with traffic splitting",
                 "features": ["Traffic router", "A/B testing", "Monitoring"],
                 "risk_level": "medium"
@@ -2038,11 +2080,11 @@ class MigrationConfig:
                 "risk_level": "low"
             }
         }
-        
+
         self.compatibility_matrix = {
             "frontend_apis": {
                 "/api/mal/*": "migrate_week_1",
-                "/api/anilist/*": "migrate_week_2", 
+                "/api/anilist/*": "migrate_week_2",
                 "/api/jikan/*": "migrate_week_3",
                 "/api/auth/*": "migrate_week_4",
                 "/api/cache/*": "migrate_week_5"
@@ -2059,67 +2101,69 @@ class MigrationConfig:
 
 ```javascript
 // migration-router.js - Gradual traffic migration
-const express = require('express');
-const httpProxy = require('http-proxy-middleware');
+const express = require("express");
+const httpProxy = require("http-proxy-middleware");
 
 class MigrationRouter {
-    constructor() {
-        this.fastApiUrl = process.env.FASTAPI_URL || 'http://localhost:8000';
-        this.legacyUrl = process.env.LEGACY_URL || 'http://localhost:3002';
-        this.migrationConfig = this.loadMigrationConfig();
-    }
-    
-    setupRoutes(app) {
-        // Route specific endpoints based on migration status
-        app.use('/api/v1/*', this.createFastApiProxy());
-        
-        // Legacy routes with gradual migration
-        app.use('/api/mal/*', this.createGradualMigrationProxy('mal'));
-        app.use('/api/anilist/*', this.createGradualMigrationProxy('anilist'));
-        app.use('/api/jikan/*', this.createGradualMigrationProxy('jikan'));
-        
-        // Health check for both systems
-        app.get('/health/migration', this.getMigrationStatus.bind(this));
-    }
-    
-    createGradualMigrationProxy(service) {
-        return (req, res, next) => {
-            const migrationPercentage = this.getMigrationPercentage(service);
-            const shouldUseFastApi = Math.random() < migrationPercentage;
-            
-            const targetUrl = shouldUseFastApi ? this.fastApiUrl : this.legacyUrl;
-            const proxyMiddleware = httpProxy({
-                target: targetUrl,
-                changeOrigin: true,
-                onError: (err, req, res) => {
-                    // Fallback to legacy on FastAPI error
-                    if (shouldUseFastApi) {
-                        console.log(`FastAPI error, falling back to legacy: ${err.message}`);
-                        this.routeToLegacy(req, res);
-                    } else {
-                        res.status(500).json({ error: 'Service unavailable' });
-                    }
-                }
-            });
-            
-            proxyMiddleware(req, res, next);
-        };
-    }
-    
-    getMigrationPercentage(service) {
-        // Progressive migration percentages
-        const week = this.getCurrentMigrationWeek();
-        const percentages = {
-            1: { mal: 0.1, anilist: 0, jikan: 0 },
-            2: { mal: 0.3, anilist: 0.1, jikan: 0 },
-            3: { mal: 0.6, anilist: 0.3, jikan: 0.1 },
-            4: { mal: 0.8, anilist: 0.6, jikan: 0.3 },
-            5: { mal: 1.0, anilist: 0.8, jikan: 0.6 },
-            6: { mal: 1.0, anilist: 1.0, jikan: 1.0 }
-        };
-        
-        return percentages[week]?.[service] || 0;
-    }
+  constructor() {
+    this.fastApiUrl = process.env.FASTAPI_URL || "http://localhost:8000";
+    this.legacyUrl = process.env.LEGACY_URL || "http://localhost:3002";
+    this.migrationConfig = this.loadMigrationConfig();
+  }
+
+  setupRoutes(app) {
+    // Route specific endpoints based on migration status
+    app.use("/api/v1/*", this.createFastApiProxy());
+
+    // Legacy routes with gradual migration
+    app.use("/api/mal/*", this.createGradualMigrationProxy("mal"));
+    app.use("/api/anilist/*", this.createGradualMigrationProxy("anilist"));
+    app.use("/api/jikan/*", this.createGradualMigrationProxy("jikan"));
+
+    // Health check for both systems
+    app.get("/health/migration", this.getMigrationStatus.bind(this));
+  }
+
+  createGradualMigrationProxy(service) {
+    return (req, res, next) => {
+      const migrationPercentage = this.getMigrationPercentage(service);
+      const shouldUseFastApi = Math.random() < migrationPercentage;
+
+      const targetUrl = shouldUseFastApi ? this.fastApiUrl : this.legacyUrl;
+      const proxyMiddleware = httpProxy({
+        target: targetUrl,
+        changeOrigin: true,
+        onError: (err, req, res) => {
+          // Fallback to legacy on FastAPI error
+          if (shouldUseFastApi) {
+            console.log(
+              `FastAPI error, falling back to legacy: ${err.message}`,
+            );
+            this.routeToLegacy(req, res);
+          } else {
+            res.status(500).json({ error: "Service unavailable" });
+          }
+        },
+      });
+
+      proxyMiddleware(req, res, next);
+    };
+  }
+
+  getMigrationPercentage(service) {
+    // Progressive migration percentages
+    const week = this.getCurrentMigrationWeek();
+    const percentages = {
+      1: { mal: 0.1, anilist: 0, jikan: 0 },
+      2: { mal: 0.3, anilist: 0.1, jikan: 0 },
+      3: { mal: 0.6, anilist: 0.3, jikan: 0.1 },
+      4: { mal: 0.8, anilist: 0.6, jikan: 0.3 },
+      5: { mal: 1.0, anilist: 0.8, jikan: 0.6 },
+      6: { mal: 1.0, anilist: 1.0, jikan: 1.0 },
+    };
+
+    return percentages[week]?.[service] || 0;
+  }
 }
 ```
 
@@ -2136,7 +2180,7 @@ import uuid
 
 def upgrade():
     """Create initial database schema for MCP server"""
-    
+
     # Users table
     op.create_table(
         'users',
@@ -2149,7 +2193,7 @@ def upgrade():
         sa.Column('created_at', sa.DateTime, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now())
     )
-    
+
     # Anime database table (from offline DB)
     op.create_table(
         'anime_database',
@@ -2174,7 +2218,7 @@ def upgrade():
         sa.Column('created_at', sa.DateTime, server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now())
     )
-    
+
     # User anime lists
     op.create_table(
         'user_anime_lists',
@@ -2193,7 +2237,7 @@ def upgrade():
         sa.Column('updated_at', sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now()),
         sa.UniqueConstraint('user_id', 'anime_id', name='unique_user_anime')
     )
-    
+
     # User preferences and recommendations
     op.create_table(
         'user_recommendations',
@@ -2207,7 +2251,7 @@ def upgrade():
         sa.Column('generated_at', sa.DateTime, server_default=sa.func.now()),
         sa.Column('expires_at', sa.DateTime, nullable=True)
     )
-    
+
     # MCP conversation history
     op.create_table(
         'mcp_conversations',
@@ -2221,7 +2265,7 @@ def upgrade():
         sa.Column('response_metadata', postgresql.JSONB, nullable=True),
         sa.Column('created_at', sa.DateTime, server_default=sa.func.now())
     )
-    
+
     # Create indexes for performance
     op.create_index('idx_anime_mal_id', 'anime_database', ['mal_id'])
     op.create_index('idx_anime_anilist_id', 'anime_database', ['anilist_id'])
@@ -2260,7 +2304,7 @@ async def mal_proxy(path: str, request: Request):
     try:
         # Extract query parameters
         params = dict(request.query_params)
-        
+
         # Route to appropriate new endpoint
         if "user" in path and "animelist" in path:
             return await legacy_adapter.handle_mal_user_animelist(path, params)
@@ -2269,7 +2313,7 @@ async def mal_proxy(path: str, request: Request):
         else:
             # Fallback to direct proxy
             return await legacy_adapter.proxy_to_mal(path, params)
-            
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"MAL API error: {str(e)}")
 
@@ -2278,14 +2322,14 @@ async def anilist_proxy(path: str, request: Request):
     """Maintain compatibility with existing AniList API calls"""
     try:
         params = dict(request.query_params)
-        
+
         # Convert GraphQL queries to new API format
         if request.method == "POST":
             body = await request.json()
             return await legacy_adapter.handle_anilist_graphql(body)
         else:
             return await legacy_adapter.handle_anilist_rest(path, params)
-            
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AniList API error: {str(e)}")
 
@@ -2300,16 +2344,16 @@ async def jikan_proxy(path: str, request: Request):
 
 class LegacyAPIAdapter:
     """Adapter to maintain compatibility with existing frontend API calls"""
-    
+
     def __init__(self):
         self.anime_service = AnimeService()
         self.user_service = UserService()
-    
+
     async def handle_mal_user_animelist(self, path: str, params: Dict) -> Dict:
         """Convert MAL user animelist calls to new format"""
         # Extract user_id from path
         user_id = self.extract_user_id_from_path(path)
-        
+
         # Get user anime list from new service
         anime_list = await self.user_service.get_user_anime_list(
             user_id=user_id,
@@ -2317,22 +2361,22 @@ class LegacyAPIAdapter:
             status=params.get("status"),
             limit=params.get("limit", 100)
         )
-        
+
         # Convert to legacy format
         return self.convert_to_mal_format(anime_list)
-    
+
     async def handle_mal_anime_details(self, path: str, params: Dict) -> Dict:
         """Convert MAL anime details calls to new format"""
         anime_id = self.extract_anime_id_from_path(path)
-        
+
         # Get anime details from new service
         anime_details = await self.anime_service.get_anime_details(
             anime_id=anime_id,
             source="mal"
         )
-        
+
         return self.convert_anime_to_mal_format(anime_details)
-    
+
     def convert_to_mal_format(self, anime_list: List[Dict]) -> Dict:
         """Convert new format to legacy MAL format"""
         return {
@@ -2374,19 +2418,19 @@ gantt
     Database Schema         :db, after setup, 4d
     MCP Protocol Basic      :mcp1, after setup, 5d
     Legacy Compatibility    :legacy, after db, 4d
-    
+
     section Phase 2: Core Features
     Anime Offline DB        :anime-db, 2025-06-30, 5d
     Marqo Integration       :marqo, after anime-db, 4d
     Vector Embeddings       :vectors, after marqo, 3d
     Basic MCP Tools         :mcp-tools, after mcp1, 6d
-    
+
     section Phase 3: Advanced Features
     LangChain Integration   :langchain, 2025-07-14, 4d
     Query Processing        :queries, after langchain, 3d
     Recommendation Engine   :recs, after vectors, 5d
     User Preference System  :prefs, after recs, 3d
-    
+
     section Phase 4: Migration
     Traffic Router          :router, 2025-07-28, 2d
     Gradual Migration       :migration, after router, 7d
@@ -2422,7 +2466,7 @@ class Week1Implementation:
                     "Create database migration scripts"
                 ],
                 "deliverables": ["Database models", "API schemas", "Basic endpoints"],
-                "time_estimate": "8 hours", 
+                "time_estimate": "8 hours",
                 "dependencies": ["day_1"]
             },
             "day_3": {
@@ -2439,7 +2483,7 @@ class Week1Implementation:
             "day_4": {
                 "tasks": [
                     "Implement OAuth authentication services",
-                    "Create JWT token management", 
+                    "Create JWT token management",
                     "Setup user registration/login",
                     "Integrate with MAL/AniList auth"
                 ],
@@ -2519,7 +2563,7 @@ class Week2Implementation:
                     "Test MCP tool functionality"
                 ],
                 "deliverables": ["MCP tools", "Search/recommendation", "User tools"],
-                "time_estimate": "8 hours", 
+                "time_estimate": "8 hours",
                 "dependencies": ["day_9"]
             }
         }
@@ -2648,7 +2692,7 @@ class LangChainImplementationPlan:
                 ]
             },
             "phase_3b_advanced_nlp": {
-                "duration": "2 days", 
+                "duration": "2 days",
                 "components": [
                     {
                         "name": "Conversational AI",
@@ -2673,7 +2717,7 @@ class LangChainImplementationPlan:
                 ]
             }
         }
-        
+
     def get_detailed_langchain_architecture(self):
         return {
             "core_components": {
@@ -2735,7 +2779,7 @@ class MigrationExecutionPlan:
                 "day_2": {
                     "tasks": [
                         "Implement traffic router",
-                        "Setup A/B testing framework", 
+                        "Setup A/B testing framework",
                         "Create feature flags",
                         "Configure load balancing"
                     ],
@@ -2844,7 +2888,7 @@ class TestingArchitecture:
             },
             "integration_tests": {
                 "framework": "pytest + testcontainers",
-                "coverage_target": "90%", 
+                "coverage_target": "90%",
                 "focus": ["API endpoints", "Database operations", "Service interactions"],
                 "tools": ["testcontainers", "httpx", "sqlalchemy-utils"]
             },
@@ -2886,19 +2930,19 @@ from mcp.types import CallToolRequest, GetToolRequest
 
 class TestMCPProtocol:
     """Comprehensive MCP protocol compliance testing"""
-    
+
     @pytest.fixture
     async def mcp_client(self):
         """Setup MCP client for testing"""
         from app.mcp.server import AnimeTrackrMCPServer
-        
+
         server = AnimeTrackrMCPServer()
         # Setup test client connection
         async with stdio_client() as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 yield session
-    
+
     @pytest.mark.asyncio
     async def test_search_anime_tool(self, mcp_client):
         """Test anime search tool functionality"""
@@ -2909,12 +2953,12 @@ class TestMCPProtocol:
                 arguments={"query": "Attack on Titan", "limit": 5}
             )
         )
-        
+
         assert result.content[0].type == "text"
         search_results = json.loads(result.content[0].text)
         assert len(search_results) <= 5
         assert any("Attack on Titan" in anime["title"] for anime in search_results)
-        
+
         # Test with filters
         result = await mcp_client.call_tool(
             CallToolRequest(
@@ -2926,20 +2970,20 @@ class TestMCPProtocol:
                 }
             )
         )
-        
+
         filtered_results = json.loads(result.content[0].text)
         assert all(
             "action" in [genre.lower() for genre in anime.get("genres", [])]
             for anime in filtered_results
         )
-    
+
     @pytest.mark.asyncio
     async def test_recommendation_tool(self, mcp_client):
         """Test recommendation tool with various scenarios"""
         # Test user-based recommendations
         result = await mcp_client.call_tool(
             CallToolRequest(
-                name="get_recommendations", 
+                name="get_recommendations",
                 arguments={
                     "user_id": "test_user_123",
                     "context": "I liked Death Note and Code Geass",
@@ -2947,31 +2991,31 @@ class TestMCPProtocol:
                 }
             )
         )
-        
+
         recommendations = json.loads(result.content[0].text)
         assert len(recommendations) <= 10
         assert all("similarity_score" in rec for rec in recommendations)
         assert all(rec["similarity_score"] > 0 for rec in recommendations)
-        
+
         # Test contextual recommendations
         result = await mcp_client.call_tool(
             CallToolRequest(
                 name="get_recommendations",
                 arguments={
-                    "user_id": "test_user_123", 
+                    "user_id": "test_user_123",
                     "context": "something light and funny for a weekend",
                     "limit": 5
                 }
             )
         )
-        
+
         contextual_recs = json.loads(result.content[0].text)
         # Should return comedy/slice-of-life anime
         assert any(
             "comedy" in [genre.lower() for genre in anime.get("genres", [])]
             for anime in contextual_recs
         )
-    
+
     @pytest.mark.asyncio
     async def test_natural_language_query_tool(self, mcp_client):
         """Test natural language processing capabilities"""
@@ -2981,7 +3025,7 @@ class TestMCPProtocol:
             "Recommend some romance anime from 2023",
             "Add Demon Slayer to my completed list with a score of 9"
         ]
-        
+
         for query in test_queries:
             result = await mcp_client.call_tool(
                 CallToolRequest(
@@ -2992,12 +3036,12 @@ class TestMCPProtocol:
                     }
                 )
             )
-            
+
             response = json.loads(result.content[0].text)
             assert response["success"] is True
             assert len(response["response"]) > 0
             assert response["query"] == query
-    
+
     @pytest.mark.asyncio
     async def test_watchlist_management_tool(self, mcp_client):
         """Test watchlist management functionality"""
@@ -3013,20 +3057,20 @@ class TestMCPProtocol:
                 }
             )
         )
-        
+
         update_result = json.loads(result.content[0].text)
         assert update_result["success"] is True
         assert update_result["anime_id"] == "test_anime_456"
         assert update_result["status"] == "watching"
         assert update_result["score"] == 8
-        
+
         # Test batch updates
         batch_updates = [
             {"anime_id": "anime_1", "status": "completed", "score": 9},
             {"anime_id": "anime_2", "status": "dropped", "score": 4},
             {"anime_id": "anime_3", "status": "plan_to_watch"}
         ]
-        
+
         for update in batch_updates:
             result = await mcp_client.call_tool(
                 CallToolRequest(
@@ -3050,7 +3094,7 @@ from app.integrations.marqo.client import MarqoClient
 
 class TestRecommendationAccuracy:
     """Test vector-based recommendation accuracy"""
-    
+
     @pytest.fixture
     def recommendation_test_data(self):
         """Load test dataset with known good recommendations"""
@@ -3068,7 +3112,7 @@ class TestRecommendationAccuracy:
                     ]
                 },
                 {
-                    "user_id": "accuracy_test_2", 
+                    "user_id": "accuracy_test_2",
                     "watch_history": [
                         {"anime_id": "your_name", "score": 10},
                         {"anime_id": "spirited_away", "score": 9},
@@ -3080,14 +3124,14 @@ class TestRecommendationAccuracy:
                 }
             ]
         }
-    
+
     @pytest.mark.asyncio
     async def test_recommendation_precision(self, recommendation_test_data):
         """Test recommendation precision for known user preferences"""
         vector_service = VectorService()
-        
+
         precision_scores = []
-        
+
         for test_user in recommendation_test_data["test_users"]:
             # Generate recommendations
             recommendations = await vector_service.contextual_anime_search(
@@ -3095,51 +3139,51 @@ class TestRecommendationAccuracy:
                 user_id=test_user["user_id"],
                 limit=10
             )
-            
+
             recommended_ids = [rec["anime_id"] for rec in recommendations]
             expected_ids = test_user["expected_recommendations"]
-            
+
             # Calculate precision
             true_positives = len(set(recommended_ids) & set(expected_ids))
             precision = true_positives / len(recommended_ids) if recommended_ids else 0
             precision_scores.append(precision)
-        
+
         avg_precision = np.mean(precision_scores)
         assert avg_precision >= 0.3  # At least 30% precision
-    
+
     @pytest.mark.asyncio
     async def test_similarity_consistency(self):
         """Test that similar anime consistently appear in recommendations"""
         vector_service = VectorService()
-        
+
         # Test anime known to be similar
         similar_anime_groups = [
             ["attack_on_titan", "fullmetal_alchemist", "demon_slayer"],
             ["your_name", "spirited_away", "howls_moving_castle"],
             ["death_note", "code_geass", "monster"]
         ]
-        
+
         for group in similar_anime_groups:
             similarity_matrix = []
-            
+
             for anime_id in group:
                 similar_anime = await vector_service.marqo.get_similar_anime(
                     anime_id=anime_id,
                     limit=20
                 )
-                
+
                 similar_ids = [anime["anime_id"] for anime in similar_anime]
                 group_overlap = len(set(similar_ids) & set(group))
                 similarity_matrix.append(group_overlap)
-            
+
             # Each anime should find at least 1 other anime from its group
             assert all(overlap >= 1 for overlap in similarity_matrix)
-    
-    @pytest.mark.asyncio 
+
+    @pytest.mark.asyncio
     async def test_diversity_in_recommendations(self):
         """Test that recommendations provide good diversity"""
         vector_service = VectorService()
-        
+
         # Test user with diverse preferences
         test_user_id = "diversity_test_user"
         recommendations = await vector_service.contextual_anime_search(
@@ -3147,17 +3191,17 @@ class TestRecommendationAccuracy:
             user_id=test_user_id,
             limit=20
         )
-        
+
         # Extract genres from recommendations
         all_genres = []
         for rec in recommendations:
             all_genres.extend(rec.get("genres", []))
-        
+
         unique_genres = set(all_genres)
-        
+
         # Should have at least 5 different genres
         assert len(unique_genres) >= 5
-        
+
         # No single genre should dominate (>50% of recommendations)
         genre_counts = {genre: all_genres.count(genre) for genre in unique_genres}
         max_genre_percentage = max(genre_counts.values()) / len(recommendations)
@@ -3176,13 +3220,13 @@ import statistics
 
 class MCPServerLoadTest(HttpUser):
     """Load testing for MCP server endpoints"""
-    
+
     wait_time = between(1, 3)
-    
+
     def on_start(self):
         """Setup for each test user"""
         self.test_user_id = f"load_test_user_{self.user_id}"
-        
+
     @task(3)
     def search_anime(self):
         """Test anime search performance"""
@@ -3190,18 +3234,18 @@ class MCPServerLoadTest(HttpUser):
             "Naruto", "One Piece", "Attack on Titan",
             "Death Note", "Dragon Ball", "Pokemon"
         ]
-        
+
         query = self.environment.random.choice(queries)
-        
+
         response = self.client.post("/api/v1/mcp/call_tool", json={
             "name": "search_anime",
             "arguments": {"query": query, "limit": 10}
         })
-        
+
         if response.status_code == 200:
             response_time = response.elapsed.total_seconds()
             assert response_time < 0.5  # Should respond within 500ms
-    
+
     @task(2)
     def get_recommendations(self):
         """Test recommendation performance"""
@@ -3213,11 +3257,11 @@ class MCPServerLoadTest(HttpUser):
                 "limit": 10
             }
         })
-        
+
         if response.status_code == 200:
             response_time = response.elapsed.total_seconds()
             assert response_time < 1.0  # Recommendations can take up to 1s
-    
+
     @task(1)
     def natural_language_query(self):
         """Test NLP query performance"""
@@ -3227,9 +3271,9 @@ class MCPServerLoadTest(HttpUser):
             "Recommend comedy anime",
             "Add One Piece to my watchlist"
         ]
-        
+
         query = self.environment.random.choice(queries)
-        
+
         response = self.client.post("/api/v1/mcp/call_tool", json={
             "name": "natural_language_query",
             "arguments": {
@@ -3237,7 +3281,7 @@ class MCPServerLoadTest(HttpUser):
                 "user_context": {"user_id": self.test_user_id}
             }
         })
-        
+
         if response.status_code == 200:
             response_time = response.elapsed.total_seconds()
             assert response_time < 2.0  # NLP can take up to 2s
@@ -3245,50 +3289,50 @@ class MCPServerLoadTest(HttpUser):
 @pytest.mark.performance
 class TestVectorSearchPerformance:
     """Test vector search and embedding performance"""
-    
+
     @pytest.mark.asyncio
     async def test_batch_embedding_performance(self):
         """Test performance of batch embedding generation"""
         from app.services.vector_service import VectorService
-        
+
         vector_service = VectorService()
-        
+
         # Test with different batch sizes
         batch_sizes = [10, 50, 100, 500]
         performance_results = {}
-        
+
         for batch_size in batch_sizes:
             test_texts = [f"Test anime description {i}" for i in range(batch_size)]
-            
+
             start_time = time.time()
             embeddings = await vector_service.generate_embeddings({
                 f"text_{i}": text for i, text in enumerate(test_texts)
             })
             end_time = time.time()
-            
+
             processing_time = end_time - start_time
             per_item_time = processing_time / batch_size
-            
+
             performance_results[batch_size] = {
                 "total_time": processing_time,
                 "per_item_time": per_item_time,
                 "throughput": batch_size / processing_time
             }
-            
+
             # Performance assertions
             assert per_item_time < 0.1  # Less than 100ms per item
             assert processing_time < 30  # Total time under 30s
-        
+
         # Log performance results for analysis
         print(f"Embedding performance results: {performance_results}")
-    
+
     @pytest.mark.asyncio
     async def test_concurrent_search_performance(self):
         """Test performance under concurrent search loads"""
         from app.services.vector_service import VectorService
-        
+
         vector_service = VectorService()
-        
+
         async def search_task(query_id):
             start_time = time.time()
             results = await vector_service.contextual_anime_search(
@@ -3297,27 +3341,27 @@ class TestVectorSearchPerformance:
             )
             end_time = time.time()
             return end_time - start_time
-        
+
         # Test with increasing concurrency levels
         concurrency_levels = [5, 10, 25, 50]
-        
+
         for concurrency in concurrency_levels:
             tasks = [search_task(i) for i in range(concurrency)]
-            
+
             start_time = time.time()
             response_times = await asyncio.gather(*tasks)
             total_time = time.time() - start_time
-            
+
             # Performance metrics
             avg_response_time = statistics.mean(response_times)
             max_response_time = max(response_times)
             throughput = concurrency / total_time
-            
+
             # Assertions
             assert avg_response_time < 1.0  # Average under 1s
             assert max_response_time < 3.0  # Max under 3s
             assert throughput > 2.0  # At least 2 requests/second
-            
+
             print(f"Concurrency {concurrency}: avg={avg_response_time:.3f}s, "
                   f"max={max_response_time:.3f}s, throughput={throughput:.1f}/s")
 ```
@@ -3332,7 +3376,7 @@ class TestVectorSearchPerformance:
 
 ```yaml
 # docker-compose.yml - Complete deployment stack
-version: '3.8'
+version: "3.8"
 
 services:
   # FastAPI MCP Server
@@ -3488,40 +3532,40 @@ spec:
         app: mcp-server
     spec:
       containers:
-      - name: mcp-server
-        image: anime-mcp-server:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: mcp-secrets
-              key: database-url
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: mcp-secrets
-              key: openai-api-key
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: mcp-server
+          image: anime-mcp-server:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-secrets
+                  key: database-url
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-secrets
+                  key: openai-api-key
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 
 ---
 # k8s/mcp-server-service.yaml
@@ -3534,9 +3578,9 @@ spec:
   selector:
     app: mcp-server
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8000
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
   type: ClusterIP
 
 ---
@@ -3552,20 +3596,20 @@ metadata:
     nginx.ingress.kubernetes.io/rate-limit: "100"
 spec:
   tls:
-  - hosts:
-    - api.animetrackr.com
-    secretName: mcp-server-tls
+    - hosts:
+        - api.animetrackr.com
+      secretName: mcp-server-tls
   rules:
-  - host: api.animetrackr.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: mcp-server-service
-            port:
-              number: 80
+    - host: api.animetrackr.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mcp-server-service
+                port:
+                  number: 80
 
 ---
 # k8s/hpa.yaml
@@ -3582,18 +3626,18 @@ spec:
   minReplicas: 3
   maxReplicas: 20
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
 ```
 
 #### **Environment-Specific Configurations**
@@ -3608,52 +3652,52 @@ class Settings(BaseSettings):
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
-    
+
     # Database
     DATABASE_URL: str
     DATABASE_POOL_SIZE: int = 10
     DATABASE_MAX_OVERFLOW: int = 20
-    
+
     # Redis Cache
     REDIS_URL: str = "redis://localhost:6379"
     CACHE_TTL: int = 3600  # 1 hour
-    
+
     # Marqo Vector Database
     MARQO_URL: str = "http://localhost:8882"
     MARQO_INDEX_PREFIX: str = "anime"
-    
+
     # External APIs
     MAL_CLIENT_ID: str
     MAL_CLIENT_SECRET: str
     ANILIST_CLIENT_ID: str
     ANILIST_CLIENT_SECRET: str
     OPENAI_API_KEY: str
-    
+
     # MCP Configuration
     MCP_SERVER_NAME: str = "anime-trackr"
     MCP_SERVER_VERSION: str = "1.0.0"
     MCP_TOOL_TIMEOUT: int = 30
-    
+
     # Security
     SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 1440  # 24 hours
-    
+
     # CORS
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
-    
+
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FILE: Optional[str] = None
-    
+
     # Monitoring
     PROMETHEUS_ENABLED: bool = True
     SENTRY_DSN: Optional[str] = None
-    
+
     # Performance
     ASYNC_POOL_SIZE: int = 50
     MAX_CONCURRENT_REQUESTS: int = 100
-    
+
     class Config:
         env_file = ".env"
         case_sensitive = True
@@ -3808,7 +3852,7 @@ def monitor_mcp_tool(tool_name: str):
         async def wrapper(*args, **kwargs):
             start_time = time.time()
             status = "success"
-            
+
             try:
                 result = await func(*args, **kwargs)
                 return result
@@ -3823,7 +3867,7 @@ def monitor_mcp_tool(tool_name: str):
                 duration = time.time() - start_time
                 MCP_TOOL_CALLS_TOTAL.labels(tool_name=tool_name, status=status).inc()
                 MCP_TOOL_DURATION.labels(tool_name=tool_name).observe(duration)
-        
+
         return wrapper
     return decorator
 
@@ -3835,7 +3879,7 @@ def monitor_vector_search(search_type: str):
             start_time = time.time()
             status = "success"
             result_count = 0
-            
+
             try:
                 result = await func(*args, **kwargs)
                 result_count = len(result) if isinstance(result, list) else 1
@@ -3853,7 +3897,7 @@ def monitor_vector_search(search_type: str):
                 VECTOR_SEARCH_DURATION.labels(search_type=search_type).observe(duration)
                 if status == "success":
                     VECTOR_SEARCH_RESULTS.labels(search_type=search_type).observe(result_count)
-        
+
         return wrapper
     return decorator
 ```
@@ -3876,7 +3920,7 @@ user_id_context: ContextVar[Optional[str]] = ContextVar('user_id', default=None)
 
 class JSONFormatter(logging.Formatter):
     """Custom JSON formatter for structured logging"""
-    
+
     def format(self, record: logging.LogRecord) -> str:
         log_entry = {
             "timestamp": datetime.utcnow().isoformat(),
@@ -3887,16 +3931,16 @@ class JSONFormatter(logging.Formatter):
             "function": record.funcName,
             "line": record.lineno,
         }
-        
+
         # Add context information
         request_id = request_id_context.get()
         user_id = user_id_context.get()
-        
+
         if request_id:
             log_entry["request_id"] = request_id
         if user_id:
             log_entry["user_id"] = user_id
-        
+
         # Add exception information if present
         if record.exc_info:
             log_entry["exception"] = {
@@ -3904,37 +3948,37 @@ class JSONFormatter(logging.Formatter):
                 "message": str(record.exc_info[1]),
                 "traceback": traceback.format_exception(*record.exc_info)
             }
-        
+
         # Add any extra fields
         for key, value in record.__dict__.items():
             if key not in log_entry and not key.startswith('_'):
                 if isinstance(value, (str, int, float, bool, list, dict)):
                     log_entry[key] = value
-        
+
         return json.dumps(log_entry)
 
 def setup_logging():
     """Setup application logging configuration"""
-    
+
     # Create logger
     logger = logging.getLogger()
     logger.setLevel(getattr(logging, settings.LOG_LEVEL.upper()))
-    
+
     # Remove existing handlers
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
-    
+
     # Console handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(JSONFormatter())
     logger.addHandler(console_handler)
-    
+
     # File handler (if specified)
     if settings.LOG_FILE:
         file_handler = logging.FileHandler(settings.LOG_FILE)
         file_handler.setFormatter(JSONFormatter())
         logger.addHandler(file_handler)
-    
+
     # Disable some noisy loggers in production
     if settings.ENVIRONMENT == "production":
         logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
@@ -3942,10 +3986,10 @@ def setup_logging():
 
 class MCPLogger:
     """Specialized logger for MCP operations"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger("mcp")
-    
+
     def tool_call_start(self, tool_name: str, arguments: Dict[str, Any]):
         """Log MCP tool call start"""
         self.logger.info(
@@ -3956,7 +4000,7 @@ class MCPLogger:
                 "arguments": arguments
             }
         )
-    
+
     def tool_call_complete(self, tool_name: str, duration: float, result_size: int):
         """Log MCP tool call completion"""
         self.logger.info(
@@ -3968,7 +4012,7 @@ class MCPLogger:
                 "result_size": result_size
             }
         )
-    
+
     def tool_call_error(self, tool_name: str, error: Exception, duration: float):
         """Log MCP tool call error"""
         self.logger.error(
@@ -3981,7 +4025,7 @@ class MCPLogger:
                 "error_type": type(error).__name__
             }
         )
-    
+
     def recommendation_generated(self, user_id: str, recommendation_count: int, context: str):
         """Log recommendation generation"""
         self.logger.info(
@@ -3993,7 +4037,7 @@ class MCPLogger:
                 "context": context
             }
         )
-    
+
     def vector_search_performed(self, query: str, results_count: int, duration: float):
         """Log vector search operation"""
         self.logger.info(
@@ -4034,19 +4078,19 @@ class HealthChecker:
             "external_apis": self._check_external_apis,
             "mcp_tools": self._check_mcp_tools
         }
-    
+
     async def _check_database(self) -> Dict[str, Any]:
         """Check database connectivity and performance"""
         try:
             from app.core.database import engine
-            
+
             start_time = time.time()
             async with engine.begin() as conn:
                 result = await conn.execute(text("SELECT 1"))
                 assert result.scalar() == 1
-            
+
             duration = time.time() - start_time
-            
+
             return {
                 "status": "healthy",
                 "response_time": round(duration * 1000, 2),  # ms
@@ -4058,22 +4102,22 @@ class HealthChecker:
                 "error": str(e),
                 "details": "Database connection failed"
             }
-    
+
     async def _check_redis(self) -> Dict[str, Any]:
         """Check Redis connectivity and performance"""
         try:
             cache_service = CacheService()
-            
+
             start_time = time.time()
             test_key = "health_check_test"
             test_value = "test_value"
-            
+
             await cache_service.set(test_key, test_value, ttl=10)
             retrieved_value = await cache_service.get(test_key)
             await cache_service.delete(test_key)
-            
+
             duration = time.time() - start_time
-            
+
             if retrieved_value == test_value:
                 return {
                     "status": "healthy",
@@ -4091,17 +4135,17 @@ class HealthChecker:
                 "error": str(e),
                 "details": "Redis connection failed"
             }
-    
+
     async def _check_marqo(self) -> Dict[str, Any]:
         """Check Marqo vector database connectivity"""
         try:
             marqo_client = MarqoClient()
-            
+
             start_time = time.time()
             # Try to get index stats (lightweight operation)
             indexes = marqo_client.client.get_indexes()
             duration = time.time() - start_time
-            
+
             return {
                 "status": "healthy",
                 "response_time": round(duration * 1000, 2),
@@ -4113,27 +4157,27 @@ class HealthChecker:
                 "error": str(e),
                 "details": "Marqo connection failed"
             }
-    
+
     async def _check_external_apis(self) -> Dict[str, Any]:
         """Check external API availability"""
         try:
             import aiohttp
-            
+
             apis_to_check = [
                 ("MAL", "https://api.myanimelist.net/v2/anime/ranking"),
                 ("Jikan", "https://api.jikan.moe/v4/anime/1"),
             ]
-            
+
             results = {}
             overall_status = "healthy"
-            
+
             async with aiohttp.ClientSession() as session:
                 for api_name, url in apis_to_check:
                     try:
                         start_time = time.time()
                         async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as response:
                             duration = time.time() - start_time
-                            
+
                             if response.status == 200:
                                 results[api_name] = {
                                     "status": "healthy",
@@ -4152,7 +4196,7 @@ class HealthChecker:
                             "error": str(e)
                         }
                         overall_status = "unhealthy"
-            
+
             return {
                 "status": overall_status,
                 "details": results
@@ -4163,12 +4207,12 @@ class HealthChecker:
                 "error": str(e),
                 "details": "External API checks failed"
             }
-    
+
     async def _check_mcp_tools(self) -> Dict[str, Any]:
         """Check MCP tools functionality"""
         try:
             from app.mcp.tools.anime_search import search_anime
-            
+
             # Test basic search tool
             start_time = time.time()
             test_result = await search_anime({
@@ -4176,7 +4220,7 @@ class HealthChecker:
                 "limit": 1
             })
             duration = time.time() - start_time
-            
+
             return {
                 "status": "healthy",
                 "response_time": round(duration * 1000, 2),
@@ -4188,17 +4232,17 @@ class HealthChecker:
                 "error": str(e),
                 "details": "MCP tools check failed"
             }
-    
+
     async def run_all_checks(self) -> Dict[str, Any]:
         """Run all health checks concurrently"""
         results = await asyncio.gather(
             *[check() for check in self.checks.values()],
             return_exceptions=True
         )
-        
+
         check_results = {}
         overall_status = "healthy"
-        
+
         for i, (check_name, result) in enumerate(zip(self.checks.keys(), results)):
             if isinstance(result, Exception):
                 check_results[check_name] = {
@@ -4210,7 +4254,7 @@ class HealthChecker:
                 check_results[check_name] = result
                 if result["status"] != "healthy":
                     overall_status = result["status"]
-        
+
         return {
             "status": overall_status,
             "timestamp": time.time(),
@@ -4228,20 +4272,20 @@ async def health_check():
 async def detailed_health_check():
     """Detailed health check with all system components"""
     results = await health_checker.run_all_checks()
-    
+
     if results["status"] != "healthy":
         raise HTTPException(status_code=503, detail=results)
-    
+
     return results
 
 @router.get("/ready")
 async def readiness_check():
     """Kubernetes readiness probe endpoint"""
     results = await health_checker.run_all_checks()
-    
+
     # For readiness, we're more strict - all components must be healthy
     critical_checks = ["database", "redis", "marqo"]
-    
+
     for check_name in critical_checks:
         check_result = results["checks"].get(check_name, {})
         if check_result.get("status") != "healthy":
@@ -4249,7 +4293,7 @@ async def readiness_check():
                 status_code=503,
                 detail=f"Critical component {check_name} is not ready"
             )
-    
+
     return {"status": "ready", "timestamp": time.time()}
 ```
 
@@ -4480,19 +4524,19 @@ class RiskMonitor:
             "recommendation_accuracy": {"medium": 0.6, "high": 0.4, "critical": 0.2},
             "cache_hit_rate": {"medium": 70, "high": 50, "critical": 30}
         }
-    
+
     async def assess_current_risks(self) -> List[RiskIndicator]:
         """Assess current system risks based on metrics"""
         risks = []
-        
+
         # Get current metrics
         current_metrics = await self._collect_current_metrics()
-        
+
         for metric_name, value in current_metrics.items():
             if metric_name in self.risk_thresholds:
                 thresholds = self.risk_thresholds[metric_name]
                 level = self._determine_risk_level(value, thresholds, metric_name)
-                
+
                 if level != RiskLevel.LOW:
                     risks.append(RiskIndicator(
                         name=metric_name,
@@ -4502,14 +4546,14 @@ class RiskMonitor:
                         threshold=self._get_threshold_for_level(thresholds, level),
                         timestamp=time.time()
                     ))
-        
+
         return risks
-    
+
     def _determine_risk_level(self, value: float, thresholds: Dict, metric_name: str) -> RiskLevel:
         """Determine risk level based on value and thresholds"""
         # Different metrics have different direction (higher is worse vs lower is worse)
         reverse_metrics = {"recommendation_accuracy", "cache_hit_rate"}
-        
+
         if metric_name in reverse_metrics:
             # For these metrics, lower values are worse
             if value <= thresholds["critical"]:
@@ -4530,7 +4574,7 @@ class RiskMonitor:
                 return RiskLevel.MEDIUM
             else:
                 return RiskLevel.LOW
-    
+
     async def _collect_current_metrics(self) -> Dict[str, float]:
         """Collect current system metrics for risk assessment"""
         # This would integrate with your metrics collection system
@@ -4543,7 +4587,7 @@ class RiskMonitor:
             "recommendation_accuracy": 0.75,  # ratio
             "cache_hit_rate": 80  # percentage
         }
-    
+
     def _get_risk_description(self, metric_name: str, level: RiskLevel) -> str:
         """Get human-readable risk description"""
         descriptions = {
@@ -4670,7 +4714,7 @@ class SuccessMetrics:
                 }
             }
         }
-        
+
         self.success_phases = {
             "phase_1_foundation": {
                 "duration": "2 weeks",
@@ -4682,7 +4726,7 @@ class SuccessMetrics:
                 ]
             },
             "phase_2_migration": {
-                "duration": "4 weeks", 
+                "duration": "4 weeks",
                 "success_criteria": [
                     "100% traffic migrated to FastAPI",
                     "No performance regression",
@@ -4769,7 +4813,7 @@ class BusinessMetrics:
                 }
             }
         }
-        
+
         self.success_timeline = {
             "week_1_2": {
                 "milestones": [
@@ -4785,7 +4829,7 @@ class BusinessMetrics:
             },
             "week_3_6": {
                 "milestones": [
-                    "Traffic migration complete", 
+                    "Traffic migration complete",
                     "MCP tools operational",
                     "Vector search active"
                 ],
@@ -4829,13 +4873,16 @@ class BusinessMetrics:
 ### 🚀 Implementation Priority Matrix
 
 #### **Immediate Actions (Week 1)**
+
 1. **Setup Development Environment**
+
    - Clone and analyze current React codebase architecture
    - Setup FastAPI project structure with proper documentation
    - Configure PostgreSQL and Redis for development
    - Initialize Marqo vector database with basic configuration
 
 2. **Data Foundation**
+
    - Download and analyze anime-offline-database
    - Design database schema for MCP server
    - Create data migration scripts
@@ -4848,7 +4895,9 @@ class BusinessMetrics:
    - Develop comprehensive testing strategy
 
 #### **Short-term Goals (Weeks 2-4)**
+
 1. **Core Integration**
+
    - Complete Marqo integration with embedding generation
    - Implement basic vector search functionality
    - Create fundamental MCP tools (search, recommend, update)
@@ -4861,7 +4910,9 @@ class BusinessMetrics:
    - Prepare rollback procedures
 
 #### **Medium-term Objectives (Weeks 5-8)**
+
 1. **Advanced Features**
+
    - Complete LangChain integration
    - Implement natural language query processing
    - Develop sophisticated recommendation algorithms
@@ -4876,18 +4927,21 @@ class BusinessMetrics:
 ### 🎯 Critical Success Factors
 
 #### **Technical Excellence**
+
 - **Zero-Downtime Migration**: Ensure seamless transition without service interruption
 - **Performance Improvement**: Achieve >20% performance improvement over current system
 - **Reliability**: Maintain 99.9% uptime with comprehensive monitoring
 - **Scalability**: Support 1000+ concurrent users with auto-scaling
 
 #### **User Experience**
+
 - **Seamless Integration**: Users should not notice the backend migration
 - **Enhanced Features**: AI-powered recommendations should provide clear value
 - **Fast Response Times**: <200ms average response for search and recommendations
 - **High Accuracy**: >80% relevance in search results and recommendations
 
 #### **Business Impact**
+
 - **Development Efficiency**: 30% faster feature development with new architecture
 - **User Engagement**: 25% increase in session duration and feature usage
 - **Cost Optimization**: 20% reduction in infrastructure costs per user
@@ -4896,12 +4950,14 @@ class BusinessMetrics:
 ### 🔮 Future Enhancement Roadmap
 
 #### **Phase 2: Advanced AI Features (Months 2-3)**
+
 - **Multi-modal Search**: Image-based anime search using computer vision
 - **Voice Integration**: Voice-activated anime queries and updates
 - **Personalized Chatbot**: Dedicated anime assistant with personality
 - **Social Features**: AI-powered anime discussion and community features
 
 #### **Phase 3: Ecosystem Expansion (Months 4-6)**
+
 - **Third-party Integrations**: Streaming platforms, review sites, merchandise
 - **API Marketplace**: Expose MCP tools for other developers
 - **Mobile App Integration**: Dedicated mobile app with AI features
@@ -4910,6 +4966,7 @@ class BusinessMetrics:
 ### 📋 Implementation Checklist
 
 #### **Pre-Implementation Requirements**
+
 - [ ] **Team Preparation**: Ensure development team has FastAPI and vector database experience
 - [ ] **Infrastructure Setup**: Prepare development, staging, and production environments
 - [ ] **API Keys and Credentials**: Secure all required API keys and credentials
@@ -4917,6 +4974,7 @@ class BusinessMetrics:
 - [ ] **Backup Strategy**: Implement comprehensive backup and recovery procedures
 
 #### **Implementation Validation**
+
 - [ ] **Performance Baselines**: Establish current system performance metrics
 - [ ] **User Acceptance Criteria**: Define clear success criteria with stakeholders
 - [ ] **Rollback Procedures**: Test and validate rollback mechanisms
@@ -4924,6 +4982,7 @@ class BusinessMetrics:
 - [ ] **Documentation**: Create comprehensive operational and user documentation
 
 #### **Post-Implementation Review**
+
 - [ ] **Metrics Analysis**: Compare actual vs. expected performance improvements
 - [ ] **User Feedback**: Collect and analyze user satisfaction data
 - [ ] **System Optimization**: Identify and implement performance optimizations
@@ -4932,19 +4991,22 @@ class BusinessMetrics:
 
 ### 🎖️ Success Criteria Summary
 
-**Migration Success**: 
+**Migration Success**:
+
 - Zero downtime during migration
 - 100% data integrity maintained
 - No functionality regression
-- >20% performance improvement
+- > 20% performance improvement
 
 **MCP Integration Success**:
-- >90% successful AI query resolution
-- >80% user satisfaction with recommendations
+
+- > 90% successful AI query resolution
+- > 80% user satisfaction with recommendations
 - <200ms average vector search response time
-- >75% recommendation accuracy
+- > 75% recommendation accuracy
 
 **Business Impact Success**:
+
 - 30% faster feature development
 - 25% increase in user engagement
 - 20% reduction in operational costs
@@ -4965,6 +5027,7 @@ This ultra-comprehensive MCP server integration plan provides a detailed roadmap
 5. **Scalable Foundation**: The architecture supports future enhancements and third-party integrations
 
 **Success Depends On**:
+
 - Careful planning and execution of the migration strategy
 - Comprehensive testing at every phase
 - Strong monitoring and alerting infrastructure

@@ -407,3 +407,277 @@ class TestFastMCPServerImplementation:
         assert len(filter_anime(test_anime, genres="Action")) == 2  # Genre filter
         assert len(filter_anime(test_anime, year=2023, anime_type="TV")) == 2  # Multiple filters
         assert len(filter_anime(test_anime, genres="Romance")) == 1  # Specific genre
+
+
+# ============================================================================
+# IMAGE SEARCH TOOLS TESTS (PHASE 4)
+# ============================================================================
+
+from src.mcp.server import (
+    search_anime_by_image, 
+    find_visually_similar_anime, 
+    search_multimodal_anime
+)
+
+
+class TestMCPImageTools:
+    """Test suite for MCP image search tools."""
+    
+    @pytest.fixture(autouse=True)
+    def setup_mock_client(self):
+        """Setup mock Qdrant client for testing."""
+        import src.mcp.server
+        
+        # Save original client
+        self.original_client = src.mcp.server.qdrant_client
+        
+        # Create mock client
+        mock_client = MagicMock()
+        mock_client._supports_multi_vector = True
+        
+        # Mock search methods
+        mock_client.search_by_image = AsyncMock(return_value=[
+            {"anime_id": "test1", "title": "Visual Match 1", "visual_similarity_score": 0.95},
+            {"anime_id": "test2", "title": "Visual Match 2", "visual_similarity_score": 0.88}
+        ])
+        
+        mock_client.find_visually_similar_anime = AsyncMock(return_value=[
+            {"anime_id": "similar1", "title": "Similar Anime 1", "visual_similarity_score": 0.92},
+            {"anime_id": "similar2", "title": "Similar Anime 2", "visual_similarity_score": 0.85}
+        ])
+        
+        mock_client.search_multimodal = AsyncMock(return_value=[
+            {
+                "anime_id": "multi1", 
+                "title": "Multimodal Result 1", 
+                "multimodal_score": 0.89,
+                "text_score": 0.85,
+                "image_score": 0.93
+            }
+        ])
+        
+        mock_client.search = AsyncMock(return_value=[
+            {"anime_id": "text1", "title": "Text Result 1", "_score": 0.87}
+        ])
+        
+        # Replace global client
+        src.mcp.server.qdrant_client = mock_client
+        
+        yield mock_client
+        
+        # Restore original client
+        src.mcp.server.qdrant_client = self.original_client
+    
+    @pytest.mark.asyncio
+    async def test_search_anime_by_image_success(self, setup_mock_client):
+        """Test successful image search."""
+        mock_client = setup_mock_client
+        
+        # Test data
+        image_data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        
+        # Call the tool
+        results = await search_anime_by_image(image_data, limit=5)
+        
+        # Verify results
+        assert len(results) == 2
+        assert results[0]["title"] == "Visual Match 1"
+        assert results[0]["visual_similarity_score"] == 0.95
+        
+        # Verify client was called correctly
+        mock_client.search_by_image.assert_called_once_with(image_data=image_data, limit=5)
+    
+    @pytest.mark.asyncio
+    async def test_search_anime_by_image_no_multi_vector(self, setup_mock_client):
+        """Test image search when multi-vector is not enabled."""
+        mock_client = setup_mock_client
+        mock_client._supports_multi_vector = False
+        
+        image_data = "test_image_data"
+        
+        # Should raise runtime error
+        with pytest.raises(RuntimeError, match="Multi-vector image search not enabled"):
+            await search_anime_by_image(image_data)
+    
+    @pytest.mark.asyncio
+    async def test_search_anime_by_image_no_client(self):
+        """Test image search when client is not initialized."""
+        import src.mcp.server
+        original_client = src.mcp.server.qdrant_client
+        src.mcp.server.qdrant_client = None
+        
+        try:
+            with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
+                await search_anime_by_image("test_data")
+        finally:
+            src.mcp.server.qdrant_client = original_client
+    
+    @pytest.mark.asyncio
+    async def test_search_anime_by_image_limit_validation(self, setup_mock_client):
+        """Test limit validation for image search."""
+        mock_client = setup_mock_client
+        
+        # Test limit clamping
+        await search_anime_by_image("test_data", limit=50)  # Should be clamped to 30
+        mock_client.search_by_image.assert_called_with(image_data="test_data", limit=30)
+        
+        await search_anime_by_image("test_data", limit=0)   # Should be clamped to 1
+        mock_client.search_by_image.assert_called_with(image_data="test_data", limit=1)
+    
+    @pytest.mark.asyncio
+    async def test_find_visually_similar_anime_success(self, setup_mock_client):
+        """Test successful visual similarity search."""
+        mock_client = setup_mock_client
+        
+        # Call the tool
+        results = await find_visually_similar_anime("reference_anime_123", limit=10)
+        
+        # Verify results
+        assert len(results) == 2
+        assert results[0]["title"] == "Similar Anime 1"
+        assert results[0]["visual_similarity_score"] == 0.92
+        
+        # Verify client was called correctly
+        mock_client.find_visually_similar_anime.assert_called_once_with(
+            anime_id="reference_anime_123", 
+            limit=10
+        )
+    
+    @pytest.mark.asyncio
+    async def test_find_visually_similar_anime_no_multi_vector(self, setup_mock_client):
+        """Test visual similarity when multi-vector is not enabled."""
+        mock_client = setup_mock_client
+        mock_client._supports_multi_vector = False
+        
+        # Should raise runtime error
+        with pytest.raises(RuntimeError, match="Multi-vector visual similarity not enabled"):
+            await find_visually_similar_anime("test_anime_id")
+    
+    @pytest.mark.asyncio
+    async def test_search_multimodal_anime_with_image(self, setup_mock_client):
+        """Test multimodal search with both text and image."""
+        mock_client = setup_mock_client
+        
+        query = "mecha robots"
+        image_data = "base64_image_data"
+        text_weight = 0.6
+        
+        # Call the tool
+        results = await search_multimodal_anime(
+            query=query, 
+            image_data=image_data, 
+            limit=15,
+            text_weight=text_weight
+        )
+        
+        # Verify results
+        assert len(results) == 1
+        assert results[0]["title"] == "Multimodal Result 1"
+        assert results[0]["multimodal_score"] == 0.89
+        
+        # Verify client was called correctly
+        mock_client.search_multimodal.assert_called_once_with(
+            query=query,
+            image_data=image_data,
+            limit=15,
+            text_weight=text_weight
+        )
+    
+    @pytest.mark.asyncio
+    async def test_search_multimodal_anime_text_only(self, setup_mock_client):
+        """Test multimodal search with text only."""
+        mock_client = setup_mock_client
+        
+        query = "romantic comedy"
+        
+        # Call the tool without image
+        results = await search_multimodal_anime(query=query, limit=10)
+        
+        # Should fall back to regular search when no image provided
+        mock_client.search_multimodal.assert_called_once_with(
+            query=query,
+            image_data=None,
+            limit=10,
+            text_weight=0.7
+        )
+    
+    @pytest.mark.asyncio
+    async def test_search_multimodal_anime_no_multi_vector(self, setup_mock_client):
+        """Test multimodal search fallback when multi-vector is not enabled."""
+        mock_client = setup_mock_client
+        mock_client._supports_multi_vector = False
+        
+        query = "action anime"
+        image_data = "test_image"
+        
+        # Call the tool
+        results = await search_multimodal_anime(query=query, image_data=image_data)
+        
+        # Should fall back to text search
+        mock_client.search.assert_called_once_with(query=query, limit=10)
+        assert len(results) == 1
+        assert results[0]["title"] == "Text Result 1"
+    
+    @pytest.mark.asyncio
+    async def test_image_search_error_handling(self, setup_mock_client):
+        """Test error handling in image search tools."""
+        mock_client = setup_mock_client
+        
+        # Mock client method to raise exception
+        mock_client.search_by_image.side_effect = Exception("Database error")
+        
+        # Should raise RuntimeError with appropriate message
+        with pytest.raises(RuntimeError, match="Image search failed: Database error"):
+            await search_anime_by_image("test_image")
+    
+    @pytest.mark.asyncio
+    async def test_visual_similarity_error_handling(self, setup_mock_client):
+        """Test error handling in visual similarity search."""
+        mock_client = setup_mock_client
+        
+        # Mock client method to raise exception
+        mock_client.find_visually_similar_anime.side_effect = Exception("Similarity error")
+        
+        # Should raise RuntimeError with appropriate message
+        with pytest.raises(RuntimeError, match="Visual similarity search failed: Similarity error"):
+            await find_visually_similar_anime("test_anime_id")
+    
+    @pytest.mark.asyncio
+    async def test_multimodal_search_error_handling(self, setup_mock_client):
+        """Test error handling in multimodal search."""
+        mock_client = setup_mock_client
+        
+        # Mock client method to raise exception
+        mock_client.search_multimodal.side_effect = Exception("Multimodal error")
+        
+        # Should raise RuntimeError with appropriate message
+        with pytest.raises(RuntimeError, match="Multimodal search failed: Multimodal error"):
+            await search_multimodal_anime("test query", "test_image")
+
+
+class TestMCPImageToolsIntegration:
+    """Integration tests for MCP image tools."""
+    
+    def test_image_tools_parameter_types(self):
+        """Test that image tools have correct parameter types."""
+        import inspect
+        
+        # Test search_anime_by_image signature
+        sig = inspect.signature(search_anime_by_image)
+        assert sig.parameters['image_data'].annotation == str
+        assert sig.parameters['limit'].annotation == int
+        assert sig.parameters['limit'].default == 10
+        
+        # Test find_visually_similar_anime signature
+        sig = inspect.signature(find_visually_similar_anime)
+        assert sig.parameters['anime_id'].annotation == str
+        assert sig.parameters['limit'].annotation == int
+        assert sig.parameters['limit'].default == 10
+        
+        # Test search_multimodal_anime signature
+        sig = inspect.signature(search_multimodal_anime)
+        assert sig.parameters['query'].annotation == str
+        assert 'Optional' in str(sig.parameters['image_data'].annotation)
+        assert sig.parameters['limit'].annotation == int
+        assert sig.parameters['text_weight'].annotation == float
+        assert sig.parameters['text_weight'].default == 0.7

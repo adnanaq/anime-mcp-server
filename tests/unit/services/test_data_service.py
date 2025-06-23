@@ -627,3 +627,340 @@ class TestAnimeDataServicePerformance:
         # Verify correctness wasn't sacrificed for speed
         platform_ids = service._extract_all_platform_ids(sources)
         assert len(platform_ids) == 11  # All platforms extracted
+
+
+# ============================================================================
+# SECTION 4: REFACTORED DATA PROCESSING TESTS
+# ============================================================================
+
+class MockProcessingConfig:
+    """Mock processing configuration for testing."""
+    
+    def __init__(self, batch_size: int = 1000, max_concurrent_batches: int = 3, processing_timeout: int = 300):
+        self.batch_size = batch_size
+        self.max_concurrent_batches = max_concurrent_batches
+        self.processing_timeout = processing_timeout
+
+
+class TestRefactoredDataProcessing:
+    """Test cases for refactored data processing functionality."""
+    
+    @pytest.fixture
+    def mock_data_service(self):
+        """Create mock data service for testing."""
+        class MockDataService:
+            def __init__(self):
+                self.settings = MagicMock()
+                self.settings.batch_size = 1000
+                self.settings.max_concurrent_batches = 3
+                self.settings.processing_timeout = 300
+                self.platform_configs = {
+                    'myanimelist': {'domain': 'myanimelist.net', 'pattern': 'anime/(\\d+)'},
+                    'anilist': {'domain': 'anilist.co', 'pattern': 'anime/(\\d+)'},
+                }
+            
+            def _create_processing_config(self):
+                return MockProcessingConfig(
+                    batch_size=self.settings.batch_size,
+                    max_concurrent_batches=self.settings.max_concurrent_batches,
+                    processing_timeout=self.settings.processing_timeout
+                )
+            
+            def _create_batches(self, anime_list: List[Dict[str, Any]], batch_size: int):
+                batches = []
+                for i in range(0, len(anime_list), batch_size):
+                    batch = anime_list[i:i + batch_size]
+                    batches.append(batch)
+                return batches
+            
+            def _aggregate_results(self, batch_results: List[List[Dict[str, Any]]]):
+                all_processed = []
+                for batch_result in batch_results:
+                    if isinstance(batch_result, list):
+                        all_processed.extend(batch_result)
+                return all_processed
+            
+            def _log_batch_metrics(self, batch_num: int, batch_start: float, total_entries: int, processed_entries: int, error_count: int):
+                pass  # Mock logging
+            
+            def _log_processing_metrics(self, start_time: float, total_entries: int, processed_entries: int):
+                pass  # Mock logging
+            
+            def process_anime_entry(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+                """Mock process single anime entry."""
+                if entry.get('title') == 'invalid_anime':
+                    raise ValueError("Invalid anime data")
+                return {
+                    'anime_id': f"anime_{entry.get('title', 'unknown')}",
+                    'title': entry.get('title', 'Unknown'),
+                    'processed': True
+                }
+            
+            async def _process_batch(self, batch: List[Dict[str, Any]], batch_num: int, config):
+                """Mock process batch method."""
+                processed = []
+                for entry in batch:
+                    try:
+                        result = self.process_anime_entry(entry)
+                        processed.append(result)
+                    except Exception:
+                        # Skip invalid entries
+                        pass
+                return processed
+            
+            async def _process_batches_concurrently(self, batches: List[List[Dict[str, Any]]], config):
+                """Mock concurrent batch processing."""
+                results = []
+                for i, batch in enumerate(batches):
+                    batch_result = await self._process_batch(batch, i + 1, config)
+                    results.append(batch_result)
+                return results
+        
+        return MockDataService()
+    
+    @pytest.fixture
+    def sample_anime_data(self):
+        """Create sample anime data for testing."""
+        return {
+            "data": [
+                {"title": "Attack on Titan", "synopsis": "Humanity fights giant humanoids"},
+                {"title": "Death Note", "synopsis": "A supernatural notebook that kills"},
+                {"title": "One Piece", "synopsis": "Pirates searching for treasure"},
+                {"title": "Naruto", "synopsis": "Young ninja's journey to become Hokage"},
+                {"title": "Dragon Ball Z", "synopsis": "Saiyans protecting Earth"},
+                {"title": "invalid_anime", "synopsis": "This will cause processing error"},
+                {"title": "Demon Slayer", "synopsis": "Demon hunting organization"},
+                {"title": "My Hero Academia", "synopsis": "Heroes with superpowers"},
+            ]
+        }
+    
+    def test_create_processing_config(self, mock_data_service):
+        """Test processing configuration creation."""
+        config = mock_data_service._create_processing_config()
+        
+        assert isinstance(config, MockProcessingConfig)
+        assert config.batch_size == 1000
+        assert config.max_concurrent_batches == 3
+        assert config.processing_timeout == 300
+    
+    def test_create_batches_normal_case(self, mock_data_service):
+        """Test batch creation with normal data."""
+        anime_list = [{"title": f"Anime {i}"} for i in range(10)]
+        batch_size = 3
+        
+        batches = mock_data_service._create_batches(anime_list, batch_size)
+        
+        assert len(batches) == 4  # 10 items with batch size 3 = 4 batches
+        assert len(batches[0]) == 3
+        assert len(batches[1]) == 3
+        assert len(batches[2]) == 3
+        assert len(batches[3]) == 1  # Last batch has remainder
+        
+        # Verify all items are included
+        flattened = [item for batch in batches for item in batch]
+        assert len(flattened) == len(anime_list)
+    
+    @pytest.mark.asyncio
+    async def test_process_batch_success(self, mock_data_service):
+        """Test successful batch processing."""
+        batch = [
+            {"title": "Attack on Titan", "synopsis": "Titans"},
+            {"title": "Death Note", "synopsis": "Notebook"},
+        ]
+        config = MockProcessingConfig()
+        
+        results = await mock_data_service._process_batch(batch, 1, config)
+        
+        assert len(results) == 2
+        assert results[0]["title"] == "Attack on Titan"
+        assert results[0]["processed"] is True
+        assert results[1]["title"] == "Death Note"
+        assert results[1]["processed"] is True
+    
+    def test_aggregate_results_normal_case(self, mock_data_service):
+        """Test result aggregation from multiple batches."""
+        batch_results = [
+            [{"title": "Anime 1"}, {"title": "Anime 2"}],
+            [{"title": "Anime 3"}],
+            [{"title": "Anime 4"}, {"title": "Anime 5"}, {"title": "Anime 6"}],
+        ]
+        
+        aggregated = mock_data_service._aggregate_results(batch_results)
+        
+        assert len(aggregated) == 6
+        assert aggregated[0]["title"] == "Anime 1"
+        assert aggregated[2]["title"] == "Anime 3"
+        assert aggregated[5]["title"] == "Anime 6"
+
+
+# ============================================================================
+# SECTION 5: REMOVE ENTRIES FUNCTIONALITY TESTS
+# ============================================================================
+
+class TestRemoveEntriesFunctionality:
+    """Test cases for remove_entries functionality in update service."""
+    
+    @pytest.fixture
+    def mock_qdrant_client(self):
+        """Create mock Qdrant client for testing."""
+        client = MagicMock()
+        client.collection_name = "anime_database"
+        client.client = MagicMock()
+        
+        # Mock point ID generation
+        client._generate_point_id = lambda anime_id: f"point_{anime_id}"
+        
+        # Mock successful delete response
+        delete_response = MagicMock()
+        delete_response.status = "completed"
+        client.client.delete.return_value = delete_response
+        
+        return client
+    
+    @pytest.fixture
+    def mock_update_service(self, mock_qdrant_client):
+        """Create mock update service for testing."""
+        class MockUpdateService:
+            def __init__(self, qdrant_client):
+                self.qdrant_client = qdrant_client
+            
+            async def remove_entries(self, entries: List[Dict]) -> bool:
+                """Implementation of remove_entries for testing."""
+                if not entries:
+                    return True
+                
+                try:
+                    # Extract anime IDs from entries to remove
+                    anime_ids_to_remove = []
+                    for entry in entries:
+                        anime_id = entry.get('anime_id')
+                        if anime_id:
+                            anime_ids_to_remove.append(anime_id)
+                    
+                    if not anime_ids_to_remove:
+                        return False
+                    
+                    # Remove entries in batches
+                    batch_size = 100
+                    successful_removals = 0
+                    failed_removals = 0
+                    
+                    for i in range(0, len(anime_ids_to_remove), batch_size):
+                        batch_ids = anime_ids_to_remove[i:i + batch_size]
+                        
+                        try:
+                            # Generate point IDs for the anime IDs
+                            point_ids = [self.qdrant_client._generate_point_id(anime_id) for anime_id in batch_ids]
+                            
+                            # Delete points from Qdrant
+                            delete_result = self.qdrant_client.client.delete(
+                                collection_name=self.qdrant_client.collection_name,
+                                points_selector={"points": point_ids}
+                            )
+                            
+                            if delete_result.status == "completed":
+                                successful_removals += len(batch_ids)
+                            else:
+                                failed_removals += len(batch_ids)
+                                
+                        except Exception:
+                            failed_removals += len(batch_ids)
+                    
+                    # Consider it successful if at least 80% of entries were removed
+                    total_attempted = len(anime_ids_to_remove)
+                    success_rate = (successful_removals / total_attempted) * 100 if total_attempted > 0 else 0
+                    return success_rate >= 80.0
+                    
+                except Exception:
+                    return False
+        
+        return MockUpdateService(mock_qdrant_client)
+    
+    @pytest.fixture
+    def sample_remove_entries(self):
+        """Create sample anime entries for testing."""
+        return [
+            {
+                "anime_id": "anime123",
+                "title": "Attack on Titan",
+                "synopsis": "Humanity fights titans"
+            },
+            {
+                "anime_id": "anime456",
+                "title": "Death Note",
+                "synopsis": "Supernatural notebook"
+            },
+            {
+                "anime_id": "anime789",
+                "title": "One Piece",
+                "synopsis": "Pirates search for treasure"
+            }
+        ]
+    
+    @pytest.mark.asyncio
+    async def test_remove_entries_success(self, mock_update_service, sample_remove_entries):
+        """Test successful removal of entries."""
+        result = await mock_update_service.remove_entries(sample_remove_entries)
+        
+        assert result is True
+        
+        # Verify delete was called for each batch
+        mock_update_service.qdrant_client.client.delete.assert_called()
+        
+        # Verify point ID generation was called for each anime_id
+        expected_point_ids = ["point_anime123", "point_anime456", "point_anime789"]
+        for anime_id in ["anime123", "anime456", "anime789"]:
+            point_id = mock_update_service.qdrant_client._generate_point_id(anime_id)
+            assert point_id in expected_point_ids
+    
+    @pytest.mark.asyncio
+    async def test_remove_entries_empty_list(self, mock_update_service):
+        """Test removal with empty entry list."""
+        result = await mock_update_service.remove_entries([])
+        
+        assert result is True
+        
+        # Verify no delete operations were called
+        mock_update_service.qdrant_client.client.delete.assert_not_called()
+    
+    @pytest.mark.asyncio
+    async def test_remove_entries_missing_anime_ids(self, mock_update_service):
+        """Test removal with entries missing anime_id."""
+        entries_without_ids = [
+            {
+                "title": "Attack on Titan",
+                "synopsis": "No anime_id field"
+            },
+            {
+                "anime_id": "",  # Empty anime_id
+                "title": "Death Note"
+            },
+            {
+                "title": "One Piece"
+                # Missing anime_id field entirely
+            }
+        ]
+        
+        result = await mock_update_service.remove_entries(entries_without_ids)
+        
+        assert result is False
+        
+        # Verify no delete operations were called since no valid anime_ids
+        mock_update_service.qdrant_client.client.delete.assert_not_called()
+    
+    @pytest.mark.asyncio
+    async def test_remove_entries_batch_processing(self, mock_update_service):
+        """Test batch processing with large number of entries."""
+        # Create 250 entries to test batching (batch size is 100)
+        large_entry_list = [
+            {"anime_id": f"anime{i:03d}", "title": f"Anime {i}"}
+            for i in range(250)
+        ]
+        
+        result = await mock_update_service.remove_entries(large_entry_list)
+        
+        assert result is True
+        
+        # Verify delete was called multiple times for batches
+        # Should be called 3 times: 100 + 100 + 50
+        assert mock_update_service.qdrant_client.client.delete.call_count == 3

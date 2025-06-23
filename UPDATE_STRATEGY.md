@@ -7,12 +7,14 @@ The anime-offline-database updates weekly, so we need an efficient strategy to k
 ## 📊 Update Types
 
 ### 1. **Incremental Updates** (Recommended)
+
 - **Frequency**: Weekly (automated)
-- **Duration**: 10-30 minutes 
+- **Duration**: 10-30 minutes
 - **Process**: Only index new/changed entries
 - **Efficiency**: 95%+ time savings vs full update
 
 ### 2. **Full Updates** (Emergency only)
+
 - **Frequency**: Manual or quarterly
 - **Duration**: 2-3 hours
 - **Process**: Complete re-index of all 38,894 entries
@@ -23,7 +25,7 @@ The anime-offline-database updates weekly, so we need an efficient strategy to k
 ```
 Weekly Schedule (Every Friday 2 AM):
 1. Check for updates → Compare content hash
-2. If changes detected → Download new data  
+2. If changes detected → Download new data
 3. Compare datasets → Find added/modified/removed entries
 4. Process changes → Generate embeddings for new entries
 5. Update vector DB → Add new, update modified, remove deleted
@@ -36,6 +38,7 @@ so Friday 2 AM ensures we catch the latest weekly changes.
 ## 📡 API Endpoints
 
 ### Admin Endpoints
+
 ```http
 POST /api/admin/check-updates          # Check for available updates (✅ Implemented)
 POST /api/admin/download-data          # Download latest anime database
@@ -45,6 +48,7 @@ POST /api/admin/schedule-weekly-update # Manually trigger weekly job
 ```
 
 ### Usage Examples
+
 ```bash
 # Check if updates are available
 curl -X POST http://localhost:8000/api/admin/check-updates
@@ -62,6 +66,7 @@ curl http://localhost:8000/stats
 ## 🔧 Setup Instructions
 
 ### 1. Automatic Updates (Recommended)
+
 ```bash
 # Setup weekly cron job
 ./scripts/setup_cron.sh
@@ -71,6 +76,7 @@ crontab -l
 ```
 
 ### 2. Manual Updates
+
 ```bash
 # Check for updates
 python scripts/weekly_update.py
@@ -81,10 +87,10 @@ curl -X POST http://localhost:8000/api/admin/schedule-weekly-update
 
 ## 📊 Performance Comparison
 
-| Update Type | Duration | Data Processed | Downtime | Efficiency |
-|-------------|----------|----------------|----------|------------|
-| **Incremental** | 10-30 min | ~100-500 entries | None | ⭐⭐⭐⭐⭐ |
-| **Full** | 2-3 hours | 38,894 entries | Partial | ⭐⭐ |
+| Update Type     | Duration  | Data Processed   | Downtime | Efficiency |
+| --------------- | --------- | ---------------- | -------- | ---------- |
+| **Incremental** | 10-30 min | ~100-500 entries | None     | ⭐⭐⭐⭐⭐ |
+| **Full**        | 2-3 hours | 38,894 entries   | Partial  | ⭐⭐       |
 
 ## 🛡️ Smart Diffing Algorithm
 
@@ -96,11 +102,12 @@ The incremental update uses intelligent comparison:
 4. **Vector Efficiency**: Only re-embed changed content
 
 ### Example Weekly Changes
+
 ```json
 {
-  "added": 15,        // New anime releases
-  "modified": 8,      // Updated episode counts, status
-  "removed": 2,       // Duplicate cleanup
+  "added": 15, // New anime releases
+  "modified": 8, // Updated episode counts, status
+  "removed": 2, // Duplicate cleanup
   "total_time": "12 minutes"
 }
 ```
@@ -120,11 +127,12 @@ data/
 ## 🔍 Monitoring
 
 ### Log Files
+
 ```bash
 # Weekly update logs
 tail -f logs/weekly_update.log
 
-# Cron job logs  
+# Cron job logs
 tail -f logs/cron.log
 
 # Server logs
@@ -132,6 +140,7 @@ tail -f server.log
 ```
 
 ### Status Tracking
+
 ```bash
 # Current database stats
 curl http://localhost:8000/stats
@@ -145,11 +154,13 @@ curl http://localhost:8000/api/admin/update-status
 ### Common Issues
 
 1. **Update Fails**
+
    - Check Qdrant connection
    - Verify disk space
    - Review error logs
 
 2. **Slow Performance**
+
    - Reduce batch size
    - Check memory usage
    - Monitor network latency
@@ -175,6 +186,7 @@ curl -X POST http://localhost:8000/api/admin/update-full
 ## 🔮 Future Enhancements
 
 ### Phase 2 Features
+
 - [ ] **Backup & Rollback**: Snapshot vector index before updates
 - [ ] **Health Monitoring**: Automated alert system
 - [ ] **Delta Compression**: Store only changes for efficiency
@@ -182,6 +194,7 @@ curl -X POST http://localhost:8000/api/admin/update-full
 - [ ] **Real-time Updates**: WebSocket notifications for changes
 
 ### Phase 3 Features
+
 - [ ] **Blue-Green Deployment**: Zero-downtime updates
 - [ ] **Distributed Updates**: Multi-node update coordination
 - [ ] **ML-Powered Diffing**: Intelligent change detection

@@ -1,8 +1,10 @@
 """Test configuration and fixtures."""
-import pytest
+
 import asyncio
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.models.anime import AnimeEntry
 from src.services.data_service import AnimeDataService
@@ -24,23 +26,20 @@ def sample_anime_data() -> Dict[str, Any]:
             "https://myanimelist.net/anime/1",
             "https://anilist.co/anime/1",
             "https://kitsu.app/anime/1",
-            "https://anidb.net/anime/1"
+            "https://anidb.net/anime/1",
         ],
         "title": "Test Anime",
         "type": "TV",
         "episodes": 12,
         "status": "FINISHED",
-        "animeSeason": {
-            "season": "SPRING",
-            "year": 2023
-        },
+        "animeSeason": {"season": "SPRING", "year": 2023},
         "picture": "https://example.com/image.jpg",
         "thumbnail": "https://example.com/thumb.jpg",
         "synonyms": ["Test Show", "テストアニメ"],
         "tags": ["Action", "Adventure", "Sci-Fi"],
         "studios": ["Test Studio"],
         "producers": ["Test Producer"],
-        "synopsis": "A test anime about testing."
+        "synopsis": "A test anime about testing.",
     }
 
 
@@ -50,7 +49,7 @@ def complex_anime_data() -> Dict[str, Any]:
     return {
         "sources": [
             "https://myanimelist.net/anime/12345",
-            "https://anilist.co/anime/67890", 
+            "https://anilist.co/anime/67890",
             "https://kitsu.app/anime/111",
             "https://anidb.net/anime/222",
             "https://anisearch.com/anime/333",
@@ -59,22 +58,19 @@ def complex_anime_data() -> Dict[str, Any]:
             "https://animenewsnetwork.com/encyclopedia/anime.php?id=666",
             "https://anime-planet.com/anime/test-anime-slug",
             "https://notify.moe/anime/ABC123DEF",
-            "https://animecountdown.com/777"
+            "https://animecountdown.com/777",
         ],
         "title": "Complex Test Anime",
         "type": "Movie",
         "episodes": 1,
         "status": "FINISHED",
-        "animeSeason": {
-            "season": "SUMMER",
-            "year": 2024
-        },
+        "animeSeason": {"season": "SUMMER", "year": 2024},
         "picture": "https://example.com/complex.jpg",
         "synonyms": ["Complex Show", "複雑なアニメ"],
         "tags": ["Drama", "Thriller", "Mystery"],
         "studios": ["Complex Studio", "Another Studio"],
         "producers": ["Complex Producer"],
-        "synopsis": "A complex anime for testing cross-platform ID extraction."
+        "synopsis": "A complex anime for testing cross-platform ID extraction.",
     }
 
 
@@ -103,7 +99,7 @@ def mock_qdrant_client():
         "indexed_anime": 100,
         "last_updated": "2024-01-01T00:00:00Z",
         "index_health": "green",
-        "average_quality_score": 0.85
+        "average_quality_score": 0.85,
     }
     return mock_client
 
@@ -122,7 +118,7 @@ def expected_platform_ids() -> Dict[str, Any]:
         "animenewsnetwork_id": 666,
         "animeplanet_id": "test-anime-slug",
         "notify_id": "ABC123DEF",
-        "animecountdown_id": 777
+        "animecountdown_id": 777,
     }
 
 

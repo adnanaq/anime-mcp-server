@@ -211,6 +211,129 @@ async def recommend_anime(
         raise RuntimeError(f"Recommendation failed: {str(e)}")
 
 
+# Phase 4: Multi-Modal Image Search Tools
+@mcp.tool
+async def search_anime_by_image(image_data: str, limit: int = 10) -> List[Dict[str, Any]]:
+    """Search for anime using visual similarity from an uploaded image.
+    
+    Find anime with poster images visually similar to the provided image.
+    Requires multi-vector support to be enabled in server configuration.
+    
+    Args:
+        image_data: Base64 encoded image data (supports JPG, PNG, WebP formats)
+        limit: Maximum number of results to return (default: 10, max: 30)
+    
+    Returns:
+        List of anime with visual similarity scores and metadata
+    """
+    if not qdrant_client:
+        raise RuntimeError("Qdrant client not initialized")
+    
+    # Check if multi-vector support is enabled
+    if not getattr(qdrant_client, '_supports_multi_vector', False):
+        raise RuntimeError("Multi-vector image search not enabled. Enable in server configuration.")
+    
+    # Validate limit
+    limit = min(max(1, limit), 30)
+    
+    logger.info(f"MCP image search request (limit: {limit})")
+    
+    try:
+        results = await qdrant_client.search_by_image(image_data=image_data, limit=limit)
+        logger.info(f"Found {len(results)} visually similar anime")
+        return results
+    except Exception as e:
+        logger.error(f"Image search failed: {e}")
+        raise RuntimeError(f"Image search failed: {str(e)}")
+
+
+@mcp.tool
+async def find_visually_similar_anime(anime_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+    """Find anime with similar visual style to a reference anime.
+    
+    Uses the poster image of the reference anime to find visually similar anime.
+    Requires multi-vector support to be enabled in server configuration.
+    
+    Args:
+        anime_id: Reference anime ID to find visually similar anime for
+        limit: Maximum number of similar anime to return (default: 10, max: 20)
+    
+    Returns:
+        List of visually similar anime with similarity scores
+    """
+    if not qdrant_client:
+        raise RuntimeError("Qdrant client not initialized")
+    
+    # Check if multi-vector support is enabled
+    if not getattr(qdrant_client, '_supports_multi_vector', False):
+        raise RuntimeError("Multi-vector visual similarity not enabled. Enable in server configuration.")
+    
+    # Validate limit
+    limit = min(max(1, limit), 20)
+    
+    logger.info(f"MCP visual similarity request for anime: {anime_id} (limit: {limit})")
+    
+    try:
+        results = await qdrant_client.find_visually_similar_anime(anime_id=anime_id, limit=limit)
+        logger.info(f"Found {len(results)} visually similar anime for: {anime_id}")
+        return results
+    except Exception as e:
+        logger.error(f"Visual similarity search failed: {e}")
+        raise RuntimeError(f"Visual similarity search failed: {str(e)}")
+
+
+@mcp.tool
+async def search_multimodal_anime(
+    query: str, 
+    image_data: Optional[str] = None, 
+    limit: int = 10,
+    text_weight: float = 0.7
+) -> List[Dict[str, Any]]:
+    """Search for anime using both text query and image similarity.
+    
+    Combines semantic text search with visual image search for enhanced discovery.
+    The text_weight parameter controls the balance between text and image matching.
+    
+    Args:
+        query: Text search query (e.g., "mecha robots fighting")
+        image_data: Optional base64 encoded image for visual similarity
+        limit: Maximum number of results to return (default: 10, max: 25)
+        text_weight: Weight for text similarity (0.0-1.0), default 0.7 means 70% text, 30% image
+    
+    Returns:
+        List of anime with combined similarity scores (text + image)
+    """
+    if not qdrant_client:
+        raise RuntimeError("Qdrant client not initialized")
+    
+    # Validate parameters
+    limit = min(max(1, limit), 25)
+    text_weight = max(0.0, min(1.0, text_weight))
+    
+    logger.info(f"MCP multimodal search: '{query}' with image={image_data is not None} (limit: {limit}, text_weight: {text_weight})")
+    
+    try:
+        # Check if multi-vector support is available for enhanced search
+        if getattr(qdrant_client, '_supports_multi_vector', False) and image_data:
+            results = await qdrant_client.search_multimodal(
+                query=query, 
+                image_data=image_data, 
+                limit=limit, 
+                text_weight=text_weight
+            )
+        else:
+            # Fallback to text-only search if multi-vector not available
+            if image_data:
+                logger.warning("Multi-vector not enabled, falling back to text-only search")
+            results = await qdrant_client.search(query=query, limit=limit)
+        
+        logger.info(f"Found {len(results)} multimodal search results")
+        return results
+    except Exception as e:
+        logger.error(f"Multimodal search failed: {e}")
+        raise RuntimeError(f"Multimodal search failed: {str(e)}")
+
+
 @mcp.resource("anime://database/stats")
 async def database_stats() -> str:
     """Provides current anime database statistics and health information."""
@@ -248,9 +371,12 @@ async def database_schema() -> str:
             "anidb_id": {"type": "integer", "platform": "AniDB"}
         },
         "vector_info": {
-            "embedding_model": settings.fastembed_model,
-            "vector_size": settings.qdrant_vector_size,
-            "distance_metric": settings.qdrant_distance_metric
+            "text_embedding_model": settings.fastembed_model,
+            "text_vector_size": settings.qdrant_vector_size,
+            "image_embedding_model": getattr(settings, 'clip_model', 'ViT-B/32'),
+            "image_vector_size": getattr(settings, 'image_vector_size', 512),
+            "distance_metric": settings.qdrant_distance_metric,
+            "multi_vector_enabled": getattr(settings, 'enable_multi_vector', False)
         }
     }
     return f"Anime Database Schema: {schema}"

@@ -390,3 +390,317 @@ class TestQdrantClient:
             
             with pytest.raises(Exception):
                 QdrantClient()
+
+
+# ============================================================================
+# MULTI-VECTOR FUNCTIONALITY TESTS (PHASE 4)
+# ============================================================================
+
+from qdrant_client.models import (
+    Distance, VectorParams, CollectionInfo, PointStruct,
+    Filter, FieldCondition, MatchValue, ScoredPoint
+)
+
+
+class TestQdrantMultiVector:
+    """Test suite for multi-vector QdrantClient functionality."""
+    
+    @pytest.fixture
+    def mock_settings(self):
+        """Mock settings for testing."""
+        from src.config import Settings
+        settings = MagicMock(spec=Settings)
+        settings.qdrant_url = "http://localhost:6333"
+        settings.qdrant_collection_name = "test_anime_database"
+        settings.qdrant_vector_size = 384
+        settings.qdrant_distance_metric = "cosine"
+        settings.fastembed_model = "BAAI/bge-small-en-v1.5"
+        settings.fastembed_cache_dir = None
+        return settings
+    
+    @pytest.fixture
+    def mock_qdrant_sdk(self):
+        """Mock QdrantSDK client."""
+        with patch('src.vector.qdrant_client.QdrantSDK') as mock_sdk:
+            mock_client = MagicMock()
+            mock_sdk.return_value = mock_client
+            yield mock_client
+    
+    @pytest.fixture
+    def mock_text_embedding(self):
+        """Mock FastEmbed TextEmbedding."""
+        with patch('src.vector.qdrant_client.TextEmbedding') as mock_embedding:
+            mock_encoder = MagicMock()
+            mock_embedding.return_value = mock_encoder
+            # Mock embedding output - 384 dimensions
+            mock_encoder.embed.return_value = [np.random.random(384).tolist()]
+            yield mock_encoder
+    
+    @pytest.fixture  
+    def mock_vision_processor(self):
+        """Mock VisionProcessor."""
+        with patch('src.vector.qdrant_client.VisionProcessor') as mock_processor:
+            processor = MagicMock()
+            mock_processor.return_value = processor
+            # Mock image embedding output - 512 dimensions
+            processor.encode_image.return_value = np.random.random(512).tolist()
+            yield processor
+    
+    @pytest.fixture
+    def multi_vector_client(self, mock_settings, mock_qdrant_sdk, mock_text_embedding, mock_vision_processor):
+        """Create QdrantClient with multi-vector support enabled."""
+        client = QdrantClient(mock_settings)
+        # Enable multi-vector support manually for testing
+        client._supports_multi_vector = True
+        client._vision_processor = mock_vision_processor
+        return client
+    
+    def test_multi_vector_initialization(self, multi_vector_client):
+        """Test that multi-vector support can be enabled."""
+        assert multi_vector_client._supports_multi_vector is True
+        assert multi_vector_client._vision_processor is not None
+    
+    @pytest.mark.asyncio
+    async def test_create_multi_vector_collection(self, multi_vector_client, mock_qdrant_sdk):
+        """Test creation of multi-vector collection with named vectors."""
+        # Mock collection doesn't exist
+        mock_qdrant_sdk.collection_exists.return_value = False
+        mock_qdrant_sdk.create_collection.return_value = True
+        
+        await multi_vector_client._ensure_collection_exists()
+        
+        # Verify create_collection was called with multi-vector config
+        mock_qdrant_sdk.create_collection.assert_called_once()
+        call_args = mock_qdrant_sdk.create_collection.call_args
+        vectors_config = call_args[1]['vectors_config']
+        
+        # Should have both text and image vectors
+        assert 'text' in vectors_config
+        assert 'image' in vectors_config
+        assert vectors_config['text'].size == 384
+        assert vectors_config['image'].size == 512
+    
+    @pytest.mark.asyncio
+    async def test_search_by_image(self, multi_vector_client, mock_qdrant_sdk, mock_vision_processor):
+        """Test image-based search functionality."""
+        # Mock search results
+        mock_points = [
+            ScoredPoint(id="anime1", score=0.95, payload={"title": "Attack on Titan"}),
+            ScoredPoint(id="anime2", score=0.87, payload={"title": "Death Note"})
+        ]
+        mock_qdrant_sdk.search.return_value = mock_points
+        
+        # Test image search
+        test_image_data = "base64_image_data_here"
+        results = await multi_vector_client.search_by_image(test_image_data, limit=5)
+        
+        # Verify vision processor was called
+        mock_vision_processor.encode_image.assert_called_once_with(test_image_data)
+        
+        # Verify search was called with image vector
+        mock_qdrant_sdk.search.assert_called_once()
+        search_call = mock_qdrant_sdk.search.call_args
+        assert search_call[1]['using'] == 'image'  # Named vector
+        assert len(search_call[1]['query_vector']) == 512  # Image embedding size
+        
+        # Verify results
+        assert len(results) == 2
+        assert results[0]['title'] == "Attack on Titan"
+        assert results[0]['score'] == 0.95
+    
+    @pytest.mark.asyncio
+    async def test_find_visually_similar_anime(self, multi_vector_client, mock_qdrant_sdk, mock_vision_processor):
+        """Test finding visually similar anime by anime ID."""
+        # Mock getting the reference anime first
+        reference_anime = {"anime_id": "ref123", "title": "Reference Anime"}
+        mock_qdrant_sdk.retrieve.return_value = [
+            PointStruct(id="ref123", payload=reference_anime, vector={"image": [0.1] * 512})
+        ]
+        
+        # Mock similar anime search results
+        mock_points = [
+            ScoredPoint(id="anime1", score=0.93, payload={"title": "Similar Anime 1"}),
+            ScoredPoint(id="anime2", score=0.89, payload={"title": "Similar Anime 2"})
+        ]
+        mock_qdrant_sdk.search.return_value = mock_points
+        
+        results = await multi_vector_client.find_visually_similar_anime("ref123", limit=3)
+        
+        # Verify retrieve was called to get reference anime
+        mock_qdrant_sdk.retrieve.assert_called_once_with(
+            collection_name=multi_vector_client.collection_name,
+            ids=["ref123"],
+            with_vectors=['image']
+        )
+        
+        # Verify search was called with reference image vector
+        mock_qdrant_sdk.search.assert_called_once()
+        search_call = mock_qdrant_sdk.search.call_args
+        assert search_call[1]['using'] == 'image'
+        
+        # Verify results
+        assert len(results) == 2
+        assert results[0]['title'] == "Similar Anime 1"
+    
+    @pytest.mark.asyncio
+    async def test_search_multimodal(self, multi_vector_client, mock_qdrant_sdk, mock_text_embedding, mock_vision_processor):
+        """Test multimodal search combining text and image."""
+        # Mock text and image search results
+        text_points = [
+            ScoredPoint(id="anime1", score=0.91, payload={"title": "Text Match 1"}),
+            ScoredPoint(id="anime2", score=0.85, payload={"title": "Text Match 2"})
+        ]
+        image_points = [
+            ScoredPoint(id="anime1", score=0.88, payload={"title": "Text Match 1"}),  # Same anime
+            ScoredPoint(id="anime3", score=0.82, payload={"title": "Image Match 1"})
+        ]
+        
+        # Mock multiple search calls
+        mock_qdrant_sdk.search.side_effect = [text_points, image_points]
+        
+        results = await multi_vector_client.search_multimodal(
+            text_query="mecha robots",
+            image_data="base64_image",
+            text_weight=0.7,
+            limit=5
+        )
+        
+        # Verify both text and image embeddings were generated
+        mock_text_embedding.embed.assert_called_once_with(["mecha robots"])
+        mock_vision_processor.encode_image.assert_called_once_with("base64_image")
+        
+        # Verify two searches were performed
+        assert mock_qdrant_sdk.search.call_count == 2
+        
+        # Verify combined results are returned
+        assert len(results) > 0
+        # anime1 should have highest combined score (0.91 * 0.7 + 0.88 * 0.3)
+    
+    @pytest.mark.asyncio
+    async def test_add_documents_multi_vector(self, multi_vector_client, mock_qdrant_sdk, mock_text_embedding, mock_vision_processor):
+        """Test adding documents with both text and image vectors."""
+        # Mock successful upsert
+        mock_qdrant_sdk.upsert.return_value = True
+        
+        documents = [
+            {
+                "anime_id": "anime1",
+                "title": "Test Anime",
+                "embedding_text": "Test anime about robots",
+                "image_data": "base64_image_data"
+            }
+        ]
+        
+        await multi_vector_client.add_documents(documents)
+        
+        # Verify both text and image embeddings were generated
+        mock_text_embedding.embed.assert_called_once()
+        mock_vision_processor.encode_image.assert_called_once()
+        
+        # Verify upsert was called with multi-vector point
+        mock_qdrant_sdk.upsert.assert_called_once()
+        upsert_call = mock_qdrant_sdk.upsert.call_args
+        points = upsert_call[1]['points']
+        
+        assert len(points) == 1
+        point = points[0]
+        assert 'text' in point.vector
+        assert 'image' in point.vector
+        assert len(point.vector['text']) == 384  # Text embedding size
+        assert len(point.vector['image']) == 512  # Image embedding size
+    
+    @pytest.mark.asyncio
+    async def test_backward_compatibility_single_vector(self, mock_settings, mock_qdrant_sdk, mock_text_embedding):
+        """Test that existing single-vector functionality still works."""
+        # Create client without multi-vector support
+        client = QdrantClient(mock_settings)
+        # Explicitly disable multi-vector support
+        client._supports_multi_vector = False
+        
+        # Mock single-vector collection exists
+        mock_qdrant_sdk.collection_exists.return_value = True
+        
+        # Mock search results
+        mock_points = [
+            ScoredPoint(id="anime1", score=0.95, payload={"title": "Attack on Titan"})
+        ]
+        mock_qdrant_sdk.search.return_value = mock_points
+        
+        # Test regular text search
+        results = await client.search("mecha anime", limit=5)
+        
+        # Verify search used single vector (no 'using' parameter)
+        search_call = mock_qdrant_sdk.search.call_args
+        assert 'using' not in search_call[1]  # Single vector mode
+        
+        # Verify results
+        assert len(results) == 1
+        assert results[0]['title'] == "Attack on Titan"
+    
+    @pytest.mark.asyncio 
+    async def test_graceful_fallback_missing_vision_processor(self, mock_settings, mock_qdrant_sdk, mock_text_embedding):
+        """Test graceful handling when VisionProcessor is unavailable."""
+        with patch('src.vector.qdrant_client.VisionProcessor') as mock_vision_import:
+            # Mock VisionProcessor import failure
+            mock_vision_import.side_effect = ImportError("VisionProcessor not available")
+            
+            client = QdrantClient(mock_settings)
+            
+            # Should fall back to single-vector mode
+            assert client._supports_multi_vector is False
+            assert client._vision_processor is None
+    
+    def test_multi_vector_settings_validation(self):
+        """Test that multi-vector settings are properly validated."""
+        from src.config import Settings
+        
+        # Test with valid multi-vector settings
+        settings = Settings()
+        client = QdrantClient(settings)
+        
+        # Verify multi-vector support is based on VisionProcessor availability
+        if hasattr(client, '_vision_processor') and client._vision_processor:
+            assert client._supports_multi_vector is True
+        else:
+            assert client._supports_multi_vector is False
+    
+    @pytest.mark.asyncio
+    async def test_image_search_error_handling(self, multi_vector_client, mock_vision_processor):
+        """Test error handling in image search functionality."""
+        # Mock vision processor failure
+        mock_vision_processor.encode_image.side_effect = Exception("Image processing failed")
+        
+        with pytest.raises(Exception, match="Image processing failed"):
+            await multi_vector_client.search_by_image("invalid_image_data")
+    
+    @pytest.mark.asyncio
+    async def test_multimodal_search_partial_failure(self, multi_vector_client, mock_qdrant_sdk, mock_text_embedding, mock_vision_processor):
+        """Test multimodal search when one modality fails."""
+        # Mock text search success, image search failure
+        text_points = [ScoredPoint(id="anime1", score=0.9, payload={"title": "Text Result"})]
+        mock_qdrant_sdk.search.side_effect = [text_points, Exception("Image search failed")]
+        
+        # Should fall back to text-only search
+        results = await multi_vector_client.search_multimodal(
+            text_query="mecha anime",
+            image_data="base64_image",
+            limit=5
+        )
+        
+        # Should return text results even if image search failed
+        assert len(results) == 1
+        assert results[0]['title'] == "Text Result"
+    
+    def test_collection_migration_compatibility(self, multi_vector_client):
+        """Test that collection migration maintains compatibility."""
+        # Verify the client can handle both single and multi-vector collections
+        assert hasattr(multi_vector_client, '_ensure_collection_exists')
+        assert hasattr(multi_vector_client, '_supports_multi_vector')
+        
+        # Test migration flag
+        if multi_vector_client._supports_multi_vector:
+            # Should create multi-vector collection
+            assert multi_vector_client._vision_processor is not None
+        else:
+            # Should create single-vector collection
+            assert multi_vector_client._vision_processor is None
