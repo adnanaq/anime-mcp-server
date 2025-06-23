@@ -8,8 +8,9 @@ An AI-powered anime search and recommendation system built with **FastAPI**, **Q
 - ⚡ **High Performance**: Sub-200ms response times with vector embeddings
 - 📊 **Comprehensive Database**: 38,894 anime entries with rich metadata
 - 🤖 **MCP Protocol Integration**: FastMCP server for AI assistant communication
-- 🐳 **Docker Support**: Easy deployment with containerized services
 - 🎯 **Real-time Vector Search**: Qdrant-powered semantic search
+- 🖼️ **Image Search** (Phase 4): Visual similarity search with CLIP embeddings *[In Development]*
+- 🐳 **Docker Support**: Easy deployment with containerized services
 
 ## 🏗️ Architecture
 
@@ -44,11 +45,13 @@ anime-mcp-server/
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.12+
 - Docker & Docker Compose
 - 4GB+ RAM (for vector processing)
 
 ### 1. Clone and Setup
+
 ```bash
 git clone <your-repo-url>
 cd anime-mcp-server
@@ -66,6 +69,7 @@ pip install -r requirements.txt
 ### 2. Start Services
 
 **Full Stack (Recommended)**
+
 ```bash
 # Start complete stack with Docker
 docker compose up -d
@@ -76,6 +80,7 @@ docker compose up -d
 ```
 
 **Local Development**
+
 ```bash
 # Start Qdrant vector database
 docker compose up -d qdrant
@@ -125,13 +130,17 @@ python scripts/test_mcp.py
 
 ### MCP Tools Available
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `search_anime` | Semantic anime search | `query` (string), `limit` (int) |
-| `get_anime_details` | Get detailed anime info | `anime_id` (string) |
-| `find_similar_anime` | Find similar anime | `anime_id` (string), `limit` (int) |
-| `get_anime_stats` | Database statistics | None |
-| `recommend_anime` | Personalized recommendations | `genres`, `year`, `anime_type`, `limit` |
+| Tool                 | Description                  | Parameters                              |
+| -------------------- | ---------------------------- | --------------------------------------- |
+| `search_anime`       | Semantic anime search        | `query` (string), `limit` (int)         |
+| `get_anime_details`  | Get detailed anime info      | `anime_id` (string)                     |
+| `find_similar_anime` | Find similar anime           | `anime_id` (string), `limit` (int)      |
+| `get_anime_stats`    | Database statistics          | None                                    |
+| `recommend_anime`    | Personalized recommendations | `genres`, `year`, `anime_type`, `limit` |
+| *`search_anime_by_image`* | *Image similarity search* | *`image_data` (base64), `limit` (int)* |
+| *`search_multimodal_anime`* | *Text + image search* | *`query`, `image_data`, `text_weight`* |
+
+> **Note**: Image search tools (*italicized*) are implemented but require multi-vector collection setup. See Phase 4 development section below.
 
 ### MCP Resources
 
@@ -142,20 +151,21 @@ python scripts/test_mcp.py
 
 ### 🏥 Core System Endpoints
 
-| Endpoint | Method | Purpose | Example |
-|----------|--------|---------|---------|
-| `/` | GET | API overview | `curl http://localhost:8000/` |
-| `/health` | GET | Health check | `curl http://localhost:8000/health` |
-| `/stats` | GET | Database stats | `curl http://localhost:8000/stats` |
+| Endpoint  | Method | Purpose        | Example                             |
+| --------- | ------ | -------------- | ----------------------------------- |
+| `/`       | GET    | API overview   | `curl http://localhost:8000/`       |
+| `/health` | GET    | Health check   | `curl http://localhost:8000/health` |
+| `/stats`  | GET    | Database stats | `curl http://localhost:8000/stats`  |
 
 ### 🔍 Search & Discovery Endpoints
 
-| Endpoint | Method | Purpose | Example |
-|----------|--------|---------|---------|
-| `/api/search/` | GET | Basic search | `curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"` |
-| `/api/search/semantic` | POST | Advanced search | See examples below |
+| Endpoint               | Method | Purpose         | Example                                                            |
+| ---------------------- | ------ | --------------- | ------------------------------------------------------------------ |
+| `/api/search/`         | GET    | Basic search    | `curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"` |
+| `/api/search/semantic` | POST   | Advanced search | See examples below                                                 |
 
 **Basic Search Examples:**
+
 ```bash
 # Search by genre
 curl "http://localhost:8000/api/search/?q=action%20adventure&limit=5"
@@ -168,6 +178,7 @@ curl "http://localhost:8000/api/search/?q=romantic%20comedy&limit=5"
 ```
 
 **Advanced Semantic Search:**
+
 ```bash
 curl -X POST http://localhost:8000/api/search/semantic \
   -H "Content-Type: application/json" \
@@ -179,9 +190,9 @@ curl -X POST http://localhost:8000/api/search/semantic \
 
 ### ⚙️ Admin Endpoints
 
-| Endpoint | Method | Purpose | Example |
-|----------|--------|---------|---------|
-| `/api/admin/check-updates` | POST | Check for updates | `curl -X POST http://localhost:8000/api/admin/check-updates` |
+| Endpoint                   | Method | Purpose           | Example                                                      |
+| -------------------------- | ------ | ----------------- | ------------------------------------------------------------ |
+| `/api/admin/check-updates` | POST   | Check for updates | `curl -X POST http://localhost:8000/api/admin/check-updates` |
 
 ### 🎯 Response Format
 
@@ -213,6 +224,7 @@ curl -X POST http://localhost:8000/api/search/semantic \
 ## 🧪 Testing
 
 ### FastAPI Server Testing
+
 ```bash
 # Health check
 curl http://localhost:8000/health
@@ -227,6 +239,7 @@ curl http://localhost:8000/stats
 ### MCP Server Testing
 
 **Automated Testing**
+
 ```bash
 # Test MCP server (comprehensive)
 python scripts/test_mcp.py
@@ -254,6 +267,7 @@ python scripts/test_mcp.py
 ```
 
 ### Unit Tests
+
 ```bash
 # Run full test suite
 python run_tests.py
@@ -266,12 +280,13 @@ pytest tests/integration/ -v
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```bash
 # Qdrant Configuration
 QDRANT_URL=http://localhost:6333          # Vector database URL
 QDRANT_COLLECTION_NAME=anime_database     # Collection name
 
-# Server Configuration  
+# Server Configuration
 HOST=0.0.0.0                              # FastAPI bind host
 PORT=8000                                 # FastAPI port
 DEBUG=True                                # Debug mode
@@ -314,12 +329,14 @@ services:
 ## 🔄 Data Pipeline
 
 ### Source Data
+
 - **Provider**: [anime-offline-database](https://github.com/manami-project/anime-offline-database)
 - **Format**: Comprehensive JSON with cross-platform references
 - **Coverage**: MyAnimeList, AniList, Kitsu, AniDB, and 7 other sources
 - **Total Entries**: 38,894 anime with rich metadata
 
 ### Processing Steps
+
 1. **Download**: Fetch latest anime-offline-database JSON
 2. **Validation**: Parse and validate entries with Pydantic models
 3. **Enhancement**: Extract platform IDs, calculate quality scores
@@ -327,7 +344,9 @@ services:
 5. **Indexing**: Store in Qdrant with optimized batch processing
 
 ### Database Schema
+
 Each anime entry contains:
+
 - **Basic Info**: title, type, episodes, status, year, season
 - **Metadata**: synopsis, tags, studios, producers
 - **Platform IDs**: MyAnimeList, AniList, Kitsu, AniDB, etc.
@@ -337,12 +356,15 @@ Each anime entry contains:
 ## 🎮 Interactive Testing
 
 ### Web Interface
+
 Visit **http://localhost:8000** for:
+
 - FastAPI automatic documentation (Swagger UI)
 - Interactive API testing
 - Real-time endpoint exploration
 
 ### MCP Testing
+
 ```bash
 # Test MCP server communication
 python scripts/test_mcp.py
@@ -354,12 +376,13 @@ python -m src.mcp.server
 ## 🛠️ Development
 
 ### Code Quality
+
 ```bash
 # Format code
 black src/
 isort src/
 
-# Type checking  
+# Type checking
 mypy src/
 
 # Run tests
@@ -367,6 +390,7 @@ pytest tests/ -v
 ```
 
 ### Project Structure
+
 - **`src/main.py`**: FastAPI application entry point
 - **`src/mcp/server.py`**: FastMCP server with 5 tools + 2 resources
 - **`src/vector/qdrant_client.py`**: Vector database operations
@@ -403,4 +427,44 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**Status**: ✅ **Production Ready** - Fully functional anime search with vector database, FastMCP integration, and comprehensive API
+## 🚧 Phase 4: Image Search Development
+
+### Current Implementation Status
+
+**🔧 Infrastructure**: ✅ Complete
+- Multi-vector Qdrant client with CLIP integration
+- Vision processor with ViT-B/32 model  
+- MCP tools for image search functionality
+- Environment configuration (`ENABLE_MULTI_VECTOR=true`)
+
+**🗄️ Database State**: ❌ Requires Setup
+- Current: Single-vector collection (text embeddings only)
+- Required: Multi-vector collection (text + image vectors)
+- Action needed: Collection migration + image processing
+
+**🔗 API Availability**: ⚠️ MCP Only
+- Image search available through MCP protocol
+- REST API endpoints not yet implemented
+- MCP tools ready: `search_anime_by_image`, `search_multimodal_anime`
+
+### Quick Setup for Image Search Testing
+
+```bash
+# Enable multi-vector support
+echo "ENABLE_MULTI_VECTOR=true" >> .env
+
+# Restart server to load CLIP model
+docker-compose restart
+
+# Migrate collection to multi-vector (TODO: implement)
+python scripts/migrate_to_multivector.py
+
+# Process anime images (TODO: implement) 
+python scripts/add_image_embeddings.py
+```
+
+**Note**: Image search is architecturally complete but requires database migration and image processing to become functional.
+
+---
+
+**Status**: ✅ **Production Ready** - Fully functional anime search with vector database, FastMCP integration, and comprehensive API. Image search infrastructure ready for Phase 4 completion.
