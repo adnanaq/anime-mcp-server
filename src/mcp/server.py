@@ -7,6 +7,7 @@ Provides anime search tools to AI assistants via Model Context Protocol.
 
 import asyncio
 import logging
+import argparse
 from typing import List, Dict, Any, Optional
 
 from fastmcp import FastMCP
@@ -399,34 +400,88 @@ async def initialize_mcp_server():
     logger.info("Qdrant connection verified - MCP server ready")
 
 
+def parse_arguments():
+    """Parse command line arguments for MCP server."""
+    parser = argparse.ArgumentParser(
+        description="Anime Search MCP Server with dual protocol support"
+    )
+    parser.add_argument(
+        "--mode", 
+        choices=["stdio", "http", "sse", "streamable"],
+        default=settings.server_mode,
+        help="MCP server transport mode (default: from config)"
+    )
+    parser.add_argument(
+        "--host",
+        default=settings.mcp_host,
+        help="Server host for HTTP modes (default: from config)"
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=settings.mcp_port,
+        help="Server port for HTTP modes (default: from config)"
+    )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging"
+    )
+    return parser.parse_args()
+
+
 def main():
     """Main entry point for running the MCP server."""
+    # Parse command line arguments
+    args = parse_arguments()
+    
+    # Override log level if verbose
+    log_level = "DEBUG" if args.verbose else settings.log_level
+    
     # Configure logging
     logging.basicConfig(
-        level=getattr(logging, settings.log_level),
+        level=getattr(logging, log_level),
         format=settings.log_format
     )
+    
+    # Log server configuration
+    logger.info(f"🚀 Starting Anime Search MCP Server")
+    logger.info(f"📡 Transport mode: {args.mode}")
+    if args.mode in ["http", "sse", "streamable"]:
+        logger.info(f"🌐 HTTP server: {args.host}:{args.port}")
+    logger.info(f"📊 Database: {settings.qdrant_collection_name} ({settings.qdrant_url})")
     
     async def init_and_run():
         """Initialize server in async context."""
         try:
             await initialize_mcp_server()
-            logger.info("Starting Anime Search MCP Server")
+            logger.info("✅ MCP server initialized successfully")
         except Exception as e:
-            logger.error(f"MCP server initialization error: {e}", exc_info=True)
+            logger.error(f"❌ MCP server initialization error: {e}", exc_info=True)
             raise
     
     try:
         # Initialize server synchronously
         asyncio.run(init_and_run())
         
-        # Run FastMCP server (this handles its own event loop)
-        mcp.run()
+        # Run FastMCP server with appropriate transport
+        if args.mode == "stdio":
+            logger.info("🔌 Starting stdio transport (local mode)")
+            mcp.run(transport="stdio")
+        elif args.mode == "http":
+            logger.info(f"🌐 Starting HTTP transport on {args.host}:{args.port}")
+            mcp.run(transport="sse", host=args.host, port=args.port)
+        elif args.mode == "sse":
+            logger.info(f"🌐 Starting SSE transport on {args.host}:{args.port}")
+            mcp.run(transport="sse", host=args.host, port=args.port)
+        elif args.mode == "streamable":
+            logger.info(f"🌐 Starting Streamable HTTP transport on {args.host}:{args.port}")
+            mcp.run(transport="streamable", host=args.host, port=args.port)
         
     except KeyboardInterrupt:
-        logger.info("MCP server shutdown requested")
+        logger.info("🛑 MCP server shutdown requested")
     except Exception as e:
-        logger.error(f"MCP server error: {e}", exc_info=True)
+        logger.error(f"❌ MCP server error: {e}", exc_info=True)
         raise
 
 

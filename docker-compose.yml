@@ -19,7 +19,8 @@ services:
     build: .
     container_name: anime-mcp-server
     ports:
-      - "8000:8000"
+      - "8000:8000"  # FastAPI REST API
+      - "8001:8001"  # MCP Server HTTP
     networks:
       - anime-mcp-network
     depends_on:
@@ -27,8 +28,32 @@ services:
     environment:
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION_NAME=anime_database
+      - ENABLE_MULTI_VECTOR=true
+      - SERVER_MODE=stdio  # Change to 'http' for HTTP mode
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8001
     volumes:
       - ./data:/app/data
+
+  mcp-server:
+    build: .
+    container_name: anime-mcp-http-server
+    ports:
+      - "8001:8001"  # MCP Server HTTP
+    networks:
+      - anime-mcp-network
+    depends_on:
+      - qdrant
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION_NAME=anime_database
+      - ENABLE_MULTI_VECTOR=true
+      - SERVER_MODE=http
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8001
+    volumes:
+      - ./data:/app/data
+    command: ["python", "-m", "src.mcp.server", "--mode", "http", "--host", "0.0.0.0", "--port", "8001"]
 
 networks:
   anime-mcp-network:

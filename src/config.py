@@ -97,6 +97,22 @@ class Settings(BaseSettings):
         description="Log message format",
     )
 
+    # MCP Server Configuration
+    server_mode: str = Field(
+        default="stdio", 
+        description="MCP server transport mode: stdio, http, sse, streamable"
+    )
+    mcp_host: str = Field(
+        default="0.0.0.0", 
+        description="MCP server host (for HTTP modes)"
+    )
+    mcp_port: int = Field(
+        default=8001, 
+        ge=1024, 
+        le=65535, 
+        description="MCP server port (for HTTP modes)"
+    )
+
     # Data Source Configuration
     anime_database_url: str = Field(
         default="https://github.com/manami-project/anime-offline-database/raw/master/anime-offline-database.json",
@@ -133,6 +149,14 @@ class Settings(BaseSettings):
         if v.upper() not in valid_levels:
             raise ValueError(f"Log level must be one of: {valid_levels}")
         return v.upper()
+
+    @validator("server_mode")
+    def validate_server_mode(cls, v):
+        """Validate MCP server transport mode."""
+        valid_modes = ["stdio", "http", "sse", "streamable"]
+        if v.lower() not in valid_modes:
+            raise ValueError(f"Server mode must be one of: {valid_modes}")
+        return v.lower()
 
     @validator("fastembed_model")
     def validate_fastembed_model(cls, v):

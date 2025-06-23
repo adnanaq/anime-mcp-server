@@ -627,17 +627,31 @@ class QdrantClient:
                 ]
             )
             
-            search_result = await loop.run_in_executor(
-                None,
-                lambda: self.client.search(
-                    collection_name=self.collection_name,
-                    query_vector=embedding,
-                    query_filter=filter_out_self,
-                    limit=limit,
-                    with_payload=True,
-                    with_vectors=False
+            # Use appropriate vector search based on collection type
+            if self._supports_multi_vector:
+                search_result = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.search(
+                        collection_name=self.collection_name,
+                        query_vector=NamedVector(name="text", vector=embedding),
+                        query_filter=filter_out_self,
+                        limit=limit,
+                        with_payload=True,
+                        with_vectors=False
+                    )
                 )
-            )
+            else:
+                search_result = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.search(
+                        collection_name=self.collection_name,
+                        query_vector=embedding,
+                        query_filter=filter_out_self,
+                        limit=limit,
+                        with_payload=True,
+                        with_vectors=False
+                    )
+                )
             
             # Format results
             results = []

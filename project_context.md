@@ -13,7 +13,8 @@ A FastAPI-based MCP (Model Context Protocol) server with Qdrant vector database 
 - ✅ **Phase 2 COMPLETED**: Marqo → Qdrant migration with FastEmbed
 - ✅ **Phase 3 COMPLETED**: FastMCP integration with 5 tools + 2 resources
 - ✅ **Phase 4 COMPLETED**: Multi-modal image search with CLIP embeddings
-- 🎯 **PRODUCTION READY**: Complete anime search system with multi-modal capabilities
+- ✅ **Phase 5 COMPLETED**: Dual protocol support (stdio + HTTP)
+- 🎯 **PRODUCTION READY**: Complete anime search system with multi-modal capabilities and flexible deployment
 
 ## 🏗️ Architecture Overview
 
@@ -21,7 +22,7 @@ A FastAPI-based MCP (Model Context Protocol) server with Qdrant vector database 
 anime-mcp-server/
 ├── src/
 │   ├── main.py                    # FastAPI application entry point
-│   ├── config.py                  # Centralized configuration management
+│   ├── config.py                  # Centralized configuration with dual protocol support
 │   ├── vector/
 │   │   ├── qdrant_client.py      # Multi-vector database operations
 │   │   └── vision_processor.py   # CLIP image processing
@@ -30,7 +31,7 @@ anime-mcp-server/
 │   │   ├── admin.py              # Admin endpoints
 │   │   └── recommendations.py    # Recommendation endpoints
 │   ├── mcp/
-│   │   ├── server.py             # FastMCP server (8 tools + 2 resources)
+│   │   ├── server.py             # FastMCP server with dual protocol (stdio + HTTP)
 │   │   └── tools.py              # MCP utility functions
 │   ├── models/
 │   │   └── anime.py              # Pydantic data models
@@ -62,20 +63,14 @@ anime-mcp-server/
 - ✅ **Qdrant Multi-Vector Database**: 38,894 anime entries with text + image embeddings
 - ✅ **FastEmbed Integration**: BAAI/bge-small-en-v1.5 model for text embeddings  
 - ✅ **CLIP Integration**: ViT-B/32 model for 512-dimensional image embeddings
-- ✅ **FastMCP Server**: 8 tools + 2 resources (including 3 image search tools)
+- ✅ **FastMCP Server**: 8 tools + 2 resources with dual protocol support (stdio + HTTP)
 - ✅ **Complete REST API**: Text search + image search + multimodal endpoints
-- ✅ **Docker Infrastructure**: Containerized deployment with docker-compose
-- ⚠️ **MCP Dependency Issue**: Pydantic 2.10.0 compatibility problem (REST API unaffected)
+- ✅ **Docker Infrastructure**: Containerized deployment with dual protocol support
+- ✅ **Dual Protocol Support**: stdio (local) + HTTP (web/remote) for maximum accessibility
 
 ## 🎯 Next Steps (Future Enhancements)
 
-### Priority 1: MCP Server Fix
-
-1. Resolve Pydantic 2.10.0 compatibility issue with MCP 1.9.4
-2. Test alternative MCP versions or dependency pinning
-3. Restore full MCP protocol functionality
-
-### Enhanced Features (Phase 5)
+### Enhanced Features (Phase 6)
 
 1. Multi-filter search capabilities (genre + year + studio)
 2. Hybrid search (semantic + keyword + metadata)
@@ -98,16 +93,17 @@ anime-mcp-server/
 
 ## 🎮 Current Achievement - ✅ MAJOR MILESTONE!
 
-✅ **Phase 1-4 Complete**: Production-ready anime search system with multi-modal capabilities:
+✅ **Phase 1-5 Complete**: Production-ready anime search system with multi-modal capabilities and dual protocol support:
 
 - **38,894 anime entries** with text + image vector embeddings
 - **Multi-modal search** with CLIP integration for image similarity
-- **FastMCP integration** with 8 tools for AI assistant interaction
+- **FastMCP integration** with 8 tools and dual protocol support (stdio + HTTP)
 - **Sub-200ms text search, ~1s image search** response times
 - **Complete REST API** with all search modalities
+- **Flexible deployment** supporting local development and web accessibility
 - **Docker deployment** ready for production hosting
 
-🚀 **Achievement**: Full multi-modal anime search system with visual similarity capabilities!
+🚀 **Achievement**: Complete anime search system with visual similarity and maximum accessibility!
 
 ## 🔧 Recent Major Achievements
 
@@ -116,5 +112,6 @@ anime-mcp-server/
 - **Image Embedding Processing**: Generated image vectors for all 38,894 anime entries
 - **Multi-Modal APIs**: Full REST API implementation for image and combined search
 - **FastMCP Enhancement**: Expanded from 5 to 8 tools including image search capabilities
-- **Zero Breaking Changes**: Maintained full backward compatibility throughout Phase 4
-- **Production Validation**: Live testing confirms all search modalities working
+- **Dual Protocol Support**: Implemented stdio + HTTP transports for maximum accessibility
+- **Zero Breaking Changes**: Maintained full backward compatibility throughout all phases
+- **Production Validation**: Live testing confirms all search modalities and protocols working

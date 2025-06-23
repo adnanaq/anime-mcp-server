@@ -119,19 +119,63 @@ curl -X POST http://localhost:8000/api/admin/check-updates
 # Response: {"has_updates":false,"entry_count":38894}
 ```
 
-## 🤖 MCP Server Integration
+## MCP Server Integration
+
+### Transport Protocols
+
+The MCP server supports multiple transport protocols for different use cases:
+
+| Protocol | Use Case | Port | Command |
+|----------|----------|------|---------|
+| **stdio** | Local development, Claude Code | N/A | `python -m src.mcp.server` |
+| **HTTP (SSE)** | Web clients, Postman, remote access | 8001 | `python -m src.mcp.server --mode http` |
 
 ### Running the MCP Server
 
-The project includes a **FastMCP server** for AI assistant integration:
-
 ```bash
-# Start MCP server
+# Local development (stdio) - default mode
 python -m src.mcp.server
+
+# Web/remote access (HTTP)
+python -m src.mcp.server --mode http --host 0.0.0.0 --port 8001
+
+# With verbose logging
+python -m src.mcp.server --mode http --verbose
 
 # Test MCP functionality
 python scripts/test_mcp.py
 ```
+
+### Configuration Options
+
+Environment variables for MCP server:
+
+```bash
+# MCP Server Configuration
+SERVER_MODE=stdio          # Transport mode: stdio, http, sse, streamable
+MCP_HOST=0.0.0.0          # HTTP server host (for HTTP modes)
+MCP_PORT=8001             # HTTP server port (for HTTP modes)
+```
+
+### Client Integration
+
+**Claude Code (stdio mode)**
+```json
+{
+  "mcpServers": {
+    "anime-search": {
+      "command": "python",
+      "args": ["-m", "src.mcp.server"],
+      "cwd": "/path/to/anime-mcp-server"
+    }
+  }
+}
+```
+
+**Postman or Web Clients (HTTP mode)**
+- Start server: `python -m src.mcp.server --mode http --port 8001`
+- MCP endpoint: `http://localhost:8001/sse/`
+- Health check: `curl http://localhost:8001/health`
 
 ### MCP Tools Available
 
@@ -286,18 +330,17 @@ curl http://localhost:8000/stats
 python scripts/test_mcp.py
 
 # Expected output:
-# ✅ MCP session initialized
-# ✅ Available tools: ['search_anime', 'get_anime_details', 'find_similar_anime', 'get_anime_stats', 'recommend_anime', 'search_anime_by_image', 'find_visually_similar_anime', 'search_multimodal_anime']
-# ✅ Search result: Found Dragon Ball Z & Dragon Ball with full metadata
-# ✅ Stats result: 38,894 documents, healthy database
-# ✅ Available resources: ['anime://database/stats', 'anime://database/schema']
-# ✅ All MCP tests completed successfully!
+# MCP session initialized
+# Available tools: ['search_anime', 'get_anime_details', 'find_similar_anime', 'get_anime_stats', 'recommend_anime', 'search_anime_by_image', 'find_visually_similar_anime', 'search_multimodal_anime']
+# Search result: Found Dragon Ball Z & Dragon Ball with full metadata
+# Stats result: 38,894 documents, healthy database
+# Available resources: ['anime://database/stats', 'anime://database/schema']
+# All MCP tests completed successfully!
 ```
 
-**Manual MCP Testing**
+**Protocol-Specific Testing**
 
-For manual testing without the Python script, use the automated test as reference since MCP protocol requires proper session management:
-
+**stdio mode (local development):**
 ```bash
 # Start MCP server in one terminal
 source venv/bin/activate
@@ -305,6 +348,18 @@ python -m src.mcp.server
 
 # Use the automated test script (recommended approach)
 python scripts/test_mcp.py
+```
+
+**HTTP mode (web/remote access):**
+```bash
+# Start HTTP MCP server
+python -m src.mcp.server --mode http --port 8001
+
+# Test HTTP endpoint accessibility
+curl http://localhost:8001/sse/
+
+# Test with Postman or other HTTP MCP clients
+# Endpoint: http://localhost:8001/sse/
 ```
 
 ### Unit Tests
@@ -350,7 +405,7 @@ ALLOWED_ORIGINS=*                         # CORS origins
 
 ### Docker Configuration
 
-The system uses Docker Compose for orchestration:
+The system uses Docker Compose for orchestration with support for both REST API and MCP server:
 
 ```yaml
 services:
@@ -361,7 +416,35 @@ services:
       - "6334:6334"
     volumes:
       - ./data/qdrant_storage:/qdrant/storage
+
+  fastapi:
+    build: .
+    ports:
+      - "8000:8000"  # FastAPI REST API
+      - "8001:8001"  # MCP Server HTTP (when enabled)
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - SERVER_MODE=stdio  # Change to 'http' for web access
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8001
+
+  # Optional: Dedicated MCP HTTP server
+  mcp-server:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - SERVER_MODE=http
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8001
+    command: ["python", "-m", "src.mcp.server", "--mode", "http"]
 ```
+
+**Port Allocation:**
+- **8000**: FastAPI REST API
+- **8001**: MCP HTTP Server (when enabled)
+- **6333**: Qdrant Vector Database
+- **6334**: Qdrant gRPC (internal)
 
 ## 📊 Performance
 
@@ -428,6 +511,11 @@ python -m src.mcp.server
 ### Important Scripts
 
 ```bash
+# MCP Server Management
+python -m src.mcp.server                            # Start MCP server (stdio mode)
+python -m src.mcp.server --mode http --port 8001    # Start MCP server (HTTP mode)
+python -m src.mcp.server --help                     # View all CLI options
+
 # Data Management
 python scripts/migrate_to_multivector.py --dry-run    # Test collection migration
 python scripts/migrate_to_multivector.py             # Migrate to multi-vector
@@ -489,12 +577,51 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [FastAPI](https://fastapi.tiangolo.com/) for the web framework
 - [FastMCP](https://github.com/jlowin/fastmcp) for MCP protocol integration
 
-## 📞 Support
+## Troubleshooting
 
-- 🐛 **Issues**: Report bugs via GitHub Issues
-- 💬 **Discussions**: Community discussions in GitHub Discussions
-- 📖 **Documentation**: Full docs at `/docs` endpoint when server is running
-- 🔧 **Development**: See `CLAUDE.md` for detailed development guidance
+### Common Issues
+
+**Port Conflicts**
+```bash
+# Check if port is in use
+netstat -tulpn | grep :8001
+
+# Use different port
+python -m src.mcp.server --mode http --port 8002
+```
+
+**MCP Connection Issues**
+```bash
+# Check server logs with verbose output
+python -m src.mcp.server --mode http --verbose
+
+# Verify Qdrant connection
+curl http://localhost:6333/health
+```
+
+**Docker Issues**
+```bash
+# Check container logs
+docker-compose logs fastapi
+docker-compose logs mcp-server
+
+# Restart specific service
+docker-compose restart mcp-server
+```
+
+**Invalid Transport Mode**
+```bash
+# Valid modes: stdio, http, sse, streamable
+python -m src.mcp.server --mode invalid
+# Error: argument --mode: invalid choice: 'invalid'
+```
+
+### Support
+
+- **Issues**: Report bugs via GitHub Issues
+- **Discussions**: Community discussions in GitHub Discussions
+- **Documentation**: Full docs at `/docs` endpoint when server is running
+- **Development**: See `CLAUDE.md` for detailed development guidance
 
 ---
 
