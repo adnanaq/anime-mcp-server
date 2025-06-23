@@ -37,9 +37,9 @@ so Friday 2 AM ensures we catch the latest weekly changes.
 
 ### Admin Endpoints
 ```http
-POST /api/admin/check-updates          # Check for available updates
-POST /api/admin/update-incremental     # Run incremental update
-POST /api/admin/update-full           # Run full refresh (emergency)
+POST /api/admin/check-updates          # Check for available updates (✅ Implemented)
+POST /api/admin/download-data          # Download latest anime database
+POST /api/admin/process-data           # Process and index data into Qdrant
 GET  /api/admin/update-status         # Get update status & metadata
 POST /api/admin/schedule-weekly-update # Manually trigger weekly job
 ```
@@ -49,11 +49,14 @@ POST /api/admin/schedule-weekly-update # Manually trigger weekly job
 # Check if updates are available
 curl -X POST http://localhost:8000/api/admin/check-updates
 
-# Start incremental update
-curl -X POST http://localhost:8000/api/admin/update-incremental
+# Download latest data
+curl -X POST http://localhost:8000/api/admin/download-data
 
-# View update status
-curl http://localhost:8000/api/admin/update-status
+# Process and index data
+curl -X POST http://localhost:8000/api/admin/process-data
+
+# View database stats
+curl http://localhost:8000/stats
 ```
 
 ## 🔧 Setup Instructions
@@ -142,7 +145,7 @@ curl http://localhost:8000/api/admin/update-status
 ### Common Issues
 
 1. **Update Fails**
-   - Check Marqo connection
+   - Check Qdrant connection
    - Verify disk space
    - Review error logs
 
@@ -194,4 +197,4 @@ curl -X POST http://localhost:8000/api/admin/update-full
 
 ---
 
-**Current Status**: ✅ Incremental update system implemented and ready for production use
+**Current Status**: ✅ Basic update system implemented with Qdrant integration. Incremental updates and automation scheduled for Phase 4 enhancements.
