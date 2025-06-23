@@ -43,9 +43,11 @@ class TestCollectionMigration:
         """QdrantClient instance with mocked dependencies."""
         return QdrantClient(settings=mock_settings)
 
-    def test_migration_preserves_existing_data(self, qdrant_client, mock_qdrant_sdk):
+    @pytest.mark.asyncio
+    async def test_migration_preserves_existing_data(self, qdrant_client, mock_qdrant_sdk):
         """Test that migration preserves all existing text vectors."""
         # Setup: Mock existing single-vector collection
+        mock_qdrant_sdk.collection_exists.return_value = True
         mock_qdrant_sdk.get_collection.return_value.config.params.vectors = MagicMock()
         mock_qdrant_sdk.get_collection.return_value.config.params.vectors.size = 384
         
@@ -56,8 +58,11 @@ class TestCollectionMigration:
         ]
         mock_qdrant_sdk.scroll.return_value = (mock_points, None)
         
+        # Mock stats for verification
+        qdrant_client.get_stats = AsyncMock(return_value={"total_documents": 2})
+        
         # Execute migration
-        result = qdrant_client.migrate_to_multi_vector()
+        result = await qdrant_client.migrate_to_multi_vector()
         
         # Verify: All existing data preserved
         assert result["preserved_vectors"] == 2
@@ -73,26 +78,36 @@ class TestCollectionMigration:
         call_args = mock_qdrant_sdk.recreate_collection.call_args
         assert call_args[1]["vectors_config"] == expected_vectors_config
 
-    def test_migration_creates_backup_collection(self, qdrant_client, mock_qdrant_sdk):
+    @pytest.mark.asyncio 
+    async def test_migration_creates_backup_collection(self, qdrant_client, mock_qdrant_sdk):
         """Test that migration creates backup before proceeding."""
         # Setup: Mock collection exists
         mock_qdrant_sdk.collection_exists.return_value = True
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors = MagicMock()
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors.size = 384
+        mock_qdrant_sdk.scroll.return_value = ([], None)  # Empty collection
+        qdrant_client.get_stats = AsyncMock(return_value={"total_documents": 0})
         
         # Execute migration  
-        qdrant_client.migrate_to_multi_vector()
+        await qdrant_client.migrate_to_multi_vector()
         
         # Verify: Backup collection created
         backup_calls = [call for call in mock_qdrant_sdk.create_collection.call_args_list 
                        if 'backup' in str(call)]
         assert len(backup_calls) >= 1
 
-    def test_migration_rollback_on_failure(self, qdrant_client, mock_qdrant_sdk):
+    @pytest.mark.asyncio
+    async def test_migration_rollback_on_failure(self, qdrant_client, mock_qdrant_sdk):
         """Test that migration rolls back on failure."""
         # Setup: Mock migration failure
+        mock_qdrant_sdk.collection_exists.return_value = True
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors = MagicMock()
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors.size = 384
+        mock_qdrant_sdk.scroll.return_value = ([], None)
         mock_qdrant_sdk.recreate_collection.side_effect = Exception("Migration failed")
         
         # Execute migration (should handle gracefully)
-        result = qdrant_client.migrate_to_multi_vector()
+        result = await qdrant_client.migrate_to_multi_vector()
         
         # Verify: Rollback occurred
         assert result["migration_successful"] is False
@@ -101,55 +116,76 @@ class TestCollectionMigration:
         mock_qdrant_sdk.delete_collection.assert_called()  # Delete failed collection
         # Backup should be renamed back to original
 
-    def test_migration_validates_prerequisites(self, qdrant_client, mock_qdrant_sdk):
+    @pytest.mark.asyncio
+    async def test_migration_validates_prerequisites(self, qdrant_client, mock_qdrant_sdk):
         """Test that migration validates prerequisites before starting."""
         # Setup: Mock missing collection
         mock_qdrant_sdk.collection_exists.return_value = False
         
         # Execute migration
-        with pytest.raises(ValueError, match="Collection .* does not exist"):
-            qdrant_client.migrate_to_multi_vector()
+        result = await qdrant_client.migrate_to_multi_vector()
+        
+        # Verify: Migration failed with proper error
+        assert result["migration_successful"] is False
+        assert "error" in result
+        assert "does not exist" in result["error"]
 
-    def test_migration_handles_empty_collection(self, qdrant_client, mock_qdrant_sdk):
+    @pytest.mark.asyncio
+    async def test_migration_handles_empty_collection(self, qdrant_client, mock_qdrant_sdk):
         """Test migration of empty collection."""
         # Setup: Mock empty collection
         mock_qdrant_sdk.collection_exists.return_value = True
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors = MagicMock()
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors.size = 384
         mock_qdrant_sdk.scroll.return_value = ([], None)  # No points
+        qdrant_client.get_stats = AsyncMock(return_value={"total_documents": 0})
         
         # Execute migration
-        result = qdrant_client.migrate_to_multi_vector()
+        result = await qdrant_client.migrate_to_multi_vector()
         
         # Verify: Migration succeeds with zero vectors
         assert result["migration_successful"] is True
         assert result["preserved_vectors"] == 0
 
-    def test_migration_batch_processing(self, qdrant_client, mock_qdrant_sdk):
+    @pytest.mark.asyncio
+    async def test_migration_batch_processing(self, qdrant_client, mock_qdrant_sdk):
         """Test that migration processes large collections in batches."""
         # Setup: Mock large collection
-        mock_points = [MagicMock(id=f"anime{i}", vector=[0.1] * 384) 
+        mock_qdrant_sdk.collection_exists.return_value = True
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors = MagicMock()
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors.size = 384
+        
+        mock_points = [MagicMock(id=f"anime{i}", vector=[0.1] * 384, payload={"title": f"Anime {i}"}) 
                       for i in range(2500)]  # More than batch size
         
         # Mock scroll to return batches
         def scroll_side_effect(collection_name, limit, **kwargs):
-            start = kwargs.get('offset', 0)
+            offset = kwargs.get('offset', None)
+            start = offset if offset is not None else 0
             end = min(start + limit, len(mock_points))
             batch = mock_points[start:end]
             next_offset = end if end < len(mock_points) else None
             return batch, next_offset
             
         mock_qdrant_sdk.scroll.side_effect = scroll_side_effect
+        qdrant_client.get_stats = AsyncMock(return_value={"total_documents": 2500})
         
         # Execute migration
-        result = qdrant_client.migrate_to_multi_vector()
+        result = await qdrant_client.migrate_to_multi_vector()
         
         # Verify: All points migrated in batches
         assert result["preserved_vectors"] == 2500
         # Verify multiple upsert calls (batching)
         assert mock_qdrant_sdk.upsert.call_count > 1
 
-    def test_migration_preserves_metadata(self, qdrant_client, mock_qdrant_sdk):
+    @pytest.mark.asyncio
+    async def test_migration_preserves_metadata(self, qdrant_client, mock_qdrant_sdk):
         """Test that migration preserves all metadata and payload."""
         # Setup: Mock points with rich metadata
+        mock_qdrant_sdk.collection_exists.return_value = True
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors = MagicMock()
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors.size = 384
+        
         mock_points = [
             MagicMock(
                 id="anime1", 
@@ -166,9 +202,10 @@ class TestCollectionMigration:
             )
         ]
         mock_qdrant_sdk.scroll.return_value = (mock_points, None)
+        qdrant_client.get_stats = AsyncMock(return_value={"total_documents": 1})
         
         # Execute migration
-        qdrant_client.migrate_to_multi_vector()
+        result = await qdrant_client.migrate_to_multi_vector()
         
         # Verify: Metadata preserved in upsert
         upsert_calls = mock_qdrant_sdk.upsert.call_args_list
@@ -181,23 +218,26 @@ class TestCollectionMigration:
         assert points[0].payload["data_quality_score"] == 0.85
 
     @pytest.mark.asyncio
-    async def test_async_migration_performance(self, qdrant_client):
+    async def test_async_migration_performance(self, qdrant_client, mock_qdrant_sdk):
         """Test that migration completes within reasonable time."""
         import time
         
         # Setup: Mock moderate size collection
-        with patch.object(qdrant_client, '_migrate_collection_data') as mock_migrate:
-            mock_migrate.return_value = {"preserved_vectors": 1000, "migration_successful": True}
-            
-            # Execute migration with timing
-            start_time = time.time()
-            result = await qdrant_client.migrate_to_multi_vector_async()
-            end_time = time.time()
-            
-            # Verify: Migration completes quickly (< 30 seconds for 1000 items)
-            migration_time = end_time - start_time
-            assert migration_time < 30.0
-            assert result["migration_successful"] is True
+        mock_qdrant_sdk.collection_exists.return_value = True
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors = MagicMock()
+        mock_qdrant_sdk.get_collection.return_value.config.params.vectors.size = 384
+        mock_qdrant_sdk.scroll.return_value = ([], None)  # Empty for speed
+        qdrant_client.get_stats = AsyncMock(return_value={"total_documents": 0})
+        
+        # Execute migration with timing
+        start_time = time.time()
+        result = await qdrant_client.migrate_to_multi_vector_async()
+        end_time = time.time()
+        
+        # Verify: Migration completes quickly (< 30 seconds for mocked operations)
+        migration_time = end_time - start_time
+        assert migration_time < 30.0
+        assert result["migration_successful"] is True
 
 
 class TestMigrationUtilities:
