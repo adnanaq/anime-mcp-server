@@ -323,19 +323,33 @@ curl http://localhost:8000/stats
 
 ### MCP Server Testing
 
-**Automated Testing**
+**Comprehensive Testing**
 
 ```bash
-# Test MCP server (comprehensive)
-python scripts/test_mcp.py
+# Test MCP server (comprehensive verification)
+python scripts/verify_mcp_server.py
+
+# With detailed output and image testing
+python scripts/verify_mcp_server.py --detailed
+
+# Skip image tests (if CLIP not available)
+python scripts/verify_mcp_server.py --skip-image-tests
 
 # Expected output:
+# Starting comprehensive FastMCP Anime Server verification...
 # MCP session initialized
 # Available tools: ['search_anime', 'get_anime_details', 'find_similar_anime', 'get_anime_stats', 'recommend_anime', 'search_anime_by_image', 'find_visually_similar_anime', 'search_multimodal_anime']
-# Search result: Found Dragon Ball Z & Dragon Ball with full metadata
-# Stats result: 38,894 documents, healthy database
-# Available resources: ['anime://database/stats', 'anime://database/schema']
-# All MCP tests completed successfully!
+# All expected MCP tools are available
+# Basic search test successful
+# Stats test successful
+# Testing image search functionality...
+# Image search returned 3 results
+# Visual similarity search returned 2 results
+# Multimodal search returned 3 results
+# Testing database health and statistics...
+# Qdrant connection verified
+# Total anime entries: 38,894
+# All tests completed successfully!
 ```
 
 **Protocol-Specific Testing**
@@ -347,7 +361,7 @@ source venv/bin/activate
 python -m src.mcp.server
 
 # Use the automated test script (recommended approach)
-python scripts/test_mcp.py
+python scripts/verify_mcp_server.py
 ```
 
 **HTTP mode (web/remote access):**
@@ -522,8 +536,9 @@ python scripts/migrate_to_multivector.py             # Migrate to multi-vector
 python scripts/add_image_embeddings.py --batch-size 100  # Process image embeddings
 
 # Testing & Verification
-python scripts/test_mcp.py                          # Test MCP server functionality
-python scripts/verify_mcp_server.py                 # Verify MCP server status
+python scripts/verify_mcp_server.py                 # Comprehensive MCP server testing
+python scripts/verify_mcp_server.py --detailed      # Detailed testing with sample data
+python scripts/verify_mcp_server.py --skip-image-tests  # Skip image tests if CLIP unavailable
 python run_tests.py                                 # Run full test suite
 
 # Data Pipeline
