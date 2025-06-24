@@ -383,6 +383,16 @@ async def database_schema() -> str:
     return f"Anime Database Schema: {schema}"
 
 
+def initialize_qdrant_client():
+    """Initialize the Qdrant client synchronously if not already initialized."""
+    global qdrant_client
+    
+    if qdrant_client is None:
+        logger.info("Initializing MCP tools Qdrant client")
+        qdrant_client = QdrantClient(settings=settings)
+        logger.info("MCP tools Qdrant client initialized")
+
+
 async def initialize_mcp_server():
     """Initialize the MCP server with Qdrant client."""
     global qdrant_client

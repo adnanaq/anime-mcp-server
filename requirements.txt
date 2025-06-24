@@ -16,6 +16,13 @@ git+https://github.com/openai/CLIP.git
 # MCP (Model Context Protocol) dependencies
 fastmcp==2.9.0
 
+# LangChain/LangGraph dependencies for Phase 6
+langchain==0.3.26
+langchain-community==0.3.26
+langchain-core==0.3.66
+langgraph==0.4.8
+langchain-mcp==0.2.1
+
 # Security-critical dependencies (explicit versions for security)
 cryptography>=45.0.4
 certifi>=2025.6.15

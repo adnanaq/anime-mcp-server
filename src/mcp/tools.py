@@ -273,3 +273,50 @@ class SearchError(MCPToolError):
     
     def __init__(self, message: str):
         super().__init__(message, "SEARCH_ERROR")
+
+
+def get_all_mcp_tools() -> Dict[str, Any]:
+    """Get all available MCP tools for LangGraph integration.
+    
+    Returns:
+        Dictionary mapping tool names to their corresponding callable functions
+    """
+    from .server import (
+        search_anime,
+        get_anime_details,
+        find_similar_anime,
+        get_anime_stats,
+        recommend_anime,
+        search_anime_by_image,
+        find_visually_similar_anime,
+        search_multimodal_anime,
+        initialize_qdrant_client
+    )
+    
+    # Initialize the MCP tools' Qdrant client if not already done
+    initialize_qdrant_client()
+    
+    # FastMCP wraps functions in FunctionTool objects
+    # We need to extract the actual callable functions
+    tools = {
+        "search_anime": search_anime,
+        "get_anime_details": get_anime_details,
+        "find_similar_anime": find_similar_anime,
+        "get_anime_stats": get_anime_stats,
+        "recommend_anime": recommend_anime,
+        "search_anime_by_image": search_anime_by_image,
+        "find_visually_similar_anime": find_visually_similar_anime,
+        "search_multimodal_anime": search_multimodal_anime,
+    }
+    
+    # Extract the underlying functions from FunctionTool objects
+    extracted_tools = {}
+    for name, tool in tools.items():
+        if hasattr(tool, 'fn'):
+            # It's a FunctionTool, extract the original function
+            extracted_tools[name] = tool.fn
+        else:
+            # It's already a function
+            extracted_tools[name] = tool
+    
+    return extracted_tools

@@ -1,16 +1,18 @@
-# 🚀 Anime MCP Server
+# Anime MCP Server
 
-An AI-powered anime search and recommendation system built with **FastAPI**, **Qdrant vector database**, and **FastMCP protocol**. Features semantic search capabilities over 38,000+ anime entries with MCP integration for AI assistants.
+An AI-powered anime search and recommendation system built with **FastAPI**, **Qdrant vector database**, **FastMCP protocol**, and **LangGraph workflow orchestration**. Features semantic search capabilities over 38,000+ anime entries with MCP integration for AI assistants.
 
-## ✨ Features
+## Features
 
-- 🔍 **Semantic Search**: Natural language queries for anime discovery
-- ⚡ **High Performance**: Sub-200ms response times with vector embeddings
-- 📊 **Comprehensive Database**: 38,894 anime entries with rich metadata
-- 🤖 **MCP Protocol Integration**: FastMCP server for AI assistant communication
-- 🎯 **Real-time Vector Search**: Qdrant-powered semantic search
-- 🖼️ **Multi-Modal Search**: Visual similarity and combined text+image search with CLIP embeddings
-- 🐳 **Docker Support**: Easy deployment with containerized services
+- **Semantic Search**: Natural language queries for anime discovery
+- **High Performance**: Sub-200ms response times with vector embeddings
+- **Comprehensive Database**: 38,894 anime entries with rich metadata
+- **MCP Protocol Integration**: FastMCP server for AI assistant communication
+- **Real-time Vector Search**: Qdrant-powered semantic search
+- **Multi-Modal Search**: Visual similarity and combined text+image search with CLIP embeddings
+- **Conversational Workflows**: LangGraph-powered intelligent conversation flows
+- **Preference Learning**: User preference tracking across conversation sessions
+- **Docker Support**: Easy deployment with containerized services
 
 ## 🏗️ Architecture
 
@@ -22,12 +24,17 @@ anime-mcp-server/
 │   ├── api/
 │   │   ├── search.py            # Search endpoints
 │   │   ├── admin.py             # Admin endpoints
-│   │   └── recommendations.py   # Recommendation endpoints (basic)
+│   │   ├── recommendations.py   # Recommendation endpoints (basic)
+│   │   └── workflow.py          # LangGraph workflow endpoints
 │   ├── mcp/
 │   │   ├── server.py            # FastMCP server implementation
 │   │   └── tools.py             # MCP utility functions
+│   ├── langgraph/
+│   │   ├── models.py            # Workflow state models
+│   │   ├── adapters.py          # MCP tool adapter layer
+│   │   └── workflow_engine.py   # LangGraph workflow engine
 │   ├── vector/
-│   │   ├── qdrant_client.py     # Vector database operations  
+│   │   ├── qdrant_client.py     # Vector database operations
 │   │   └── vision_processor.py  # CLIP image processing
 │   ├── models/
 │   │   └── anime.py             # Pydantic data models
@@ -125,9 +132,9 @@ curl -X POST http://localhost:8000/api/admin/check-updates
 
 The MCP server supports multiple transport protocols for different use cases:
 
-| Protocol | Use Case | Port | Command |
-|----------|----------|------|---------|
-| **stdio** | Local development, Claude Code | N/A | `python -m src.mcp.server` |
+| Protocol       | Use Case                            | Port | Command                                |
+| -------------- | ----------------------------------- | ---- | -------------------------------------- |
+| **stdio**      | Local development, Claude Code      | N/A  | `python -m src.mcp.server`             |
 | **HTTP (SSE)** | Web clients, Postman, remote access | 8001 | `python -m src.mcp.server --mode http` |
 
 ### Running the MCP Server
@@ -160,6 +167,7 @@ MCP_PORT=8001             # HTTP server port (for HTTP modes)
 ### Client Integration
 
 **Claude Code (stdio mode)**
+
 ```json
 {
   "mcpServers": {
@@ -173,22 +181,23 @@ MCP_PORT=8001             # HTTP server port (for HTTP modes)
 ```
 
 **Postman or Web Clients (HTTP mode)**
+
 - Start server: `python -m src.mcp.server --mode http --port 8001`
 - MCP endpoint: `http://localhost:8001/sse/`
 - Health check: `curl http://localhost:8001/health`
 
 ### MCP Tools Available
 
-| Tool                 | Description                  | Parameters                              |
-| -------------------- | ---------------------------- | --------------------------------------- |
-| `search_anime`       | Semantic anime search        | `query` (string), `limit` (int)         |
-| `get_anime_details`  | Get detailed anime info      | `anime_id` (string)                     |
-| `find_similar_anime` | Find similar anime           | `anime_id` (string), `limit` (int)      |
-| `get_anime_stats`    | Database statistics          | None                                    |
-| `recommend_anime`    | Personalized recommendations | `genres`, `year`, `anime_type`, `limit` |
-| `search_anime_by_image` | Image similarity search | `image_data` (base64), `limit` (int) |
-| `find_visually_similar_anime` | Visual similarity | `anime_id` (string), `limit` (int) |
-| `search_multimodal_anime` | Text + image search | `query`, `image_data`, `text_weight` |
+| Tool                          | Description                  | Parameters                              |
+| ----------------------------- | ---------------------------- | --------------------------------------- |
+| `search_anime`                | Semantic anime search        | `query` (string), `limit` (int)         |
+| `get_anime_details`           | Get detailed anime info      | `anime_id` (string)                     |
+| `find_similar_anime`          | Find similar anime           | `anime_id` (string), `limit` (int)      |
+| `get_anime_stats`             | Database statistics          | None                                    |
+| `recommend_anime`             | Personalized recommendations | `genres`, `year`, `anime_type`, `limit` |
+| `search_anime_by_image`       | Image similarity search      | `image_data` (base64), `limit` (int)    |
+| `find_visually_similar_anime` | Visual similarity            | `anime_id` (string), `limit` (int)      |
+| `search_multimodal_anime`     | Text + image search          | `query`, `image_data`, `text_weight`    |
 
 ### MCP Resources
 
@@ -207,20 +216,20 @@ MCP_PORT=8001             # HTTP server port (for HTTP modes)
 
 ### 🔍 Search & Discovery Endpoints
 
-| Endpoint               | Method | Purpose         | Example                                                            |
-| ---------------------- | ------ | --------------- | ------------------------------------------------------------------ |
-| `/api/search/`         | GET    | Basic search    | `curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"` |
-| `/api/search/semantic` | POST   | Advanced search | See examples below                                                 |
-| `/api/search/similar/{anime_id}` | GET | Find similar anime | `curl "http://localhost:8000/api/search/similar/cac1eeaeddf7?limit=5"` |
+| Endpoint                         | Method | Purpose            | Example                                                                |
+| -------------------------------- | ------ | ------------------ | ---------------------------------------------------------------------- |
+| `/api/search/`                   | GET    | Basic search       | `curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"`     |
+| `/api/search/semantic`           | POST   | Advanced search    | See examples below                                                     |
+| `/api/search/similar/{anime_id}` | GET    | Find similar anime | `curl "http://localhost:8000/api/search/similar/cac1eeaeddf7?limit=5"` |
 
 ### 🖼️ Image Search Endpoints
 
-| Endpoint               | Method | Purpose         | Example                                                            |
-| ---------------------- | ------ | --------------- | ------------------------------------------------------------------ |
-| `/api/search/by-image` | POST   | Image upload search | Upload image file for visual similarity |
-| `/api/search/by-image-base64` | POST | Base64 image search | Send base64 encoded image data |
-| `/api/search/visually-similar/{anime_id}` | GET | Visual similarity | Find anime with similar poster images |
-| `/api/search/multimodal` | POST | Combined search | Text query + image for enhanced results |
+| Endpoint                                  | Method | Purpose             | Example                                 |
+| ----------------------------------------- | ------ | ------------------- | --------------------------------------- |
+| `/api/search/by-image`                    | POST   | Image upload search | Upload image file for visual similarity |
+| `/api/search/by-image-base64`             | POST   | Base64 image search | Send base64 encoded image data          |
+| `/api/search/visually-similar/{anime_id}` | GET    | Visual similarity   | Find anime with similar poster images   |
+| `/api/search/multimodal`                  | POST   | Combined search     | Text query + image for enhanced results |
 
 **Basic Search Examples:**
 
@@ -271,13 +280,56 @@ curl -X POST http://localhost:8000/api/search/multimodal \
   -F "text_weight=0.7"
 ```
 
+### 🤖 Conversational Workflow Endpoints
+
+| Endpoint                          | Method | Purpose                      | Example                                  |
+| --------------------------------- | ------ | ---------------------------- | ---------------------------------------- |
+| `/api/workflow/conversation`      | POST   | Start/continue conversation  | Intelligent conversation flows           |
+| `/api/workflow/multimodal`        | POST   | Multimodal conversation      | Text + image conversation                |
+| `/api/workflow/conversation/{id}` | GET    | Get conversation history     | Retrieve session with summary           |
+| `/api/workflow/conversation/{id}` | DELETE | Delete conversation          | Remove conversation session             |
+| `/api/workflow/stats`             | GET    | Workflow statistics          | Get conversation metrics                 |
+| `/api/workflow/health`            | GET    | Workflow system health       | Check LangGraph engine status           |
+
+**Conversational Workflow Examples:**
+
+```bash
+# Start new conversation
+curl -X POST http://localhost:8000/api/workflow/conversation \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Find me some good action anime"}'
+
+# Continue existing conversation
+curl -X POST http://localhost:8000/api/workflow/conversation \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Find something similar but more romantic",
+    "session_id": "existing-session-id"
+  }'
+
+# Multimodal conversation with image
+curl -X POST http://localhost:8000/api/workflow/multimodal \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Find anime similar to this image",
+    "image_data": "base64_encoded_image_data",
+    "text_weight": 0.7
+  }'
+
+# Get conversation history
+curl http://localhost:8000/api/workflow/conversation/session-id
+
+# Check workflow system health
+curl http://localhost:8000/api/workflow/health
+```
+
 ### ⚙️ Admin Endpoints
 
-| Endpoint                   | Method | Purpose           | Example                                                      |
-| -------------------------- | ------ | ----------------- | ------------------------------------------------------------ |
-| `/api/admin/check-updates` | POST   | Check for updates | `curl -X POST http://localhost:8000/api/admin/check-updates` |
+| Endpoint                   | Method | Purpose                    | Example                                                      |
+| -------------------------- | ------ | -------------------------- | ------------------------------------------------------------ |
+| `/api/admin/check-updates` | POST   | Check for updates          | `curl -X POST http://localhost:8000/api/admin/check-updates` |
 | `/api/admin/download-data` | POST   | Download latest anime data | `curl -X POST http://localhost:8000/api/admin/download-data` |
-| `/api/admin/process-data`  | POST   | Process and index data | `curl -X POST http://localhost:8000/api/admin/process-data` |
+| `/api/admin/process-data`  | POST   | Process and index data     | `curl -X POST http://localhost:8000/api/admin/process-data`  |
 
 ### 🎯 Response Format
 
@@ -355,6 +407,7 @@ python scripts/verify_mcp_server.py --skip-image-tests
 **Protocol-Specific Testing**
 
 **stdio mode (local development):**
+
 ```bash
 # Start MCP server in one terminal
 source venv/bin/activate
@@ -365,6 +418,7 @@ python scripts/verify_mcp_server.py
 ```
 
 **HTTP mode (web/remote access):**
+
 ```bash
 # Start HTTP MCP server
 python -m src.mcp.server --mode http --port 8001
@@ -421,40 +475,8 @@ ALLOWED_ORIGINS=*                         # CORS origins
 
 The system uses Docker Compose for orchestration with support for both REST API and MCP server:
 
-```yaml
-services:
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - ./data/qdrant_storage:/qdrant/storage
-
-  fastapi:
-    build: .
-    ports:
-      - "8000:8000"  # FastAPI REST API
-      - "8001:8001"  # MCP Server HTTP (when enabled)
-    environment:
-      - QDRANT_URL=http://qdrant:6333
-      - SERVER_MODE=stdio  # Change to 'http' for web access
-      - MCP_HOST=0.0.0.0
-      - MCP_PORT=8001
-
-  # Optional: Dedicated MCP HTTP server
-  mcp-server:
-    build: .
-    ports:
-      - "8001:8001"
-    environment:
-      - SERVER_MODE=http
-      - MCP_HOST=0.0.0.0
-      - MCP_PORT=8001
-    command: ["python", "-m", "src.mcp.server", "--mode", "http"]
-```
-
 **Port Allocation:**
+
 - **8000**: FastAPI REST API
 - **8001**: MCP HTTP Server (when enabled)
 - **6333**: Qdrant Vector Database
@@ -463,7 +485,7 @@ services:
 ## 📊 Performance
 
 - **Search Speed**: Sub-200ms text search, ~1s image search response times
-- **Vector Models**: 
+- **Vector Models**:
   - Text: BAAI/bge-small-en-v1.5 (384-dimensional embeddings)
   - Image: CLIP ViT-B/32 (512-dimensional embeddings)
 - **Database Size**: 38,894 anime entries with multi-vector support
@@ -597,6 +619,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ### Common Issues
 
 **Port Conflicts**
+
 ```bash
 # Check if port is in use
 netstat -tulpn | grep :8001
@@ -606,6 +629,7 @@ python -m src.mcp.server --mode http --port 8002
 ```
 
 **MCP Connection Issues**
+
 ```bash
 # Check server logs with verbose output
 python -m src.mcp.server --mode http --verbose
@@ -615,6 +639,7 @@ curl http://localhost:6333/health
 ```
 
 **Docker Issues**
+
 ```bash
 # Check container logs
 docker-compose logs fastapi
@@ -625,6 +650,7 @@ docker-compose restart mcp-server
 ```
 
 **Invalid Transport Mode**
+
 ```bash
 # Valid modes: stdio, http, sse, streamable
 python -m src.mcp.server --mode invalid
