@@ -6,6 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is an **Anime MCP (Model Context Protocol) Server** built with FastAPI and Qdrant vector database. It provides semantic search capabilities over 38,000+ anime entries from the anime-offline-database, designed to be integrated as an MCP tool for AI assistants.
 
+### Future Enhancement: LangChain/LangGraph Integration (Phase 6)
+
+**Strategic Direction**: Hybrid architecture implementing LangGraph workflow orchestration while preserving current high-performance indexing system.
+
+**Research Completed**: Ultra-deep analysis of LangChain/LangGraph integration identified optimal hybrid approach:
+
+- **PRESERVE**: Qdrant + FastEmbed + CLIP indexing (proven performance <200ms)
+- **ADD**: LangGraph orchestration layer for conversational workflows
+- **ENHANCE**: Multi-step discovery, contextual recommendations, user preference learning
+
+**Architecture Benefits**:
+
+- Fast path: Direct MCP tools for simple queries (<200ms)
+- Intelligent path: LangGraph workflows for complex conversations (<3s)
+- Zero data migration risk, incremental enhancement approach
+- Official `langchain-mcp-adapters` integration path available
+
 ## Architecture
 
 - **FastAPI Server**: Main application with REST API endpoints (`src/main.py`)
@@ -190,6 +207,7 @@ curl "http://localhost:8000/api/search/similar/abc123def456?limit=10"
 ### Others
 
 - Do not use emojis unless specified
+- Always go with TDD approach.
 
 ## File Structure Context
 
@@ -215,15 +233,18 @@ src/
 ## Development Phase Status
 
 1. **Phase 1**: ✅ Vector database foundation with FastAPI (COMPLETED)
-2. **Phase 2**: ✅ Qdrant migration and optimization (COMPLETED)  
+2. **Phase 2**: ✅ Qdrant migration and optimization (COMPLETED)
 3. **Phase 3**: ✅ FastMCP protocol implementation (COMPLETED)
 4. **Phase 4**: ✅ Multi-modal image search (COMPLETED)
+5. **Phase 5**: ✅ Dual protocol support (stdio + HTTP) (COMPLETED)
+6. **Phase 6**: 🔮 LangChain/LangGraph Integration (PLANNED)
 
 ## Phase 4 Completion: Multi-Modal Image Search
 
 **Status**: ✅ PRODUCTION READY - All components implemented and operational
 
 **Completed Components**:
+
 - ✅ Multi-vector QdrantClient with CLIP integration
 - ✅ Vision processor (ViT-B/32, 512-dim embeddings)
 - ✅ MCP tools: 8 total including `search_anime_by_image`, `find_visually_similar_anime`, `search_multimodal_anime`
@@ -231,11 +252,30 @@ src/
 - ✅ Image processing pipeline completed (38,894 anime with image vectors)
 - ✅ REST API endpoints implemented: `/api/search/by-image`, `/api/search/by-image-base64`, `/api/search/visually-similar/{anime_id}`, `/api/search/multimodal`
 
-**Current Issue**:
-- ⚠️ MCP Server dependency conflict (Pydantic 2.10.0 + MCP 1.9.4)
-- **Workaround**: All functionality available through REST API
-
 **Achievement**: Complete multi-modal anime search system with visual similarity capabilities!
+
+## Phase 6 Planning: LangChain/LangGraph Integration
+
+**Status**: 🔮 PLANNED - Awaiting implementation approval
+
+**Strategic Context**:
+
+- **Ultra-deep research completed** on LangChain/LangGraph integration patterns
+- **Hybrid architecture strategy defined** to preserve performance while adding intelligence
+- **Official integration path identified** using `langchain-mcp-adapters` library
+
+**Implementation Approach**:
+
+- **Foundation** (2-3 weeks): Install adapters, create tool wrappers, basic LangGraph setup
+- **Smart Workflows** (3 weeks): Conversational discovery, complex query chaining, multi-modal conversations
+- **Advanced Features** (4-5 weeks): Specialized agents, analytics workflows, production optimization
+
+**Key Benefits**:
+
+- Conversational anime discovery with context awareness
+- Multi-step recommendation workflows with explanations
+- User preference learning across sessions
+- Zero performance impact on existing functionality
 
 ## Data Source
 
