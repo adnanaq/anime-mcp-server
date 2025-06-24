@@ -223,20 +223,20 @@ MCP_PORT=8001             # HTTP server port (for HTTP modes)
 
 ### 🔍 Search & Discovery Endpoints
 
-| Endpoint                         | Method | Purpose            | Example                                                                |
-| -------------------------------- | ------ | ------------------ | ---------------------------------------------------------------------- |
-| `/api/search/`                   | GET    | Basic search       | `curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"`     |
-| `/api/search/semantic`           | POST   | Advanced search    | See examples below                                                     |
-| `/api/search/similar/{anime_id}` | GET    | Find similar anime | `curl "http://localhost:8000/api/search/similar/cac1eeaeddf7?limit=5"` |
+| Endpoint                         | Method | Purpose            | Parameters                                          |
+| -------------------------------- | ------ | ------------------ | --------------------------------------------------- |
+| `/api/search/`                   | GET    | Basic search       | `q` (required), `limit` (1-50, default: 10)        |
+| `/api/search/semantic`           | POST   | Advanced search    | JSON body: `query` (required), `limit` (optional)  |
+| `/api/search/similar/{anime_id}` | GET    | Find similar anime | `anime_id` (path), `limit` (1-50, default: 10)     |
 
 ### 🖼️ Image Search Endpoints
 
-| Endpoint                                  | Method | Purpose             | Example                                 |
-| ----------------------------------------- | ------ | ------------------- | --------------------------------------- |
-| `/api/search/by-image`                    | POST   | Image upload search | Upload image file for visual similarity |
-| `/api/search/by-image-base64`             | POST   | Base64 image search | Send base64 encoded image data          |
-| `/api/search/visually-similar/{anime_id}` | GET    | Visual similarity   | Find anime with similar poster images   |
-| `/api/search/multimodal`                  | POST   | Combined search     | Text query + image for enhanced results |
+| Endpoint                                  | Method | Purpose             | Parameters                                          |
+| ----------------------------------------- | ------ | ------------------- | --------------------------------------------------- |
+| `/api/search/by-image`                    | POST   | Image upload search | Form: `image` (file), `limit` (1-50, default: 10)  |
+| `/api/search/by-image-base64`             | POST   | Base64 image search | Form: `image_data` (base64), `limit` (optional)    |
+| `/api/search/visually-similar/{anime_id}` | GET    | Visual similarity   | `anime_id` (path), `limit` (1-50, default: 10)     |
+| `/api/search/multimodal`                  | POST   | Combined search     | Form: `query`, `image`, `limit`, `text_weight`     |
 
 **Basic Search Examples:**
 
@@ -372,16 +372,17 @@ curl http://localhost:8000/api/workflow/health
 | `/api/admin/download-data` | POST   | Download latest anime data | `curl -X POST http://localhost:8000/api/admin/download-data` |
 | `/api/admin/process-data`  | POST   | Process and index data     | `curl -X POST http://localhost:8000/api/admin/process-data`  |
 
-### 🎯 Response Format
+### 🎯 Response Formats
 
+#### **Standard Search Response**
 ```json
 {
   "query": "dragon ball",
   "results": [
     {
       "anime_id": "cac1eeaeddf7",
-      "title": "Dragon Ball Z",
-      "synopsis": "",
+      "title": "Dragon Ball Z", 
+      "synopsis": "Description text",
       "type": "TV",
       "episodes": 291,
       "tags": ["action", "adventure", "fighting"],
@@ -395,9 +396,68 @@ curl http://localhost:8000/api/workflow/health
     }
   ],
   "total_results": 1,
-  "processing_time_ms": 0.0
+  "processing_time_ms": 45.2
 }
 ```
+
+#### **Workflow Response Structure**
+```json
+{
+  "session_id": "string - Session identifier",
+  "messages": "array - Conversation history", 
+  "workflow_steps": "array - Executed workflow steps",
+  "current_context": {
+    "query": "string - Processed query",
+    "limit": "integer - Result limit",
+    "filters": "object - Applied filters", 
+    "results": "array[AnimeResult] - Search results"
+  },
+  "user_preferences": "object - Learned user preferences"
+}
+```
+
+#### **Error Response Structure**
+```json
+{
+  "error": "string - Error message",
+  "detail": "string - Detailed error information", 
+  "status_code": "integer - HTTP status code"
+}
+```
+
+### 🔧 API Constraints & Limits
+
+- **Search Limit**: 1-50 results per request
+- **Image Size**: Max 10MB for image uploads  
+- **Session Timeout**: 1 hour of inactivity
+- **Query Length**: Max 500 characters
+- **Concurrent Requests**: 10 per client
+- **Text Weight**: 0.0-1.0 (multimodal searches)
+
+### 🎛️ Query Filters & AI Understanding
+
+#### **AI-Extracted Filter Patterns**
+The system automatically extracts these filters from natural language:
+
+```json
+{
+  "filters": {
+    "year_range": [2020, 2029],        // From "2020s"
+    "year": 2019,                      // From "2019" 
+    "genres": ["mecha", "action"],     // From "mecha action anime"
+    "exclusions": ["horror", "violent"], // From "but not horror or violent"
+    "studios": ["Studio Ghibli"],      // From "Studio Ghibli movies"
+    "anime_types": ["Movie"],          // From "movies" or "films"
+    "mood": ["light", "funny"]         // From "light-hearted" or "funny"
+  }
+}
+```
+
+#### **Manual Filter Syntax**
+For direct API calls, use these patterns:
+- `"mecha anime 2020s -horror"` → Mecha from 2020s, exclude horror
+- `"Studio Ghibli movies"` → Studio Ghibli movies only  
+- `"action adventure TV series"` → Action adventure TV series
 
 ## 🧪 Testing
 
@@ -414,43 +474,85 @@ curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
 curl http://localhost:8000/stats
 ```
 
-### AI-Powered Query Understanding Testing (Phase 6C)
+### 🔬 API Testing Sequences
+
+#### **Basic API Testing Sequence**
+1. Health Check → Database Stats → Simple Search → Semantic Search
+
+```bash
+# 1. Health check
+curl http://localhost:8000/health
+
+# 2. Database stats  
+curl http://localhost:8000/stats
+
+# 3. Simple search
+curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
+
+# 4. Semantic search
+curl -X POST http://localhost:8000/api/search/semantic \
+  -H "Content-Type: application/json" \
+  -d '{"query": "mecha robots fighting in space", "limit": 10}'
+```
+
+#### **AI Query Understanding Testing** 
+1. Smart Conversation with limit extraction
+2. Complex query with multiple filters  
+3. Studio + year + exclusion query
+4. Verify extracted parameters in response
 
 ```bash
 # Test natural language parameter extraction
 curl -X POST http://localhost:8000/api/workflow/smart-conversation \
   -H "Content-Type: application/json" \
-  -d '{"message": "find me 5 mecha anime from 2020s but not too violent"}' \
-  | jq '{query: .current_context.query, limit: .current_context.limit, filters: .current_context.filters}'
+  -d '{"message": "find me 5 mecha anime from 2020s but not too violent"}'
 
-# Expected response:
-# {
-#   "query": "mecha anime",
-#   "limit": 5,
-#   "filters": {
-#     "year_range": [2020, 2029],
-#     "genres": ["mecha"],
-#     "exclusions": ["violent"]
-#   }
-# }
-
-# Test various natural language patterns
+# Test studio + year extraction
 curl -X POST http://localhost:8000/api/workflow/smart-conversation \
   -H "Content-Type: application/json" \
   -d '{"message": "show me top 3 Studio Ghibli movies from 90s"}'
 
+# Test complex exclusions
 curl -X POST http://localhost:8000/api/workflow/smart-conversation \
   -H "Content-Type: application/json" \
   -d '{"message": "find action adventure anime but not romance or horror"}'
-
-# Test without LLM (fallback to regex patterns)
-# Remove OPENAI_API_KEY from environment and test fallback behavior
 ```
 
-### Smart Orchestration Workflow Testing
+#### **Multimodal Testing Sequence**
+1. Base64 image search
+2. Multimodal conversation with text + image  
+3. Visual similarity search
+4. Verify image and text weights
 
 ```bash
-# Test Phase 6B smart orchestration with complex queries
+# Upload image search
+curl -X POST http://localhost:8000/api/search/by-image \
+  -F "image=@anime_poster.jpg" -F "limit=5"
+
+# Base64 image search  
+curl -X POST http://localhost:8000/api/search/by-image-base64 \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "image_data=iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB..." -d "limit=5"
+
+# Multimodal workflow
+curl -X POST http://localhost:8000/api/workflow/multimodal \
+  -H "Content-Type: application/json" \
+  -d '{"message": "find anime similar to this style", "image_data": "base64_data", "text_weight": 0.7}'
+```
+
+#### **Workflow Testing Sequence**
+1. Standard conversation
+2. Smart orchestration with complex query
+3. Multimodal workflow  
+4. Session management (create, retrieve, delete)
+
+```bash
+# Standard conversation
+curl -X POST http://localhost:8000/api/workflow/conversation \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Find me some good action anime"}'
+
+# Smart orchestration with complex query
 curl -X POST http://localhost:8000/api/workflow/smart-conversation \
   -H "Content-Type: application/json" \
   -d '{
@@ -459,27 +561,9 @@ curl -X POST http://localhost:8000/api/workflow/smart-conversation \
     "max_discovery_depth": 3
   }'
 
-# Test simple query for comparison (should use standard workflow)
-curl -X POST http://localhost:8000/api/workflow/smart-conversation \
-  -H "Content-Type: application/json" \
-  -d '{"message": "naruto"}'
-
-# Test multimodal orchestration capabilities
-curl -X POST http://localhost:8000/api/workflow/multimodal \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "find anime similar to this style",
-    "image_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
-    "text_weight": 0.7
-  }'
-
-# Test concurrent smart orchestration requests
-for i in {1..3}; do
-  curl -X POST http://localhost:8000/api/workflow/smart-conversation \
-    -H "Content-Type: application/json" \
-    -d "{\"message\": \"test complex query $i\"}" &
-done
-wait
+# Session management
+curl http://localhost:8000/api/workflow/conversation/session-id  # Get history
+curl -X DELETE http://localhost:8000/api/workflow/conversation/session-id  # Delete session
 ```
 
 ### MCP Server Testing
