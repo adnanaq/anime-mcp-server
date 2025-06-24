@@ -1,10 +1,18 @@
 """Unit tests for anime models."""
+
+from datetime import datetime
+from typing import Any, Dict
+
 import pytest
 from pydantic import ValidationError
-from typing import Dict, Any
 
-from src.models.anime import AnimeEntry, SearchRequest, SearchResult, SearchResponse, DatabaseStats
-from datetime import datetime
+from src.models.anime import (
+    AnimeEntry,
+    DatabaseStats,
+    SearchRequest,
+    SearchResponse,
+    SearchResult,
+)
 
 
 class TestAnimeEntry:
@@ -13,7 +21,7 @@ class TestAnimeEntry:
     def test_anime_entry_valid_data(self, sample_anime_data: Dict[str, Any]):
         """Test AnimeEntry creation with valid data."""
         anime = AnimeEntry(**sample_anime_data)
-        
+
         assert anime.title == "Test Anime"
         assert anime.type == "TV"
         assert anime.episodes == 12
@@ -29,9 +37,9 @@ class TestAnimeEntry:
             "title": "Minimal Anime",
             "type": "TV",
             "episodes": 0,
-            "status": "FINISHED"
+            "status": "FINISHED",
         }
-        
+
         anime = AnimeEntry(**minimal_data)
         assert anime.title == "Minimal Anime"
         assert anime.episodes == 0
@@ -48,11 +56,11 @@ class TestAnimeEntry:
             "type": "TV",
             "episodes": 1,
             "status": "FINISHED",
-            "duration": 1440
+            "duration": 1440,
         }
         anime = AnimeEntry(**data_int)
         assert anime.duration == 1440
-        
+
         # Test with dict duration
         data_dict = {
             "sources": ["https://myanimelist.net/anime/1"],
@@ -60,11 +68,11 @@ class TestAnimeEntry:
             "type": "TV",
             "episodes": 1,
             "status": "FINISHED",
-            "duration": {"value": 1440, "unit": "seconds"}
+            "duration": {"value": 1440, "unit": "seconds"},
         }
         anime = AnimeEntry(**data_dict)
         assert anime.duration == 1440
-        
+
         # Test with None
         data_none = {
             "sources": ["https://myanimelist.net/anime/1"],
@@ -72,7 +80,7 @@ class TestAnimeEntry:
             "type": "TV",
             "episodes": 1,
             "status": "FINISHED",
-            "duration": None
+            "duration": None,
         }
         anime = AnimeEntry(**data_none)
         assert anime.duration is None
@@ -89,9 +97,9 @@ class TestAnimeEntry:
             "title": "Test",
             "type": "TV",
             "episodes": "not-an-int",  # Should be int
-            "status": "FINISHED"
+            "status": "FINISHED",
         }
-        
+
         with pytest.raises(ValidationError):
             AnimeEntry(**invalid_data)
 
@@ -102,7 +110,7 @@ class TestSearchModels:
     def test_search_request_valid(self):
         """Test SearchRequest with valid data."""
         request = SearchRequest(query="test anime", limit=10)
-        
+
         assert request.query == "test anime"
         assert request.limit == 10
         assert request.filters is None
@@ -111,7 +119,7 @@ class TestSearchModels:
         """Test SearchRequest with filters."""
         filters = {"type": "TV", "year": 2023}
         request = SearchRequest(query="test", limit=20, filters=filters)
-        
+
         assert request.query == "test"
         assert request.limit == 20
         assert request.filters == filters
@@ -121,11 +129,11 @@ class TestSearchModels:
         # Valid limits
         SearchRequest(query="test", limit=1)
         SearchRequest(query="test", limit=100)
-        
+
         # Invalid limits
         with pytest.raises(ValidationError):
             SearchRequest(query="test", limit=0)
-        
+
         with pytest.raises(ValidationError):
             SearchRequest(query="test", limit=101)
 
@@ -143,7 +151,6 @@ class TestSearchModels:
             score=0.95,
             year=2023,
             season="spring",
-            
             # Platform IDs
             myanimelist_id=12345,
             anilist_id=67890,
@@ -155,9 +162,9 @@ class TestSearchModels:
             animenewsnetwork_id=666,
             animeplanet_id="test-slug",
             notify_id="ABC123",
-            animecountdown_id=777
+            animecountdown_id=777,
         )
-        
+
         assert result.anime_id == "test123"
         assert result.title == "Test Anime"
         assert result.myanimelist_id == 12345
@@ -173,9 +180,9 @@ class TestSearchModels:
             episodes=12,
             tags=[],
             studios=[],
-            score=0.5
+            score=0.5,
         )
-        
+
         assert result.anime_id == "test123"
         assert result.synopsis is None
         assert result.myanimelist_id is None
@@ -193,12 +200,12 @@ class TestSearchModels:
             studios=[],
             score=0.5,
             myanimelist_id=12345,
-            anilist_id=67890
+            anilist_id=67890,
         )
-        
+
         assert isinstance(result.myanimelist_id, int)
         assert isinstance(result.anilist_id, int)
-        
+
         # String IDs should accept strings
         result = SearchResult(
             anime_id="test123",
@@ -209,9 +216,9 @@ class TestSearchModels:
             studios=[],
             score=0.5,
             animeplanet_id="test-slug",
-            notify_id="ABC123"
+            notify_id="ABC123",
         )
-        
+
         assert isinstance(result.animeplanet_id, str)
         assert isinstance(result.notify_id, str)
 
@@ -225,26 +232,26 @@ class TestSearchModels:
                 episodes=12,
                 tags=["Action"],
                 studios=["Studio A"],
-                score=0.9
+                score=0.9,
             ),
             SearchResult(
-                anime_id="test2", 
+                anime_id="test2",
                 title="Test 2",
                 type="Movie",
                 episodes=1,
                 tags=["Drama"],
                 studios=["Studio B"],
-                score=0.8
-            )
+                score=0.8,
+            ),
         ]
-        
+
         response = SearchResponse(
             query="test anime",
             results=results,
             total_results=2,
-            processing_time_ms=150.5
+            processing_time_ms=150.5,
         )
-        
+
         assert response.query == "test anime"
         assert len(response.results) == 2
         assert response.total_results == 2
@@ -256,9 +263,9 @@ class TestSearchModels:
             query="nonexistent anime",
             results=[],
             total_results=0,
-            processing_time_ms=50.0
+            processing_time_ms=50.0,
         )
-        
+
         assert response.query == "nonexistent anime"
         assert len(response.results) == 0
         assert response.total_results == 0
@@ -274,9 +281,9 @@ class TestDatabaseStats:
             indexed_anime=38894,
             last_updated=datetime(2024, 1, 1, 12, 0, 0),
             index_health="green",
-            average_quality_score=0.85
+            average_quality_score=0.85,
         )
-        
+
         assert stats.total_anime == 38894
         assert stats.indexed_anime == 38894
         assert stats.index_health == "green"
@@ -289,9 +296,9 @@ class TestDatabaseStats:
             indexed_anime=17931,
             last_updated=datetime.now(),
             index_health="yellow",
-            average_quality_score=0.75
+            average_quality_score=0.75,
         )
-        
+
         assert stats.total_anime > stats.indexed_anime
         assert stats.index_health == "yellow"
 
@@ -303,9 +310,9 @@ class TestDatabaseStats:
             indexed_anime=1000,
             last_updated=datetime.now(),
             index_health="green",
-            average_quality_score=0.5
+            average_quality_score=0.5,
         )
-        
+
         # Invalid data types
         with pytest.raises(ValidationError):
             DatabaseStats(
@@ -313,5 +320,5 @@ class TestDatabaseStats:
                 indexed_anime=1000,
                 last_updated=datetime.now(),
                 index_health="green",
-                average_quality_score=0.5
+                average_quality_score=0.5,
             )

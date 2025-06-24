@@ -41,3 +41,8 @@ pytest-asyncio==1.0.0
 httpx>=0.28.1
 pytest-cov==6.2.1
 pytest-mock==3.14.1
+
+# Code formatting and linting dependencies
+black>=24.0.0
+isort>=5.13.0
+autoflake>=2.3.0

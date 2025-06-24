@@ -43,8 +43,6 @@ class AnimeServerError(Exception):
 class VectorDatabaseError(AnimeServerError):
     """Base exception for vector database related errors."""
 
-    pass
-
 
 class QdrantConnectionError(VectorDatabaseError):
     """Raised when Qdrant connection fails or times out."""
@@ -105,8 +103,6 @@ class SearchError(VectorDatabaseError):
 class DataProcessingError(AnimeServerError):
     """Base exception for data processing related errors."""
 
-    pass
-
 
 class AnimeDataDownloadError(DataProcessingError):
     """Raised when anime database download fails."""
@@ -160,8 +156,6 @@ class PlatformIDExtractionError(DataProcessingError):
 class ConfigurationError(AnimeServerError):
     """Base exception for configuration related errors."""
 
-    pass
-
 
 class InvalidConfigurationError(ConfigurationError):
     """Raised when configuration validation fails."""
@@ -193,8 +187,6 @@ class MissingConfigurationError(ConfigurationError):
 
 class APIError(AnimeServerError):
     """Base exception for API related errors."""
-
-    pass
 
 
 class InvalidSearchQueryError(APIError):
@@ -242,8 +234,6 @@ class RateLimitExceededError(APIError):
 class MCPError(AnimeServerError):
     """Base exception for MCP (Model Context Protocol) related errors."""
 
-    pass
-
 
 class MCPToolError(MCPError):
     """Raised when MCP tool execution fails."""
@@ -275,8 +265,6 @@ class MCPClientError(MCPError):
 
 class UpdateServiceError(AnimeServerError):
     """Base exception for update service related errors."""
-
-    pass
 
 
 class UpdateSchedulingError(UpdateServiceError):

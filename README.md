@@ -698,12 +698,18 @@ curl -X POST http://localhost:8000/api/admin/download-data  # Download latest da
 curl -X POST http://localhost:8000/api/admin/process-data   # Process and index
 ```
 
-### Code Quality
+### Code Quality & Formatting
 
 ```bash
-# Format code
-black src/
-isort src/
+# Code formatting and linting (recommended order)
+autoflake --recursive --in-place --remove-all-unused-imports --remove-unused-variables src/ tests/ scripts/
+isort src/ tests/ scripts/
+black src/ tests/ scripts/
+
+# Check formatting (CI/pre-commit)
+autoflake --check --recursive --remove-all-unused-imports src/ tests/ scripts/
+isort --check-only src/ tests/ scripts/
+black --check src/ tests/ scripts/
 
 # Type checking
 mypy src/
@@ -711,6 +717,13 @@ mypy src/
 # Run tests
 pytest tests/ -v
 ```
+
+**Formatting Tools Configuration:**
+- **Black**: Code style formatting (88 char line length, Python 3.11+ target)
+- **isort**: Import organization (Black-compatible profile)
+- **autoflake**: Unused import removal (safe settings, preserves __init__.py imports)
+
+All tools configured in `pyproject.toml` with modern best practices and compatibility.
 
 ### Project Structure
 

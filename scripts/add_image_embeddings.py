@@ -25,7 +25,7 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 from PIL import Image
@@ -514,4 +514,3 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"❌ Unexpected error: {e}")
         sys.exit(1)
-

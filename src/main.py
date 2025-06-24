@@ -10,7 +10,6 @@ from .api import admin, recommendations, search
 
 # Import our modules
 from .config import get_settings
-from .models.anime import DatabaseStats
 from .vector.qdrant_client import QdrantClient
 
 # Get application settings

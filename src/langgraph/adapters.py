@@ -1,7 +1,7 @@
 """MCP tool adapter layer for LangGraph integration."""
 
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Any, Awaitable, Callable, Dict, List
 
 logger = logging.getLogger(__name__)
@@ -222,4 +222,3 @@ def create_adapter_registry_from_mcp_tools(
         f"Created adapter registry with {len(registry.list_tool_names())} tools"
     )
     return registry
-

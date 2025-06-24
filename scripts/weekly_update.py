@@ -5,7 +5,6 @@ Run this via cron job every Sunday at 2 AM:
 0 2 * * 0 /path/to/anime-mcp-server/scripts/weekly_update.py
 """
 import asyncio
-import os
 import sys
 from pathlib import Path
 

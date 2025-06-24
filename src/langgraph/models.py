@@ -1,12 +1,15 @@
 """LangGraph workflow state models with type safety."""
-from enum import Enum
-from typing import List, Dict, Any, Optional, Tuple
-from pydantic import BaseModel, Field
+
 import time
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+from pydantic import BaseModel, Field
 
 
 class MessageType(str, Enum):
     """Message types in workflow conversations."""
+
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
@@ -15,6 +18,7 @@ class MessageType(str, Enum):
 
 class WorkflowStepType(str, Enum):
     """Types of workflow steps."""
+
     SEARCH = "search"
     REASONING = "reasoning"
     SYNTHESIS = "synthesis"
@@ -27,6 +31,7 @@ class WorkflowStepType(str, Enum):
 
 class WorkflowMessage(BaseModel):
     """A message in the workflow conversation."""
+
     message_type: MessageType
     content: str
     timestamp: float = Field(default_factory=time.time)
@@ -37,6 +42,7 @@ class WorkflowMessage(BaseModel):
 
 class AnimeSearchContext(BaseModel):
     """Context for anime search operations."""
+
     query: Optional[str] = None
     image_data: Optional[str] = None
     text_weight: float = 0.5
@@ -48,6 +54,7 @@ class AnimeSearchContext(BaseModel):
 
 class UserPreferences(BaseModel):
     """User preferences for anime recommendations."""
+
     favorite_genres: List[str] = Field(default_factory=list)
     favorite_studios: List[str] = Field(default_factory=list)
     preferred_year_range: Optional[Tuple[int, int]] = None
@@ -60,6 +67,7 @@ class UserPreferences(BaseModel):
 
 class WorkflowStep(BaseModel):
     """A single step in the workflow execution."""
+
     step_type: WorkflowStepType
     tool_name: Optional[str] = None
     parameters: Dict[str, Any] = Field(default_factory=dict)
@@ -73,6 +81,7 @@ class WorkflowStep(BaseModel):
 
 class ConversationState(BaseModel):
     """Complete state of a conversation workflow."""
+
     session_id: str
     messages: List[WorkflowMessage] = Field(default_factory=list)
     current_context: Optional[AnimeSearchContext] = None
@@ -121,6 +130,7 @@ class ConversationState(BaseModel):
 
 class QueryChain(BaseModel):
     """Represents a chain of related queries for complex discovery."""
+
     chain_id: str
     queries: List[str] = Field(default_factory=list)
     relationships: List[Dict[str, Any]] = Field(default_factory=list)
@@ -131,6 +141,7 @@ class QueryChain(BaseModel):
 
 class RefinementCriteria(BaseModel):
     """Criteria for refining search results through multiple iterations."""
+
     min_confidence: float = 0.7
     max_iterations: int = 3
     target_result_count: int = 10
@@ -141,6 +152,7 @@ class RefinementCriteria(BaseModel):
 
 class OrchestrationPlan(BaseModel):
     """Plan for orchestrating multiple tools and operations."""
+
     plan_id: str
     steps: List[Dict[str, Any]] = Field(default_factory=list)
     dependencies: Dict[str, List[str]] = Field(default_factory=dict)
@@ -151,6 +163,7 @@ class OrchestrationPlan(BaseModel):
 
 class ConversationFlow(BaseModel):
     """Enhanced conversation flow for multi-modal and complex interactions."""
+
     flow_id: str
     flow_type: str  # "discovery", "refinement", "exploration", "comparison"
     current_stage: str
@@ -162,13 +175,14 @@ class ConversationFlow(BaseModel):
 
 class AdaptivePreferences(BaseModel):
     """Adaptive user preferences that learn from interactions."""
+
     base_preferences: UserPreferences
     learned_patterns: Dict[str, Any] = Field(default_factory=dict)
     interaction_history: List[Dict[str, Any]] = Field(default_factory=list)
     confidence_levels: Dict[str, float] = Field(default_factory=dict)
     adaptation_rate: float = 0.1
     last_update: float = Field(default_factory=time.time)
-    
+
     def adapt_from_interaction(self, interaction: Dict[str, Any]) -> None:
         """Adapt preferences based on user interaction."""
         self.interaction_history.append(interaction)
@@ -178,6 +192,7 @@ class AdaptivePreferences(BaseModel):
 
 class SmartOrchestrationState(ConversationState):
     """Extended conversation state for smart orchestration features."""
+
     query_chains: List[QueryChain] = Field(default_factory=list)
     refinement_criteria: Optional[RefinementCriteria] = None
     orchestration_plan: Optional[OrchestrationPlan] = None
@@ -185,17 +200,18 @@ class SmartOrchestrationState(ConversationState):
     adaptive_preferences: Optional[AdaptivePreferences] = None
     discovery_depth: int = 1
     max_discovery_depth: int = 5
-    
+
     def create_query_chain(self, initial_query: str) -> QueryChain:
         """Create a new query chain for complex discovery."""
         chain = QueryChain(
-            chain_id=f"chain_{len(self.query_chains) + 1}",
-            queries=[initial_query]
+            chain_id=f"chain_{len(self.query_chains) + 1}", queries=[initial_query]
         )
         self.query_chains.append(chain)
         return chain
-    
-    def add_to_chain(self, chain_id: str, query: str, relationship: Dict[str, Any]) -> bool:
+
+    def add_to_chain(
+        self, chain_id: str, query: str, relationship: Dict[str, Any]
+    ) -> bool:
         """Add a query to an existing chain."""
         for chain in self.query_chains:
             if chain.chain_id == chain_id:

@@ -1,8 +1,8 @@
 """Test configuration and fixtures."""
 
 import asyncio
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock
+from typing import Any, Dict
+from unittest.mock import AsyncMock
 
 import pytest
 

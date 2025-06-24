@@ -5,7 +5,6 @@ Run this via cron job every few hours to catch updates when they're stable:
 0 */4 * * * /path/to/anime-mcp-server/scripts/smart_weekly_update.py
 """
 import asyncio
-import os
 import sys
 from pathlib import Path
 
