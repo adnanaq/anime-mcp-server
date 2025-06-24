@@ -148,7 +148,7 @@ class ConversationalAgent:
         content = last_message.content
         
         # Extract search intent and parameters
-        new_context = self._extract_search_context(content)
+        new_context = await self._extract_search_context(content)
         
         # Merge with existing context if it exists (preserve image data, etc.)
         if state.current_context:
@@ -348,9 +348,59 @@ class ConversationalAgent:
         
         return state
     
-    def _extract_search_context(self, message: str) -> AnimeSearchContext:
-        """Extract search context from user message."""
-        # Simple extraction logic (can be enhanced with NLP)
+    async def _extract_search_context(self, message: str) -> AnimeSearchContext:
+        """Extract search context from user message using AI-powered understanding."""
+        try:
+            # Use LLM service for intelligent parameter extraction
+            from ..services.llm_service import extract_search_intent
+            intent = await extract_search_intent(message)
+            
+            # Convert SearchIntent to AnimeSearchContext
+            filters = {}
+            
+            # Add year range to filters
+            if intent.year_range and len(intent.year_range) >= 2:
+                if intent.year_range[0] == intent.year_range[1]:
+                    filters["year"] = intent.year_range[0]
+                else:
+                    filters["year_range"] = tuple(intent.year_range[:2])
+            
+            # Add anime types to filters
+            if intent.anime_types:
+                if len(intent.anime_types) == 1:
+                    filters["type"] = intent.anime_types[0]
+                else:
+                    filters["types"] = intent.anime_types
+            
+            # Add genres to filters
+            if intent.genres:
+                filters["genres"] = intent.genres
+            
+            # Add studios to filters
+            if intent.studios:
+                filters["studios"] = intent.studios
+            
+            # Add exclusions to filters
+            if intent.exclusions:
+                filters["exclusions"] = intent.exclusions
+            
+            # Add mood keywords to filters
+            if intent.mood_keywords:
+                filters["mood"] = intent.mood_keywords
+            
+            return AnimeSearchContext(
+                query=intent.query,
+                filters=filters,
+                limit=intent.limit
+            )
+            
+        except Exception as e:
+            logger.warning(f"LLM extraction failed, using fallback: {e}")
+            # Fallback to basic extraction if LLM fails
+            return self._fallback_extract_search_context(message)
+    
+    def _fallback_extract_search_context(self, message: str) -> AnimeSearchContext:
+        """Fallback extraction using basic patterns."""
         query = message.lower()
         
         # Extract filters from common patterns

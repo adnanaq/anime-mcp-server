@@ -23,6 +23,12 @@ langchain-core==0.3.66
 langgraph==0.4.8
 langchain-mcp==0.2.1
 
+# LLM Client dependencies for Phase 6C - AI-Powered Query Understanding
+openai>=1.40.0
+langchain-openai==0.3.42
+anthropic>=0.28.0
+langchain-anthropic==0.3.25
+
 # Security-critical dependencies (explicit versions for security)
 cryptography>=45.0.4
 certifi>=2025.6.15

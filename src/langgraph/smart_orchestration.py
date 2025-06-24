@@ -31,25 +31,28 @@ class QueryChainOrchestrator:
         """Execute a query chain with intelligent orchestration."""
         results = {}
         
+        # Get limit from context
+        limit = state.current_context.limit if state.current_context and state.current_context.limit else 10
+        
         for i, query in enumerate(chain.queries):
             # Determine the best search strategy for this query
             strategy = self._determine_search_strategy(query, chain, i)
             
             # Execute with appropriate tools
             if strategy == "semantic":
-                result = await self.adapter_registry.invoke_tool("search_anime", {"query": query, "limit": 10})
+                result = await self.adapter_registry.invoke_tool("search_anime", {"query": query, "limit": limit})
             elif strategy == "similarity" and i > 0:
                 # Use results from previous query for similarity search
                 prev_results = results.get(f"query_{i-1}", [])
                 if prev_results:
                     result = await self.adapter_registry.invoke_tool(
                         "find_similar_anime", 
-                        {"anime_id": prev_results[0].get("anime_id"), "limit": 10}
+                        {"anime_id": prev_results[0].get("anime_id"), "limit": limit}
                     )
                 else:
-                    result = await self.adapter_registry.invoke_tool("search_anime", {"query": query, "limit": 10})
+                    result = await self.adapter_registry.invoke_tool("search_anime", {"query": query, "limit": limit})
             else:
-                result = await self.adapter_registry.invoke_tool("search_anime", {"query": query, "limit": 10})
+                result = await self.adapter_registry.invoke_tool("search_anime", {"query": query, "limit": limit})
             
             results[f"query_{i}"] = result
             chain.results_mapping[query] = result
@@ -576,6 +579,7 @@ class SmartOrchestrationEngine:
         self.refinement_engine = ResultRefinementEngine(adapter_registry)
         self.flow_manager = ConversationFlowManager(adapter_registry)
     
+    
     async def process_complex_conversation(
         self, 
         state: SmartOrchestrationState, 
@@ -749,15 +753,49 @@ class SmartOrchestrationEngine:
         message: str
     ) -> SmartOrchestrationState:
         """Execute standard workflow for simpler queries."""
-        # Set up context
-        if not state.current_context:
-            state.current_context = AnimeSearchContext()
-        state.current_context.query = message
+        # Use LLM extraction to understand the query
+        try:
+            from ..services.llm_service import extract_search_intent
+            intent = await extract_search_intent(message)
+            
+            # Set up context with extracted parameters
+            if not state.current_context:
+                state.current_context = AnimeSearchContext()
+            
+            state.current_context.query = intent.query
+            state.current_context.limit = intent.limit
+            
+            # Add extracted filters
+            filters = {}
+            if intent.year_range and len(intent.year_range) >= 2:
+                if intent.year_range[0] == intent.year_range[1]:
+                    filters["year"] = intent.year_range[0]
+                else:
+                    filters["year_range"] = tuple(intent.year_range[:2])
+            
+            if intent.genres:
+                filters["genres"] = intent.genres
+            if intent.exclusions:
+                filters["exclusions"] = intent.exclusions
+            if intent.anime_types:
+                filters["anime_types"] = intent.anime_types
+            
+            state.current_context.filters = filters
+            
+        except Exception as e:
+            logger.warning(f"LLM extraction failed in smart orchestration: {e}")
+            # Fallback to basic setup
+            if not state.current_context:
+                state.current_context = AnimeSearchContext()
+            state.current_context.query = message
+        
+        # Use extracted or context limit, otherwise default
+        limit = state.current_context.limit if state.current_context.limit else 10
         
         # Perform search
         results = await self.adapter_registry.invoke_tool(
             "search_anime", 
-            {"query": message, "limit": 10}
+            {"query": message, "limit": limit}
         )
         
         state.current_context.results = results
@@ -766,7 +804,7 @@ class SmartOrchestrationEngine:
         search_step = WorkflowStep(
             step_type=WorkflowStepType.SEARCH,
             tool_name="search_anime",
-            parameters={"query": message, "limit": 10},
+            parameters={"query": message, "limit": limit},
             result={"results": results},
             confidence=sum(r.get("score", 0.0) for r in results) / len(results) if results else 0.0,
             reasoning="Standard search for straightforward query"

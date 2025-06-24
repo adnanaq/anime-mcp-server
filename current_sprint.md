@@ -57,9 +57,33 @@ System Stack:
 - **Performance**: Smart orchestration actually faster (50ms) than standard workflows (74ms)
 - **Comprehensive Testing**: Unit tests, integration tests, and end-to-end validation completed
 
-## Future Phases (Phase 6C+)
+## Phase 6C: AI-Powered Query Understanding (ACTIVE)
 
-### Phase 6C: Specialized Agents & Analytics (PLANNED)
+**Status**: In Development - Natural Language Intelligence Integration
+
+### Core Objective
+Replace hardcoded regex patterns with true AI/LLM-powered natural language understanding for contextual parameter extraction.
+
+### Key Features Being Implemented
+- **LLM Integration**: OpenAI/Anthropic client for intelligent query processing
+- **Structured Output Parsing**: LLM extracts search parameters (limit, filters, genres) from natural language
+- **Contextual Understanding**: Process queries like "find 5 mecha anime from 2020s" without manual parameter passing
+- **Smart Parameter Extraction**: Automatic detection of limits, years, genres, exclusions from user intent
+- **Workflow Engine Enhancement**: Replace `_extract_search_context()` with LLM-powered understanding
+
+### Technical Implementation
+- **LLM Service**: `src/services/llm_service.py` for natural language processing
+- **Structured Schema**: Pydantic models for LLM output validation
+- **Workflow Integration**: Enhanced `_understand_node` in workflow engine
+- **Backward Compatibility**: Maintains existing API contracts while adding intelligence
+
+### Problem Solved
+- ❌ Before: "find pirates anime but limit to 5" → Manual `limit: 5` parameter required
+- ✅ After: "find pirates anime but limit to 5" → LLM extracts `limit: 5` automatically
+
+### Future Phases (Phase 6D+)
+
+### Phase 6D: Specialized Agents & Analytics (PLANNED)
 - Genre-expert agents and studio-focused discovery
 - Comparative analysis and trend analytics workflows
 - Streaming responses and performance optimization
@@ -84,4 +108,4 @@ POST /api/workflow/conversation → LangGraph agent → Multi-step process → <
 
 ---
 
-**Current Status**: Phase 1-6 Complete | Phase 6C+ Available for Future Implementation
+**Current Status**: Phase 1-6 Complete | Phase 6C Active Development | Phase 6D+ Available for Future Implementation

@@ -127,6 +127,17 @@ class Settings(BaseSettings):
         default=10, ge=1, description="Health check timeout in seconds"
     )
 
+    # LLM Configuration (Phase 6C)
+    openai_api_key: Optional[str] = Field(
+        default=None, description="OpenAI API key for LLM services"
+    )
+    anthropic_api_key: Optional[str] = Field(
+        default=None, description="Anthropic API key for LLM services"
+    )
+    llm_provider: str = Field(
+        default="openai", description="Default LLM provider: openai, anthropic"
+    )
+
     @validator("qdrant_url")
     def validate_qdrant_url(cls, v):
         """Validate Qdrant URL format."""

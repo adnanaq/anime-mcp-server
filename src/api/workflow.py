@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from ..langgraph.workflow_engine import AnimeWorkflowEngine
 from ..langgraph.adapters import MCPAdapterRegistry, create_adapter_registry_from_mcp_tools
-from ..langgraph.models import ConversationState, WorkflowMessage, WorkflowStep, SmartOrchestrationState
+from ..langgraph.models import ConversationState, WorkflowMessage, WorkflowStep, SmartOrchestrationState, AnimeSearchContext
 from ..mcp.tools import get_all_mcp_tools
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ class SmartConversationRequest(BaseModel):
     session_id: Optional[str] = Field(None, description="Existing session ID")
     enable_smart_orchestration: bool = Field(True, description="Enable smart orchestration features")
     max_discovery_depth: int = Field(3, description="Maximum discovery depth for complex queries")
+    limit: Optional[int] = Field(None, description="Result limit (1-50), extracted from message if not specified")
 
 
 class ConversationResponse(BaseModel):
@@ -274,6 +275,12 @@ async def process_smart_conversation(request: SmartConversationRequest) -> Conve
                 session_id=str(uuid.uuid4()),
                 max_discovery_depth=request.max_discovery_depth
             )
+        
+        # Set limit in context if provided
+        if request.limit:
+            if not state.current_context:
+                state.current_context = AnimeSearchContext()
+            state.current_context.limit = request.limit
         
         # Process the conversation with smart orchestration
         engine = get_workflow_engine()

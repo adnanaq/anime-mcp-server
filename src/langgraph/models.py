@@ -43,6 +43,7 @@ class AnimeSearchContext(BaseModel):
     filters: Dict[str, Any] = Field(default_factory=dict)
     results: List[Dict[str, Any]] = Field(default_factory=list)
     search_history: List[Dict[str, Any]] = Field(default_factory=list)
+    limit: Optional[int] = Field(None, description="Result limit for searches")
 
 
 class UserPreferences(BaseModel):
