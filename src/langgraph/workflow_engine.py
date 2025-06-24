@@ -12,9 +12,11 @@ from .models import (
     AnimeSearchContext,
     UserPreferences,
     WorkflowStep,
-    WorkflowStepType
+    WorkflowStepType,
+    SmartOrchestrationState
 )
 from .adapters import MCPAdapterRegistry
+from .smart_orchestration import SmartOrchestrationEngine
 
 logger = logging.getLogger(__name__)
 
@@ -457,15 +459,24 @@ class AnimeWorkflowEngine:
     def __init__(self, adapter_registry: MCPAdapterRegistry):
         self.adapter_registry = adapter_registry
         self.agent = ConversationalAgent(adapter_registry)
+        self.smart_orchestration = SmartOrchestrationEngine(adapter_registry)
     
     async def process_conversation(self, state: ConversationState, message: str) -> ConversationState:
-        """Process a conversation message."""
+        """Process a conversation message with smart orchestration."""
         logger.info(f"Processing conversation for session {state.session_id}")
         
         try:
-            result = await self.agent.process_user_message(state, message)
-            logger.info(f"Conversation processed successfully, {len(result.workflow_steps)} steps executed")
-            return result
+            # Check if we need to upgrade to smart orchestration
+            if isinstance(state, SmartOrchestrationState):
+                # Use smart orchestration for enhanced features
+                result = await self.smart_orchestration.process_complex_conversation(state, message)
+                logger.info(f"Smart orchestration processed, {len(result.workflow_steps)} steps executed")
+                return result
+            else:
+                # Use standard agent workflow
+                result = await self.agent.process_user_message(state, message)
+                logger.info(f"Standard workflow processed, {len(result.workflow_steps)} steps executed")
+                return result
         except Exception as e:
             logger.error(f"Error processing conversation: {e}")
             # Return state with error message
@@ -486,14 +497,33 @@ class AnimeWorkflowEngine:
         """Process a multimodal conversation with text and image."""
         logger.info(f"Processing multimodal conversation for session {state.session_id}")
         
-        # Pre-populate context with image data
-        if not state.current_context:
-            state.current_context = AnimeSearchContext()
-        
-        state.current_context.image_data = image_data
-        state.current_context.text_weight = text_weight
-        
-        return await self.process_conversation(state, message)
+        try:
+            # Check if we can use smart orchestration for multimodal
+            if isinstance(state, SmartOrchestrationState):
+                # Use smart orchestration multimodal processing
+                result = await self.smart_orchestration.process_multimodal_orchestration(
+                    state, message, image_data, text_weight
+                )
+                logger.info(f"Smart multimodal orchestration processed, {len(result.workflow_steps)} steps executed")
+                return result
+            else:
+                # Pre-populate context with image data for standard processing
+                if not state.current_context:
+                    state.current_context = AnimeSearchContext()
+                
+                state.current_context.image_data = image_data
+                state.current_context.text_weight = text_weight
+                
+                return await self.process_conversation(state, message)
+        except Exception as e:
+            logger.error(f"Error processing multimodal conversation: {e}")
+            # Return state with error message
+            error_msg = WorkflowMessage(
+                message_type=MessageType.SYSTEM,
+                content=f"Sorry, I encountered an error processing your multimodal request: {str(e)}"
+            )
+            state.add_message(error_msg)
+            return state
     
     async def get_conversation_summary(self, state: ConversationState) -> str:
         """Generate a summary of the conversation."""
