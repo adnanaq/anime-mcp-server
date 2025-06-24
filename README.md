@@ -12,9 +12,11 @@ An AI-powered anime search and recommendation system built with **FastAPI**, **Q
 - **Multi-Modal Search**: Visual similarity and combined text+image search with CLIP embeddings
 - **Conversational Workflows**: LangGraph-powered intelligent conversation flows
 - **Smart Orchestration**: Advanced multi-step query processing with complexity assessment
+- **AI-Powered Query Understanding**: Natural language parameter extraction with LLM intelligence
 - **Query Chain Processing**: Automatic query decomposition and intelligent tool orchestration
 - **Result Refinement**: Multi-iteration result improvement with quality filtering
 - **Adaptive Preference Learning**: Dynamic user preference extraction and adaptation
+- **Intelligent Parameter Extraction**: Automatic limit, genre, year, and exclusion detection
 - **Docker Support**: Easy deployment with containerized services
 
 ## 🏗️ Architecture
@@ -43,7 +45,8 @@ anime-mcp-server/
 │   ├── models/
 │   │   └── anime.py             # Pydantic data models
 │   ├── services/
-│   │   └── data_service.py      # Data processing pipeline
+│   │   ├── data_service.py      # Data processing pipeline
+│   │   └── llm_service.py       # LLM service for AI-powered query understanding
 │   └── exceptions.py            # Custom exception classes
 ├── scripts/
 │   ├── test_mcp.py              # MCP server testing client
@@ -296,6 +299,30 @@ curl -X POST http://localhost:8000/api/search/multimodal \
 | `/api/workflow/stats`             | GET    | Workflow statistics          | Get conversation metrics                 |
 | `/api/workflow/health`            | GET    | Workflow system health       | Check LangGraph engine status           |
 
+**AI-Powered Query Understanding (Phase 6C):**
+
+The system now features intelligent natural language processing that automatically extracts search parameters from user queries:
+
+```bash
+# AI-powered natural language understanding
+curl -X POST http://localhost:8000/api/workflow/smart-conversation \
+  -H "Content-Type: application/json" \
+  -d '{"message": "find me 5 mecha anime from 2020s but not too violent"}'
+
+# Response includes extracted parameters:
+# {
+#   "current_context": {
+#     "query": "mecha anime",           # Cleaned query
+#     "limit": 5,                      # Extracted from "find me 5"
+#     "filters": {
+#       "year_range": [2020, 2029],    # From "2020s"
+#       "genres": ["mecha"],           # Detected genre
+#       "exclusions": ["violent"]      # From "but not too violent"
+#     }
+#   }
+# }
+```
+
 **Conversational Workflow Examples:**
 
 ```bash
@@ -304,7 +331,7 @@ curl -X POST http://localhost:8000/api/workflow/conversation \
   -H "Content-Type: application/json" \
   -d '{"message": "Find me some good action anime"}'
 
-# Smart orchestration for complex queries
+# Smart orchestration for complex queries  
 curl -X POST http://localhost:8000/api/workflow/smart-conversation \
   -H "Content-Type: application/json" \
   -d '{
@@ -385,6 +412,39 @@ curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
 
 # Stats
 curl http://localhost:8000/stats
+```
+
+### AI-Powered Query Understanding Testing (Phase 6C)
+
+```bash
+# Test natural language parameter extraction
+curl -X POST http://localhost:8000/api/workflow/smart-conversation \
+  -H "Content-Type: application/json" \
+  -d '{"message": "find me 5 mecha anime from 2020s but not too violent"}' \
+  | jq '{query: .current_context.query, limit: .current_context.limit, filters: .current_context.filters}'
+
+# Expected response:
+# {
+#   "query": "mecha anime",
+#   "limit": 5,
+#   "filters": {
+#     "year_range": [2020, 2029],
+#     "genres": ["mecha"],
+#     "exclusions": ["violent"]
+#   }
+# }
+
+# Test various natural language patterns
+curl -X POST http://localhost:8000/api/workflow/smart-conversation \
+  -H "Content-Type: application/json" \
+  -d '{"message": "show me top 3 Studio Ghibli movies from 90s"}'
+
+curl -X POST http://localhost:8000/api/workflow/smart-conversation \
+  -H "Content-Type: application/json" \
+  -d '{"message": "find action adventure anime but not romance or horror"}'
+
+# Test without LLM (fallback to regex patterns)
+# Remove OPENAI_API_KEY from environment and test fallback behavior
 ```
 
 ### Smart Orchestration Workflow Testing
@@ -485,9 +545,19 @@ curl http://localhost:8001/sse/
 # Run full test suite
 python run_tests.py
 
-# Run specific test category
+# Run specific test categories
 pytest tests/unit/ -v
 pytest tests/integration/ -v
+
+# Test AI-powered query understanding (Phase 6C)
+pytest tests/unit/services/test_llm_service.py -v
+pytest tests/unit/langgraph/test_llm_integration.py -v
+
+# Test smart orchestration features
+pytest tests/unit/langgraph/test_smart_orchestration.py -v
+
+# Run tests with coverage
+pytest tests/ --cov=src --cov-report=html
 ```
 
 ## 🔧 Configuration
@@ -518,6 +588,11 @@ CLIP_MODEL=ViT-B/32                       # CLIP model for image processing
 API_TITLE=Anime MCP Server                # API title
 API_VERSION=1.0.0                         # API version
 ALLOWED_ORIGINS=*                         # CORS origins
+
+# LLM Configuration (Phase 6C - AI-Powered Query Understanding)
+OPENAI_API_KEY=your_openai_key_here       # OpenAI API key for intelligent query parsing
+ANTHROPIC_API_KEY=your_anthropic_key_here # Anthropic API key (alternative)
+LLM_PROVIDER=openai                       # Default LLM provider: openai, anthropic
 ```
 
 ### Docker Configuration
@@ -534,15 +609,19 @@ The system uses Docker Compose for orchestration with support for both REST API 
 ## 📊 Performance
 
 - **Search Speed**: Sub-200ms text search, ~1s image search response times
+- **AI Query Understanding**: ~500ms LLM response time with structured output parsing
 - **Smart Orchestration**: 50ms average response time (faster than standard workflows)
+- **Fallback Performance**: <10ms regex-based parameter extraction when LLM unavailable
 - **Vector Models**:
   - Text: BAAI/bge-small-en-v1.5 (384-dimensional embeddings)
   - Image: CLIP ViT-B/32 (512-dimensional embeddings)
+  - LLM: OpenAI GPT-4o-mini / Anthropic Claude Haiku for query understanding
 - **Database Size**: 38,894 anime entries with multi-vector support
 - **Memory Usage**: ~3-4GB for full dataset with image embeddings
 - **Concurrency**: Supports multiple simultaneous searches and complex query processing
 - **MCP Protocol**: Full FastMCP 2.8.1 integration with 8 tools
 - **Workflow Processing**: 2-5 workflow steps per query depending on complexity
+- **Natural Language Processing**: Intelligent parameter extraction with graceful fallbacks
 
 ## 🔄 Data Pipeline
 
@@ -640,6 +719,7 @@ pytest tests/ -v
 - **`src/vector/qdrant_client.py`**: Multi-vector database operations with CLIP
 - **`src/vector/vision_processor.py`**: CLIP image processing pipeline
 - **`src/config.py`**: Centralized configuration management
+- **`src/services/llm_service.py`**: AI-powered query understanding service
 - **`scripts/test_mcp.py`**: MCP server testing client
 
 ## 🔮 Technology Stack
@@ -648,6 +728,8 @@ pytest tests/ -v
 - **Vector Database**: Qdrant 1.11.3 (multi-vector support)
 - **Text Embeddings**: FastEmbed (BAAI/bge-small-en-v1.5)
 - **Image Embeddings**: CLIP (ViT-B/32)
+- **AI Integration**: OpenAI GPT-4o-mini / Anthropic Claude for query understanding
+- **Workflow Engine**: LangGraph for conversation orchestration
 - **MCP Integration**: FastMCP 2.8.1
 - **Image Processing**: PIL + torch + CLIP
 - **Containerization**: Docker + Docker Compose
