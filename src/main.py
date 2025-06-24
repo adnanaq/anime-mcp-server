@@ -87,6 +87,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 # Include LangGraph workflow routes (Phase 6)
 try:
     from .api.workflow import router as workflow_router
+
     app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
 except ImportError as e:
     logger.warning(f"LangGraph workflow routes not available: {e}")
@@ -112,7 +113,7 @@ async def root():
             "image_search": True,
             "multimodal_search": True,
             "conversational_workflows": True,
-            "mcp_protocol": True
+            "mcp_protocol": True,
         },
     }
 

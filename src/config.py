@@ -99,18 +99,14 @@ class Settings(BaseSettings):
 
     # MCP Server Configuration
     server_mode: str = Field(
-        default="stdio", 
-        description="MCP server transport mode: stdio, http, sse, streamable"
+        default="stdio",
+        description="MCP server transport mode: stdio, http, sse, streamable",
     )
     mcp_host: str = Field(
-        default="0.0.0.0", 
-        description="MCP server host (for HTTP modes)"
+        default="0.0.0.0", description="MCP server host (for HTTP modes)"
     )
     mcp_port: int = Field(
-        default=8001, 
-        ge=1024, 
-        le=65535, 
-        description="MCP server port (for HTTP modes)"
+        default=8001, ge=1024, le=65535, description="MCP server port (for HTTP modes)"
     )
 
     # Data Source Configuration

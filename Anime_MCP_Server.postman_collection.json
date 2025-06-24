@@ -1,0 +1,471 @@
+{
+  "info": {
+    "_postman_id": "anime-mcp-server-collection",
+    "name": "Anime MCP Server",
+    "description": "Complete API collection for Anime MCP Server with AI-powered query understanding and multimodal search capabilities",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01. Health & System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Database Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["stats"]
+            }
+          }
+        },
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. Basic Search",
+      "item": [
+        {
+          "name": "Simple Search (GET)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/search/?q=dragon ball&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search", ""],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "dragon ball"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Semantic Search (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mecha robots fighting in space\",\n  \"limit\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/search/semantic",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search", "semantic"]
+            }
+          }
+        },
+        {
+          "name": "Find Similar Anime",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/search/similar/cac1eeaeddf7?limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search", "similar", "cac1eeaeddf7"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Image Search",
+      "item": [
+        {
+          "name": "Search by Base64 Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "image_data",
+                  "value": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+                  "type": "text"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/search/by-image-base64",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search", "by-image-base64"]
+            }
+          }
+        },
+        {
+          "name": "Find Visually Similar Anime",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/search/visually-similar/cac1eeaeddf7?limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search", "visually-similar", "cac1eeaeddf7"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Multimodal Search (Form)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "query",
+                  "value": "mecha anime",
+                  "type": "text"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "type": "text"
+                },
+                {
+                  "key": "text_weight",
+                  "value": "0.7",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/search/multimodal",
+              "host": ["{{base_url}}"],
+              "path": ["api", "search", "multimodal"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04. Workflow Endpoints",
+      "item": [
+        {
+          "name": "Standard Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Find me some good action anime\",\n  \"session_id\": \"test-session-1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/workflow/conversation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "workflow", "conversation"]
+            }
+          }
+        },
+        {
+          "name": "Smart Conversation (AI-Powered)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"find me 5 mecha anime from 2020s but not too violent\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/workflow/smart-conversation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "workflow", "smart-conversation"]
+            }
+          }
+        },
+        {
+          "name": "Complex Smart Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"show me top 3 Studio Ghibli movies from 90s but not romance\",\n  \"limit\": 3,\n  \"enable_smart_orchestration\": true,\n  \"max_discovery_depth\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/workflow/smart-conversation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "workflow", "smart-conversation"]
+            }
+          }
+        },
+        {
+          "name": "Multimodal Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"find me 5 anime similar to this image style but not too dark\",\n  \"image_data\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==\",\n  \"text_weight\": 0.6\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/workflow/multimodal",
+              "host": ["{{base_url}}"],
+              "path": ["api", "workflow", "multimodal"]
+            }
+          }
+        },
+        {
+          "name": "Get Conversation History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workflow/conversation/test-session-1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "workflow", "conversation", "test-session-1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Conversation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workflow/conversation/test-session-1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "workflow", "conversation", "test-session-1"]
+            }
+          }
+        },
+        {
+          "name": "Workflow Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workflow/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "workflow", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Workflow Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/workflow/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "workflow", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05. Admin Operations",
+      "item": [
+        {
+          "name": "Check for Updates",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/check-updates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "check-updates"]
+            }
+          }
+        },
+        {
+          "name": "Download Latest Data",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/download-data",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "download-data"]
+            }
+          }
+        },
+        {
+          "name": "Process and Index Data",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/process-data",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "process-data"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. MCP Server (HTTP Mode)",
+      "item": [
+        {
+          "name": "MCP Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{mcp_url}}/health",
+              "host": ["{{mcp_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "MCP SSE Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/event-stream"
+              }
+            ],
+            "url": {
+              "raw": "{{mcp_url}}/sse/",
+              "host": ["{{mcp_url}}"],
+              "path": ["sse", ""]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Log request timestamp",
+          "console.log(\"Request at:\", new Date().toISOString());",
+          "console.log(\"Request URL:\", pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Basic response validation",
+          "pm.test(\"Status code is 200\", function () {",
+          "    pm.response.to.have.status(200);",
+          "});",
+          "",
+          "pm.test(\"Response time is less than 5000ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test(\"Response has valid JSON\", function () {",
+          "    pm.response.to.be.json;",
+          "});",
+          "",
+          "// Log response info",
+          "console.log(\"Response time:\", pm.response.responseTime + \"ms\");",
+          "console.log(\"Response size:\", pm.response.responseSize + \" bytes\");"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "mcp_url",
+      "value": "http://localhost:8001",
+      "type": "string"
+    }
+  ]
+}
+

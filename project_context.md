@@ -61,7 +61,7 @@ anime-mcp-server/
 ## 📊 Current System Status
 
 - ✅ **Qdrant Multi-Vector Database**: 38,894 anime entries with text + image embeddings
-- ✅ **FastEmbed Integration**: BAAI/bge-small-en-v1.5 model for text embeddings  
+- ✅ **FastEmbed Integration**: BAAI/bge-small-en-v1.5 model for text embeddings
 - ✅ **CLIP Integration**: ViT-B/32 model for 512-dimensional image embeddings
 - ✅ **FastMCP Server**: 8 tools + 2 resources with dual protocol support (stdio + HTTP)
 - ✅ **Complete REST API**: Text search + image search + multimodal endpoints

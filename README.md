@@ -289,15 +289,15 @@ curl -X POST http://localhost:8000/api/search/multimodal \
 
 ### 🤖 Conversational Workflow Endpoints
 
-| Endpoint                          | Method | Purpose                      | Example                                  |
-| --------------------------------- | ------ | ---------------------------- | ---------------------------------------- |
-| `/api/workflow/conversation`      | POST   | Start/continue conversation  | Standard conversation flows              |
-| `/api/workflow/smart-conversation`| POST   | Smart orchestration workflow | Advanced multi-step query processing    |
-| `/api/workflow/multimodal`        | POST   | Multimodal conversation      | Text + image conversation                |
-| `/api/workflow/conversation/{id}` | GET    | Get conversation history     | Retrieve session with summary           |
-| `/api/workflow/conversation/{id}` | DELETE | Delete conversation          | Remove conversation session             |
-| `/api/workflow/stats`             | GET    | Workflow statistics          | Get conversation metrics                 |
-| `/api/workflow/health`            | GET    | Workflow system health       | Check LangGraph engine status           |
+| Endpoint                           | Method | Purpose                      | Example                              |
+| ---------------------------------- | ------ | ---------------------------- | ------------------------------------ |
+| `/api/workflow/conversation`       | POST   | Start/continue conversation  | Standard conversation flows          |
+| `/api/workflow/smart-conversation` | POST   | Smart orchestration workflow | Advanced multi-step query processing |
+| `/api/workflow/multimodal`         | POST   | Multimodal conversation      | Text + image conversation            |
+| `/api/workflow/conversation/{id}`  | GET    | Get conversation history     | Retrieve session with summary        |
+| `/api/workflow/conversation/{id}`  | DELETE | Delete conversation          | Remove conversation session          |
+| `/api/workflow/stats`              | GET    | Workflow statistics          | Get conversation metrics             |
+| `/api/workflow/health`             | GET    | Workflow system health       | Check LangGraph engine status        |
 
 **AI-Powered Query Understanding (Phase 6C):**
 
@@ -331,7 +331,7 @@ curl -X POST http://localhost:8000/api/workflow/conversation \
   -H "Content-Type: application/json" \
   -d '{"message": "Find me some good action anime"}'
 
-# Smart orchestration for complex queries  
+# Smart orchestration for complex queries
 curl -X POST http://localhost:8000/api/workflow/smart-conversation \
   -H "Content-Type: application/json" \
   -d '{

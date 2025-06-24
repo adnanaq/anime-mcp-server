@@ -12,7 +12,7 @@ class TestRefactoringCompatibility:
         # Mock dependencies
         with patch('src.vector.qdrant_client.TextEmbedding') as mock_fastembed, \
              patch('src.vector.qdrant_client.QdrantSDK') as mock_qdrant_sdk, \
-             patch('src.vector.qdrant_client.get_settings') as mock_get_settings:
+             patch('src.config.get_settings') as mock_get_settings:
             
             # Mock settings
             mock_settings = MagicMock()
