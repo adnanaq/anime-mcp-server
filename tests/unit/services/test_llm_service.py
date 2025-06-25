@@ -87,6 +87,28 @@ class TestLLMService:
             service = LLMService(provider=LLMProvider.OPENAI)
             assert service.client is None
 
+        # Test Anthropic without API key
+        with patch("src.services.llm_service.get_settings") as mock_settings:
+            mock_settings.return_value.anthropic_api_key = None
+            service = LLMService(provider=LLMProvider.ANTHROPIC)
+            assert service.client is None
+
+    def test_service_import_error_handling(self):
+        """Test service handles ImportError for missing LLM providers."""
+        with patch("src.services.llm_service.get_settings") as mock_settings:
+            mock_settings.return_value.openai_api_key = "test-key"
+            with patch("builtins.__import__", side_effect=ImportError("OpenAI not installed")):
+                service = LLMService(provider=LLMProvider.OPENAI)
+                assert service.client is None
+
+    def test_service_anthropic_import_error(self):
+        """Test service handles ImportError for missing Anthropic."""
+        with patch("src.services.llm_service.get_settings") as mock_settings:
+            mock_settings.return_value.anthropic_api_key = "test-key"
+            with patch("builtins.__import__", side_effect=ImportError("Anthropic not installed")):
+                service = LLMService(provider=LLMProvider.ANTHROPIC)
+                assert service.client is None
+
     @pytest.mark.asyncio
     async def test_fallback_extraction_basic(self):
         """Test fallback extraction with basic query."""
@@ -232,6 +254,74 @@ class TestLLMService:
         assert result.mood_keywords == ["light"]
         assert result.confidence == 0.85
 
+    @pytest.mark.asyncio
+    async def test_anthropic_extraction_failure_fallback(self):
+        """Test Anthropic extraction failure falls back to regex."""
+        mock_client = AsyncMock()
+        mock_client.messages.create.side_effect = Exception("Anthropic API Error")
+
+        service = LLMService(provider=LLMProvider.ANTHROPIC)
+        service.client = mock_client
+
+        result = await service.extract_search_intent("find 5 mecha anime")
+
+        # Should fall back to regex extraction
+        assert result.limit == 5
+        assert "mecha" in result.genres
+        assert result.confidence == 0.7  # Fallback confidence
+
+    @pytest.mark.asyncio
+    async def test_openai_extraction_field_validation(self):
+        """Test OpenAI extraction handles missing fields."""
+        mock_client = AsyncMock()
+        mock_response = Mock()
+        mock_response.choices = [Mock()]
+        mock_response.choices[0].message.content = """
+        {
+            "query": "action anime",
+            "limit": 3
+        }
+        """
+        mock_client.chat.completions.create.return_value = mock_response
+
+        service = LLMService(provider=LLMProvider.OPENAI)
+        service.client = mock_client
+
+        result = await service.extract_search_intent("find action anime")
+
+        # Missing fields should be initialized as empty lists
+        assert result.genres == []
+        assert result.anime_types == []
+        assert result.studios == []
+        assert result.exclusions == []
+        assert result.mood_keywords == []
+
+    @pytest.mark.asyncio 
+    async def test_anthropic_extraction_field_validation(self):
+        """Test Anthropic extraction handles missing fields."""
+        mock_client = AsyncMock()
+        mock_response = Mock()
+        mock_response.content = [Mock()]
+        mock_response.content[0].text = """
+        {
+            "query": "romance anime",
+            "limit": 2
+        }
+        """
+        mock_client.messages.create.return_value = mock_response
+
+        service = LLMService(provider=LLMProvider.ANTHROPIC)
+        service.client = mock_client
+
+        result = await service.extract_search_intent("find romance anime")
+
+        # Missing fields should be initialized as empty lists
+        assert result.genres == []
+        assert result.anime_types == []
+        assert result.studios == []
+        assert result.exclusions == []
+        assert result.mood_keywords == []
+
 
 class TestFallbackExtractionPatterns:
     """Test comprehensive fallback extraction patterns."""
@@ -255,6 +345,24 @@ class TestFallbackExtractionPatterns:
         for query, expected_limit in test_cases:
             result = await service.extract_search_intent(query)
             assert result.limit == expected_limit, f"Failed for query: {query}"
+
+        # Test invalid limit patterns that trigger ValueError handling
+        invalid_limit_queries = [
+            "show me 999 results",  # Out of range  
+            "top 0 shows",  # Out of range
+        ]
+        
+        for query in invalid_limit_queries:
+            result = await service.extract_search_intent(query)
+            assert result.limit is None, f"Should not extract limit from: {query}"
+
+        # Test edge case that could cause ValueError in int() conversion
+        # This is tricky because the regex patterns are well-formed, but let's try
+        # to trigger the ValueError handling by mocking the int() conversion
+        with patch('builtins.int', side_effect=ValueError("invalid literal")):
+            result = await service.extract_search_intent("find 5 anime")
+            # Should still work because it falls back gracefully
+            assert result.limit is None
 
     @pytest.mark.asyncio
     async def test_genre_detection(self):

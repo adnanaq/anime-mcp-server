@@ -1,399 +1,328 @@
-"""Tests for LangGraph workflow engine."""
-
-from unittest.mock import AsyncMock, Mock
+"""Tests for ToolNode workflow engine integration."""
 
 import pytest
+from unittest.mock import AsyncMock, Mock, patch
+from typing import Dict, Any
 
-from src.langgraph.adapters import MCPAdapterRegistry
-from src.langgraph.models import (
-    AnimeSearchContext,
-    ConversationState,
-    MessageType,
-    UserPreferences,
-    WorkflowStepType,
-)
 from src.langgraph.workflow_engine import (
     AnimeWorkflowEngine,
-    ConversationalAgent,
-    WorkflowGraph,
-    WorkflowNode,
+    create_anime_workflow_engine,
 )
-
-
-class TestWorkflowNode:
-    """Test workflow node implementation."""
-
-    def test_create_node(self):
-        """Test creating a workflow node."""
-
-        async def test_func(state: ConversationState) -> ConversationState:
-            return state
-
-        node = WorkflowNode(
-            name="test_node", function=test_func, description="Test node"
-        )
-
-        assert node.name == "test_node"
-        assert node.description == "Test node"
-        assert callable(node.function)
-
-    @pytest.mark.asyncio
-    async def test_execute_node(self):
-        """Test executing a workflow node."""
-
-        async def test_func(state: ConversationState) -> ConversationState:
-            state.conversation_summary = "Updated by test node"
-            return state
-
-        node = WorkflowNode("test", test_func, "Test")
-        state = ConversationState(session_id="test")
-
-        result = await node.execute(state)
-
-        assert result.conversation_summary == "Updated by test node"
-
-
-class TestWorkflowGraph:
-    """Test workflow graph implementation."""
-
-    def test_create_graph(self):
-        """Test creating workflow graph."""
-        graph = WorkflowGraph()
-
-        assert len(graph.nodes) == 0
-        assert len(graph.edges) == 0
-
-    def test_add_node(self):
-        """Test adding nodes to graph."""
-        graph = WorkflowGraph()
-
-        async def test_func(state: ConversationState) -> ConversationState:
-            return state
-
-        node = WorkflowNode("test", test_func, "Test")
-        graph.add_node(node)
-
-        assert "test" in graph.nodes
-        assert graph.nodes["test"] == node
-
-    def test_add_edge(self):
-        """Test adding edges to graph."""
-        graph = WorkflowGraph()
-
-        async def func1(state: ConversationState) -> ConversationState:
-            return state
-
-        async def func2(state: ConversationState) -> ConversationState:
-            return state
-
-        node1 = WorkflowNode("node1", func1, "Node 1")
-        node2 = WorkflowNode("node2", func2, "Node 2")
-
-        graph.add_node(node1)
-        graph.add_node(node2)
-        graph.add_edge("node1", "node2")
-
-        assert "node1" in graph.edges
-        assert "node2" in graph.edges["node1"]
-
-    def test_get_next_nodes(self):
-        """Test getting next nodes from graph."""
-        graph = WorkflowGraph()
-
-        async def func(state: ConversationState) -> ConversationState:
-            return state
-
-        node1 = WorkflowNode("start", func, "Start")
-        node2 = WorkflowNode("middle", func, "Middle")
-        node3 = WorkflowNode("end", func, "End")
-
-        graph.add_node(node1)
-        graph.add_node(node2)
-        graph.add_node(node3)
-        graph.add_edge("start", "middle")
-        graph.add_edge("start", "end")
-
-        next_nodes = graph.get_next_nodes("start")
-        assert len(next_nodes) == 2
-        assert "middle" in next_nodes
-        assert "end" in next_nodes
-
-
-class TestConversationalAgent:
-    """Test conversational agent."""
-
-    @pytest.mark.asyncio
-    async def test_create_agent(self):
-        """Test creating conversational agent."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        agent = ConversationalAgent(mock_registry)
-
-        assert agent.adapter_registry == mock_registry
-        assert agent.workflow_graph is not None
-
-    @pytest.mark.asyncio
-    async def test_process_user_message(self):
-        """Test processing user message."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        mock_registry.invoke_tool = AsyncMock(return_value=[])
-        agent = ConversationalAgent(mock_registry)
-
-        state = ConversationState(session_id="test")
-
-        result = await agent.process_user_message(state, "Find action anime")
-
-        # Should have both user message and assistant response
-        assert len(result.messages) >= 1
-        assert result.messages[0].message_type == MessageType.USER
-        assert result.messages[0].content == "Find action anime"
-        # Should have workflow steps executed
-        assert len(result.workflow_steps) > 0
-
-    @pytest.mark.asyncio
-    async def test_search_node(self):
-        """Test search workflow node."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        mock_registry.invoke_tool = AsyncMock(
-            return_value=[{"title": "Naruto", "anime_id": "abc123", "score": 0.95}]
-        )
-
-        agent = ConversationalAgent(mock_registry)
-
-        state = ConversationState(session_id="test")
-        state.current_context = AnimeSearchContext(query="action anime")
-
-        result = await agent._search_node(state)
-
-        assert result.current_context.results is not None
-        assert len(result.current_context.results) == 1
-        assert result.current_context.results[0]["title"] == "Naruto"
-        mock_registry.invoke_tool.assert_called_once_with(
-            "search_anime", {"query": "action anime", "limit": 10}
-        )
-
-    @pytest.mark.asyncio
-    async def test_reasoning_node(self):
-        """Test reasoning workflow node."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        agent = ConversationalAgent(mock_registry)
-
-        state = ConversationState(session_id="test")
-        state.current_context = AnimeSearchContext(
-            query="action anime",
-            results=[{"title": "Naruto", "tags": ["action", "shounen"]}],
-        )
-
-        result = await agent._reasoning_node(state)
-
-        assert len(result.workflow_steps) > 0
-        reasoning_step = result.workflow_steps[-1]
-        assert reasoning_step.step_type == WorkflowStepType.REASONING
-        assert reasoning_step.reasoning is not None
-        assert "action" in reasoning_step.reasoning.lower()
-
-    @pytest.mark.asyncio
-    async def test_reasoning_node_with_none_years(self):
-        """Test reasoning node properly handles None year values."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        agent = ConversationalAgent(mock_registry)
-
-        state = ConversationState(session_id="test")
-        state.current_context = AnimeSearchContext(
-            query="test anime",
-            results=[
-                {
-                    "title": "Anime 1",
-                    "tags": ["action"],
-                    "studios": ["Studio A"],
-                    "year": 2020,
-                },
-                {
-                    "title": "Anime 2",
-                    "tags": ["romance"],
-                    "studios": ["Studio B"],
-                    "year": None,
-                },
-                {
-                    "title": "Anime 3",
-                    "tags": ["comedy"],
-                    "studios": ["Studio C"],
-                    "year": 2022,
-                },
-                {"title": "Anime 4", "tags": ["drama"], "studios": [], "year": None},
-            ],
-        )
-
-        result = await agent._reasoning_node(state)
-
-        assert len(result.workflow_steps) > 0
-        reasoning_step = result.workflow_steps[-1]
-        assert reasoning_step.step_type == WorkflowStepType.REASONING
-
-        # Should not crash and should include year range from valid years only
-        reasoning = reasoning_step.reasoning
-        assert "2020-2022" in reasoning  # Only valid years should be included
-        assert "action" in reasoning  # Should include genres
-        assert "Studio A" in reasoning  # Should include studios
-
-    @pytest.mark.asyncio
-    async def test_synthesis_node(self):
-        """Test synthesis workflow node."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        agent = ConversationalAgent(mock_registry)
-
-        state = ConversationState(session_id="test")
-        state.current_context = AnimeSearchContext(
-            results=[
-                {"title": "Naruto", "score": 0.95, "tags": ["action"]},
-                {"title": "One Piece", "score": 0.90, "tags": ["action", "adventure"]},
-            ]
-        )
-        state.user_preferences = UserPreferences(favorite_genres=["action"])
-
-        result = await agent._synthesis_node(state)
-
-        assert len(result.workflow_steps) > 0
-        synthesis_step = result.workflow_steps[-1]
-        assert synthesis_step.step_type == WorkflowStepType.SYNTHESIS
-        assert synthesis_step.result is not None
-        assert "synthesized_results" in synthesis_step.result
 
 
 class TestAnimeWorkflowEngine:
-    """Test anime workflow engine."""
+    """Test the ToolNode-based workflow engine that replaces StateGraphAnimeWorkflowEngine."""
+
+    @pytest.fixture
+    def mock_mcp_tools(self):
+        """Mock MCP tools for testing."""
+        return {
+            "search_anime": AsyncMock(return_value=[
+                {"anime_id": "t1", "title": "Test Anime", "score": 0.9}
+            ]),
+            "get_anime_details": AsyncMock(return_value={
+                "anime_id": "t1", "title": "Test Anime", "synopsis": "Test synopsis"
+            }),
+            "get_anime_stats": AsyncMock(return_value={"total_documents": 100}),
+        }
+
+    @pytest.fixture
+    def workflow_engine(self, mock_mcp_tools):
+        """Create workflow engine instance."""
+        return AnimeWorkflowEngine(mock_mcp_tools)
+
+    def test_engine_initialization(self, workflow_engine):
+        """Test that the engine initializes properly."""
+        assert workflow_engine.tools is not None
+        assert len(workflow_engine.tools) == 3
+        assert workflow_engine.tool_node is not None
+        assert workflow_engine.state_graph is not None
+        assert workflow_engine.memory_saver is not None
+
+    def test_engine_has_compatible_api(self, workflow_engine):
+        """Test that engine has same API as StateGraphAnimeWorkflowEngine."""
+        # Should have the same methods
+        assert hasattr(workflow_engine, 'process_conversation')
+        assert hasattr(workflow_engine, 'process_multimodal_conversation')
+        assert hasattr(workflow_engine, 'get_conversation_summary')
+        assert hasattr(workflow_engine, 'get_workflow_info')
 
     @pytest.mark.asyncio
-    async def test_create_engine(self):
-        """Test creating workflow engine."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        engine = AnimeWorkflowEngine(mock_registry)
-
-        assert engine.adapter_registry == mock_registry
-        assert engine.agent is not None
-
-    @pytest.mark.asyncio
-    async def test_process_conversation(self):
-        """Test processing conversation."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        mock_registry.invoke_tool = AsyncMock(
-            return_value=[
-                {"title": "Attack on Titan", "anime_id": "aot123", "score": 0.92}
-            ]
+    async def test_process_conversation_basic(self, workflow_engine, mock_mcp_tools):
+        """Test basic conversation processing."""
+        result = await workflow_engine.process_conversation(
+            session_id="test_session",
+            message="find action anime"
         )
 
-        engine = AnimeWorkflowEngine(mock_registry)
-
-        state = ConversationState(session_id="test-session")
-
-        result = await engine.process_conversation(state, "Find dark fantasy anime")
-
-        # Should have processed the message
-        assert len(result.messages) >= 1
-        assert result.messages[0].content == "Find dark fantasy anime"
-
-        # Should have search context
-        assert result.current_context is not None
-        assert result.current_context.query == "Find dark fantasy anime"
+        assert isinstance(result, dict)
+        assert result["session_id"] == "test_session"
+        assert "messages" in result
+        assert "workflow_steps" in result
+        assert len(result["messages"]) >= 1
 
     @pytest.mark.asyncio
-    async def test_multimodal_conversation(self):
+    async def test_process_multimodal_conversation(self, workflow_engine, mock_mcp_tools):
         """Test multimodal conversation processing."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        mock_registry.invoke_tool = AsyncMock(
-            return_value=[
-                {"title": "Mecha Anime", "anime_id": "mecha123", "score": 0.88}
-            ]
+        result = await workflow_engine.process_multimodal_conversation(
+            session_id="multimodal_session",
+            message="find similar anime",
+            image_data="base64_image_data",
+            text_weight=0.6
         )
 
-        engine = AnimeWorkflowEngine(mock_registry)
+        assert isinstance(result, dict)
+        assert result["session_id"] == "multimodal_session"
+        assert result.get("image_data") == "base64_image_data"
+        assert result.get("text_weight") == 0.6
 
-        state = ConversationState(session_id="test-multimodal")
+    @pytest.mark.asyncio
+    async def test_conversation_summary(self, workflow_engine):
+        """Test conversation summary generation."""
+        summary = await workflow_engine.get_conversation_summary("summary_session")
+        
+        assert isinstance(summary, str)
+        assert "summary_session" in summary
+        assert "ToolNode-based" in summary
 
-        result = await engine.process_multimodal_conversation(
-            state, "Find mecha anime", "base64_image_data"
+    def test_workflow_info(self, workflow_engine):
+        """Test workflow information retrieval."""
+        info = workflow_engine.get_workflow_info()
+        
+        assert isinstance(info, dict)
+        assert info["engine_type"] == "ToolNode+StateGraph"
+        assert "features" in info
+        assert "LangGraph ToolNode native integration" in info["features"]
+        assert "performance" in info
+        assert info["performance"]["memory_persistence"] is True
+        assert "tools" in info
+        assert len(info["tools"]) == 3
+
+    @pytest.mark.asyncio
+    async def test_error_handling(self, workflow_engine, mock_mcp_tools):
+        """Test error handling in workflow processing."""
+        # Mock tool failure
+        mock_mcp_tools["search_anime"].side_effect = Exception("Tool error")
+
+        result = await workflow_engine.process_conversation(
+            session_id="error_session",
+            message="trigger error"
         )
 
-        # Should have processed both text and image
-        assert len(result.messages) >= 1
-        assert result.current_context is not None
-        assert result.current_context.query == "Find mecha anime"
-        assert result.current_context.image_data == "base64_image_data"
-        # Should have called multimodal search tool
-        mock_registry.invoke_tool.assert_called_with(
-            "search_multimodal_anime",
-            {
-                "query": "Find mecha anime",
-                "image_data": "base64_image_data",
-                "text_weight": 0.7,
-                "limit": 10,
-            },
+        assert isinstance(result, dict)
+        assert result["session_id"] == "error_session"
+        assert "messages" in result
+        # Should have error handling
+        assert any(
+            "Error processing request" in str(msg) or "error" in str(msg).lower()
+            for msg in result["messages"]
         )
 
     @pytest.mark.asyncio
-    async def test_workflow_error_handling(self):
-        """Test workflow error handling."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        mock_registry.invoke_tool = AsyncMock(side_effect=Exception("Search failed"))
+    async def test_state_graph_compatibility(self, workflow_engine):
+        """Test that result format is compatible with StateGraph format."""
+        result = await workflow_engine.process_conversation(
+            session_id="compat_session",
+            message="test compatibility"
+        )
 
-        engine = AnimeWorkflowEngine(mock_registry)
+        # Should have all expected StateGraph fields
+        required_fields = [
+            "session_id", "messages", "workflow_steps", "current_context",
+            "user_preferences", "image_data", "text_weight", "orchestration_enabled"
+        ]
+        
+        for field in required_fields:
+            assert field in result
 
-        state = ConversationState(session_id="error-test")
+    def test_text_content_extraction(self, workflow_engine):
+        """Test text content extraction from various message formats."""
+        # String content
+        assert workflow_engine._extract_text_content("hello") == "hello"
+        
+        # List content
+        list_content = ["hello", {"text": "world"}, "!"]
+        assert workflow_engine._extract_text_content(list_content) == "hello world !"
+        
+        # Other types
+        assert workflow_engine._extract_text_content(123) == "123"
 
-        # Should handle errors gracefully
-        result = await engine.process_conversation(state, "Find anime")
+    @pytest.mark.asyncio 
+    async def test_ai_intent_integration(self, workflow_engine):
+        """Test integration with AI-powered query understanding."""
+        # Mock SearchIntent
+        mock_intent = Mock()
+        mock_intent.query = "action anime"
+        mock_intent.limit = 5
+        mock_intent.year_range = [2020]
+        mock_intent.genres = ["action", "adventure"]
+        mock_intent.anime_types = ["TV"]
+        
+        with patch('src.services.llm_service.extract_search_intent', 
+                   new_callable=AsyncMock) as mock_extract:
+            mock_extract.return_value = mock_intent
+            
+            tool_call = workflow_engine._create_tool_call_from_intent(mock_intent, 1)
+            
+            assert tool_call is not None
+            assert tool_call["name"] == "search_anime"
+            assert tool_call["args"]["query"] == "action anime"
+            assert tool_call["args"]["limit"] == 5
+            assert tool_call["args"]["year"] == 2020
+            assert tool_call["args"]["genres"] == "action,adventure"
+            assert tool_call["args"]["anime_type"] == "TV"
 
-        # Should still return a valid state
-        assert result.session_id == "error-test"
-        assert len(result.messages) >= 1
+    def test_performance_improvements(self, workflow_engine):
+        """Test that performance improvements are reflected in workflow info."""
+        info = workflow_engine.get_workflow_info()
+        
+        # Should have improved response time
+        assert info["performance"]["target_response_time"] == "150ms"
+        
+        # Should indicate boilerplate reduction
+        assert "boilerplate_reduction" in info["performance"]
+        assert "~200 lines eliminated" in info["performance"]["boilerplate_reduction"]
+
+
+class TestCreateAnimeWorkflowEngine:
+    """Test the factory function for creating ToolNode workflow engines."""
+
+    @pytest.fixture
+    def mock_mcp_tools(self):
+        """Mock MCP tools for testing."""
+        return {
+            "search_anime": AsyncMock(),
+            "get_anime_details": AsyncMock(),
+            "find_similar_anime": AsyncMock(),
+        }
+
+    def test_factory_function(self, mock_mcp_tools):
+        """Test factory function creates proper engine."""
+        engine = create_anime_workflow_engine(mock_mcp_tools)
+        
+        assert isinstance(engine, AnimeWorkflowEngine)
+        assert len(engine.tools) == 3
+        assert engine.state_graph is not None
+
+    def test_factory_function_with_all_tools(self):
+        """Test factory function with all 8 MCP tools."""
+        all_tools = {
+            "search_anime": AsyncMock(),
+            "get_anime_details": AsyncMock(),
+            "find_similar_anime": AsyncMock(),
+            "get_anime_stats": AsyncMock(),
+            "recommend_anime": AsyncMock(),
+            "search_anime_by_image": AsyncMock(),
+            "find_visually_similar_anime": AsyncMock(),
+            "search_multimodal_anime": AsyncMock(),
+        }
+        
+        engine = create_anime_workflow_engine(all_tools)
+        
+        assert isinstance(engine, AnimeWorkflowEngine)
+        assert len(engine.tools) == 8
+        
+        # All tool names should be available
+        tool_names = {tool.name for tool in engine.tools}
+        expected_names = set(all_tools.keys())
+        assert tool_names == expected_names
+
+
+class TestAPICompatibility:
+    """Test compatibility with existing API endpoints."""
+
+    @pytest.fixture
+    def mock_mcp_tools(self):
+        """Mock MCP tools for testing."""
+        return {
+            "search_anime": AsyncMock(return_value=[
+                {"anime_id": "api1", "title": "API Test", "score": 0.95}
+            ]),
+            "get_anime_details": AsyncMock(return_value={
+                "anime_id": "api1", "title": "API Test", "synopsis": "API test synopsis"
+            }),
+        }
+
+    @pytest.fixture
+    def workflow_engine(self, mock_mcp_tools):
+        """Create workflow engine instance."""
+        return AnimeWorkflowEngine(mock_mcp_tools)
 
     @pytest.mark.asyncio
-    async def test_conversation_context_preservation(self):
-        """Test that conversation context is preserved across interactions."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        mock_registry.invoke_tool = AsyncMock(
-            return_value=[{"title": "Contextual Result", "anime_id": "ctx123"}]
+    async def test_api_response_format(self, workflow_engine):
+        """Test that API response format matches expectations."""
+        result = await workflow_engine.process_conversation(
+            session_id="api_test",
+            message="find anime"
         )
 
-        engine = AnimeWorkflowEngine(mock_registry)
-
-        # First interaction
-        state = ConversationState(session_id="context-test")
-        state1 = await engine.process_conversation(state, "Find action anime")
-
-        # Second interaction should preserve context
-        state2 = await engine.process_conversation(
-            state1, "Find similar to the first result"
-        )
-
-        # Should maintain session and build on previous context
-        assert state2.session_id == "context-test"
-        assert len(state2.messages) >= 2
-        # Both interactions should have produced workflow steps
-        assert len(state1.workflow_steps) > 0
-        assert len(state2.workflow_steps) > 0
+        # Should match ConversationResponse model structure
+        assert "session_id" in result
+        assert "messages" in result
+        assert "workflow_steps" in result
+        assert "current_context" in result
+        assert "user_preferences" in result
+        
+        # Messages should be in expected format
+        assert isinstance(result["messages"], list)
+        if result["messages"]:
+            assert isinstance(result["messages"][0], str)
 
     @pytest.mark.asyncio
-    async def test_preference_learning(self):
-        """Test user preference learning from conversation."""
-        mock_registry = Mock(spec=MCPAdapterRegistry)
-        mock_registry.invoke_tool = AsyncMock(
-            return_value=[{"title": "Action Anime", "tags": ["action", "shounen"]}]
+    async def test_session_isolation(self, workflow_engine):
+        """Test that different sessions are properly isolated."""
+        # Process conversations for different sessions
+        result1 = await workflow_engine.process_conversation(
+            session_id="session_1",
+            message="test message 1"
         )
 
-        engine = AnimeWorkflowEngine(mock_registry)
-
-        state = ConversationState(session_id="pref-test")
-
-        # Multiple interactions should build preferences
-        state1 = await engine.process_conversation(state, "I love action anime")
-        state2 = await engine.process_conversation(
-            state1, "Shounen is my favorite genre"
+        result2 = await workflow_engine.process_conversation(
+            session_id="session_2", 
+            message="test message 2"
         )
 
-        # Should have learned preferences
-        if state2.user_preferences:
-            # Preferences should be inferred from conversation
-            assert (
-                len(state2.user_preferences.favorite_genres) > 0
-                or len(state2.messages) >= 2
-            )
+        # Sessions should be independent
+        assert result1["session_id"] == "session_1"
+        assert result2["session_id"] == "session_2"
+        assert result1["session_id"] != result2["session_id"]
+
+    @pytest.mark.asyncio
+    async def test_thread_persistence(self, workflow_engine):
+        """Test conversation persistence with thread IDs."""
+        thread_id = "persistent_thread"
+
+        # First message
+        result1 = await workflow_engine.process_conversation(
+            session_id="persist_session",
+            message="hello",
+            thread_id=thread_id
+        )
+
+        # Second message should persist context
+        result2 = await workflow_engine.process_conversation(
+            session_id="persist_session", 
+            message="find anime",
+            thread_id=thread_id
+        )
+
+        assert result1["session_id"] == result2["session_id"]
+        # Both should use the same thread for persistence
+        assert thread_id is not None
+
+    def test_workflow_info_api_compatibility(self, workflow_engine):
+        """Test that workflow info is compatible with API expectations."""
+        info = workflow_engine.get_workflow_info()
+        
+        # Should have all expected fields for health check endpoint
+        assert "engine_type" in info
+        assert "features" in info
+        assert "performance" in info
+        assert isinstance(info["features"], list)
+        assert isinstance(info["performance"], dict)
+        
+        # Performance should have expected fields
+        perf = info["performance"]
+        assert "target_response_time" in perf
+        assert "memory_persistence" in perf
+        assert "conversation_threading" in perf

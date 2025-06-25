@@ -1,8 +1,11 @@
-"""Integration tests for Phase 4: Multi-Modal Image Vector Search.
+"""Integration tests for multi-vector search functionality.
 
-Tests the complete multi-vector implementation including QdrantClient extensions,
-VisionProcessor integration, and new MCP tools with both single-vector and
-multi-vector configurations.
+Tests the complete multi-vector implementation including:
+- QdrantClient single vs multi-vector configurations
+- VisionProcessor integration for image embeddings
+- Image search methods (search_by_image, find_visually_similar_anime, search_multimodal)
+- MCP tools integration with image capabilities
+- Backward compatibility preservation
 """
 
 import base64

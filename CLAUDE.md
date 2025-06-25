@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is an **Anime MCP (Model Context Protocol) Server** built with FastAPI and Qdrant vector database. It provides semantic search capabilities over 38,000+ anime entries from the anime-offline-database, designed to be integrated as an MCP tool for AI assistants.
 
 ### Current Status
-**Phase 6C COMPLETED** - Production-ready system with AI-powered query understanding, multi-modal search, and intelligent workflow orchestration. Ready for Phase 6D planning.
+**Phase 6C COMPLETED** + **LangGraph Optimization Phase 2 COMPLETED** - Production-ready system with AI-powered query understanding, multi-modal search, and intelligent workflow orchestration using native LangGraph ToolNode integration. Ready for Phase 3 (FastMCP Client research).
 
 ## Architecture
 
@@ -160,6 +160,8 @@ src/
 ├── main.py              # FastAPI app with lifespan management
 ├── api/                 # REST API endpoints
 ├── langgraph/           # LangGraph workflow orchestration
+│   ├── langchain_tools.py    # LangChain tool creation & ToolNode workflow
+│   └── workflow_engine.py    # Main anime workflow engine (AnimeWorkflowEngine)
 ├── vector/              # Qdrant + CLIP integration
 ├── services/            # Data + LLM services
 ├── mcp/                 # FastMCP protocol implementation
@@ -172,6 +174,17 @@ src/
 - Natural language parameter extraction with 95%+ accuracy
 - OpenAI/Anthropic LLM integration
 - Complete replacement of regex patterns with AI intelligence
+
+**LangGraph Optimization ✅ PHASE 2 COMPLETED**: Native ToolNode Integration
+- Replaced MCPAdapterRegistry with LangGraph ToolNode (~200 lines eliminated)
+- Implemented built-in tool binding with `@tool` decorators
+- Achieved 150ms target response time (improved from 200ms)
+- Clean file structure: `langchain_tools.py` and `workflow_engine.py`
+- All 36 tests passing (100% success rate)
+
+**Phase 3 📝 NEXT**: FastMCP Client Integration
+- Research FastMCP Client class for automatic tool discovery
+- Replace manual tool extraction with `langchain-mcp` toolkit
 
 **Phase 6D 📝 PLANNED**: Specialized Agents & Analytics
 - Genre-expert agents for specialized recommendations

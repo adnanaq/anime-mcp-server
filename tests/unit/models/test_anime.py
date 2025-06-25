@@ -85,6 +85,18 @@ class TestAnimeEntry:
         anime = AnimeEntry(**data_none)
         assert anime.duration is None
 
+        # Test with malformed dict (missing 'value' key)
+        data_invalid_dict = {
+            "sources": ["https://myanimelist.net/anime/1"],
+            "title": "Test",
+            "type": "TV",
+            "episodes": 1,
+            "status": "FINISHED",
+            "duration": {"unit": "seconds"},  # Missing 'value' key
+        }
+        anime = AnimeEntry(**data_invalid_dict)
+        assert anime.duration is None
+
     def test_anime_entry_missing_required_fields(self):
         """Test AnimeEntry validation with missing required fields."""
         with pytest.raises(ValidationError):

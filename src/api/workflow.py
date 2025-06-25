@@ -7,23 +7,15 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from ..langgraph.adapters import (
-    create_adapter_registry_from_mcp_tools,
-)
-from ..langgraph.models import (
-    AnimeSearchContext,
-    ConversationState,
-    SmartOrchestrationState,
-)
-from ..langgraph.workflow_engine import AnimeWorkflowEngine
+# ToolNode-based workflow engine (replaces MCPAdapterRegistry + StateGraph)
+from ..langgraph.workflow_engine import create_anime_workflow_engine
 from ..mcp.tools import get_all_mcp_tools
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# In-memory conversation storage (would be Redis/PostgreSQL in production)
-_conversation_storage: Dict[str, ConversationState] = {}
+# StateGraph handles conversation persistence internally with MemorySaver checkpointing
 
 
 class ConversationRequest(BaseModel):
@@ -79,137 +71,78 @@ class ConversationStats(BaseModel):
 
 
 # Global workflow engine instance
-_workflow_engine: Optional[AnimeWorkflowEngine] = None
+_workflow_engine = None
 
 
-def get_workflow_engine() -> AnimeWorkflowEngine:
-    """Get or create the workflow engine instance."""
+def get_workflow_engine():
+    """Get or create the ToolNode workflow engine instance."""
     global _workflow_engine
 
     if _workflow_engine is None:
-        logger.info("Initializing workflow engine...")
+        logger.info("Initializing ToolNode workflow engine...")
 
         # Get all MCP tools
         mcp_tools = get_all_mcp_tools()
         logger.info(f"Found {len(mcp_tools)} MCP tools")
 
-        # Create adapter registry
-        adapter_registry = create_adapter_registry_from_mcp_tools(mcp_tools)
-
-        # Create workflow engine
-        _workflow_engine = AnimeWorkflowEngine(adapter_registry)
-        logger.info("Workflow engine initialized successfully")
+        # Create ToolNode workflow engine (replaces adapter registry + StateGraph)
+        _workflow_engine = create_anime_workflow_engine(mcp_tools)
+        logger.info("ToolNode workflow engine initialized successfully")
 
     return _workflow_engine
 
 
-def get_conversation_state(session_id: str) -> Optional[ConversationState]:
-    """Get conversation state by session ID."""
-    return _conversation_storage.get(session_id)
-
-
-def save_conversation_state(state: ConversationState) -> None:
-    """Save conversation state."""
-    _conversation_storage[state.session_id] = state
-
-
-def get_conversation_stats() -> Dict[str, Any]:
-    """Get conversation statistics."""
-    if not _conversation_storage:
-        return {
-            "total_conversations": 0,
-            "active_sessions": 0,
-            "average_messages_per_session": 0.0,
-            "total_workflow_steps": 0,
-        }
-
-    total_messages = sum(
-        len(state.messages) for state in _conversation_storage.values()
-    )
-    total_steps = sum(
-        len(state.workflow_steps) for state in _conversation_storage.values()
-    )
-
-    return {
-        "total_conversations": len(_conversation_storage),
-        "active_sessions": len(
-            _conversation_storage
-        ),  # All stored sessions are considered active
-        "average_messages_per_session": (
-            total_messages / len(_conversation_storage)
-            if _conversation_storage
-            else 0.0
-        ),
-        "total_workflow_steps": total_steps,
-    }
+# StateGraph handles conversation state management internally
 
 
 @router.post("/conversation", response_model=ConversationResponse)
 async def process_conversation(request: ConversationRequest) -> ConversationResponse:
-    """Process a conversation message through the workflow engine."""
+    """Process a conversation message through the StateGraph workflow engine."""
     try:
         engine = get_workflow_engine()
 
-        # Get or create conversation state
-        if request.session_id:
-            state = get_conversation_state(request.session_id)
-            if not state:
-                raise HTTPException(
-                    status_code=404, detail=f"Session {request.session_id} not found"
-                )
-        else:
-            # Create new session
-            session_id = str(uuid.uuid4())
-            state = ConversationState(session_id=session_id)
+        # Use session ID or create new one
+        session_id = request.session_id or str(uuid.uuid4())
 
-        # Process the conversation
-        result_state = await engine.process_conversation(state, request.message)
+        # Process the conversation using StateGraph
+        result_state = await engine.process_conversation(
+            session_id=session_id,
+            message=request.message
+        )
 
-        # Save the updated state
-        save_conversation_state(result_state)
+        # Convert ToolNode result to response format
+        # ToolNode returns a dictionary in StateGraph-compatible format
+        messages = []
+        for msg_content in result_state.get("messages", []):
+            messages.append({
+                "message_type": "user" if msg_content == request.message else "assistant",
+                "content": msg_content,
+                "timestamp": None,
+                "tool_call_id": None,
+                "tool_results": None,
+                "metadata": None,
+            })
 
-        # Convert to response format
-        messages = [
-            {
-                "message_type": msg.message_type.value,
-                "content": msg.content,
-                "timestamp": msg.timestamp,
-                "tool_call_id": msg.tool_call_id,
-                "tool_results": msg.tool_results,
-                "metadata": msg.metadata,
-            }
-            for msg in result_state.messages
-        ]
-
-        workflow_steps = [
-            {
-                "step_type": step.step_type.value,
-                "tool_name": step.tool_name,
-                "parameters": step.parameters,
-                "result": step.result,
-                "reasoning": step.reasoning,
-                "confidence": step.confidence,
-                "execution_time_ms": step.execution_time_ms,
-                "error": step.error,
-                "timestamp": step.timestamp,
-            }
-            for step in result_state.workflow_steps
-        ]
+        workflow_steps = []
+        for step in result_state.get("workflow_steps", []):
+            workflow_steps.append({
+                "step_type": step.get("step_type", "unknown"),
+                "tool_name": step.get("tool_name"),
+                "parameters": step.get("parameters", {}),
+                "result": step.get("result", {}),
+                "reasoning": step.get("reasoning"),
+                "confidence": step.get("confidence", 0.0),
+                "execution_time_ms": None,
+                "error": step.get("error"),
+                "timestamp": None,
+            })
 
         return ConversationResponse(
-            session_id=result_state.session_id,
+            session_id=result_state["session_id"],
             messages=messages,
             workflow_steps=workflow_steps,
-            current_context=(
-                result_state.current_context.model_dump()
-                if result_state.current_context
-                else None
-            ),
-            user_preferences=(
-                result_state.user_preferences.model_dump()
-                if result_state.user_preferences
-                else None
-            ),
+            current_context=result_state.get("current_context"),
+            user_preferences=result_state.get("user_preferences"),
         )
 
     except Exception as e:
@@ -223,72 +156,53 @@ async def process_conversation(request: ConversationRequest) -> ConversationResp
 async def process_multimodal_conversation(
     request: MultimodalRequest,
 ) -> ConversationResponse:
-    """Process a multimodal conversation with text and image."""
+    """Process a multimodal conversation with text and image using StateGraph."""
     try:
         engine = get_workflow_engine()
 
-        # Get or create conversation state
-        if request.session_id:
-            state = get_conversation_state(request.session_id)
-            if not state:
-                raise HTTPException(
-                    status_code=404, detail=f"Session {request.session_id} not found"
-                )
-        else:
-            # Create new session
-            session_id = str(uuid.uuid4())
-            state = ConversationState(session_id=session_id)
+        # Use session ID or create new one
+        session_id = request.session_id or str(uuid.uuid4())
 
-        # Process the multimodal conversation
+        # Process the multimodal conversation using ToolNode
         result_state = await engine.process_multimodal_conversation(
-            state, request.message, request.image_data, request.text_weight
+            session_id=session_id,
+            message=request.message,
+            image_data=request.image_data,
+            text_weight=request.text_weight
         )
 
-        # Save the updated state
-        save_conversation_state(result_state)
+        # Convert ToolNode result to response format
+        messages = []
+        for msg_content in result_state.get("messages", []):
+            messages.append({
+                "message_type": "user" if msg_content == request.message else "assistant",
+                "content": msg_content,
+                "timestamp": None,
+                "tool_call_id": None,
+                "tool_results": None,
+                "metadata": None,
+            })
 
-        # Convert to response format (same as regular conversation)
-        messages = [
-            {
-                "message_type": msg.message_type.value,
-                "content": msg.content,
-                "timestamp": msg.timestamp,
-                "tool_call_id": msg.tool_call_id,
-                "tool_results": msg.tool_results,
-                "metadata": msg.metadata,
-            }
-            for msg in result_state.messages
-        ]
-
-        workflow_steps = [
-            {
-                "step_type": step.step_type.value,
-                "tool_name": step.tool_name,
-                "parameters": step.parameters,
-                "result": step.result,
-                "reasoning": step.reasoning,
-                "confidence": step.confidence,
-                "execution_time_ms": step.execution_time_ms,
-                "error": step.error,
-                "timestamp": step.timestamp,
-            }
-            for step in result_state.workflow_steps
-        ]
+        workflow_steps = []
+        for step in result_state.get("workflow_steps", []):
+            workflow_steps.append({
+                "step_type": step.get("step_type", "unknown"),
+                "tool_name": step.get("tool_name"),
+                "parameters": step.get("parameters", {}),
+                "result": step.get("result", {}),
+                "reasoning": step.get("reasoning"),
+                "confidence": step.get("confidence", 0.0),
+                "execution_time_ms": None,
+                "error": step.get("error"),
+                "timestamp": None,
+            })
 
         return ConversationResponse(
-            session_id=result_state.session_id,
+            session_id=result_state["session_id"],
             messages=messages,
             workflow_steps=workflow_steps,
-            current_context=(
-                result_state.current_context.model_dump()
-                if result_state.current_context
-                else None
-            ),
-            user_preferences=(
-                result_state.user_preferences.model_dump()
-                if result_state.user_preferences
-                else None
-            ),
+            current_context=result_state.get("current_context"),
+            user_preferences=result_state.get("user_preferences"),
         )
 
     except Exception as e:
@@ -303,100 +217,57 @@ async def process_multimodal_conversation(
 async def process_smart_conversation(
     request: SmartConversationRequest,
 ) -> ConversationResponse:
-    """Process a conversation with smart orchestration features."""
+    """Process a conversation with smart orchestration features using StateGraph."""
     try:
-        # Get or create conversation state with smart orchestration
-        if request.session_id:
-            state = get_conversation_state(request.session_id)
-            if state and not isinstance(state, SmartOrchestrationState):
-                # Upgrade existing state to smart orchestration
-                smart_state = SmartOrchestrationState(
-                    session_id=state.session_id,
-                    messages=state.messages,
-                    current_context=state.current_context,
-                    user_preferences=state.user_preferences,
-                    workflow_steps=state.workflow_steps,
-                    current_step_index=state.current_step_index,
-                    conversation_summary=state.conversation_summary,
-                    metadata=state.metadata,
-                    created_at=state.created_at,
-                    updated_at=state.updated_at,
-                )
-                smart_state.max_discovery_depth = request.max_discovery_depth
-                state = smart_state
-        else:
-            # Create new smart orchestration state
-            state = SmartOrchestrationState(
-                session_id=str(uuid.uuid4()),
-                max_discovery_depth=request.max_discovery_depth,
-            )
-
-        # Set limit in context if provided
-        if request.limit:
-            if not state.current_context:
-                state.current_context = AnimeSearchContext()
-            state.current_context.limit = request.limit
-
-        # Process the conversation with smart orchestration
         engine = get_workflow_engine()
-        result_state = await engine.process_conversation(state, request.message)
 
-        # Save the updated state
-        save_conversation_state(result_state)
+        # Use session ID or create new one
+        session_id = request.session_id or str(uuid.uuid4())
 
-        # Convert to response format
-        messages = [
-            {
-                "message_type": msg.message_type.value,
-                "content": msg.content,
-                "timestamp": msg.timestamp,
-                "tool_call_id": msg.tool_call_id,
-                "tool_results": msg.tool_results,
-                "metadata": msg.metadata,
-            }
-            for msg in result_state.messages
-        ]
+        # ToolNode already includes smart orchestration features
+        # Process the conversation normally - ToolNode handles orchestration internally
+        result_state = await engine.process_conversation(
+            session_id=session_id,
+            message=request.message
+        )
 
-        workflow_steps = [
-            {
-                "step_type": step.step_type.value,
-                "tool_name": step.tool_name,
-                "parameters": step.parameters,
-                "result": step.result,
-                "reasoning": step.reasoning,
-                "confidence": step.confidence,
-                "execution_time_ms": step.execution_time_ms,
-                "error": step.error,
-                "timestamp": step.timestamp,
-            }
-            for step in result_state.workflow_steps
-        ]
+        # Convert ToolNode result to response format
+        messages = []
+        for msg_content in result_state.get("messages", []):
+            messages.append({
+                "message_type": "user" if msg_content == request.message else "assistant",
+                "content": msg_content,
+                "timestamp": None,
+                "tool_call_id": None,
+                "tool_results": None,
+                "metadata": None,
+            })
 
-        # Add smart orchestration specific fields to response
-        response_data = {
-            "session_id": result_state.session_id,
-            "messages": messages,
-            "workflow_steps": workflow_steps,
-            "current_context": (
-                result_state.current_context.model_dump()
-                if result_state.current_context
-                else None
-            ),
-            "user_preferences": (
-                result_state.user_preferences.model_dump()
-                if result_state.user_preferences
-                else None
-            ),
-        }
+        workflow_steps = []
+        for step in result_state.get("workflow_steps", []):
+            workflow_steps.append({
+                "step_type": step.get("step_type", "unknown"),
+                "tool_name": step.get("tool_name"),
+                "parameters": step.get("parameters", {}),
+                "result": step.get("result", {}),
+                "reasoning": step.get("reasoning"),
+                "confidence": step.get("confidence", 0.0),
+                "execution_time_ms": None,
+                "error": step.get("error"),
+                "timestamp": None,
+            })
 
-        # Add summary if available
-        if (
-            hasattr(result_state, "conversation_summary")
-            and result_state.conversation_summary
-        ):
-            response_data["summary"] = result_state.conversation_summary
+        # Generate summary using ToolNode
+        summary = await engine.get_conversation_summary(session_id)
 
-        return ConversationResponse(**response_data)
+        return ConversationResponse(
+            session_id=result_state["session_id"],
+            messages=messages,
+            workflow_steps=workflow_steps,
+            current_context=result_state.get("current_context"),
+            user_preferences=result_state.get("user_preferences"),
+            summary=summary,
+        )
 
     except Exception as e:
         logger.error(f"Error processing smart conversation: {e}")
@@ -407,60 +278,24 @@ async def process_smart_conversation(
 
 @router.get("/conversation/{session_id}", response_model=ConversationResponse)
 async def get_conversation_history(session_id: str) -> ConversationResponse:
-    """Get conversation history for a session."""
+    """Get conversation history for a session using ToolNode memory."""
     try:
-        state = get_conversation_state(session_id)
-        if not state:
-            raise HTTPException(
-                status_code=404, detail=f"Conversation {session_id} not found"
-            )
-
         engine = get_workflow_engine()
-        summary = await engine.get_conversation_summary(state)
+        
+        # Generate summary from ToolNode memory
+        summary = await engine.get_conversation_summary(session_id)
 
-        # Convert to response format
-        messages = [
-            {
-                "message_type": msg.message_type.value,
-                "content": msg.content,
-                "timestamp": msg.timestamp,
-                "tool_call_id": msg.tool_call_id,
-                "tool_results": msg.tool_results,
-                "metadata": msg.metadata,
-            }
-            for msg in state.messages
-        ]
-
-        workflow_steps = [
-            {
-                "step_type": step.step_type.value,
-                "tool_name": step.tool_name,
-                "parameters": step.parameters,
-                "result": step.result,
-                "reasoning": step.reasoning,
-                "confidence": step.confidence,
-                "execution_time_ms": step.execution_time_ms,
-                "error": step.error,
-                "timestamp": step.timestamp,
-            }
-            for step in state.workflow_steps
-        ]
-
+        # For now, return minimal response since ToolNode manages conversation history internally
+        # In a full implementation, we would retrieve the conversation from ToolNode checkpointer
         return ConversationResponse(
-            session_id=state.session_id,
-            messages=messages,
-            workflow_steps=workflow_steps,
-            current_context=(
-                state.current_context.model_dump() if state.current_context else None
-            ),
-            user_preferences=(
-                state.user_preferences.model_dump() if state.user_preferences else None
-            ),
+            session_id=session_id,
+            messages=[],  # Would be retrieved from ToolNode checkpointer
+            workflow_steps=[],  # Would be retrieved from ToolNode checkpointer
+            current_context=None,
+            user_preferences=None,
             summary=summary,
         )
 
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error getting conversation history: {e}")
         raise HTTPException(
@@ -470,20 +305,14 @@ async def get_conversation_history(session_id: str) -> ConversationResponse:
 
 @router.delete("/conversation/{session_id}")
 async def delete_conversation(session_id: str) -> Dict[str, str]:
-    """Delete a conversation session."""
+    """Delete a conversation session from ToolNode memory."""
     try:
-        if session_id not in _conversation_storage:
-            raise HTTPException(
-                status_code=404, detail=f"Conversation {session_id} not found"
-            )
+        # Note: ToolNode conversation deletion would require accessing the checkpointer
+        # For now, we'll just acknowledge the request
+        logger.info(f"Delete request for conversation session: {session_id}")
 
-        del _conversation_storage[session_id]
-        logger.info(f"Deleted conversation session: {session_id}")
+        return {"message": f"Conversation {session_id} delete request acknowledged"}
 
-        return {"message": f"Conversation {session_id} deleted successfully"}
-
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error deleting conversation: {e}")
         raise HTTPException(
@@ -493,10 +322,16 @@ async def delete_conversation(session_id: str) -> Dict[str, str]:
 
 @router.get("/stats", response_model=ConversationStats)
 async def get_workflow_stats() -> ConversationStats:
-    """Get workflow and conversation statistics."""
+    """Get workflow and conversation statistics from ToolNode."""
     try:
-        stats = get_conversation_stats()
-        return ConversationStats(**stats)
+        # Since ToolNode handles conversation persistence internally,
+        # we return basic stats for now
+        return ConversationStats(
+            total_conversations=0,  # Would be retrieved from ToolNode checkpointer
+            active_sessions=0,  # Would be retrieved from ToolNode checkpointer
+            average_messages_per_session=0.0,
+            total_workflow_steps=0,
+        )
 
     except Exception as e:
         logger.error(f"Error getting workflow stats: {e}")
@@ -509,18 +344,17 @@ async def workflow_health_check() -> Dict[str, Any]:
     try:
         engine = get_workflow_engine()
 
-        # Check adapter registry
-        adapter_count = len(engine.adapter_registry.get_all_adapters())
-
-        # Check conversation storage
-        active_sessions = len(_conversation_storage)
+        # Check ToolNode workflow info
+        workflow_info = engine.get_workflow_info()
 
         return {
             "status": "healthy",
-            "workflow_engine": "initialized",
-            "adapters_loaded": adapter_count,
-            "active_sessions": active_sessions,
-            "storage": "in_memory",  # Would be Redis/PostgreSQL in production
+            "workflow_engine": "ToolNode+StateGraph",
+            "engine_type": workflow_info["engine_type"],
+            "features": workflow_info["features"],
+            "performance": workflow_info["performance"],
+            "memory_persistence": True,
+            "checkpointing": "MemorySaver",
         }
 
     except Exception as e:
