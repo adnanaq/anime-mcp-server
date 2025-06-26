@@ -1,7 +1,6 @@
 """Unit tests for configuration management."""
 
 import warnings
-from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -24,7 +23,7 @@ class TestConfiguration:
         """Test invalid Qdrant URL validation."""
         with pytest.raises(ValidationError) as exc_info:
             Settings(qdrant_url="invalid-url")
-        
+
         assert "Qdrant URL must start with http:// or https://" in str(exc_info.value)
 
     def test_qdrant_url_validation_valid(self):
@@ -32,7 +31,7 @@ class TestConfiguration:
         # Test http://
         settings = Settings(qdrant_url="http://localhost:6333")
         assert settings.qdrant_url == "http://localhost:6333"
-        
+
         # Test https://
         settings = Settings(qdrant_url="https://cloud.qdrant.io")
         assert settings.qdrant_url == "https://cloud.qdrant.io"
@@ -41,8 +40,10 @@ class TestConfiguration:
         """Test invalid distance metric validation."""
         with pytest.raises(ValidationError) as exc_info:
             Settings(qdrant_distance_metric="invalid")
-        
-        assert "Distance metric must be one of: ['cosine', 'euclid', 'dot']" in str(exc_info.value)
+
+        assert "Distance metric must be one of: ['cosine', 'euclid', 'dot']" in str(
+            exc_info.value
+        )
 
     def test_distance_metric_validation_valid(self):
         """Test valid distance metric validation."""
@@ -53,8 +54,11 @@ class TestConfiguration:
         """Test invalid log level validation."""
         with pytest.raises(ValidationError) as exc_info:
             Settings(log_level="INVALID")
-        
-        assert "Log level must be one of: ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']" in str(exc_info.value)
+
+        assert (
+            "Log level must be one of: ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']"
+            in str(exc_info.value)
+        )
 
     def test_log_level_validation_valid(self):
         """Test valid log level validation."""
@@ -65,8 +69,11 @@ class TestConfiguration:
         """Test invalid server mode validation."""
         with pytest.raises(ValidationError) as exc_info:
             Settings(server_mode="invalid")
-        
-        assert "Server mode must be one of: ['stdio', 'http', 'sse', 'streamable']" in str(exc_info.value)
+
+        assert (
+            "Server mode must be one of: ['stdio', 'http', 'sse', 'streamable']"
+            in str(exc_info.value)
+        )
 
     def test_server_mode_validation_valid(self):
         """Test valid server mode validation."""
@@ -83,7 +90,7 @@ class TestConfiguration:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             settings = Settings(fastembed_model="custom/model")
-            
+
             assert settings.fastembed_model == "custom/model"
             assert len(w) == 1
             assert "not in validated list" in str(w[0].message)
@@ -98,7 +105,7 @@ class TestConfiguration:
         """Test settings reload functionality."""
         original_settings = get_settings()
         reloaded_settings = reload_settings()
-        
+
         # Should return new Settings instance
         assert reloaded_settings is not original_settings
         # But new get_settings() should return the reloaded one

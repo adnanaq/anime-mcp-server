@@ -421,7 +421,7 @@ class QdrantClient:
             qdrant_filter = None
             if filters:
                 qdrant_filter = self._build_filter(filters)
-
+            print(f"Qdrant filter: {qdrant_filter}")
             loop = asyncio.get_event_loop()
 
             # Perform search (handle multi-vector vs single-vector)
@@ -554,26 +554,44 @@ class QdrantClient:
         Returns:
             Qdrant Filter object
         """
+        if not filters:
+            return None
+            
         conditions = []
 
         for key, value in filters.items():
+            # Skip None values and empty collections
+            if value is None:
+                continue
+            if isinstance(value, (list, tuple)) and len(value) == 0:
+                continue
+            if isinstance(value, dict) and len(value) == 0:
+                continue
+
             if isinstance(value, dict):
                 # Range filter
                 if "gte" in value or "lte" in value or "gt" in value or "lt" in value:
                     conditions.append(FieldCondition(key=key, range=Range(**value)))
                 # Match any filter
                 elif "any" in value:
-                    conditions.append(
-                        FieldCondition(key=key, match=MatchAny(any=value["any"]))
-                    )
+                    any_values = value["any"]
+                    # Skip empty any values
+                    if any_values and len(any_values) > 0:
+                        conditions.append(
+                            FieldCondition(key=key, match=MatchAny(any=any_values))
+                        )
             elif isinstance(value, list):
-                # Match any from list
-                conditions.append(FieldCondition(key=key, match=MatchAny(any=value)))
+                # Match any from list - only add if list is not empty
+                if len(value) > 0:
+                    conditions.append(
+                        FieldCondition(key=key, match=MatchAny(any=value))
+                    )
             else:
-                # Exact match
-                conditions.append(
-                    FieldCondition(key=key, match=MatchValue(value=value))
-                )
+                # Exact match - only add if value is not None
+                if value is not None:
+                    conditions.append(
+                        FieldCondition(key=key, match=MatchValue(value=value))
+                    )
 
         return Filter(must=conditions) if conditions else None
 
@@ -688,8 +706,14 @@ class QdrantClient:
         """Clear all points from the collection (for fresh re-indexing)."""
         try:
             # Delete and recreate collection for clean state
-            await self.delete_collection()
-            await self.create_collection()
+            delete_success = await self.delete_collection()
+            if not delete_success:
+                return False
+            
+            create_success = await self.create_collection()
+            if not create_success:
+                return False
+                
             logger.info(f"Cleared and recreated collection: {self.collection_name}")
             return True
         except Exception as e:

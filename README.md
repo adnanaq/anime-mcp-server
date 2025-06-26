@@ -197,7 +197,6 @@ MCP_PORT=8001             # HTTP server port (for HTTP modes)
 | `get_anime_details`           | Get detailed anime info      | `anime_id` (string)                     |
 | `find_similar_anime`          | Find similar anime           | `anime_id` (string), `limit` (int)      |
 | `get_anime_stats`             | Database statistics          | None                                    |
-| `recommend_anime`             | Personalized recommendations | `genres`, `year`, `anime_type`, `limit` |
 | `search_anime_by_image`       | Image similarity search      | `image_data` (base64), `limit` (int)    |
 | `find_visually_similar_anime` | Visual similarity            | `anime_id` (string), `limit` (int)      |
 | `search_multimodal_anime`     | Text + image search          | `query`, `image_data`, `text_weight`    |
@@ -579,7 +578,7 @@ python scripts/verify_mcp_server.py --skip-image-tests
 # Expected output:
 # Starting comprehensive FastMCP Anime Server verification...
 # MCP session initialized
-# Available tools: ['search_anime', 'get_anime_details', 'find_similar_anime', 'get_anime_stats', 'recommend_anime', 'search_anime_by_image', 'find_visually_similar_anime', 'search_multimodal_anime']
+# Available tools: ['search_anime', 'get_anime_details', 'find_similar_anime', 'get_anime_stats', 'search_anime_by_image', 'find_visually_similar_anime', 'search_multimodal_anime']
 # All expected MCP tools are available
 # Basic search test successful
 # Stats test successful
@@ -699,7 +698,7 @@ The system uses Docker Compose for orchestration with support for both REST API 
 - **Database Size**: 38,894 anime entries with multi-vector support
 - **Memory Usage**: ~3-4GB for full dataset with image embeddings
 - **Concurrency**: Supports multiple simultaneous searches and complex query processing
-- **MCP Protocol**: Full FastMCP 2.8.1 integration with 8 tools
+- **MCP Protocol**: Full FastMCP 2.8.1 integration with 7 tools
 - **Workflow Processing**: 2-5 workflow steps per query depending on complexity
 - **Natural Language Processing**: Intelligent parameter extraction with graceful fallbacks
 
@@ -808,7 +807,7 @@ All tools configured in `pyproject.toml` with modern best practices and compatib
 ### Project Structure
 
 - **`src/main.py`**: FastAPI application entry point
-- **`src/mcp/server.py`**: FastMCP server with 8 tools + 2 resources
+- **`src/mcp/server.py`**: FastMCP server with 7 tools + 2 resources
 - **`src/vector/qdrant_client.py`**: Multi-vector database operations with CLIP
 - **`src/vector/vision_processor.py`**: CLIP image processing pipeline
 - **`src/config.py`**: Centralized configuration management

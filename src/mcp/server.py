@@ -25,13 +25,93 @@ mcp = FastMCP("Anime Search Server")
 qdrant_client: Optional[QdrantClient] = None
 
 
+def _build_search_filters(
+    genres: Optional[List[str]] = None,
+    year_range: Optional[List[int]] = None,
+    anime_types: Optional[List[str]] = None,
+    studios: Optional[List[str]] = None,
+    exclusions: Optional[List[str]] = None,
+    mood_keywords: Optional[List[str]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Build Qdrant-compatible filters from SearchIntent parameters.
+
+    Args:
+        genres: List of anime genres to include
+        year_range: Year range as [start_year, end_year]
+        anime_types: List of anime types (TV, Movie, etc.)
+        studios: List of animation studios
+        exclusions: List of genres/themes to exclude
+        mood_keywords: List of mood descriptors
+
+    Returns:
+        Dictionary of filters compatible with QdrantClient.search() or None if no filters
+    """
+    filters = {}
+
+    # Genre filters (include)
+    if genres and any(genres):
+        filters["tags"] = {"any": genres}
+
+    # Year range filter
+    if year_range and len(year_range) == 2:
+        start_year, end_year = year_range
+        if start_year and end_year:
+            filters["year"] = {"gte": start_year, "lte": end_year}
+        elif start_year:
+            filters["year"] = {"gte": start_year}
+        elif end_year:
+            filters["year"] = {"lte": end_year}
+
+    # Anime type filters
+    if anime_types and any(anime_types):
+        filters["type"] = {"any": anime_types}
+
+    # Studio filters
+    if studios and any(studios):
+        filters["studios"] = {"any": studios}
+
+    # Exclusion filters (handled by adding mood keywords to include and exclude opposites)
+    if exclusions and any(exclusions):
+        # For exclusions, we'll add them as negative filters
+        # This will be handled in the QdrantClient._build_filter method
+        filters["exclude_tags"] = exclusions
+
+    # Mood keyword filters (treated as additional genre/tag filters)
+    if mood_keywords and any(mood_keywords):
+        # Combine with existing tag filters
+        existing_tags = filters.get("tags", {}).get("any", [])
+        if isinstance(existing_tags, list):
+            combined_tags = existing_tags + mood_keywords
+        else:
+            combined_tags = mood_keywords
+        filters["tags"] = {"any": combined_tags}
+
+    # Return None if no meaningful filters were added
+    return filters if filters else None
+
+
 @mcp.tool
-async def search_anime(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+async def search_anime(
+    query: str,
+    limit: int = 10,
+    genres: Optional[List[str]] = None,
+    year_range: Optional[List[int]] = None,
+    anime_types: Optional[List[str]] = None,
+    studios: Optional[List[str]] = None,
+    exclusions: Optional[List[str]] = None,
+    mood_keywords: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
     """Search for anime using semantic search with natural language queries.
 
     Args:
         query: Natural language search query (e.g., "romantic comedy school anime")
         limit: Maximum number of results to return (default: 10, max: 50)
+        genres: List of anime genres to filter by (e.g., ["Action", "Comedy"])
+        year_range: Year range as [start_year, end_year] (e.g., [2020, 2023])
+        anime_types: List of anime types (e.g., ["TV", "Movie", "OVA"])
+        studios: List of animation studios (e.g., ["Mappa", "Studio Ghibli"])
+        exclusions: List of genres/themes to exclude (e.g., ["Horror", "Ecchi"])
+        mood_keywords: List of mood descriptors (e.g., ["dark", "serious", "funny"])
 
     Returns:
         List of anime matching the search query with metadata
@@ -42,10 +122,23 @@ async def search_anime(query: str, limit: int = 10) -> List[Dict[str, Any]]:
     # Validate limit
     limit = min(max(1, limit), 50)
 
+    # Build filters from SearchIntent-style parameters
+    filters = _build_search_filters(
+        genres=genres,
+        year_range=year_range,
+        anime_types=anime_types,
+        studios=studios,
+        exclusions=exclusions,
+        mood_keywords=mood_keywords,
+    )
+
     logger.info(f"MCP search request: '{query}' (limit: {limit})")
+    if filters:
+        logger.info(f"Applied filters: {filters}")
 
     try:
-        results = await qdrant_client.search(query=query, limit=limit)
+        # Use enhanced search with filters if available
+        results = await qdrant_client.search(query=query, limit=limit, filters=filters)
         logger.info(f"Found {len(results)} results for query: '{query}'")
         return results
     except Exception as e:
@@ -139,79 +232,6 @@ async def get_anime_stats() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to get stats: {e}")
         raise RuntimeError(f"Failed to get database stats: {str(e)}")
-
-
-@mcp.tool
-async def recommend_anime(
-    genres: Optional[str] = None,
-    year: Optional[int] = None,
-    anime_type: Optional[str] = None,
-    limit: int = 10,
-) -> List[Dict[str, Any]]:
-    """Get anime recommendations based on preferences.
-
-    Args:
-        genres: Preferred genres (comma-separated, e.g., "Action,Comedy")
-        year: Preferred release year (e.g., 2020)
-        anime_type: Preferred type (TV, Movie, OVA, ONA, Special)
-        limit: Maximum number of recommendations (default: 10, max: 25)
-
-    Returns:
-        List of recommended anime matching preferences
-    """
-    if not qdrant_client:
-        raise RuntimeError("Qdrant client not initialized")
-
-    # Validate limit
-    limit = min(max(1, limit), 25)
-
-    # Build search query from preferences
-    query_parts = []
-    if genres:
-        genre_list = [g.strip() for g in genres.split(",")]
-        query_parts.extend(genre_list)
-    if year:
-        query_parts.append(str(year))
-    if anime_type:
-        query_parts.append(anime_type)
-
-    query = " ".join(query_parts) if query_parts else "popular anime"
-
-    logger.info(
-        f"MCP recommendation request: genres={genres}, year={year}, type={anime_type}"
-    )
-
-    try:
-        results = await qdrant_client.search(query=query, limit=limit)
-
-        # Filter results by preferences if specified
-        filtered_results = []
-        for anime in results:
-            # Check year filter
-            if year and anime.get("year") != year:
-                continue
-
-            # Check type filter
-            if anime_type and anime.get("type", "").lower() != anime_type.lower():
-                continue
-
-            # Check genre filter
-            if genres:
-                anime_tags = [tag.lower() for tag in anime.get("tags", [])]
-                requested_genres = [g.strip().lower() for g in genres.split(",")]
-                if not any(genre in anime_tags for genre in requested_genres):
-                    continue
-
-            filtered_results.append(anime)
-
-            if len(filtered_results) >= limit:
-                break
-
-        logger.info(f"Generated {len(filtered_results)} recommendations")
-        return filtered_results
-    except Exception as e:
-        logger.error(f"Recommendation failed: {e}")
-        raise RuntimeError(f"Recommendation failed: {str(e)}")
 
 
 # Phase 4: Multi-Modal Image Search Tools
@@ -357,7 +377,7 @@ async def database_stats() -> str:
         return "Database client not initialized"
 
     try:
-        stats = await get_anime_stats()
+        stats = await get_anime_stats.fn()
         return f"Anime Database Stats: {stats}"
     except Exception as e:
         return f"Error getting stats: {str(e)}"

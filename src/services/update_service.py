@@ -54,8 +54,9 @@ class UpdateService:
             previous_hash = metadata.get("content_hash")
 
             if latest_hash != previous_hash:
+                prev_hash_display = previous_hash[:8] if previous_hash else "none"
                 logger.info(
-                    f"📈 Update detected! Hash changed: {previous_hash[:8]} → {latest_hash[:8]}"
+                    f"📈 Update detected! Hash changed: {prev_hash_display} → {latest_hash[:8]}"
                 )
 
                 # Save new data

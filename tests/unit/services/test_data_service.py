@@ -7,8 +7,8 @@ This file contains all tests for the AnimeDataService class including:
 - Network Tests: Download functionality, error handling
 """
 
-from typing import Any, Dict
-from unittest.mock import patch
+from typing import Any, Dict, List
+from unittest.mock import MagicMock, patch
 
 import pytest
 

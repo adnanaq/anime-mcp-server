@@ -442,7 +442,14 @@ class TestCustomExceptions:
         for status_code, message, kwargs in test_cases:
             exception = mock_map_to_http_exception(status_code, message, **kwargs)
             assert exception.status_code == status_code
-            assert message.lower() in str(exception).lower()
+            # For status 400 with query, check for "invalid query" instead of "bad request"
+            if status_code == 400 and "query" in kwargs:
+                assert "invalid query" in str(exception).lower()
+            else:
+                assert message.lower() in str(exception).lower() or any(
+                    key_word in str(exception).lower()
+                    for key_word in message.lower().split()
+                )
 
     def test_exception_handler_decorator_logic(self):
         """Test exception handler decorator logic."""

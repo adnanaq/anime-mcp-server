@@ -7,7 +7,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is an **Anime MCP (Model Context Protocol) Server** built with FastAPI and Qdrant vector database. It provides semantic search capabilities over 38,000+ anime entries from the anime-offline-database, designed to be integrated as an MCP tool for AI assistants.
 
 ### Current Status
-**Phase 6C COMPLETED** + **LangGraph Optimization Phase 2 COMPLETED** - Production-ready system with AI-powered query understanding, multi-modal search, and intelligent workflow orchestration using native LangGraph ToolNode integration. Ready for Phase 3 (FastMCP Client research).
+**Phase 7 COMPLETED** - Production-ready system with modern ReactAgent architecture, AI-powered query understanding, multi-modal search, and comprehensive code cleanup. System optimized and ready for specialized agents development.
+
+## Documentation File Responsibilities
+
+**IMPORTANT**: Keep clear separation between documentation files:
+
+### `current_sprint.md` - ACTIVE WORK ONLY
+- **Purpose**: Current sprint tasks, immediate next actions, work in progress
+- **Content**: What you're working on NOW or planning for NEXT sprint
+- **Updates**: Frequently updated as work progresses
+- **Scope**: Should only contain active/pending tasks and immediate context
+
+### `project_context.md` - STRATEGIC OVERVIEW  
+- **Purpose**: Condensed historical context, strategic roadmap, system overview
+- **Content**: Completed phases (condensed), architecture, capabilities, vision
+- **Updates**: Updated when major phases complete, strategic changes occur
+- **Scope**: High-level context for understanding the project's current state and direction
+
+**Rule**: If work is COMPLETED → Move condensed summary to `project_context.md` and remove from `current_sprint.md`
 
 ## Architecture
 
@@ -116,7 +134,7 @@ python scripts/verify_mcp_server.py
    - Conversation continuity and preference learning
 
 5. **MCP Server** (`src/mcp/server.py`)
-   - 8 MCP tools including image search capabilities
+   - 7 MCP tools including image search capabilities
    - Dual protocol support (stdio + HTTP)
 
 ### Key Implementation Details

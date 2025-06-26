@@ -6,6 +6,7 @@ functionality for anime image vector search.
 
 import base64
 import io
+import sys
 from unittest.mock import Mock, patch
 
 import pytest
@@ -64,14 +65,13 @@ class TestVisionProcessor:
 
     def test_init_with_defaults(self):
         """Test VisionProcessor initialization with default parameters."""
-        with (
-            patch("src.vector.vision_processor.clip") as mock_clip,
-            patch("src.vector.vision_processor.torch") as mock_torch,
-        ):
-
-            mock_torch.cuda.is_available.return_value = False
-            mock_clip.load.return_value = (Mock(), Mock())
-
+        # Mock the imports that happen inside _init_clip_model
+        mock_clip = Mock()
+        mock_torch = Mock()
+        mock_torch.cuda.is_available.return_value = False
+        mock_clip.load.return_value = (Mock(), Mock())
+        
+        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
             processor = VisionProcessor()
 
             assert processor.model_name == "ViT-B/32"
@@ -83,14 +83,13 @@ class TestVisionProcessor:
 
     def test_init_with_custom_params(self):
         """Test VisionProcessor initialization with custom parameters."""
-        with (
-            patch("src.vector.vision_processor.clip") as mock_clip,
-            patch("src.vector.vision_processor.torch") as mock_torch,
-        ):
-
-            mock_torch.cuda.is_available.return_value = True
-            mock_clip.load.return_value = (Mock(), Mock())
-
+        # Mock the imports that happen inside _init_clip_model
+        mock_clip = Mock()
+        mock_torch = Mock()
+        mock_torch.cuda.is_available.return_value = True
+        mock_clip.load.return_value = (Mock(), Mock())
+        
+        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
             processor = VisionProcessor(model_name="ViT-L/14", cache_dir="/tmp/clip")
 
             assert processor.model_name == "ViT-L/14"
@@ -102,23 +101,20 @@ class TestVisionProcessor:
 
     def test_init_missing_dependencies(self):
         """Test VisionProcessor initialization when CLIP dependencies are missing."""
-        with patch(
-            "src.vector.vision_processor.torch",
-            side_effect=ImportError("torch not found"),
-        ):
-            with pytest.raises(ImportError, match="CLIP dependencies missing"):
-                VisionProcessor()
+        # Remove clip from sys.modules and mock __import__ to raise ImportError
+        with patch.dict('sys.modules', {}, clear=False):
+            with patch('builtins.__import__', side_effect=ImportError("No module named 'clip'")):
+                with pytest.raises(ImportError, match="CLIP dependencies missing"):
+                    VisionProcessor()
 
     def test_decode_base64_image_success(self, sample_image_base64):
         """Test successful base64 image decoding."""
-        with (
-            patch("src.vector.vision_processor.clip") as mock_clip,
-            patch("src.vector.vision_processor.torch") as mock_torch,
-        ):
-
-            mock_torch.cuda.is_available.return_value = False
-            mock_clip.load.return_value = (Mock(), Mock())
-
+        mock_clip = Mock()
+        mock_torch = Mock()
+        mock_torch.cuda.is_available.return_value = False
+        mock_clip.load.return_value = (Mock(), Mock())
+        
+        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image(sample_image_base64)
 
@@ -129,14 +125,12 @@ class TestVisionProcessor:
 
     def test_decode_base64_image_data_url(self, sample_image_data_url):
         """Test decoding image from data URL format."""
-        with (
-            patch("src.vector.vision_processor.clip") as mock_clip,
-            patch("src.vector.vision_processor.torch") as mock_torch,
-        ):
-
-            mock_torch.cuda.is_available.return_value = False
-            mock_clip.load.return_value = (Mock(), Mock())
-
+        mock_clip = Mock()
+        mock_torch = Mock()
+        mock_torch.cuda.is_available.return_value = False
+        mock_clip.load.return_value = (Mock(), Mock())
+        
+        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image(sample_image_data_url)
 
@@ -146,14 +140,12 @@ class TestVisionProcessor:
 
     def test_decode_base64_image_invalid_data(self):
         """Test handling of invalid base64 data."""
-        with (
-            patch("src.vector.vision_processor.clip") as mock_clip,
-            patch("src.vector.vision_processor.torch") as mock_torch,
-        ):
-
-            mock_torch.cuda.is_available.return_value = False
-            mock_clip.load.return_value = (Mock(), Mock())
-
+        mock_clip = Mock()
+        mock_torch = Mock()
+        mock_torch.cuda.is_available.return_value = False
+        mock_clip.load.return_value = (Mock(), Mock())
+        
+        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image("invalid_base64_data")
 
