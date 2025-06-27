@@ -27,6 +27,19 @@ queries = [
     "Search for anime where two timelines run in parallel and intersect in the final episode to reveal a tragic connection between the characters.",
     "Recommend anime with strong social commentary, minimal violence, a realistic art style, and no fantasy elements. Something akin to a political or economic thriller.",
     "I saw an anime years ago that involved underground tunnels, conspiracy theories, and a protagonist who communicates with a mysterious figure through dreams. It may have aired around 2010. Can you identify possible matches and rank them by likelihood?"
+
+    # Test all params
+    1. Show me the most popular anime.
+    2. Recommend me 5 sci-fi or cyberpunk anime with strong female leads.
+    3. I want dark mystery anime released between 2000 and 2010.
+    4. Give me fantasy anime from 2015–2020 that fall under the action or adventure genres.
+    5. Show romantic anime movies that feel warm and nostalgic.
+    6. Find supernatural TV series by Kyoto Animation or Bones released after 2010.
+    7. Recommend anime from 1995 to 2005, but exclude anything from the Naruto or Dragon Ball franchises.
+    8. I want thriller anime with deep philosophical themes produced by Madhouse or Studio MAPPA between 2010 and 2023.
+    9. Suggest slice-of-life anime that feel relaxing and cozy, made after 2018.
+    10. Find psychological seinen anime movies from Studio Pierrot or A-1 Pictures between 2005 and 2020, exclude known shounen titles, and limit to 3 results.
+
 }
 
 

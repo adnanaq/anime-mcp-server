@@ -125,17 +125,25 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             mood_keywords: Optional[List[str]] = None,
         ) -> Any:
             """Search for anime using semantic search with natural language queries."""
-            validated_input = SearchAnimeInput(
-                query=query,
-                limit=limit,
-                genres=genres,
-                year_range=year_range,
-                anime_types=anime_types,
-                studios=studios,
-                exclusions=exclusions,
-                mood_keywords=mood_keywords,
-            )
-            return await mcp_tools["search_anime"](**validated_input.model_dump())
+            
+            try:
+                validated_input = SearchAnimeInput(
+                    query=query,
+                    limit=limit,
+                    genres=genres,
+                    year_range=year_range,
+                    anime_types=anime_types,
+                    studios=studios,
+                    exclusions=exclusions,
+                    mood_keywords=mood_keywords,
+                )
+                validated_params = validated_input.model_dump()
+                result = await mcp_tools["search_anime"].ainvoke(validated_params)
+                return result
+                
+            except Exception as e:
+                logger.error(f"SearchAnimeInput validation failed: {e}")
+                raise
 
         tools.append(search_anime)
 
@@ -146,7 +154,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
         async def get_anime_details(anime_id: str) -> Any:
             """Get detailed information about a specific anime by its ID."""
             validated_input = GetAnimeDetailsInput(anime_id=anime_id)
-            return await mcp_tools["get_anime_details"](**validated_input.model_dump())
+            return await mcp_tools["get_anime_details"].ainvoke(validated_input.model_dump())
 
         tools.append(get_anime_details)
 
@@ -157,7 +165,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
         async def find_similar_anime(anime_id: str, limit: int = 10) -> Any:
             """Find anime similar to a given anime based on content and metadata."""
             validated_input = FindSimilarAnimeInput(anime_id=anime_id, limit=limit)
-            return await mcp_tools["find_similar_anime"](**validated_input.model_dump())
+            return await mcp_tools["find_similar_anime"].ainvoke(validated_input.model_dump())
 
         tools.append(find_similar_anime)
 
@@ -167,7 +175,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
         @tool("get_anime_stats")
         async def get_anime_stats() -> Any:
             """Get database statistics and health information."""
-            return await mcp_tools["get_anime_stats"]()
+            return await mcp_tools["get_anime_stats"].ainvoke({})
 
         tools.append(get_anime_stats)
 
@@ -180,8 +188,8 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             validated_input = SearchAnimeByImageInput(
                 image_data=image_data, limit=limit
             )
-            return await mcp_tools["search_anime_by_image"](
-                **validated_input.model_dump()
+            return await mcp_tools["search_anime_by_image"].ainvoke(
+                validated_input.model_dump()
             )
 
         tools.append(search_anime_by_image)
@@ -195,8 +203,8 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             validated_input = FindVisuallySimilarAnimeInput(
                 anime_id=anime_id, limit=limit
             )
-            return await mcp_tools["find_visually_similar_anime"](
-                **validated_input.model_dump()
+            return await mcp_tools["find_visually_similar_anime"].ainvoke(
+                validated_input.model_dump()
             )
 
         tools.append(find_visually_similar_anime)
@@ -215,8 +223,8 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             validated_input = SearchMultimodalAnimeInput(
                 query=query, image_data=image_data, text_weight=text_weight, limit=limit
             )
-            return await mcp_tools["search_multimodal_anime"](
-                **validated_input.model_dump()
+            return await mcp_tools["search_multimodal_anime"].ainvoke(
+                validated_input.model_dump()
             )
 
         tools.append(search_multimodal_anime)

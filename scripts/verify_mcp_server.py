@@ -54,7 +54,6 @@ async def test_basic_mcp_functionality(session: ClientSession) -> bool:
             "get_anime_details",
             "find_similar_anime",
             "get_anime_stats",
-            "recommend_anime",
             "search_anime_by_image",
             "find_visually_similar_anime",
             "search_multimodal_anime",

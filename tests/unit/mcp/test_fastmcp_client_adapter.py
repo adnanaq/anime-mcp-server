@@ -20,7 +20,6 @@ class TestFastMCPClientAdapter:
             "get_anime_details",
             "find_similar_anime",
             "get_anime_stats",
-            "recommend_anime",
             "search_anime_by_image",
             "find_visually_similar_anime",
             "search_multimodal_anime",
@@ -101,13 +100,12 @@ class TestFastMCPClientAdapter:
     @pytest.mark.asyncio
     async def test_tool_count_validation(self, mock_toolkit, adapter_config):
         """Test that discovered tools match expected count."""
-        # This test ensures we maintain compatibility with the 8 expected tools
+        # This test ensures we maintain compatibility with the 7 expected tools
         expected_tools = {
             "search_anime",
             "get_anime_details",
             "find_similar_anime",
             "get_anime_stats",
-            "recommend_anime",
             "search_anime_by_image",
             "find_visually_similar_anime",
             "search_multimodal_anime",
@@ -175,7 +173,7 @@ class TestFastMCPClientAdapter:
         mock_toolkit.get_tools.assert_called_once()
 
         # Verify correct number of tools returned
-        assert len(tools) == 8
+        assert len(tools) == 7
 
         # Verify tool names
         tool_names = {tool.name for tool in tools}
@@ -184,7 +182,6 @@ class TestFastMCPClientAdapter:
             "get_anime_details",
             "find_similar_anime",
             "get_anime_stats",
-            "recommend_anime",
             "search_anime_by_image",
             "find_visually_similar_anime",
             "search_multimodal_anime",
@@ -209,7 +206,7 @@ class TestFastMCPClientAdapter:
 
         # Results should be identical
         assert tools1 is tools2
-        assert len(tools1) == len(tools2) == 8
+        assert len(tools1) == len(tools2) == 7
 
     @pytest.mark.asyncio
     async def test_refresh_tools_clears_cache(self, adapter_config, mock_toolkit):
@@ -307,7 +304,7 @@ class TestFastMCPClientAdapter:
 
         # Should be a dictionary
         assert isinstance(tools_dict, dict)
-        assert len(tools_dict) == 8
+        assert len(tools_dict) == 7
 
         # Should contain expected tool names as keys
         expected_names = {
@@ -315,7 +312,6 @@ class TestFastMCPClientAdapter:
             "get_anime_details",
             "find_similar_anime",
             "get_anime_stats",
-            "recommend_anime",
             "search_anime_by_image",
             "find_visually_similar_anime",
             "search_multimodal_anime",
@@ -326,6 +322,61 @@ class TestFastMCPClientAdapter:
         for tool_name, tool_obj in tools_dict.items():
             assert hasattr(tool_obj, "name")
             assert tool_obj.name == tool_name
+
+
+    @pytest.mark.asyncio
+    async def test_tool_execution_after_disconnect_fails(self, adapter_config):
+        """Test that tools fail when called after client disconnect - reproduces ClosedResourceError."""
+        from src.mcp.fastmcp_client_adapter import FastMCPClientAdapter
+        
+        adapter = FastMCPClientAdapter(adapter_config)
+        
+        # Mock a connected state and get tools
+        mock_tool = AsyncMock()
+        mock_tool.name = "search_anime"
+        mock_tool.ainvoke = AsyncMock(side_effect=Exception("ClosedResourceError()"))
+        
+        mock_toolkit = AsyncMock()
+        mock_toolkit.get_tools.return_value = [mock_tool]
+        adapter.toolkit = mock_toolkit
+        
+        # Get tools while connected
+        tools_dict = await adapter.get_tools_dict()
+        search_tool = tools_dict["search_anime"]
+        
+        # Simulate disconnect (like our current architecture does)
+        await adapter.disconnect()
+        
+        # Try to call tool after disconnect - should fail
+        with pytest.raises(Exception, match="ClosedResourceError"):
+            await search_tool.ainvoke({"query": "test", "limit": 10})
+
+    @pytest.mark.asyncio
+    async def test_persistent_connection_maintains_tool_functionality(self, adapter_config):
+        """Test that tools work when connection is maintained - desired behavior."""
+        from src.mcp.fastmcp_client_adapter import FastMCPClientAdapter
+        
+        adapter = FastMCPClientAdapter(adapter_config)
+        
+        # Mock successful tool execution with persistent connection
+        mock_tool = AsyncMock()
+        mock_tool.name = "search_anime"
+        mock_tool.ainvoke = AsyncMock(return_value=[{"title": "Test Anime"}])
+        
+        mock_toolkit = AsyncMock()
+        mock_toolkit.get_tools.return_value = [mock_tool]
+        adapter.toolkit = mock_toolkit
+        
+        # Get tools while connected
+        tools_dict = await adapter.get_tools_dict()
+        search_tool = tools_dict["search_anime"]
+        
+        # DO NOT disconnect - connection should remain open
+        # Try to call tool - should succeed
+        result = await search_tool.ainvoke({"query": "test", "limit": 10})
+        
+        assert result == [{"title": "Test Anime"}]
+        assert adapter.is_connected()
 
 
 class TestFastMCPClientAdapterIntegration:

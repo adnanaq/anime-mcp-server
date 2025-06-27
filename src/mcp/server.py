@@ -132,9 +132,9 @@ async def search_anime(
         mood_keywords=mood_keywords,
     )
 
-    logger.info(f"MCP search request: '{query}' (limit: {limit})")
+    logger.info(f"Search request: '{query}' (limit: {limit})")
     if filters:
-        logger.info(f"Applied filters: {filters}")
+        logger.debug(f"Applied filters: {filters}")
 
     try:
         # Use enhanced search with filters if available
@@ -143,6 +143,7 @@ async def search_anime(
         return results
     except Exception as e:
         logger.error(f"Search failed: {e}")
+        logger.error(f"Failed with query: {query!r}, limit: {limit!r}")
         raise RuntimeError(f"Search failed: {str(e)}")
 
 

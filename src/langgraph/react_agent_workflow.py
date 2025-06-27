@@ -152,7 +152,7 @@ When users make requests, carefully analyze their natural language to extract:
 - "recommend Studio Ghibli movies from the 90s" → studios: ["Studio Ghibli"], anime_types: ["Movie"], year_range: [1990, 1999]
 - "something dark and serious but uplifting" → mood_keywords: ["dark", "serious", "uplifting"], exclusions: ["comedy"]
 
-Always extract these parameters when calling search_anime or recommend_anime tools to provide more accurate, filtered results. Use your understanding to make intelligent parameter choices that match the user's intent."""
+Always extract these parameters when calling search_anime tool to provide more accurate, filtered results. Use your understanding to make intelligent parameter choices that match the user's intent."""
 
     async def process_conversation(
         self,
