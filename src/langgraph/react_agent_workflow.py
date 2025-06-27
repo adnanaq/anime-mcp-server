@@ -152,7 +152,12 @@ When users make requests, carefully analyze their natural language to extract:
 - "recommend Studio Ghibli movies from the 90s" → studios: ["Studio Ghibli"], anime_types: ["Movie"], year_range: [1990, 1999]
 - "something dark and serious but uplifting" → mood_keywords: ["dark", "serious", "uplifting"], exclusions: ["comedy"]
 
-Always extract these parameters when calling search_anime tool to provide more accurate, filtered results. Use your understanding to make intelligent parameter choices that match the user's intent."""
+When calling the search_anime tool, you MUST:
+1. Include the original user query text in the 'query' parameter (REQUIRED)
+2. Extract and include relevant structured parameters for enhanced filtering
+3. Use your understanding to make intelligent parameter choices that match the user's intent
+
+**IMPORTANT**: The 'query' field is required and must contain the user's original search text. Always include both the original query AND extracted parameters for the best results."""
 
     async def process_conversation(
         self,
