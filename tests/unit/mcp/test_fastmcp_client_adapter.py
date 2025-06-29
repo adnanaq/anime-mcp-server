@@ -397,3 +397,137 @@ class TestFastMCPClientAdapterIntegration:
     async def test_performance_comparison(self):
         """Test that auto-discovery performance meets requirements."""
         # Should maintain <200ms response times
+
+
+class TestFastMCPAdapterMissingCoverage:
+    """Test missing coverage lines to reach 100%."""
+
+    @pytest.mark.asyncio
+    async def test_disconnect_exception_handling(self, adapter_config):
+        """Test disconnect exception handling - covers lines 104-105."""
+        from src.mcp.fastmcp_client_adapter import FastMCPClientAdapter
+
+        adapter = FastMCPClientAdapter(adapter_config)
+        
+        # Simulate connected state with session that raises exception on exit
+        mock_session = AsyncMock()
+        mock_session.__aexit__ = AsyncMock(side_effect=Exception("Disconnect error"))
+        adapter.session = mock_session
+        
+        # Should handle exception and log warning (lines 104-105)
+        await adapter.disconnect()
+        
+        # Cleanup should still happen in finally block
+        assert adapter.session is None
+        assert adapter.toolkit is None
+
+    @pytest.mark.asyncio
+    async def test_refresh_tools_not_connected_error(self, adapter_config):
+        """Test refresh_tools when not connected - covers line 176."""
+        from src.mcp.fastmcp_client_adapter import FastMCPClientAdapter
+
+        adapter = FastMCPClientAdapter(adapter_config)
+        # adapter.toolkit is None (not connected)
+        
+        with pytest.raises(RuntimeError, match="Client not connected"):
+            await adapter.refresh_tools()
+
+    @pytest.mark.asyncio
+    async def test_connected_context_manager(self, adapter_config):
+        """Test connected context manager - covers lines 190-194."""
+        from src.mcp.fastmcp_client_adapter import FastMCPClientAdapter
+
+        adapter = FastMCPClientAdapter(adapter_config)
+        
+        with (
+            patch.object(adapter, 'connect', AsyncMock()) as mock_connect,
+            patch.object(adapter, 'disconnect', AsyncMock()) as mock_disconnect
+        ):
+            # Test context manager usage
+            async with adapter.connected() as ctx_adapter:
+                assert ctx_adapter is adapter
+                mock_connect.assert_called_once()
+            
+            # Should call disconnect in finally block
+            mock_disconnect.assert_called_once()
+
+    def test_get_tool_names_with_cached_tools(self, adapter_config):
+        """Test get_tool_names when tools are cached - covers line 203."""
+        from src.mcp.fastmcp_client_adapter import FastMCPClientAdapter
+
+        adapter = FastMCPClientAdapter(adapter_config)
+        
+        # Mock cached tools
+        mock_tool1 = Mock()
+        mock_tool1.name = "search_anime"
+        mock_tool2 = Mock()
+        mock_tool2.name = "get_anime_details"
+        adapter._tools_cache = [mock_tool1, mock_tool2]
+        
+        result = adapter.get_tool_names()
+        assert result == ["search_anime", "get_anime_details"]
+
+    @pytest.mark.asyncio
+    async def test_ensure_global_connection_return_path(self):
+        """Test _ensure_global_connection return path - covers line 248."""
+        from src.mcp.fastmcp_client_adapter import _ensure_global_connection, _global_adapter
+        import src.mcp.fastmcp_client_adapter as adapter_module
+        
+        # Store original adapter
+        original_adapter = adapter_module._global_adapter
+        
+        try:
+            # Set up global adapter that's already connected
+            mock_adapter = Mock()
+            mock_adapter.is_connected.return_value = True
+            adapter_module._global_adapter = mock_adapter
+            
+            # Should return existing adapter without calling connect
+            result = await _ensure_global_connection()
+            assert result is mock_adapter
+            
+        finally:
+            # Restore original
+            adapter_module._global_adapter = original_adapter
+
+    @pytest.mark.asyncio
+    async def test_disconnect_global_adapter_success(self):
+        """Test disconnect_global_adapter success path - covers lines 259-260."""
+        from src.mcp.fastmcp_client_adapter import disconnect_global_adapter
+        import src.mcp.fastmcp_client_adapter as adapter_module
+        
+        # Store original adapter
+        original_adapter = adapter_module._global_adapter
+        
+        try:
+            # Set up global adapter that's connected
+            mock_adapter = AsyncMock()
+            mock_adapter.is_connected.return_value = True
+            mock_adapter.disconnect = AsyncMock()
+            adapter_module._global_adapter = mock_adapter
+            
+            await disconnect_global_adapter()
+            
+            # Should call disconnect and set to None
+            mock_adapter.disconnect.assert_called_once()
+            assert adapter_module._global_adapter is None
+            
+        finally:
+            # Restore original
+            adapter_module._global_adapter = original_adapter
+
+    @pytest.mark.asyncio
+    async def test_get_all_mcp_tools_function(self):
+        """Test get_all_mcp_tools backward compatibility function - covers lines 279-280."""
+        from src.mcp.fastmcp_client_adapter import get_all_mcp_tools
+        
+        with patch("src.mcp.fastmcp_client_adapter._ensure_global_connection") as mock_ensure:
+            mock_adapter = AsyncMock()
+            mock_tools_dict = {"search_anime": Mock(), "get_anime_details": Mock()}
+            mock_adapter.get_tools_dict.return_value = mock_tools_dict
+            mock_ensure.return_value = mock_adapter
+            
+            result = await get_all_mcp_tools()
+            
+            assert result == mock_tools_dict
+            mock_adapter.get_tools_dict.assert_called_once()

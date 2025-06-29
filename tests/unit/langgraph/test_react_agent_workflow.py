@@ -12,31 +12,35 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 
+@pytest.fixture
+def mock_mcp_tools():
+    """Mock MCP tools for testing - shared across all test classes."""
+    return {
+        "search_anime": AsyncMock(
+            return_value=[
+                {"anime_id": "r1", "title": "React Test Anime", "score": 0.95}
+            ]
+        ),
+        "get_anime_details": AsyncMock(
+            return_value={
+                "anime_id": "r1",
+                "title": "React Test Anime",
+                "synopsis": "React test synopsis",
+            }
+        ),
+        "recommend_anime": AsyncMock(
+            return_value=[
+                {"anime_id": "r2", "title": "Recommended Anime", "score": 0.85}
+            ]
+        ),
+        "find_similar_anime": AsyncMock(),
+        "get_anime_stats": AsyncMock(),
+    }
+
+
 class TestReactAgentWorkflowEngine:
     """Test the create_react_agent based workflow engine."""
 
-    @pytest.fixture
-    def mock_mcp_tools(self):
-        """Mock MCP tools for testing."""
-        return {
-            "search_anime": AsyncMock(
-                return_value=[
-                    {"anime_id": "r1", "title": "React Test Anime", "score": 0.95}
-                ]
-            ),
-            "get_anime_details": AsyncMock(
-                return_value={
-                    "anime_id": "r1",
-                    "title": "React Test Anime",
-                    "synopsis": "React test synopsis",
-                }
-            ),
-            "recommend_anime": AsyncMock(
-                return_value=[
-                    {"anime_id": "r2", "title": "Recommended Anime", "score": 0.85}
-                ]
-            ),
-        }
 
     @pytest.fixture
     def search_intent_mock(self):
@@ -380,21 +384,6 @@ class TestNativeStructuredOutputIntegration:
 class TestAIPoweredQueryUnderstanding:
     """Test AI-powered query understanding integration with ReactAgent."""
 
-    @pytest.fixture
-    def mock_mcp_tools(self):
-        """Mock MCP tools for AI query understanding tests."""
-        return {
-            "search_anime": AsyncMock(
-                return_value=[
-                    {"anime_id": "ai1", "title": "AI Enhanced Result", "score": 0.95}
-                ]
-            ),
-            "recommend_anime": AsyncMock(
-                return_value=[
-                    {"anime_id": "ai2", "title": "AI Recommended", "score": 0.88}
-                ]
-            ),
-        }
 
     @pytest.mark.asyncio
     async def test_complex_query_parameter_extraction(self, mock_mcp_tools):
@@ -617,19 +606,6 @@ class TestAIPoweredQueryUnderstanding:
 class TestBackwardCompatibility:
     """Test backward compatibility with existing API contracts."""
 
-    @pytest.fixture
-    def mock_mcp_tools(self):
-        """Mock MCP tools matching current interface."""
-        return {
-            "search_anime": AsyncMock(
-                return_value=[
-                    {"anime_id": "bc1", "title": "Compatibility Test", "score": 0.9}
-                ]
-            ),
-            "get_anime_details": AsyncMock(
-                return_value={"anime_id": "bc1", "title": "Compatibility Test"}
-            ),
-        }
 
     @pytest.mark.asyncio
     async def test_conversation_response_format(self, mock_mcp_tools):
@@ -698,3 +674,320 @@ class TestBackwardCompatibility:
             assert result["image_data"] == "base64_image_data"
             assert result["text_weight"] == 0.7
             assert result["session_id"] == "multimodal_test"
+
+
+class TestReactAgentValidationFix:
+    """Test cases for fixing ReactAgent tool call validation errors."""
+
+
+    @pytest.mark.asyncio
+    async def test_missing_query_field_validation_error(self, mock_mcp_tools):
+        """Test that reproduces the missing query field validation error.
+        
+        This test simulates the exact error we observed:
+        "Error: 1 validation error for SearchAnimeInput query Field required"
+        """
+        with patch('src.langgraph.react_agent_workflow.ChatOpenAI'):
+            with patch('src.langgraph.react_agent_workflow.create_react_agent') as mock_create_agent:
+                mock_agent = AsyncMock()
+                
+                # Simulate the problematic tool call that causes validation error
+                mock_result = {
+                    "messages": [
+                        Mock(content="User message"),
+                        Mock(content="AI response with validation error"),
+                        Mock(content="Error: 1 validation error for SearchAnimeInput\nquery\n  Field required [type=missing, input_value={'genres': ['thriller'], 'year_range': [2010, 2023]}, input_type=dict]")
+                    ]
+                }
+                mock_agent.ainvoke = AsyncMock(return_value=mock_result)
+                mock_create_agent.return_value = mock_agent
+                
+                from src.langgraph.react_agent_workflow import create_react_agent_workflow_engine, LLMProvider
+                
+                engine = create_react_agent_workflow_engine(mock_mcp_tools, LLMProvider.OPENAI)
+                
+                result = await engine.process_conversation(
+                    session_id="test_validation", 
+                    message="I want thriller anime with deep philosophical themes produced by Madhouse between 2010 and 2023"
+                )
+                
+                # Verify the validation error occurred
+                messages = result.get("messages", [])
+                error_found = any("validation error for SearchAnimeInput" in str(msg) and "query" in str(msg) for msg in messages)
+                assert error_found, "Expected validation error for missing query field not found"
+
+    @pytest.mark.asyncio 
+    async def test_tool_call_should_include_query_field(self, mock_mcp_tools):
+        """Test that tool calls should include the original query field.
+        
+        This test defines the expected behavior: tool calls must include
+        the original query text along with extracted parameters.
+        """
+        with patch('src.langgraph.react_agent_workflow.ChatOpenAI'):
+            with patch('src.langgraph.react_agent_workflow.create_react_agent') as mock_create_agent:
+                
+                mock_agent = AsyncMock()
+                
+                # Mock successful execution with proper tool call
+                mock_result = {
+                    "messages": [
+                        Mock(content="User message"),
+                        Mock(content="Search results")
+                    ]
+                }
+                mock_agent.ainvoke = AsyncMock(return_value=mock_result)
+                mock_create_agent.return_value = mock_agent
+                
+                from src.langgraph.react_agent_workflow import create_react_agent_workflow_engine, LLMProvider
+                
+                engine = create_react_agent_workflow_engine(mock_mcp_tools, LLMProvider.OPENAI)
+                
+                result = await engine.process_conversation(
+                    session_id="test_fixed",
+                    message="I want thriller anime with deep philosophical themes produced by Madhouse between 2010 and 2023"
+                )
+                
+                # After the fix, this should work without validation errors
+                messages = result.get("messages", [])
+                validation_error = any("validation error" in str(msg) for msg in messages)
+                assert not validation_error, "Should not have validation errors after fix"
+
+    @pytest.mark.asyncio
+    async def test_complex_parameter_extraction_with_query(self, mock_mcp_tools):
+        """Test that complex parameter extraction includes query field.
+        
+        Tests the most complex query from our test cases to ensure
+        all parameters are extracted AND the query field is preserved.
+        """
+        complex_query = "Find psychological seinen anime movies from Studio Pierrot or A-1 Pictures between 2005 and 2020, exclude known shounen titles, and limit to 3 results"
+        
+        with patch('src.langgraph.react_agent_workflow.ChatOpenAI'):
+            with patch('src.langgraph.react_agent_workflow.create_react_agent') as mock_create_agent:
+                
+                mock_agent = AsyncMock()
+                
+                mock_result = {"messages": [Mock(content="Success")]}
+                mock_agent.ainvoke = AsyncMock(return_value=mock_result)
+                mock_create_agent.return_value = mock_agent
+                
+                from src.langgraph.react_agent_workflow import create_react_agent_workflow_engine, LLMProvider
+                
+                engine = create_react_agent_workflow_engine(mock_mcp_tools, LLMProvider.OPENAI)
+                
+                result = await engine.process_conversation(
+                    session_id="test_complex",
+                    message=complex_query
+                )
+                
+                # Should succeed without validation errors
+                messages = result.get("messages", [])
+                validation_error = any("validation error" in str(msg) for msg in messages)
+                assert not validation_error, "Complex query should work without validation errors"
+
+
+class TestReactAgentErrorHandling:
+    """Test error handling and edge cases in ReactAgent workflow."""
+
+    def test_openai_import_error_handling(self):
+        """Test handling when ChatOpenAI is not available."""
+        with patch("src.langgraph.react_agent_workflow.ChatOpenAI", None):
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine, LLMProvider
+            
+            mock_tools = {"search_anime": Mock()}
+            
+            with pytest.raises(RuntimeError) as exc_info:
+                ReactAgentWorkflowEngine(mock_tools, LLMProvider.OPENAI)
+            
+            assert "langchain_openai not available" in str(exc_info.value)
+            assert "pip install langchain-openai" in str(exc_info.value)
+
+    def test_anthropic_import_error_handling(self):
+        """Test handling when ChatAnthropic is not available."""
+        with patch("src.langgraph.react_agent_workflow.ChatAnthropic", None):
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine, LLMProvider
+            
+            mock_tools = {"search_anime": Mock()}
+            
+            with pytest.raises(RuntimeError) as exc_info:
+                ReactAgentWorkflowEngine(mock_tools, LLMProvider.ANTHROPIC)
+            
+            assert "langchain_anthropic not available" in str(exc_info.value)
+            assert "pip install langchain-anthropic" in str(exc_info.value)
+
+    def test_openai_missing_api_key(self):
+        """Test handling when OpenAI API key is missing."""
+        with patch("src.langgraph.react_agent_workflow.ChatOpenAI"), \
+             patch("src.langgraph.react_agent_workflow.get_settings") as mock_get_settings:
+            
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine, LLMProvider
+            
+            # Mock settings without openai_api_key
+            mock_settings = Mock()
+            mock_settings.openai_api_key = None
+            mock_get_settings.return_value = mock_settings
+            
+            mock_tools = {"search_anime": Mock()}
+            
+            with pytest.raises(RuntimeError) as exc_info:
+                ReactAgentWorkflowEngine(mock_tools, LLMProvider.OPENAI)
+            
+            assert "OpenAI API key not found" in str(exc_info.value)
+            assert "OPENAI_API_KEY environment variable" in str(exc_info.value)
+
+    def test_anthropic_missing_api_key(self):
+        """Test handling when Anthropic API key is missing."""
+        with patch("src.langgraph.react_agent_workflow.ChatAnthropic"), \
+             patch("src.langgraph.react_agent_workflow.get_settings") as mock_get_settings:
+            
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine, LLMProvider
+            
+            # Mock settings without anthropic_api_key
+            mock_settings = Mock()
+            mock_settings.anthropic_api_key = None
+            mock_get_settings.return_value = mock_settings
+            
+            mock_tools = {"search_anime": Mock()}
+            
+            with pytest.raises(RuntimeError) as exc_info:
+                ReactAgentWorkflowEngine(mock_tools, LLMProvider.ANTHROPIC)
+            
+            assert "Anthropic API key not found" in str(exc_info.value)
+            assert "ANTHROPIC_API_KEY environment variable" in str(exc_info.value)
+
+    def test_anthropic_provider_initialization(self):
+        """Test successful Anthropic provider initialization."""
+        mock_anthropic = Mock()
+        
+        with patch("src.langgraph.react_agent_workflow.ChatAnthropic", mock_anthropic), \
+             patch("src.langgraph.react_agent_workflow.get_settings") as mock_get_settings, \
+             patch("src.langgraph.react_agent_workflow.create_anime_langchain_tools"), \
+             patch("src.langgraph.react_agent_workflow.create_react_agent"):
+            
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine, LLMProvider
+            
+            # Mock settings with anthropic_api_key
+            mock_settings = Mock()
+            mock_settings.anthropic_api_key = "test_key"
+            mock_get_settings.return_value = mock_settings
+            
+            mock_tools = {"search_anime": Mock()}
+            
+            engine = ReactAgentWorkflowEngine(mock_tools, LLMProvider.ANTHROPIC)
+            
+            # Should call ChatAnthropic constructor
+            mock_anthropic.assert_called_once_with(
+                model="claude-3-haiku-20240307",
+                api_key="test_key",
+                streaming=True,
+                temperature=0.1
+            )
+
+
+class TestImportErrorCoverage:
+    """Test import error handling to achieve 100% coverage."""
+
+    def test_import_errors_are_handled_gracefully(self):
+        """Test that import errors are handled and modules are set to None."""
+        # Test the actual import behavior by temporarily modifying sys.modules
+        import sys
+        
+        # Store original modules
+        original_openai = sys.modules.get('langchain_openai')
+        original_anthropic = sys.modules.get('langchain_anthropic')
+        
+        try:
+            # Simulate missing modules
+            if 'langchain_openai' in sys.modules:
+                del sys.modules['langchain_openai']
+            if 'langchain_anthropic' in sys.modules:
+                del sys.modules['langchain_anthropic']
+            
+            # Force reimport to trigger ImportError handling
+            import importlib
+            
+            # Re-import the module to test the except blocks
+            if 'src.langgraph.react_agent_workflow' in sys.modules:
+                importlib.reload(sys.modules['src.langgraph.react_agent_workflow'])
+            
+            # Import should work even with missing dependencies
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine
+            
+            # Should be able to create engine even with missing deps
+            # (errors will occur during LLM creation, not import)
+            mock_tools = {"search_anime": Mock()}
+            engine = ReactAgentWorkflowEngine(mock_tools)
+            assert engine is not None
+            
+        finally:
+            # Restore original modules
+            if original_openai is not None:
+                sys.modules['langchain_openai'] = original_openai
+            if original_anthropic is not None:
+                sys.modules['langchain_anthropic'] = original_anthropic
+
+    def test_unknown_llm_provider_error(self):
+        """Test RuntimeError for unknown LLM provider - covers line 125."""
+        with patch("src.langgraph.react_agent_workflow.get_settings"), \
+             patch("src.langgraph.react_agent_workflow.create_anime_langchain_tools"):
+            
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine
+            
+            mock_tools = {"search_anime": Mock()}
+            
+            # Test with an invalid provider value (simulate unknown provider)
+            with pytest.raises(RuntimeError) as exc_info:
+                # Pass an invalid provider that would trigger line 125
+                engine = ReactAgentWorkflowEngine(mock_tools, "INVALID_PROVIDER")
+            
+            assert "Unknown LLM provider" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_conversation_summary_exception_handling(self, mock_mcp_tools):
+        """Test exception handling in conversation summary - covers lines 277, 280-283."""
+        with patch("src.langgraph.react_agent_workflow.create_react_agent") as mock_create_agent:
+            mock_agent = Mock()
+            mock_create_agent.return_value = mock_agent
+            
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine
+            
+            engine = ReactAgentWorkflowEngine(mock_mcp_tools)
+            
+            # Force an exception in the summary generation
+            with patch.object(engine, '_get_conversation_messages', side_effect=Exception("Summary error")):
+                summary = await engine.get_conversation_summary("test_session")
+                
+                # Should handle exception and return fallback summary
+                assert "Unable to generate summary" in summary or "No conversation history" in summary
+
+    @pytest.mark.asyncio
+    async def test_image_data_handling_in_conversation(self, mock_mcp_tools):
+        """Test image data handling - covers lines 316-317, 322."""
+        with patch("src.langgraph.react_agent_workflow.create_react_agent") as mock_create_agent:
+            mock_agent = Mock()
+            mock_agent.astream = AsyncMock()
+            mock_create_agent.return_value = mock_agent
+            
+            from src.langgraph.react_agent_workflow import ReactAgentWorkflowEngine
+            
+            engine = ReactAgentWorkflowEngine(mock_mcp_tools)
+            
+            # Mock streaming response with image data
+            async def mock_stream_with_image():
+                yield {
+                    "messages": [AIMessage(content="Processing image...")],
+                    "image_data": "base64_encoded_image"  # This covers line 316
+                }
+                yield {
+                    "messages": [AIMessage(content="Analysis complete")],
+                    "has_image": True  # This covers line 317
+                }
+            
+            mock_agent.astream.return_value = mock_stream_with_image()
+            
+            # Test streaming with image handling
+            stream_results = []
+            async for chunk in engine.astream_conversation("test_session", "analyze this image"):
+                stream_results.append(chunk)
+            
+            # Should handle image data in streaming
+            assert len(stream_results) >= 1

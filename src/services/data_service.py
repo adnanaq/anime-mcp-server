@@ -1,6 +1,8 @@
 # src/services/data_service.py - Anime Data Processing Service
 import asyncio
+import base64
 import hashlib
+import io
 import json
 import logging
 import re
@@ -8,6 +10,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 import aiohttp
+from PIL import Image
 
 from ..config import Settings, get_settings
 from ..exceptions import (
@@ -48,6 +51,7 @@ class AnimeDataService:
         """
         self.settings = settings or get_settings()
         self.anime_db_url = self.settings.anime_database_url
+        self._http_session = None
 
         # Platform configurations for ID extraction
         self.platform_configs = {
@@ -111,6 +115,61 @@ class AnimeDataService:
             },
         }
 
+    async def _get_http_session(self) -> aiohttp.ClientSession:
+        """Get or create HTTP session for image downloads."""
+        if self._http_session is None or self._http_session.closed:
+            self._http_session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30),
+                headers={"User-Agent": "Anime-MCP-Server/1.0"},
+            )
+        return self._http_session
+
+    async def _close_http_session(self):
+        """Close HTTP session if open."""
+        if self._http_session and not self._http_session.closed:
+            await self._http_session.close()
+            self._http_session = None
+
+    async def _download_image(self, url: str) -> Optional[str]:
+        """Download image from URL and return base64 encoded data.
+        
+        Args:
+            url: Image URL to download
+            
+        Returns:
+            Base64 encoded image data or None if failed
+        """
+        if not url:
+            return None
+            
+        try:
+            session = await self._get_http_session()
+            async with session.get(url) as response:
+                if response.status == 200:
+                    content_type = response.headers.get("content-type", "")
+                    if "image" in content_type.lower():
+                        image_data = await response.read()
+                        
+                        # Verify it's a valid image
+                        try:
+                            Image.open(io.BytesIO(image_data)).verify()
+                            return base64.b64encode(image_data).decode("utf-8")
+                        except Exception:
+                            logger.debug(f"Invalid image data from {url}")
+                            return None
+                    else:
+                        logger.debug(f"Non-image content type: {content_type} for {url}")
+                        return None
+                else:
+                    logger.debug(f"HTTP {response.status} for {url}")
+                    return None
+        except asyncio.TimeoutError:
+            logger.debug(f"Timeout downloading {url}")
+            return None
+        except Exception as e:
+            logger.debug(f"Error downloading {url}: {e}")
+            return None
+
     async def download_anime_database(self) -> Dict[str, Any]:
         """Download the latest anime offline database"""
         try:
@@ -135,7 +194,7 @@ class AnimeDataService:
             logger.error(f"❌ Failed to download anime database: {e}")
             raise
 
-    def process_anime_entry(self, raw_entry: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_anime_entry(self, raw_entry: Dict[str, Any]) -> Dict[str, Any]:
         """Process raw anime entry for vector database"""
         try:
             # Create AnimeEntry from raw data
@@ -156,6 +215,10 @@ class AnimeDataService:
             # Extract IDs from all available sources
             platform_ids = self._extract_all_platform_ids(anime.sources)
 
+            # Download images for embedding processing
+            picture_data = await self._download_image(anime.picture) if anime.picture else None
+            thumbnail_data = await self._download_image(anime.thumbnail) if anime.thumbnail else None
+
             # Create processed document for Qdrant
             processed_doc = {
                 "anime_id": anime_id,
@@ -168,16 +231,22 @@ class AnimeDataService:
                 "studios": anime.studios,
                 "producers": anime.producers,
                 "synonyms": anime.synonyms,
+                "relatedAnime": anime.relatedAnime,
                 "picture": anime.picture,
                 "thumbnail": anime.thumbnail,
                 "year": year,
                 "season": season,
                 "sources": anime.sources,
+                # Score data from offline database
+                "score": anime.score,
                 # Platform IDs for cross-referencing
                 **platform_ids,
                 # Text fields for vector embedding
                 "embedding_text": embedding_text,
                 "search_text": search_text,
+                # Image data for multi-vector embedding - both picture and thumbnail
+                "picture_data": picture_data,
+                "thumbnail_data": thumbnail_data,
                 # Metadata
                 "data_quality_score": self._calculate_quality_score(anime),
             }
@@ -233,6 +302,9 @@ class AnimeDataService:
         except Exception as e:
             logger.error(f"Failed to process anime data: {e}")
             raise DataProcessingError(f"Anime processing failed: {str(e)}")
+        finally:
+            # Ensure HTTP session is closed
+            await self._close_http_session()
 
     def _create_processing_config(self) -> "ProcessingConfig":
         """Create processing configuration from settings."""
@@ -340,8 +412,8 @@ class AnimeDataService:
             """Process single entry asynchronously with error handling."""
             async with entry_semaphore:
                 try:
-                    # Run CPU-intensive processing in thread pool
-                    return await asyncio.to_thread(self.process_anime_entry, entry)
+                    # Process entry directly (now async)
+                    return await self.process_anime_entry(entry)
                 except Exception as e:
                     logger.debug(
                         f"Failed to process entry {entry.get('title', 'unknown')}: {e}"

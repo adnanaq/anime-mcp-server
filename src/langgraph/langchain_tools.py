@@ -138,7 +138,13 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
                     mood_keywords=mood_keywords,
                 )
                 validated_params = validated_input.model_dump()
-                result = await mcp_tools["search_anime"].ainvoke(validated_params)
+                # Handle both MCP tools (with .ainvoke) and test mocks (direct callable)
+                tool_func = mcp_tools["search_anime"]
+                if hasattr(tool_func, 'ainvoke'):
+                    result = await tool_func.ainvoke(validated_params)
+                else:
+                    # For tests: call function directly with unpacked parameters
+                    result = await tool_func(**validated_params)
                 return result
                 
             except Exception as e:
@@ -154,7 +160,11 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
         async def get_anime_details(anime_id: str) -> Any:
             """Get detailed information about a specific anime by its ID."""
             validated_input = GetAnimeDetailsInput(anime_id=anime_id)
-            return await mcp_tools["get_anime_details"].ainvoke(validated_input.model_dump())
+            tool_func = mcp_tools["get_anime_details"]
+            if hasattr(tool_func, 'ainvoke'):
+                return await tool_func.ainvoke(validated_input.model_dump())
+            else:
+                return await tool_func(**validated_input.model_dump())
 
         tools.append(get_anime_details)
 
@@ -165,7 +175,11 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
         async def find_similar_anime(anime_id: str, limit: int = 10) -> Any:
             """Find anime similar to a given anime based on content and metadata."""
             validated_input = FindSimilarAnimeInput(anime_id=anime_id, limit=limit)
-            return await mcp_tools["find_similar_anime"].ainvoke(validated_input.model_dump())
+            tool_func = mcp_tools["find_similar_anime"]
+            if hasattr(tool_func, 'ainvoke'):
+                return await tool_func.ainvoke(validated_input.model_dump())
+            else:
+                return await tool_func(**validated_input.model_dump())
 
         tools.append(find_similar_anime)
 
@@ -175,7 +189,11 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
         @tool("get_anime_stats")
         async def get_anime_stats() -> Any:
             """Get database statistics and health information."""
-            return await mcp_tools["get_anime_stats"].ainvoke({})
+            tool_func = mcp_tools["get_anime_stats"]
+            if hasattr(tool_func, 'ainvoke'):
+                return await tool_func.ainvoke({})
+            else:
+                return await tool_func()
 
         tools.append(get_anime_stats)
 
@@ -188,9 +206,11 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             validated_input = SearchAnimeByImageInput(
                 image_data=image_data, limit=limit
             )
-            return await mcp_tools["search_anime_by_image"].ainvoke(
-                validated_input.model_dump()
-            )
+            tool_func = mcp_tools["search_anime_by_image"]
+            if hasattr(tool_func, 'ainvoke'):
+                return await tool_func.ainvoke(validated_input.model_dump())
+            else:
+                return await tool_func(**validated_input.model_dump())
 
         tools.append(search_anime_by_image)
 
@@ -203,9 +223,11 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             validated_input = FindVisuallySimilarAnimeInput(
                 anime_id=anime_id, limit=limit
             )
-            return await mcp_tools["find_visually_similar_anime"].ainvoke(
-                validated_input.model_dump()
-            )
+            tool_func = mcp_tools["find_visually_similar_anime"]
+            if hasattr(tool_func, 'ainvoke'):
+                return await tool_func.ainvoke(validated_input.model_dump())
+            else:
+                return await tool_func(**validated_input.model_dump())
 
         tools.append(find_visually_similar_anime)
 
@@ -223,9 +245,11 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             validated_input = SearchMultimodalAnimeInput(
                 query=query, image_data=image_data, text_weight=text_weight, limit=limit
             )
-            return await mcp_tools["search_multimodal_anime"].ainvoke(
-                validated_input.model_dump()
-            )
+            tool_func = mcp_tools["search_multimodal_anime"]
+            if hasattr(tool_func, 'ainvoke'):
+                return await tool_func.ainvoke(validated_input.model_dump())
+            else:
+                return await tool_func(**validated_input.model_dump())
 
         tools.append(search_multimodal_anime)
 

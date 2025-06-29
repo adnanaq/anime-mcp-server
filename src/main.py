@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import admin, recommendations, search
+from .api import admin, search, workflow
 
 # Import our modules
 from .config import get_settings
@@ -86,18 +86,10 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(search.router, prefix="/api/search", tags=["search"])
-app.include_router(
-    recommendations.router, prefix="/api/recommendations", tags=["recommendations"]
-)
+app.include_router(workflow.router, prefix="/api/workflow", tags=["workflow"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
-# Include LangGraph workflow routes (Phase 6)
-try:
-    from .api.workflow import router as workflow_router
-
-    app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
-except ImportError as e:
-    logger.warning(f"LangGraph workflow routes not available: {e}")
+# LangGraph workflow already included above
 
 
 @app.get("/")
@@ -109,7 +101,6 @@ async def root():
         "status": "running",
         "endpoints": {
             "search": "/api/search",
-            "recommendations": "/api/recommendations",
             "admin": "/api/admin",
             "workflow": "/api/workflow",
             "health": "/health",

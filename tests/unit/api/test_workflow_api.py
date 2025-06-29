@@ -23,21 +23,29 @@ class TestWorkflowAPIEnhancements:
     @pytest.fixture
     def mock_workflow_engine(self):
         """Mock workflow engine for testing."""
-        engine = AsyncMock()
-        engine.process_conversation.return_value = {
-            "session_id": "test_session",
-            "messages": ["I'll search for anime based on your parameters"],
-            "workflow_steps": [
-                {
-                    "step_type": "search",
-                    "tool_name": "search_anime",
-                    "result": {"found": 5},
-                    "confidence": 0.95,
-                }
-            ],
-            "current_context": None,
-            "user_preferences": None,
-        }
+        from unittest.mock import Mock, AsyncMock
+        engine = Mock()
+        
+        async def dynamic_response(*args, **kwargs):
+            # Extract session_id from the call arguments
+            session_id = kwargs.get("session_id", "test_session")
+            return {
+                "session_id": session_id,
+                "messages": ["I'll search for anime based on your parameters"],
+                "workflow_steps": [
+                    {
+                        "step_type": "search",
+                        "tool_name": "search_anime",
+                        "result": {"found": 5},
+                        "confidence": 0.95,
+                    }
+                ],
+                "current_context": None,
+                "user_preferences": None,
+            }
+        
+        engine.process_conversation = AsyncMock(side_effect=dynamic_response)
+        engine.process_multimodal_conversation = AsyncMock(side_effect=dynamic_response)
         engine.get_workflow_info.return_value = {
             "engine_type": "create_react_agent+LangGraph",
             "features": ["AI-powered query understanding"],
@@ -50,8 +58,11 @@ class TestWorkflowAPIEnhancements:
         self, client, mock_workflow_engine
     ):
         """Test existing conversation endpoint with SearchIntent parameters."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             response = client.post(
                 "/api/workflow/conversation",
@@ -87,8 +98,11 @@ class TestWorkflowAPIEnhancements:
         self, client, mock_workflow_engine
     ):
         """Test that enhanced endpoint maintains backward compatibility."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             # Test without search_parameters (should work like regular conversation)
             response = client.post(
@@ -110,8 +124,11 @@ class TestWorkflowAPIEnhancements:
         self, client, mock_workflow_engine
     ):
         """Test enhanced multimodal endpoint with SearchIntent parameters."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             response = client.post(
                 "/api/workflow/multimodal",
@@ -137,8 +154,11 @@ class TestWorkflowAPIEnhancements:
     @pytest.mark.asyncio
     async def test_search_parameters_validation(self, client, mock_workflow_engine):
         """Test validation of SearchIntent parameters."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             # Test with invalid year_range format
             response = client.post(
@@ -158,8 +178,11 @@ class TestWorkflowAPIEnhancements:
     @pytest.mark.asyncio
     async def test_search_parameters_processing(self, client, mock_workflow_engine):
         """Test that search parameters are properly processed."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             test_parameters = {
                 "genres": ["Action", "Drama"],
@@ -195,8 +218,11 @@ class TestWorkflowAPIEnhancements:
         self, client, mock_workflow_engine
     ):
         """Test that explicit parameters can override AI extraction."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             response = client.post(
                 "/api/workflow/conversation",
@@ -222,8 +248,11 @@ class TestWorkflowAPIEnhancements:
     @pytest.mark.asyncio
     async def test_empty_search_parameters_ignored(self, client, mock_workflow_engine):
         """Test that empty search parameters are properly handled."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             response = client.post(
                 "/api/workflow/conversation",
@@ -304,13 +333,24 @@ class TestWorkflowAPIBackwardCompatibility:
     @pytest.fixture
     def mock_workflow_engine(self):
         """Mock workflow engine."""
-        engine = AsyncMock()
-        engine.process_conversation.return_value = {
-            "session_id": "compat_test",
-            "messages": ["Response message"],
-            "workflow_steps": [],
-            "current_context": None,
-            "user_preferences": None,
+        from unittest.mock import Mock, AsyncMock
+        engine = Mock()
+        
+        async def mock_response(*args, **kwargs):
+            return {
+                "session_id": "compat_test",
+                "messages": ["Response message"],
+                "workflow_steps": [],
+                "current_context": None,
+                "user_preferences": None,
+            }
+        
+        engine.process_conversation = AsyncMock(side_effect=mock_response)
+        engine.process_multimodal_conversation = AsyncMock(side_effect=mock_response)
+        engine.get_workflow_info.return_value = {
+            "engine_type": "create_react_agent+LangGraph",
+            "features": ["AI-powered query understanding"],
+            "performance": {"target_response_time": "120ms"},
         }
         return engine
 
@@ -319,8 +359,11 @@ class TestWorkflowAPIBackwardCompatibility:
         self, client, mock_workflow_engine
     ):
         """Test that existing /conversation endpoint is unchanged."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             response = client.post(
                 "/api/workflow/conversation",
@@ -342,8 +385,11 @@ class TestWorkflowAPIBackwardCompatibility:
         self, client, mock_workflow_engine
     ):
         """Test that existing /multimodal endpoint is unchanged."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             response = client.post(
                 "/api/workflow/multimodal",
@@ -361,8 +407,11 @@ class TestWorkflowAPIBackwardCompatibility:
         self, client, mock_workflow_engine
     ):
         """Test that health endpoint shows enhancement capabilities."""
+        async def mock_async_get_engine():
+            return mock_workflow_engine
+        
         with patch(
-            "src.api.workflow.get_workflow_engine", return_value=mock_workflow_engine
+            "src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine
         ):
             response = client.get("/api/workflow/health")
 
@@ -372,3 +421,277 @@ class TestWorkflowAPIBackwardCompatibility:
             assert data["status"] == "healthy"
             assert "workflow_engine" in data
             assert "enhanced_search_parameters" in data.get("features", [])
+
+
+class TestWorkflowAPIErrorHandling:
+    """Test error handling and edge cases in workflow API."""
+
+    @pytest.fixture
+    def client(self):
+        """Create test client."""
+        return TestClient(app)
+
+    @pytest.mark.asyncio
+    async def test_conversation_error_handling(self, client):
+        """Test error handling in conversation endpoint."""
+        with patch("src.api.workflow.get_workflow_engine") as mock_get_engine:
+            # Mock engine to raise exception
+            mock_engine = AsyncMock()
+            mock_engine.process_conversation.side_effect = Exception("Test error")
+            mock_get_engine.return_value = mock_engine
+
+            response = client.post(
+                "/api/workflow/conversation",
+                json={"message": "test message"},
+            )
+
+            assert response.status_code == 500
+            assert "Conversation processing error" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_multimodal_conversation_error_handling(self, client):
+        """Test error handling in multimodal endpoint."""
+        with patch("src.api.workflow.get_workflow_engine") as mock_get_engine:
+            # Mock engine to raise exception
+            mock_engine = AsyncMock()
+            mock_engine.process_multimodal_conversation.side_effect = Exception("Multimodal error")
+            mock_get_engine.return_value = mock_engine
+
+            response = client.post(
+                "/api/workflow/multimodal",
+                json={
+                    "message": "test message",
+                    "image_data": "base64_data",
+                },
+            )
+
+            assert response.status_code == 500
+            assert "Multimodal conversation processing error" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_smart_conversation_endpoint(self, client):
+        """Test smart conversation endpoint functionality."""
+        with patch("src.api.workflow.get_workflow_engine") as mock_get_engine:
+            mock_engine = AsyncMock()
+            mock_engine.process_conversation.return_value = {
+                "session_id": "smart_test_session",
+                "messages": ["Smart response"],
+                "workflow_steps": [{"step_type": "analysis", "result": {"analyzed": True}}],
+                "current_context": {"smart": True},
+                "user_preferences": {"ai_assistance": True},
+            }
+            mock_engine.get_conversation_summary.return_value = "Smart conversation summary"
+            mock_get_engine.return_value = mock_engine
+
+            response = client.post(
+                "/api/workflow/smart-conversation",
+                json={
+                    "message": "find complex anime recommendations",
+                    "session_id": "smart_test_session",
+                    "enable_smart_orchestration": True,
+                    "max_discovery_depth": 3,
+                    "limit": 10,
+                },
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data["session_id"] == "smart_test_session"
+            assert data["summary"] == "Smart conversation summary"
+            assert len(data["messages"]) > 0
+            assert len(data["workflow_steps"]) > 0
+
+            # Verify smart conversation was processed
+            mock_engine.process_conversation.assert_called_once()
+            mock_engine.get_conversation_summary.assert_called_once_with("smart_test_session")
+
+    @pytest.mark.asyncio
+    async def test_smart_conversation_error_handling(self, client):
+        """Test error handling in smart conversation endpoint."""
+        with patch("src.api.workflow.get_workflow_engine") as mock_get_engine:
+            mock_engine = AsyncMock()
+            mock_engine.process_conversation.side_effect = Exception("Smart processing error")
+            mock_get_engine.return_value = mock_engine
+
+            response = client.post(
+                "/api/workflow/smart-conversation",
+                json={"message": "test message"},
+            )
+
+            assert response.status_code == 500
+            assert "Smart conversation processing error" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_conversation_history_endpoint(self, client):
+        """Test conversation history retrieval."""
+        with patch("src.api.workflow.get_workflow_engine") as mock_get_engine:
+            mock_engine = AsyncMock()
+            mock_engine.get_conversation_summary.return_value = "Conversation summary"
+            mock_get_engine.return_value = mock_engine
+
+            response = client.get("/api/workflow/conversation/test_session_123")
+
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data["session_id"] == "test_session_123"
+            assert data["summary"] == "Conversation summary"
+            assert isinstance(data["messages"], list)
+            assert isinstance(data["workflow_steps"], list)
+
+            mock_engine.get_conversation_summary.assert_called_once_with("test_session_123")
+
+    @pytest.mark.asyncio
+    async def test_conversation_history_error_handling(self, client):
+        """Test error handling in conversation history endpoint."""
+        with patch("src.api.workflow.get_workflow_engine") as mock_get_engine:
+            mock_engine = AsyncMock()
+            mock_engine.get_conversation_summary.side_effect = Exception("History error")
+            mock_get_engine.return_value = mock_engine
+
+            response = client.get("/api/workflow/conversation/error_session")
+
+            assert response.status_code == 500
+            assert "Error retrieving conversation" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_delete_conversation_endpoint(self, client):
+        """Test conversation deletion endpoint."""
+        response = client.delete("/api/workflow/conversation/delete_session_123")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "delete request acknowledged" in data["message"]
+        assert "delete_session_123" in data["message"]
+
+    @pytest.mark.asyncio
+    async def test_delete_conversation_error_handling(self, client):
+        """Test error handling in delete conversation endpoint - covers lines 265-267."""
+        # We'll patch the internal delete operation to raise an exception
+        with patch("src.api.workflow.logger") as mock_logger:
+            # Force an error by making logger.info raise an exception
+            mock_logger.info.side_effect = Exception("Delete operation failed")
+            
+            response = client.delete("/api/workflow/conversation/error_session")
+            
+            # This should cover lines 265-267: except Exception as e: logger.error... raise HTTPException
+            assert response.status_code == 500
+            assert "Error deleting conversation" in response.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_workflow_stats_endpoint(self, client):
+        """Test workflow statistics endpoint."""
+        response = client.get("/api/workflow/stats")
+
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert "total_conversations" in data
+        assert "active_sessions" in data
+        assert "average_messages_per_session" in data
+        assert "total_workflow_steps" in data
+
+    @pytest.mark.asyncio
+    async def test_workflow_stats_error_handling(self, client):
+        """Test error handling in workflow stats endpoint."""
+        # This test covers the exception path, though it's unlikely to fail in practice
+        with patch("src.api.workflow.ConversationStats") as mock_stats:
+            mock_stats.side_effect = Exception("Stats error")
+            
+            response = client.get("/api/workflow/stats")
+            
+            assert response.status_code == 500
+            assert "Error retrieving stats" in response.json()["detail"]
+
+
+class TestWorkflowEngineInitialization:
+    """Test workflow engine initialization and caching."""
+
+    @pytest.mark.asyncio
+    async def test_workflow_engine_initialization(self):
+        """Test workflow engine initialization with MCP tools."""
+        with patch("src.api.workflow.get_all_mcp_tools") as mock_get_tools, \
+             patch("src.api.workflow.create_react_agent_workflow_engine") as mock_create_engine:
+            
+            # Mock MCP tools discovery
+            mock_tools = [{"name": "search_anime"}, {"name": "get_anime_details"}]
+            mock_get_tools.return_value = mock_tools
+            
+            # Mock engine creation
+            mock_engine = AsyncMock()
+            mock_create_engine.return_value = mock_engine
+            
+            # Import the function to test
+            from src.api.workflow import get_workflow_engine
+            
+            # Reset global engine state
+            import src.api.workflow
+            src.api.workflow._workflow_engine = None
+            
+            # Test first call - should initialize
+            engine = await get_workflow_engine()
+            
+            assert engine == mock_engine
+            mock_get_tools.assert_called_once()
+            mock_create_engine.assert_called_once_with(mock_tools)
+            
+            # Test second call - should use cached engine
+            engine2 = await get_workflow_engine()
+            
+            assert engine2 == mock_engine
+            # Should not call initialization again
+            assert mock_get_tools.call_count == 1
+            assert mock_create_engine.call_count == 1
+
+    def test_workflow_health_endpoint_with_engine_info(self, ):
+        """Test workflow health endpoint returns engine information."""
+        from fastapi.testclient import TestClient
+        from src.main import app
+        
+        client = TestClient(app)
+        
+        # Create a mock async function that returns our mock engine
+        async def mock_async_get_engine():
+            from unittest.mock import Mock
+            mock_engine = Mock()
+            mock_engine.get_workflow_info.return_value = {
+                "engine_type": "create_react_agent+LangGraph",
+                "features": ["AI-powered query understanding", "conversation memory"],
+                "performance": {"target_response_time": "120ms"},
+            }
+            return mock_engine
+        
+        with patch("src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine):
+            response = client.get("/api/workflow/health")
+
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data["status"] == "healthy"
+            assert data["workflow_engine"] == "create_react_agent+LangGraph"
+            assert data["engine_type"] == "create_react_agent+LangGraph"
+            assert "enhanced_search_parameters" in data["features"]
+            assert "AI-powered query understanding" in data["features"]
+            assert data["memory_persistence"] is True
+            assert data["checkpointing"] == "MemorySaver"
+
+    def test_workflow_health_error_handling(self):
+        """Test workflow health endpoint error handling."""
+        from fastapi.testclient import TestClient
+        from src.main import app
+        
+        client = TestClient(app)
+        
+        # Create a mock async function that raises an exception
+        async def mock_async_get_engine_error():
+            raise Exception("Engine initialization failed")
+        
+        with patch("src.api.workflow.get_workflow_engine", side_effect=mock_async_get_engine_error):
+            response = client.get("/api/workflow/health")
+
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data["status"] == "unhealthy"
+            assert "Engine initialization failed" in data["error"]

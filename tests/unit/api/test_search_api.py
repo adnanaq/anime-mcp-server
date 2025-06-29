@@ -322,3 +322,141 @@ class TestErrorHandling:
             with pytest.raises(HTTPException) as exc_info:
                 await search_multimodal_anime(query="test", image=image_file, limit=10)
             assert exc_info.value.status_code == 500
+
+
+class TestMissingCoverageEdgeCases:
+    """Test edge cases that were missing from coverage."""
+
+    @pytest.mark.asyncio
+    async def test_search_by_image_no_client(self):
+        """Test search by image when client is None."""
+        from unittest.mock import AsyncMock, Mock
+
+        image_file = Mock()
+        image_file.filename = "test.jpg"
+        image_file.content_type = "image/jpeg"
+        image_file.read = AsyncMock(return_value=b"fake data")
+
+        with patch("src.main.qdrant_client", None):
+            with pytest.raises(HTTPException) as exc_info:
+                await search_anime_by_image(image=image_file, limit=10)
+            assert exc_info.value.status_code == 503
+            assert "Vector database not available" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_search_by_image_base64_no_client(self):
+        """Test search by image base64 when client is None."""
+        from src.api.search import search_anime_by_image_base64
+
+        with patch("src.main.qdrant_client", None):
+            with pytest.raises(HTTPException) as exc_info:
+                await search_anime_by_image_base64(image_data="dGVzdA==", limit=10)
+            assert exc_info.value.status_code == 503
+            assert "Vector database not available" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_search_by_image_base64_no_multi_vector(self):
+        """Test search by image base64 when multi-vector is not supported."""
+        from src.api.search import search_anime_by_image_base64
+
+        with patch("src.main.qdrant_client") as mock_client:
+            mock_client._supports_multi_vector = False
+
+            with pytest.raises(HTTPException) as exc_info:
+                await search_anime_by_image_base64(image_data="dGVzdA==", limit=10)
+            assert exc_info.value.status_code == 501
+            assert "Image search not enabled" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_search_by_image_base64_empty_data(self):
+        """Test search by image base64 with empty image data."""
+        from src.api.search import search_anime_by_image_base64
+
+        with patch("src.main.qdrant_client") as mock_client:
+            mock_client._supports_multi_vector = True
+
+            # Test with empty string
+            with pytest.raises(HTTPException) as exc_info:
+                await search_anime_by_image_base64(image_data="", limit=10)
+            assert exc_info.value.status_code == 400
+            assert "Image data cannot be empty" in str(exc_info.value.detail)
+
+            # Test with whitespace only
+            with pytest.raises(HTTPException) as exc_info:
+                await search_anime_by_image_base64(image_data="   ", limit=10)
+            assert exc_info.value.status_code == 400
+            assert "Image data cannot be empty" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_find_visually_similar_no_client(self):
+        """Test find visually similar when client is None."""
+        with patch("src.main.qdrant_client", None):
+            with pytest.raises(HTTPException) as exc_info:
+                await find_visually_similar_anime(anime_id="test", limit=5)
+            assert exc_info.value.status_code == 500
+            assert "Visual similarity search failed" in str(exc_info.value.detail)
+            assert "Vector database not available" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_find_visually_similar_no_multi_vector(self):
+        """Test find visually similar when multi-vector is not supported."""
+        with patch("src.main.qdrant_client") as mock_client:
+            mock_client._supports_multi_vector = False
+
+            with pytest.raises(HTTPException) as exc_info:
+                await find_visually_similar_anime(anime_id="test", limit=5)
+            assert exc_info.value.status_code == 500
+            assert "Visual similarity search failed" in str(exc_info.value.detail)
+            assert "Visual similarity search not enabled" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_search_multimodal_no_client(self):
+        """Test multimodal search when client is None."""
+        with patch("src.main.qdrant_client", None):
+            with pytest.raises(HTTPException) as exc_info:
+                await search_multimodal_anime(query="test", image=None, limit=10)
+            assert exc_info.value.status_code == 503
+            assert "Vector database not available" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_search_by_image_base64_success_path(self, sample_anime_results):
+        """Test successful base64 image search - covers missing lines 188, 192."""
+        import base64
+        from src.api.search import search_anime_by_image_base64
+
+        # Create base64 encoded fake image data
+        fake_image_data = b"fake image data"
+        base64_data = base64.b64encode(fake_image_data).decode('utf-8')
+
+        with patch("src.main.qdrant_client") as mock_client:
+            mock_client._supports_multi_vector = True
+            # This will cover line 188: results = await qdrant_client.search_by_image(
+            mock_client.search_by_image = AsyncMock(return_value=sample_anime_results)
+
+            # This call will cover the success path and line 192: return {
+            result = await search_anime_by_image_base64(image_data=base64_data, limit=10)
+
+            assert len(result["results"]) == 2
+            assert result["search_type"] == "image_similarity_base64"
+            assert result["total_results"] == 2
+            mock_client.search_by_image.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_search_by_image_base64_generic_exception(self):
+        """Test base64 image search generic exception handling - covers lines 201-203."""
+        import base64
+        from src.api.search import search_anime_by_image_base64
+
+        fake_image_data = b"fake image data"
+        base64_data = base64.b64encode(fake_image_data).decode('utf-8')
+
+        with patch("src.main.qdrant_client") as mock_client:
+            mock_client._supports_multi_vector = True
+            # This will trigger lines 201-203: except Exception as e: logger.error... raise HTTPException
+            mock_client.search_by_image = AsyncMock(side_effect=Exception("Search failed"))
+
+            with pytest.raises(HTTPException) as exc_info:
+                await search_anime_by_image_base64(image_data=base64_data, limit=10)
+            
+            assert exc_info.value.status_code == 500
+            assert "Base64 image search failed" in str(exc_info.value.detail)

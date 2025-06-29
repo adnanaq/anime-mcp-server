@@ -20,7 +20,6 @@ services:
     container_name: anime-mcp-server
     ports:
       - "8000:8000" # FastAPI REST API
-      - "8001:8001" # MCP Server HTTP
     networks:
       - anime-mcp-network
     depends_on:

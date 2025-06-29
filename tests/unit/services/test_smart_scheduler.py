@@ -573,3 +573,154 @@ class TestTimeCalculations:
 
         # Should return a very old date for invalid timestamps
         assert result.year < 2020
+
+
+class TestSmartSchedulerMissingCoverage:
+    """Test missing coverage lines to reach 100%."""
+
+    @pytest.mark.asyncio
+    async def test_check_recent_releases_github_api_error(self, scheduler):
+        """Test GitHub API error handling - covers lines 113-114."""
+        mock_response = Mock()
+        mock_response.status = 403
+        mock_response.json = AsyncMock(side_effect=Exception("Rate limit exceeded"))
+
+        with patch("aiohttp.ClientSession.get") as mock_get:
+            mock_get.return_value.__aenter__.return_value = mock_response
+
+            result = await scheduler.check_recent_releases()
+
+            # Should handle GitHub API error gracefully
+            assert result["has_recent_releases"] is False
+            assert "error" in result
+
+    @pytest.mark.asyncio
+    async def test_check_commit_activity_complex_recent_analysis(self, scheduler):
+        """Test complex recent commit analysis - covers lines 160-169."""
+        now = datetime.utcnow()
+        
+        # Create commits with complex timing patterns to trigger analysis logic
+        complex_commits = [
+            {
+                "sha": "recent1",
+                "commit": {
+                    "author": {
+                        "date": (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                    },
+                    "message": "Recent commit 1",
+                },
+            },
+            {
+                "sha": "recent2", 
+                "commit": {
+                    "author": {
+                        "date": (now - timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                    },
+                    "message": "Recent commit 2",
+                },
+            },
+            {
+                "sha": "recent3",
+                "commit": {
+                    "author": {
+                        "date": (now - timedelta(hours=12)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                    },
+                    "message": "Recent commit 3",
+                },
+            },
+            {
+                "sha": "older",
+                "commit": {
+                    "author": {
+                        "date": (now - timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                    },
+                    "message": "Older commit",
+                },
+            },
+        ]
+
+        mock_response = Mock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value=complex_commits)
+
+        with patch("aiohttp.ClientSession.get") as mock_get:
+            mock_get.return_value.__aenter__.return_value = mock_response
+
+            result = await scheduler.check_commit_activity(hours_back=24)
+
+            # Should analyze recent commits and calculate frequency
+            assert "recent_commits" in result
+            assert "commit_frequency" in result
+            assert len(result["recent_commits"]) == 3  # Only commits within 24 hours
+            assert result["commit_frequency"] > 0
+
+    @pytest.mark.asyncio
+    async def test_is_safe_to_update_conditional_paths(self, scheduler):
+        """Test conditional update safety paths - covers lines 207-208."""
+        # Test with recent commits but old releases
+        with (
+            patch.object(
+                scheduler,
+                "check_recent_releases", 
+                return_value={"has_recent_releases": False, "recent_releases": []}
+            ),
+            patch.object(
+                scheduler,
+                "check_commit_activity",
+                return_value={"has_recent_commits": True, "recent_commits": [{"sha": "abc"}]}
+            )
+        ):
+            result = await scheduler.is_safe_to_update()
+
+            # Should evaluate commit activity when no recent releases
+            assert "safe_to_update" in result
+            assert "risk_level" in result
+
+    @pytest.mark.asyncio
+    async def test_get_optimal_update_schedule_comprehensive_logic(self, scheduler):
+        """Test comprehensive optimal schedule logic - covers lines 217-285."""
+        # Test with specific conditions that trigger different scheduling paths
+        recent_releases = {
+            "has_recent_releases": True,
+            "recent_releases": [{"hours_ago": 12, "tag_name": "v1.2.3"}],
+        }
+        
+        commit_activity = {
+            "recent_commits": [
+                {"sha": "abc", "hours_ago": 6},
+                {"sha": "def", "hours_ago": 18},
+            ],
+            "commit_frequency": 3.2,  # High frequency
+        }
+
+        with (
+            patch.object(
+                scheduler, "check_recent_releases", return_value=recent_releases
+            ),
+            patch.object(
+                scheduler, "check_commit_activity", return_value=commit_activity
+            ),
+            patch.object(
+                scheduler, 
+                "analyze_release_patterns",
+                return_value={
+                    "pattern_detected": "regular",
+                    "average_interval_days": 7,
+                    "confidence": "high"
+                }
+            )
+        ):
+            result = await scheduler.get_optimal_update_schedule()
+
+            # Should analyze all factors and provide comprehensive recommendation
+            assert "recommended_frequency" in result
+            assert "optimal_time" in result
+            assert "reasoning" in result
+            assert "cron_schedule" in result
+            assert "analysis" in result
+            
+            # Should have detailed analysis
+            analysis = result["analysis"]
+            assert "recent_activity" in analysis
+            assert "release_patterns" in analysis
+            assert "recommended_schedule" in analysis

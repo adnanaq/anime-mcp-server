@@ -1294,3 +1294,246 @@ class TestMCPServerCompleteCoverage:
                                 # Should raise exception from init_and_run
                                 with pytest.raises(Exception):
                                     main()
+
+
+class TestEnhancedSearchAnime:
+    """Test enhanced search_anime tool with SearchIntent parameters."""
+
+    @pytest.fixture
+    def mock_qdrant_client_enhanced(self):
+        """Mock Qdrant client for enhanced search testing."""
+        mock_client = MagicMock()
+        mock_anime_results = [
+            {
+                "anime_id": "test_1",
+                "title": "Attack on Titan",
+                "type": "TV",
+                "year": 2013,
+                "tags": ["Action", "Drama", "Fantasy"],
+                "studios": ["Mappa", "TOEI Animation"],
+                "synopsis": "Humanity fights giant titans",
+                "_score": 0.95,
+            },
+            {
+                "anime_id": "test_2",
+                "title": "Demon Slayer",
+                "type": "TV",
+                "year": 2019,
+                "tags": ["Action", "Supernatural"],
+                "studios": ["Ufotable"],
+                "synopsis": "Boy becomes demon slayer",
+                "_score": 0.90,
+            },
+        ]
+        mock_client.search = AsyncMock(return_value=mock_anime_results)
+        return mock_client
+
+    @pytest.mark.asyncio
+    async def test_search_anime_backward_compatibility(self, mock_qdrant_client_enhanced):
+        """Test that existing search_anime functionality remains intact."""
+        from src.mcp.server import search_anime
+
+        with patch("src.mcp.server.qdrant_client", mock_qdrant_client_enhanced):
+            result = await search_anime.fn(query="action anime", limit=10)
+
+            assert isinstance(result, list)
+            assert len(result) == 2
+            assert result[0]["title"] == "Attack on Titan"
+
+            mock_qdrant_client_enhanced.search.assert_called_once_with(
+                query="action anime",
+                limit=10,
+                filters=None,
+            )
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_genres_filter(self, mock_qdrant_client_enhanced):
+        """Test search_anime with genres parameter."""
+        from src.mcp.server import search_anime
+
+        with patch("src.mcp.server.qdrant_client", mock_qdrant_client_enhanced):
+            result = await search_anime.fn(
+                query="anime", limit=5, genres=["Action", "Drama"]
+            )
+
+            assert isinstance(result, list)
+            mock_qdrant_client_enhanced.search.assert_called_once()
+
+            call_args = mock_qdrant_client_enhanced.search.call_args
+            assert call_args[1]["query"] == "anime"
+            assert call_args[1]["limit"] == 5
+            assert "filters" in call_args[1]
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_year_range(self, mock_qdrant_client_enhanced):
+        """Test search_anime with year_range parameter."""
+        from src.mcp.server import search_anime
+
+        with patch("src.mcp.server.qdrant_client", mock_qdrant_client_enhanced):
+            result = await search_anime.fn(
+                query="mecha anime", limit=10, year_range=[2020, 2023]
+            )
+
+            assert isinstance(result, list)
+            call_args = mock_qdrant_client_enhanced.search.call_args
+            assert "filters" in call_args[1]
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_anime_types(self, mock_qdrant_client_enhanced):
+        """Test search_anime with anime_types parameter."""
+        from src.mcp.server import search_anime
+
+        with patch("src.mcp.server.qdrant_client", mock_qdrant_client_enhanced):
+            result = await search_anime.fn(query="anime", anime_types=["TV", "Movie"])
+
+            assert isinstance(result, list)
+            call_args = mock_qdrant_client_enhanced.search.call_args
+            assert "filters" in call_args[1]
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_studios(self, mock_qdrant_client_enhanced):
+        """Test search_anime with studios parameter."""
+        from src.mcp.server import search_anime
+
+        with patch("src.mcp.server.qdrant_client", mock_qdrant_client_enhanced):
+            result = await search_anime.fn(
+                query="anime", studios=["Mappa", "Studio Ghibli"]
+            )
+
+            assert isinstance(result, list)
+            call_args = mock_qdrant_client_enhanced.search.call_args
+            assert "filters" in call_args[1]
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_exclusions(self, mock_qdrant_client_enhanced):
+        """Test search_anime with exclusions parameter."""
+        from src.mcp.server import search_anime
+
+        with patch("src.mcp.server.qdrant_client", mock_qdrant_client_enhanced):
+            result = await search_anime.fn(
+                query="anime", exclusions=["Horror", "Ecchi"]
+            )
+
+            assert isinstance(result, list)
+            call_args = mock_qdrant_client_enhanced.search.call_args
+            assert "filters" in call_args[1]
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_mood_keywords(self, mock_qdrant_client_enhanced):
+        """Test search_anime with mood_keywords parameter."""
+        from src.mcp.server import search_anime
+
+        with patch("src.mcp.server.qdrant_client", mock_qdrant_client_enhanced):
+            result = await search_anime.fn(
+                query="anime", mood_keywords=["dark", "philosophical"]
+            )
+
+            assert isinstance(result, list)
+            call_args = mock_qdrant_client_enhanced.search.call_args
+            assert "filters" in call_args[1]
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_all_parameters(self, mock_qdrant_client_enhanced):
+        """Test search_anime with all SearchIntent parameters."""
+        from src.mcp.server import search_anime
+
+        with patch("src.mcp.server.qdrant_client", mock_qdrant_client_enhanced):
+            result = await search_anime.fn(
+                query="mecha anime",
+                limit=5,
+                genres=["Action", "Mecha"],
+                year_range=[2015, 2023],
+                anime_types=["TV"],
+                studios=["Sunrise"],
+                exclusions=["Ecchi"],
+                mood_keywords=["epic", "dramatic"],
+            )
+
+            assert isinstance(result, list)
+            call_args = mock_qdrant_client_enhanced.search.call_args
+            assert call_args[1]["query"] == "mecha anime"
+            assert call_args[1]["limit"] == 5
+            assert "filters" in call_args[1]
+
+
+class TestMCPServerMissingCoverage:
+    """Test specific missing coverage lines to reach 100%."""
+
+    @pytest.mark.asyncio 
+    async def test_search_anime_mood_keywords_no_genres(self):
+        """Test search_anime mood keywords when no existing tags - covers line 86."""
+        from src.mcp.server import _build_search_filters
+        
+        # Test the specific case where combined_tags = mood_keywords (line 86)
+        result = _build_search_filters(mood_keywords=["dark", "serious"])
+        expected = {"tags": {"any": ["dark", "serious"]}}
+        assert result == expected
+
+    @pytest.mark.asyncio
+    async def test_all_tools_runtime_error_not_initialized(self):
+        """Test RuntimeError for all tools when client not initialized - covers lines 161, 189, 213, 297, 343."""
+        from src.mcp.server import search_anime, get_anime_details, find_similar_anime, get_anime_stats
+        
+        with patch("src.mcp.server.qdrant_client", None):
+            # Test search_anime - line 161  
+            with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
+                await search_anime.fn(query="test")
+            
+            # Test get_anime_details - line 189
+            with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
+                await get_anime_details.fn(anime_id="test")
+            
+            # Test find_similar_anime - line 213  
+            with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
+                await find_similar_anime.fn(anime_id="test")
+            
+            # Test get_anime_stats - line 297
+            with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
+                await get_anime_stats.fn()
+
+    @pytest.mark.asyncio
+    async def test_find_similar_anime_exception_handling(self):
+        """Test find_similar_anime exception handling - covers lines 200-202."""
+        from src.mcp.server import find_similar_anime
+        
+        mock_client = AsyncMock()
+        mock_client.find_similar.side_effect = Exception("Similarity search failed")
+        
+        with patch("src.mcp.server.qdrant_client", mock_client):
+            with pytest.raises(RuntimeError) as exc_info:
+                await find_similar_anime.fn(anime_id="test123")
+            
+            assert "Similarity search failed: Similarity search failed" in str(exc_info.value)
+
+    @pytest.mark.asyncio  
+    async def test_get_anime_stats_exception_handling(self):
+        """Test get_anime_stats exception handling - covers lines 233-235."""
+        from src.mcp.server import get_anime_stats
+        
+        mock_client = AsyncMock()
+        mock_client.get_stats.side_effect = Exception("Stats retrieval failed")
+        
+        with patch("src.mcp.server.qdrant_client", mock_client):
+            with patch("src.mcp.server.settings") as mock_settings:
+                mock_settings.qdrant_url = "http://localhost:6333"
+                mock_settings.qdrant_collection_name = "anime_database"
+                mock_settings.fastembed_model = "BAAI/bge-small-en-v1.5"
+                
+                with pytest.raises(RuntimeError) as exc_info:
+                    await get_anime_stats.fn()
+                
+                assert "Failed to get stats: Stats retrieval failed" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_image_search_tools_runtime_errors(self):
+        """Test RuntimeError for image search tools when client not initialized - covers line 343."""  
+        from src.mcp.server import search_anime_by_image, find_visually_similar_anime
+        
+        with patch("src.mcp.server.qdrant_client", None):
+            # Test search_anime_by_image
+            with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
+                await search_anime_by_image.fn(image_data="test")
+            
+            # Test find_visually_similar_anime  
+            with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
+                await find_visually_similar_anime.fn(anime_id="test")

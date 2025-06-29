@@ -174,8 +174,7 @@ class UpdateService:
             await self.qdrant_client.clear_index()
 
             # Re-index everything
-            tensor_fields = ["embedding_text", "search_text"]
-            await self.qdrant_client.add_documents(processed_data, tensor_fields)
+            await self.qdrant_client.add_documents(processed_data)
 
             # Save processed data
             processed_file = self.data_dir / "processed" / "anime-vectors.json"

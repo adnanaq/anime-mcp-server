@@ -318,15 +318,33 @@ def map_to_http_exception(status_code: int, message: str, **kwargs) -> AnimeServ
     exception_class = HTTP_EXCEPTION_MAP.get(status_code, AnimeServerError)
 
     # Handle specific exception constructors
-    if exception_class == InvalidSearchQueryError and "query" in kwargs:
-        return exception_class(kwargs["query"], message)
-    elif exception_class == AnimeNotFoundError and "identifier" in kwargs:
-        return exception_class(
-            kwargs["identifier"], kwargs.get("identifier_type", "anime_id")
-        )
-    elif exception_class == QdrantConnectionError and "url" in kwargs:
-        return exception_class(kwargs["url"], message)
+    if exception_class == InvalidSearchQueryError:
+        if "query" in kwargs:
+            return exception_class(kwargs["query"], message)
+        else:
+            # Fallback for InvalidSearchQueryError without query
+            return exception_class("unknown", message)
+    elif exception_class == AnimeNotFoundError:
+        if "identifier" in kwargs:
+            return exception_class(
+                kwargs["identifier"], kwargs.get("identifier_type", "anime_id")
+            )
+        else:
+            # Fallback for AnimeNotFoundError without identifier
+            return exception_class("unknown")
+    elif exception_class == QdrantConnectionError:
+        if "url" in kwargs:
+            return exception_class(kwargs["url"], message)
+        else:
+            # Fallback for QdrantConnectionError without url
+            return exception_class("unknown", message)
+    elif exception_class == RateLimitExceededError:
+        # RateLimitExceededError requires limit and window
+        limit = kwargs.get("limit", 100)
+        window = kwargs.get("window", "hour")
+        return exception_class(limit, window, message)
     else:
+        # For AnimeServerError and other compatible exceptions
         return exception_class(message)
 
 

@@ -89,9 +89,33 @@ pip install -r requirements.txt
 docker compose up -d
 
 # Services will be available at:
-# - FastAPI: http://localhost:8000
-# - Qdrant: http://localhost:6333
+# - FastAPI REST API: http://localhost:8000
+# - MCP Server (HTTP): http://localhost:8001 (if mcp-server container is enabled)
+# - Qdrant Vector DB: http://localhost:6333
 ```
+
+**Deployment Options:**
+
+1. **REST API Only (Default)**
+   ```bash
+   # Start just FastAPI + Qdrant
+   docker compose up -d fastapi qdrant
+   ```
+
+2. **REST API + MCP HTTP Server**
+   ```bash
+   # Start all services (REST API on :8000, MCP HTTP on :8001)
+   docker compose up -d
+   ```
+
+3. **MCP stdio mode (for Claude Code integration)**
+   ```bash
+   # Start infrastructure only
+   docker compose up -d qdrant
+   
+   # Run MCP server locally in stdio mode
+   python -m src.mcp.server
+   ```
 
 **Local Development**
 
@@ -113,20 +137,38 @@ EOF
 uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 3. Verify System Status
+### 3. Initialize Database (First Time Setup)
+
+**Production Indexing (Required for first run):**
+
+```bash
+# Start the full-update process (runs in background)
+curl -X POST http://localhost:8000/api/admin/update-full
+
+# Monitor indexing progress (check logs)
+docker compose logs fastapi --tail 50 -f
+
+# Expected output shows batch progress:
+# INFO - Uploaded batch 29/389 (100 points)
+# ...continues until batch 389/389
+```
+
+**Indexing Progress:** The system will process all 38,894 anime entries with dual image vectors. This typically takes 2-3 hours depending on network speed for image downloads.
+
+### 4. Verify System Status
 
 ```bash
 # Check system health
 curl http://localhost:8000/health
 # Response: {"status":"healthy","qdrant":"connected","timestamp":"..."}
 
-# Check database stats
+# Check database stats (after indexing completes)
 curl http://localhost:8000/stats
 # Response: {"total_documents":38894,"vector_size":384,"status":"green"}
 
-# Check for updates
-curl -X POST http://localhost:8000/api/admin/check-updates
-# Response: {"has_updates":false,"entry_count":38894}
+# Check indexing status
+curl http://localhost:8000/api/admin/update-status
+# Response: {"entry_count":38894,"last_full_update":"2025-06-29T19:00:00Z"}
 ```
 
 ## MCP Server Integration
@@ -695,8 +737,10 @@ The system uses Docker Compose for orchestration with support for both REST API 
   - Text: BAAI/bge-small-en-v1.5 (384-dimensional embeddings)
   - Image: CLIP ViT-B/32 (512-dimensional embeddings)
   - LLM: OpenAI GPT-4o-mini / Anthropic Claude Haiku for query understanding
-- **Database Size**: 38,894 anime entries with multi-vector support
-- **Memory Usage**: ~3-4GB for full dataset with image embeddings
+- **Database Size**: 38,894 anime entries with dual image vectors (picture + thumbnail)
+- **Memory Usage**: ~3-4GB for full dataset with CLIP image embeddings
+- **Indexing Time**: 2-3 hours for complete database with image downloads
+- **Vector Storage**: Text (384D) + Picture (512D) + Thumbnail (512D) per anime
 - **Concurrency**: Supports multiple simultaneous searches and complex query processing
 - **MCP Protocol**: Full FastMCP 2.8.1 integration with 7 tools
 - **Workflow Processing**: 2-5 workflow steps per query depending on complexity
@@ -867,11 +911,39 @@ curl http://localhost:6333/health
 
 ```bash
 # Check container logs
-docker-compose logs fastapi
-docker-compose logs mcp-server
+docker compose logs fastapi --tail 50
+docker compose logs mcp-server --tail 50
+docker compose logs qdrant --tail 50
+
+# Monitor real-time logs (useful during indexing)
+docker compose logs fastapi -f
+
+# Check container status
+docker compose ps
 
 # Restart specific service
-docker-compose restart mcp-server
+docker compose restart fastapi
+docker compose restart mcp-server
+
+# Rebuild containers after code changes
+docker compose build --no-cache
+docker compose up -d --force-recreate
+```
+
+**Indexing Issues**
+
+```bash
+# Check indexing progress
+curl http://localhost:8000/api/admin/update-status
+
+# Monitor indexing in real-time
+docker compose logs fastapi -f | grep "batch"
+
+# Check database statistics
+curl http://localhost:8000/stats
+
+# Restart indexing if it fails
+curl -X POST http://localhost:8000/api/admin/update-full
 ```
 
 **Invalid Transport Mode**

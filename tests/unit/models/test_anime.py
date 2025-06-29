@@ -160,7 +160,7 @@ class TestSearchModels:
             tags=["Action", "Adventure"],
             studios=["Test Studio"],
             picture="https://example.com/image.jpg",
-            score=0.95,
+            relevance_score=0.95,
             year=2023,
             season="spring",
             # Platform IDs
@@ -192,7 +192,7 @@ class TestSearchModels:
             episodes=12,
             tags=[],
             studios=[],
-            score=0.5,
+            relevance_score=0.5,
         )
 
         assert result.anime_id == "test123"
@@ -210,7 +210,7 @@ class TestSearchModels:
             episodes=1,
             tags=[],
             studios=[],
-            score=0.5,
+            relevance_score=0.5,
             myanimelist_id=12345,
             anilist_id=67890,
         )
@@ -226,7 +226,7 @@ class TestSearchModels:
             episodes=1,
             tags=[],
             studios=[],
-            score=0.5,
+            relevance_score=0.5,
             animeplanet_id="test-slug",
             notify_id="ABC123",
         )
@@ -244,7 +244,7 @@ class TestSearchModels:
                 episodes=12,
                 tags=["Action"],
                 studios=["Studio A"],
-                score=0.9,
+                relevance_score=0.9,
             ),
             SearchResult(
                 anime_id="test2",
@@ -253,7 +253,7 @@ class TestSearchModels:
                 episodes=1,
                 tags=["Drama"],
                 studios=["Studio B"],
-                score=0.8,
+                relevance_score=0.8,
             ),
         ]
 

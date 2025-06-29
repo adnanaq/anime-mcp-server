@@ -19,6 +19,9 @@ class AnimeEntry(BaseModel):
     duration: Optional[Union[int, Dict[str, Any]]] = Field(
         None, description="Episode duration in seconds"
     )
+    score: Optional[Dict[str, float]] = Field(
+        None, description="Anime scoring data with arithmeticGeometricMean, arithmeticMean, median"
+    )
 
     @field_validator("duration")
     @classmethod
@@ -63,7 +66,8 @@ class SearchResult(BaseModel):
     tags: List[str]
     studios: List[str]
     picture: Optional[str] = None
-    score: float = Field(..., description="Search relevance score")
+    relevance_score: float = Field(..., description="Search relevance score (0-1)")
+    anime_score: Optional[float] = Field(None, description="Anime rating score (1-10)")
     year: Optional[int] = None
     season: Optional[str] = None
 

@@ -39,7 +39,8 @@ async def semantic_search(request: SearchRequest):
                 tags=hit.get("tags", []),
                 studios=hit.get("studios", []),
                 picture=hit.get("picture"),
-                score=hit.get("_score", 0.0),
+                relevance_score=hit.get("_score", 0.0),
+                anime_score=hit.get("score", {}).get("median") if hit.get("score") else None,
                 year=hit.get("year"),
                 season=hit.get("season"),
                 # Platform IDs

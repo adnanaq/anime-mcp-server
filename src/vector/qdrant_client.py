@@ -160,7 +160,7 @@ class QdrantClient:
         return VectorParams(size=self._vector_size, distance=distance)
 
     def _create_multi_vector_config(self) -> Dict[str, VectorParams]:
-        """Create multi-vector configuration for text + image vectors."""
+        """Create multi-vector configuration for text + picture + thumbnail vectors."""
         distance_mapping = {
             "cosine": Distance.COSINE,
             "euclid": Distance.EUCLID,
@@ -170,7 +170,8 @@ class QdrantClient:
 
         return {
             "text": VectorParams(size=self._vector_size, distance=distance),
-            "image": VectorParams(size=self._image_vector_size, distance=distance),
+            "picture": VectorParams(size=self._image_vector_size, distance=distance),
+            "thumbnail": VectorParams(size=self._image_vector_size, distance=distance),
         }
 
     async def health_check(self) -> bool:
@@ -343,25 +344,37 @@ class QdrantClient:
                         payload = {
                             k: v
                             for k, v in doc.items()
-                            if k not in ("embedding_text", "image_data")
+                            if k not in ("embedding_text", "picture_data", "thumbnail_data")
                         }
 
                         # Create point with single or multi-vector
                         if self._supports_multi_vector:
-                            # Multi-vector point with text + image vectors
+                            # Multi-vector point with text + picture + thumbnail vectors
                             vectors = {"text": text_embedding}
 
-                            # Add image vector if image data available
-                            image_data = doc.get("image_data")
-                            if image_data:
-                                image_embedding = self._create_image_embedding(
-                                    image_data
-                                )
-                                if image_embedding:
-                                    vectors["image"] = image_embedding
+                            # Add picture vector if picture data available
+                            picture_data = doc.get("picture_data")
+                            if picture_data:
+                                picture_embedding = self._create_image_embedding(picture_data)
+                                if picture_embedding:
+                                    vectors["picture"] = picture_embedding
+                                else:
+                                    vectors["picture"] = [0.0] * self._image_vector_size
                             else:
-                                # Use zero vector for missing images
-                                vectors["image"] = [0.0] * self._image_vector_size
+                                # Use zero vector for missing picture
+                                vectors["picture"] = [0.0] * self._image_vector_size
+
+                            # Add thumbnail vector if thumbnail data available
+                            thumbnail_data = doc.get("thumbnail_data")
+                            if thumbnail_data:
+                                thumbnail_embedding = self._create_image_embedding(thumbnail_data)
+                                if thumbnail_embedding:
+                                    vectors["thumbnail"] = thumbnail_embedding
+                                else:
+                                    vectors["thumbnail"] = [0.0] * self._image_vector_size
+                            else:
+                                # Use zero vector for missing thumbnail
+                                vectors["thumbnail"] = [0.0] * self._image_vector_size
 
                             point = PointStruct(
                                 id=point_id, vector=vectors, payload=payload
