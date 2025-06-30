@@ -118,6 +118,32 @@ class Settings(BaseSettings):
         default=86400, ge=300, description="Data cache TTL in seconds"
     )
 
+    # External API Configuration
+    mal_client_id: Optional[str] = Field(
+        default=None, description="MyAnimeList OAuth2 Client ID for official API"
+    )
+    mal_client_secret: Optional[str] = Field(
+        default=None, description="MyAnimeList OAuth2 Client Secret for official API"
+    )
+    anilist_client_id: Optional[str] = Field(
+        default=None, description="AniList OAuth2 Client ID for user data"
+    )
+    anilist_client_secret: Optional[str] = Field(
+        default=None, description="AniList OAuth2 Client Secret for user data"  
+    )
+    anilist_auth_token: Optional[str] = Field(
+        default=None, description="AniList OAuth2 Bearer Token for authenticated requests"
+    )
+    anidb_client: Optional[str] = Field(
+        default="dimeapi", description="AniDB client name for API requests"
+    )
+    anidb_clientver: Optional[str] = Field(
+        default="2", description="AniDB client version for API requests"
+    )
+    anidb_protover: Optional[str] = Field(
+        default="1", description="AniDB protocol version for API requests"
+    )
+
     # Health Check Configuration
     health_check_timeout: int = Field(
         default=10, ge=1, description="Health check timeout in seconds"

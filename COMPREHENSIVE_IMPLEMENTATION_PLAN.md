@@ -383,12 +383,14 @@ src/mcp/
 - **Enhanced Fields**: synopsis, characters, staff, detailed_scores, streaming_info, episode_details, schedule_data
 - **Sources**: AniList (GraphQL), MAL/Jikan (REST), Kitsu (JSON:API), AniDB (XML), **AnimeSchedule.net (REST)**
 - **Cache**: Redis, 1-24 hours TTL depending on data type
+- **Error Handling**: Multi-layer error architecture with circuit breakers and graceful degradation
 
 **Tier 3: Selective Scraping/Extraction (Last Resort)**  
 - **Response Time**: 300-1000ms
 - **Scraped/Extracted Fields**: reviews, platform-specific data, streaming_regions, alternative_schedules
 - **Sources**: Anime-Planet, LiveChart (JSON-LD), AniSearch, AnimeNewsNetwork
 - **Cache**: Redis, 1-6 hours TTL
+- **Error Handling**: Comprehensive fallback chains and retry mechanisms
 
 #### Source Selection Strategy
 
@@ -510,7 +512,7 @@ PLATFORM_PATTERNS = {
 }
 ```
 
-#### Enhanced Data Model
+#### Enhanced Data Model & Validation Architecture
 
 **Complete Anime Data Structure:**
 ```python
@@ -545,7 +547,258 @@ class EnhancedAnimeData(BaseModel):
     enhanced_from: List[str] = []  # Which sources enhanced this data
     last_enhanced: Optional[datetime] = None
     enhancement_level: int = 1  # 1=offline, 2=api, 3=scraping
+    
+    # Validation Metadata (NEW)
+    validation_metadata: Optional[ValidationMetadata] = None
 ```
+
+#### Multi-Layer Data Validation Architecture
+
+**Critical Reality Check**: Our offline database has significant data gaps (missing synopsis, characters, staff, detailed ratings) requiring smart validation when merging incomplete offline data with potentially unreliable external API data.
+
+**1. Field Completeness Validation**
+```python
+# File: src/integrations/validation/completeness_validator.py
+class DataCompletenessValidator:
+    """Validate which fields are actually present and useful"""
+    
+    COMPLETE_OFFLINE_FIELDS = [
+        "title", "type", "episodes", "year", "genres",
+        "external_ids", "pictures", "sources"
+    ]
+    
+    ENHANCEMENT_REQUIRED_FIELDS = [
+        "synopsis",          # Missing in offline DB
+        "characters",        # Missing in offline DB
+        "staff",            # Missing in offline DB  
+        "detailed_ratings", # Missing in offline DB
+        "streaming_links",  # Real-time data
+        "airing_status",    # Real-time data
+        "reviews"           # Real-time data
+    ]
+    
+    async def validate_field_completeness(self, data: dict, level: str = "basic") -> dict:
+        """Check if data meets completeness requirements"""
+        required = self.REQUIRED_FIELDS[level]
+        missing = []
+        invalid = []
+        
+        for field in required:
+            if field not in data:
+                missing.append(field)
+            elif self.is_field_empty_or_invalid(data[field]):
+                invalid.append(field)
+        
+        return {
+            "completeness_score": (len(required) - len(missing) - len(invalid)) / len(required),
+            "missing_fields": missing,
+            "invalid_fields": invalid,
+            "validation_level": level,
+            "needs_enhancement": len(missing) > 0 or len(invalid) > 0
+        }
+    
+    def is_field_empty_or_invalid(self, value) -> bool:
+        """Check if field value is actually useful"""
+        if value is None:
+            return True
+        if isinstance(value, str) and (not value.strip() or value.lower() in ["n/a", "unknown", "tbd"]):
+            return True
+        if isinstance(value, list) and len(value) == 0:
+            return True
+        if isinstance(value, dict) and len(value) == 0:
+            return True
+        return False
+```
+
+**2. Data Quality Validation**
+```python
+# File: src/integrations/validation/quality_validator.py
+class DataQualityValidator:
+    """Validate the quality and reliability of fetched data"""
+    
+    async def validate_api_response(self, source: str, data: dict) -> dict:
+        """Validate data quality from specific API source"""
+        quality_score = 0
+        issues = []
+        
+        # Title validation
+        if "title" in data:
+            if len(data["title"]) < 2:
+                issues.append("title_too_short")
+            elif len(data["title"]) > 200:
+                issues.append("title_too_long")
+            else:
+                quality_score += 0.2
+        
+        # Synopsis validation
+        if "synopsis" in data and data["synopsis"]:
+            synopsis_len = len(data["synopsis"])
+            if synopsis_len < 50:
+                issues.append("synopsis_too_short")
+            elif synopsis_len > 5000:
+                issues.append("synopsis_too_long")
+            elif self.contains_placeholder_text(data["synopsis"]):
+                issues.append("synopsis_placeholder")
+            else:
+                quality_score += 0.3
+        
+        # Episode count validation
+        if "episodes" in data:
+            try:
+                ep_count = int(data["episodes"])
+                if ep_count < 1 or ep_count > 2000:
+                    issues.append("invalid_episode_count")
+                else:
+                    quality_score += 0.2
+            except (ValueError, TypeError):
+                issues.append("non_numeric_episodes")
+        
+        # Source-specific validation
+        source_score = await self.validate_source_specific_data(source, data)
+        quality_score += source_score
+        
+        return {
+            "quality_score": min(quality_score, 1.0),
+            "issues": issues,
+            "source": source,
+            "validation_timestamp": datetime.utcnow(),
+            "reliable": quality_score > 0.7 and len(issues) == 0
+        }
+    
+    def contains_placeholder_text(self, text: str) -> bool:
+        """Check for common placeholder text patterns"""
+        placeholders = [
+            "no synopsis", "coming soon", "to be announced", 
+            "lorem ipsum", "placeholder", "description not available"
+        ]
+        return any(placeholder in text.lower() for placeholder in placeholders)
+```
+
+**3. Cross-Source Data Consistency Validation**
+```python
+# File: src/integrations/validation/consistency_validator.py
+class CrossSourceValidator:
+    """Validate consistency across multiple data sources"""
+    
+    async def validate_cross_source_consistency(self, merged_data: dict) -> dict:
+        """Check for inconsistencies when merging multiple sources"""
+        inconsistencies = []
+        confidence_score = 1.0
+        
+        # Check if basic facts match across sources
+        if "title_variations" in merged_data:
+            titles = merged_data["title_variations"]
+            if len(set(titles)) > 3:  # Too many different titles
+                inconsistencies.append("title_mismatch")
+                confidence_score -= 0.2
+        
+        # Episode count consistency
+        if "episodes_sources" in merged_data:
+            episode_counts = merged_data["episodes_sources"]
+            unique_counts = set(episode_counts.values())
+            if len(unique_counts) > 1:
+                max_diff = max(unique_counts) - min(unique_counts)
+                if max_diff > 5:  # Significant episode count difference
+                    inconsistencies.append("episode_count_mismatch")
+                    confidence_score -= 0.3
+        
+        return {
+            "consistency_score": max(confidence_score, 0.0),
+            "inconsistencies": inconsistencies,
+            "reliable_merge": confidence_score > 0.7,
+            "recommendation": self.get_consistency_recommendation(confidence_score, inconsistencies)
+        }
+```
+
+**4. Smart Data Merging with Validation**
+```python
+# File: src/integrations/validation/validated_merger.py
+class ValidatedDataMerger:
+    """Merge data with validation-driven decisions"""
+    
+    async def smart_merge_with_validation(self, offline_data: dict, api_responses: dict) -> dict:
+        """Merge data with comprehensive validation"""
+        
+        # 1. Validate offline data completeness
+        offline_validation = await self.completeness_validator.validate_field_completeness(offline_data)
+        
+        # 2. Validate each API response quality
+        validated_sources = {}
+        for source, data in api_responses.items():
+            validation = await self.quality_validator.validate_api_response(source, data)
+            if validation["reliable"]:
+                validated_sources[source] = {
+                    "data": data,
+                    "validation": validation
+                }
+        
+        # 3. Start with offline data as foundation
+        merged_result = offline_data.copy()
+        merged_result["data_sources"] = {"offline": True}
+        
+        # 4. Enhance with validated API data
+        for source, source_info in validated_sources.items():
+            source_data = source_info["data"]
+            quality_score = source_info["validation"]["quality_score"]
+            
+            # Only use high-quality data for enhancement
+            if quality_score > 0.7:
+                for field, value in source_data.items():
+                    if field in ENHANCEMENT_REQUIRED_FIELDS:
+                        # Validate specific field
+                        field_validation = await self.validate_field_content(field, value, source)
+                        if field_validation["valid"]:
+                            merged_result[field] = value
+                            merged_result["data_sources"][field] = source
+        
+        # 5. Cross-source consistency check
+        consistency = await self.consistency_validator.validate_cross_source_consistency(merged_result)
+        merged_result["validation_metadata"] = {
+            "offline_completeness": offline_validation,
+            "consistency_check": consistency,
+            "enhanced_fields": list(merged_result["data_sources"].keys()),
+            "validation_timestamp": datetime.utcnow()
+        }
+        
+        return merged_result
+```
+
+**5. Enhanced LLM Enhancement Decision Logic**
+```python
+# File: src/services/enhancement_decision.py
+async def enhanced_search_with_validation(query: str, enhance: bool = None) -> dict:
+    """Search with comprehensive data validation"""
+    
+    # 1. Get offline results
+    offline_results = await qdrant_client.search(query)
+    
+    # 2. Validate offline data completeness
+    for result in offline_results:
+        validation = await completeness_validator.validate_field_completeness(result.dict())
+        result.completeness_metadata = validation
+        
+        # Auto-enhance if offline data insufficient
+        if enhance is None:
+            enhance = validation["needs_enhancement"]
+    
+    # 3. Enhance with validated external data
+    if enhance:
+        for result in offline_results:
+            api_responses = await fetch_enhancement_data(result.id, result.external_ids)
+            validated_result = await validated_merger.smart_merge_with_validation(
+                result.dict(), 
+                api_responses
+            )
+            result.update(validated_result)
+    
+    return offline_results
+```
+
+**Validation Integration Points:**
+- **Week 0 Foundation**: Add validation as core infrastructure component
+- **Week 4-5 API Integration**: Implement validation for all API responses
+- **Week 6-7 Scraping**: Add scraping-specific validation rules
+- **Enhanced MCP Tools**: Include validation metadata in all tool responses
 
 ### 5. Multi-Level Caching Strategy
 
@@ -1044,7 +1297,388 @@ Processing Flow:
 
 ## Phase 1: Core LLM Endpoint & Architecture (2-3 weeks)
 
-### Week 1: Unified Query Handler
+### Week 0: Foundation Infrastructure (PREREQUISITE)
+**Priority: CRITICAL - MUST BE IMPLEMENTED FIRST**
+
+#### Core Error Handling Infrastructure
+**This foundational layer is essential for all external API integration and must be built before any API clients:**
+
+1. **Multi-Layer Error Handling Architecture** (2 days)
+   ```python
+   # File: src/integrations/error_handling.py
+   class ErrorContext:
+       """Three-layer error context preservation"""
+       user_message: str     # Friendly, actionable message
+       debug_info: str      # Technical context for developers  
+       trace_data: dict     # Complete execution path
+   
+   class CircuitBreaker:
+       """Prevent cascading failures across APIs"""
+       async def call_with_breaker(self, api_func: Callable) -> Any
+       async def record_success(self, api: str) -> None
+       async def record_failure(self, api: str, error: Exception) -> None
+   
+   class GracefulDegradation:
+       """5-level degradation strategy"""
+       LEVELS = {
+           1: "full_enhancement",     # All APIs available
+           2: "api_only",            # APIs only, no scraping
+           3: "community_cache",     # Use shared cached data
+           4: "offline_only",        # Offline database only
+           5: "emergency_mode"       # Minimal functionality
+       }
+   ```
+
+2. **Collaborative Community Cache System** (2 days)
+   ```python
+   # File: src/integrations/cache_manager.py
+   class CollaborativeCacheSystem:
+       """Share API responses between users to reduce rate limit pressure"""
+       async def get_enhanced_data(self, anime_id: str, user_id: str) -> dict
+       async def share_with_community(self, anime_id: str, data: dict) -> None
+       async def find_quota_donor(self, source: str) -> Optional[str]
+   
+   class RequestDeduplication:
+       """Prevent multiple simultaneous identical requests"""
+       async def deduplicate_request(self, request_key: str, fetch_func) -> Any
+   ```
+
+3. **LangGraph-Specific Debugging** (1 day)
+   ```python
+   # File: src/integrations/execution_tracing.py
+   class ExecutionTracer:
+       """Comprehensive LangGraph execution tracing"""
+       async def trace_execution(self, execution_id: str) -> TraceData
+       async def log_decision_point(self, tool: str, reasoning: str) -> None
+       async def capture_state_snapshot(self, state: dict) -> None
+   
+   class CorrelationLogger:
+       """Structured logging with correlation IDs"""
+       def log_with_context(self, level: str, message: str, **kwargs) -> None
+   
+   class LangGraphErrorHandler:
+       """LangGraph-specific error patterns and recovery"""
+       
+       # LangGraph-Specific Error Patterns:
+       # 1. Tool Selection Loops - LLM repeatedly selects wrong tool
+       # 2. Parameter Extraction Failures - Can't parse user intent
+       # 3. State Corruption - Invalid state blocks graph progress
+       # 4. Graph Execution Timeouts - Exceeds 30s execution limit
+       # 5. Memory Explosion - Context grows too large for LLM
+       # 6. Non-Deterministic Failures - LLM inconsistent responses
+       
+       async def detect_tool_selection_loop(self, execution_history: List[str]) -> bool
+       async def handle_parameter_extraction_failure(self, query: str, attempt: int) -> dict
+       async def detect_state_corruption(self, current_state: dict) -> bool
+       async def handle_graph_timeout(self, execution_id: str, partial_results: dict) -> dict
+       async def detect_memory_explosion(self, state_size: int, threshold: int) -> bool
+       async def implement_llm_retry_logic(self, failed_call: dict, max_retries: int) -> dict
+       
+       # Recovery Strategies:
+       async def force_tool_change(self, problematic_tool: str, available_tools: List[str]) -> str
+       async def simplify_parameter_extraction(self, complex_query: str) -> dict
+       async def rollback_to_checkpoint(self, execution_id: str, checkpoint_id: str) -> dict
+       async def prune_conversation_history(self, state: dict, keep_last_n: int) -> dict
+       async def return_partial_results_gracefully(self, partial_data: dict) -> dict
+   ```
+
+#### Acceptance Criteria for Foundation:
+- Multi-layer error handling functional for all failure scenarios
+- Circuit breakers prevent cascading API failures
+- Collaborative cache reduces API usage by 60%+
+- LangGraph execution fully traceable with correlation IDs
+- Request deduplication eliminates duplicate API calls
+- **LangGraph-specific error patterns detected and handled:**
+  - Tool selection loops prevented (max 3 same tool calls)
+  - Parameter extraction failures have fallback strategies
+  - State corruption detection with checkpoint rollback
+  - Graph timeouts return partial results gracefully
+  - Memory explosion triggers conversation history pruning
+  - Non-deterministic LLM failures have retry logic with exponential backoff
+
+### Week 0.5: Integration Foundation Phase (CRITICAL PREREQUISITE)
+**Priority: BLOCKING - MUST BE COMPLETED BEFORE PROCEEDING TO WEEK 1**
+
+**IMPORTANT**: This phase addresses the critical gaps identified in the current `src/integrations/` implementation. Without these components, the external API integration layer will be unreliable and incomplete.
+
+#### Core Integration Services Infrastructure
+
+**This phase implements the essential services that were identified as missing from the current implementation analysis.**
+
+#### Tasks:
+
+1. **Complete Service Manager Implementation** (3 days)
+   ```python
+   # File: src/integrations/service_manager.py (CURRENTLY EMPTY - CRITICAL)
+   class AnimeServiceManager:
+       """Central orchestration hub for all external API integrations."""
+       
+       def __init__(self):
+           self.error_handler = GracefulDegradation()
+           self.cache = CollaborativeCacheSystem()
+           self.tracer = ExecutionTracer()
+           self.source_selector = SourceSelector()
+           self.data_merger = ValidatedDataMerger()
+       
+       # Core Smart Routing Methods
+       async def smart_fetch(self, field: str, anime_id: str, preferred_source: str = None) -> Any:
+           """Intelligently fetch data from best available source."""
+       
+       async def get_best_source_for_field(self, field: str) -> str:
+           """Select optimal source based on field type and source strengths."""
+       
+       async def should_enhance(self, query: str, fields: List[str], source: str) -> bool:
+           """Determine if external API enhancement is needed."""
+       
+       async def merge_data_sources(self, offline_data: dict, api_data: dict) -> dict:
+           """Smart merge offline data with API responses using validation."""
+       
+       # Source Selection & Routing
+       async def route_to_source(self, source: str, anime_id: str) -> SourceAdapter:
+           """Route request to appropriate API client or scraper."""
+       
+       async def extract_platform_ids(self, source_urls: List[str]) -> Dict[str, str]:
+           """Extract platform-specific IDs from source URLs."""
+       
+       # Enhancement Decision Logic
+       async def determine_enhancement_strategy(
+           self, 
+           intent: str, 
+           entities: dict, 
+           source_preference: str
+       ) -> dict:
+           """Determine how to enhance data based on query intent."""
+   ```
+
+2. **Implement Data Validation Architecture** (3 days)
+   ```python
+   # MISSING CRITICAL FILES - CREATE VALIDATION DIRECTORY:
+   # File: src/integrations/validation/__init__.py
+   # File: src/integrations/validation/completeness_validator.py
+   class DataCompletenessValidator:
+       """Validate which fields are present and useful in API responses."""
+       
+       COMPLETE_OFFLINE_FIELDS = [
+           "title", "type", "episodes", "year", "genres",
+           "external_ids", "pictures", "sources"
+       ]
+       
+       ENHANCEMENT_REQUIRED_FIELDS = [
+           "synopsis", "characters", "staff", "detailed_ratings",
+           "streaming_links", "airing_status", "reviews"
+       ]
+       
+       async def validate_field_completeness(self, data: dict, level: str = "basic") -> dict:
+           """Check if data meets completeness requirements."""
+       
+       async def is_field_empty_or_invalid(self, value) -> bool:
+           """Check if field value is actually useful."""
+   
+   # File: src/integrations/validation/quality_validator.py
+   class DataQualityValidator:
+       """Validate quality and reliability of external API data."""
+       
+       async def validate_api_response(self, source: str, data: dict) -> dict:
+           """Validate data quality from specific API source."""
+       
+       async def validate_source_specific_data(self, source: str, data: dict) -> float:
+           """Source-specific validation rules."""
+       
+       async def contains_placeholder_text(self, text: str) -> bool:
+           """Detect placeholder or invalid text."""
+   
+   # File: src/integrations/validation/consistency_validator.py
+   class CrossSourceValidator:
+       """Validate consistency when merging multiple data sources."""
+       
+       async def validate_cross_source_consistency(self, merged_data: dict) -> dict:
+           """Check for inconsistencies across sources."""
+       
+       async def get_consistency_recommendation(
+           self, 
+           confidence_score: float, 
+           inconsistencies: List[str]
+       ) -> str:
+           """Provide recommendations based on consistency analysis."""
+   
+   # File: src/integrations/validation/validated_merger.py
+   class ValidatedDataMerger:
+       """Smart data merging with validation-driven decisions."""
+       
+       async def smart_merge_with_validation(
+           self, 
+           offline_data: dict, 
+           api_responses: dict
+       ) -> dict:
+           """Merge data with comprehensive validation."""
+       
+       async def validate_field_content(
+           self, 
+           field: str, 
+           value: Any, 
+           source: str
+       ) -> dict:
+           """Validate specific field content."""
+   ```
+
+3. **Complete Collaborative Cache Implementation** (2 days)
+   ```python
+   # File: src/integrations/cache_manager.py (CURRENTLY HAS EMPTY PLACEHOLDERS)
+   class CollaborativeCacheSystem:
+       """COMPLETE IMPLEMENTATION - Currently only placeholders exist."""
+       
+       def __init__(self):
+           self.redis_client = None  # Initialize Redis connection
+           self.quota_pools = {}     # Track quota donors by source
+           self.community_cache = {} # Shared cache between users
+       
+       # IMPLEMENT THESE CURRENTLY EMPTY METHODS:
+       async def has_personal_quota(self, user_id: str, source: str) -> bool:
+           """Check if user has personal API quota remaining."""
+           # CURRENTLY RETURNS: False (placeholder)
+           # MUST IMPLEMENT: Actual quota checking logic
+       
+       async def find_quota_donor(self, source: str) -> Optional[str]:
+           """Find user with available quota willing to share."""
+           # CURRENTLY RETURNS: None (placeholder)
+           # MUST IMPLEMENT: Donor pool management
+       
+       async def get_enhanced_data(self, anime_id: str, user_id: str, source: str) -> dict:
+           """Get enhanced data using collaborative caching."""
+           # CURRENTLY RETURNS: {} (placeholder)
+           # MUST IMPLEMENT: Complete collaborative caching workflow
+       
+       async def share_with_community(self, anime_id: str, source: str, data: dict) -> None:
+           """Share fetched data with community cache."""
+           # CURRENTLY: pass (placeholder)
+           # MUST IMPLEMENT: Community cache sharing
+       
+       async def track_cache_usage(self, user_id: str, anime_id: str, usage_type: str) -> None:
+           """Track cache usage patterns."""
+           # CURRENTLY: pass (placeholder)
+           # MUST IMPLEMENT: Usage tracking and analytics
+   ```
+
+4. **Enhance API Client Error Handling** (2 days)
+   ```python
+   # MISSING FROM CURRENT CLIENTS - ADD SOURCE-SPECIFIC ERROR HANDLING:
+   
+   # File: src/integrations/clients/anilist_client.py (ENHANCE EXISTING)
+   class AniListClient(BaseClient):
+       # ADD MISSING METHODS:
+       async def handle_graphql_errors(self, response: dict) -> dict:
+           """Handle GraphQL-specific error responses."""
+       
+       async def handle_rate_limit_headers(self, response: aiohttp.ClientResponse) -> None:
+           """Handle AniList rate limit headers (90 req/min)."""
+       
+       async def fallback_to_public_endpoint(self, query: str) -> dict:
+           """Fallback when authenticated endpoints fail."""
+   
+   # File: src/integrations/clients/mal_client.py (ENHANCE EXISTING)
+   class MALClient(BaseClient):
+       # ADD MISSING METHODS:
+       async def retry_with_exponential_backoff(self, func: Callable) -> dict:
+           """Exponential backoff for MAL API failures."""
+       
+       async def handle_mal_rate_limit(self, response: aiohttp.ClientResponse) -> None:
+           """Handle aggressive MAL rate limiting (2 req/sec)."""
+       
+       async def handle_mal_auth_errors(self, response: aiohttp.ClientResponse) -> dict:
+           """Handle OAuth2 authentication errors."""
+       
+       async def try_official_mal_first(self, endpoint: str, **kwargs) -> dict:
+           """Try official MAL API before falling back to Jikan."""
+   
+   # File: src/integrations/clients/kitsu_client.py (ENHANCE EXISTING)
+   class KitsuClient(BaseClient):
+       # ADD MISSING METHODS:
+       async def handle_jsonapi_errors(self, response: dict) -> dict:
+           """Handle JSON:API specification errors."""
+       
+       async def resolve_relationships(self, resource: dict, includes: List[dict]) -> dict:
+           """Resolve JSON:API relationships."""
+       
+       async def handle_pagination(self, url: str, limit: int) -> List[dict]:
+           """Handle paginated responses."""
+   ```
+
+5. **Implement Multi-Layer Caching Architecture** (2 days)
+   ```python
+   # File: src/integrations/cache.py (ENHANCE EXISTING)
+   class IntegrationCache:
+       """Multi-layer caching for API responses - L1/L2/L3 hierarchy."""
+       
+       def __init__(self):
+           self.memory_cache = TTLCache(maxsize=10000, ttl=300)  # L1 - 5 min
+           self.redis_cache = RedisCache(ttl=3600)               # L2 - 1 hour  
+           self.db_cache = DatabaseCache(ttl=86400)              # L3 - 24 hours
+       
+       async def get_or_fetch(self, key: str, fetcher: Callable) -> Any:
+           """Get data through cache hierarchy or fetch from source."""
+           # L1: Memory cache (fastest)
+           if value := self.memory_cache.get(key):
+               return value
+               
+           # L2: Redis cache  
+           if value := await self.redis_cache.get(key):
+               self.memory_cache[key] = value
+               return value
+               
+           # L3: Database cache
+           if value := await self.db_cache.get(key):
+               await self.redis_cache.set(key, value)
+               self.memory_cache[key] = value
+               return value
+               
+           # L4: Fetch from external API
+           value = await fetcher()
+           await self._cache_value(key, value)
+           return value
+       
+       async def _cache_value(self, key: str, value: Any) -> None:
+           """Cache value at all appropriate levels."""
+   ```
+
+6. **Add Source Selection Logic** (1 day)
+   ```python
+   # File: src/integrations/source_selector.py (NEW FILE)
+   class SourceSelector:
+       """Intelligent source selection based on data type and source strengths."""
+       
+       SOURCE_STRENGTHS = {
+           'anilist': ['synopsis', 'characters', 'staff', 'relations'],
+           'mal': ['score', 'reviews', 'recommendations', 'popularity'], 
+           'kitsu': ['streaming', 'episodes', 'community'],
+           'anidb': ['technical_details', 'file_hashes', 'fansubs'],
+           'animeplanet': ['tags', 'recommendations', 'characters'],
+           'livechart': ['airing_schedule', 'countdown', 'seasonal'],
+           'animeschedule': ['episode_times', 'streaming_platforms'],
+           'ann': ['news', 'industry_info', 'staff_details'],
+           'anisearch': ['german_titles', 'german_synopsis'],
+           'animecountdown': ['countdown', 'schedule', 'release_dates']
+       }
+       
+       def select_source(self, field: str, user_preference: str = None) -> str:
+           """Select best source for specific data type."""
+       
+       def get_source_priority(self, sources: List[str], field: str) -> List[str]:
+           """Rank sources by priority for specific field."""
+   ```
+
+#### Acceptance Criteria for Integration Foundation:
+- **Service Manager fully implemented** - No longer empty file
+- **4 validation classes created** - Complete data validation architecture
+- **Collaborative cache methods implemented** - No more placeholder returns
+- **Source-specific error handling added** - All API clients enhanced
+- **Multi-layer cache hierarchy functional** - L1/L2/L3 cache system
+- **Source selection logic operational** - Smart routing based on field types
+- **Integration tests passing** - All components work together
+- **Error recovery functional** - Graceful degradation across all sources
+
+**BLOCKING DEPENDENCY**: Week 1 and all subsequent phases depend on this foundation being solid. **Do not proceed to Week 1 until all acceptance criteria are met.**
+
+### Week 1: Unified Query Handler  
 **Priority: CRITICAL**
 
 #### Tasks:
@@ -1154,7 +1788,7 @@ Processing Flow:
 
 #### Implementation Priority (From Planning Analysis)
 
-**Phase 1: Core API Services (No Auth Required)**
+**Phase 1: Core API Services (Built on Foundation Infrastructure)**
 - AniList (GraphQL) - Highest priority for synopsis, characters, staff
 - Jikan/MAL (REST) - High priority for scores, reviews, popularity  
 - Kitsu (JSON:API) - Medium priority for streaming, episodes
@@ -1163,8 +1797,11 @@ Processing Flow:
 **Phase 2: Additional APIs & Enhanced Caching**
 - AniDB (XML) - Low priority, requires auth
 - AnimeNewsNetwork (XML) - Low priority for news/staff
-- Redis caching layer implementation
-- Circuit breakers and rate limiting
+- Redis caching layer implementation  
+- Circuit breakers and rate limiting (ALREADY IMPLEMENTED in Week 0)
+
+#### Foundation-Based Implementation Strategy:
+**All API clients inherit from the error handling foundation built in Week 0, ensuring consistent error handling, circuit breaking, and collaborative caching across all sources.**
 
 #### Tasks:
 1. **AniList GraphQL client** (3 days)
@@ -1172,7 +1809,26 @@ Processing Flow:
    # File: src/integrations/clients/anilist_client.py
    # Reference: https://docs.anilist.co/reference/
    # Validated with scripts/scraping_with_apis.py
+   # Built on Foundation Infrastructure (Week 0)
    class AniListClient(BaseClient):
+       def __init__(self):
+           super().__init__(
+               circuit_breaker=CircuitBreaker(failure_threshold=5, recovery_timeout=300),
+               rate_limiter=AsyncLimiter(90, 60),  # 90 req/min burst limit
+               cache_manager=CollaborativeCacheSystem(),
+               error_handler=ErrorContext()
+           )
+       
+       # AniList-Specific Error Handling:
+       # 1. GraphQL Error Parsing - Handle GraphQL-specific error responses
+       # 2. Rate Limit Handling - 90 req/min with burst detection
+       # 3. Authentication Fallback - Optional OAuth2, degrade to public endpoints
+       # 4. Field Availability Check - Some fields require authentication
+       
+       async def handle_graphql_errors(self, response: dict) -> dict
+       async def handle_rate_limit_headers(self, response: aiohttp.ClientResponse) -> None
+       async def fallback_to_public_endpoint(self, query: str) -> dict
+       
        async def get_anime_details(self, anime_id: str) -> dict
        async def search_anime(self, query: str) -> List[dict]
        async def get_characters(self, anime_id: str) -> List[dict]
@@ -1186,6 +1842,28 @@ Processing Flow:
    # Jikan: https://docs.api.jikan.moe/
    # Validated with scripts/scraping_poc.py and scripts/scraping_with_apis.py
    class MALClient(BaseClient):
+       def __init__(self):
+           super().__init__(
+               circuit_breaker=CircuitBreaker(failure_threshold=3, recovery_timeout=600),
+               rate_limiter=AsyncLimiter(2, 1),  # 2 req/sec for official MAL API
+               cache_manager=CollaborativeCacheSystem(),
+               error_handler=ErrorContext()
+           )
+       
+       # MAL/Jikan-Specific Error Handling:
+       # 1. Dual API Strategy - Official MAL API vs Jikan unofficial API
+       # 2. OAuth2 Required - Official MAL API needs authentication
+       # 3. Aggressive Rate Limiting - 2 req/sec, frequent 429 errors
+       # 4. Jikan Fallback - Use Jikan when MAL API fails or no auth
+       # 5. HTTP Status Code Mapping - Handle MAL-specific error codes
+       # 6. Request Timeout Handling - MAL API often slow (5-10s responses)
+       
+       async def try_official_mal_first(self, endpoint: str, **kwargs) -> dict
+       async def fallback_to_jikan(self, mal_id: str, endpoint: str) -> dict
+       async def handle_mal_auth_errors(self, response: aiohttp.ClientResponse) -> dict
+       async def handle_mal_rate_limit(self, response: aiohttp.ClientResponse) -> None
+       async def retry_with_exponential_backoff(self, func: Callable) -> dict
+       
        async def get_anime(self, mal_id: str) -> dict
        async def get_anime_statistics(self, mal_id: str) -> dict
        async def search_anime(self, query: str) -> List[dict]
@@ -1199,6 +1877,26 @@ Processing Flow:
    # Reference: https://kitsu.docs.apiary.io/
    # Base URL: https://kitsu.io/api/edge/
    class KitsuClient(BaseClient):
+       def __init__(self):
+           super().__init__(
+               circuit_breaker=CircuitBreaker(failure_threshold=4, recovery_timeout=300),
+               rate_limiter=AsyncLimiter(10, 1),  # 10 req/sec
+               cache_manager=CollaborativeCacheSystem(),
+               error_handler=ErrorContext()
+           )
+       
+       # Kitsu-Specific Error Handling:
+       # 1. JSON:API Format Parsing - Handle JSON:API specification errors
+       # 2. Relationship Loading - Handle missing relationships gracefully
+       # 3. Pagination Handling - Large result sets require pagination
+       # 4. Field Sparsity - Some fields may be missing or null
+       # 5. No Authentication Errors - Public API but some features limited
+       
+       async def handle_jsonapi_errors(self, response: dict) -> dict
+       async def resolve_relationships(self, resource: dict, includes: List[dict]) -> dict
+       async def handle_pagination(self, url: str, limit: int) -> List[dict]
+       async def validate_required_fields(self, data: dict) -> dict
+       
        async def get_anime(self, kitsu_id: str) -> dict
        async def get_streaming_links(self, anime_id: str) -> List[dict]
        async def search_anime(self, query: str) -> List[dict]
@@ -1209,6 +1907,26 @@ Processing Flow:
    # File: src/integrations/clients/animeschedule_client.py
    # Reference: https://animeschedule.net/api/v3/documentation/anime
    class AnimeScheduleClient(BaseClient):
+       def __init__(self):
+           super().__init__(
+               circuit_breaker=CircuitBreaker(failure_threshold=10, recovery_timeout=180),
+               rate_limiter=None,  # Unlimited requests allowed
+               cache_manager=CollaborativeCacheSystem(),
+               error_handler=ErrorContext()
+           )
+       
+       # AnimeSchedule-Specific Error Handling:
+       # 1. No Rate Limiting - Unlimited requests but need connection pooling
+       # 2. Timezone Handling - Schedule data depends on timezone
+       # 3. Date Format Validation - Strict date format requirements
+       # 4. Real-time Data Staleness - Schedule changes frequently
+       # 5. API Versioning - v3 API with potential breaking changes
+       
+       async def handle_timezone_conversion(self, schedule_data: dict, target_tz: str) -> dict
+       async def validate_date_format(self, date: str) -> str
+       async def handle_stale_schedule_data(self, data: dict) -> dict
+       async def check_api_version_compatibility(self) -> bool
+       
        async def get_today_schedule(self) -> dict
        async def get_seasonal_anime(self, season: str, year: int) -> List[dict]
        async def search_schedule(self, anime_title: str) -> dict
@@ -1218,43 +1936,77 @@ Processing Flow:
 5. **Service Manager & Base Client** (2 days)
    ```python
    # File: src/integrations/service_manager.py
+   # Built on Foundation Infrastructure (Week 0)
    class AnimeServiceManager:
+       def __init__(self):
+           self.error_handler = GracefulDegradation()
+           self.cache = CollaborativeCacheSystem()
+           self.tracer = ExecutionTracer()
+           self.langgraph_handler = LangGraphErrorHandler()  # NEW
+       
        async def smart_fetch(self, field: str, anime_id: str, preferred_source: str = None) -> Any
        async def get_best_source_for_field(self, field: str) -> str
        async def merge_data_sources(self, offline_data: dict, api_data: dict) -> dict
+       async def handle_degradation(self, level: int, anime_id: str) -> dict  # NEW
+       async def handle_langgraph_errors(self, execution_id: str, error_type: str, context: dict) -> dict  # NEW
    
    # File: src/integrations/clients/base_client.py
+   # Foundation Infrastructure (ALREADY IMPLEMENTED in Week 0)
    class BaseClient:
-       def __init__(self, rate_limiter: AsyncLimiter, circuit_breaker: CircuitBreaker)
+       def __init__(self, circuit_breaker: CircuitBreaker, rate_limiter: AsyncLimiter, 
+                   cache_manager: CollaborativeCacheSystem, error_handler: ErrorContext)
        async def make_request(self, url: str, **kwargs) -> dict
        async def handle_rate_limit(self, response: aiohttp.ClientResponse) -> None
+       async def with_circuit_breaker(self, api_func: Callable) -> Any  # NEW
    ```
 
-6. **Rate limiting & circuit breakers** (2 days)
-   - Implement per-source rate limiters
-   - Circuit breaker patterns
-   - Backoff strategies
+6. **Enhanced Error Recovery** (2 days)
+   - Implement graceful degradation strategies using Week 0 foundation
+   - Cross-source fallback chains
+   - Community cache utilization
+   - Real-time monitoring integration
 
 #### Acceptance Criteria:
-- All 4 primary APIs integrated (AniList, MAL, Kitsu, AnimeSchedule)
+- All 4 primary APIs integrated (AniList, MAL, Kitsu, AnimeSchedule) using foundation infrastructure
 - Rate limiting prevents API violations (validated with actual API limits)
-- Circuit breakers handle API downtime gracefully
+- Circuit breakers handle API downtime gracefully (using Week 0 foundation)
 - Enhanced data available for popular anime
 - Service manager intelligently routes requests to best sources
 - Smart data merging preserves offline data while enhancing with API data
+- Collaborative cache system reduces API usage by 60%+ across all sources
+- Multi-layer error handling provides clear user messages with full debugging context
+- LangGraph execution traces available for all API integration workflows
 
-### Week 6-7: Scraping Implementation
+### Week 6-7: Scraping Implementation  
 **Priority: MEDIUM**
+
+#### Foundation-Enhanced Scraping Strategy:
+**All scrapers built on the error handling foundation from Week 0, ensuring robust error recovery, rate limiting, and collaborative caching for scraping operations.**
 
 #### Tasks:
 1. **Simple scraper foundation** (1 day)
    ```python
    # File: src/integrations/scrapers/simple_scraper.py
    # Based on validated scripts/scraping_poc.py approach
+   # Built on Foundation Infrastructure (Week 0)
    class SimpleAnimeScraper:
        def __init__(self):
            self.session = aiohttp.ClientSession()  # Validated approach
-           self.cache = TTLCache(maxsize=1000, ttl=3600)
+           self.cache = CollaborativeCacheSystem()
+           self.circuit_breaker = CircuitBreaker(failure_threshold=3)
+           self.error_handler = ErrorContext()
+       
+       # Scraping-Specific Error Handling:
+       # 1. Connection Timeout - Many anime sites are slow
+       # 2. Cloudflare Protection - Some sites block scrapers
+       # 3. HTML Structure Changes - Site redesigns break extractors
+       # 4. Rate Limiting - Aggressive anti-bot measures
+       # 5. Content Encoding Issues - Unicode and special characters
+       
+       async def handle_cloudflare_protection(self, url: str) -> str
+       async def retry_with_different_user_agent(self, url: str) -> str
+       async def validate_html_structure(self, html: str, expected_selectors: List[str]) -> bool
+       async def handle_encoding_issues(self, content: bytes) -> str
        
        async def extract_json_ld(self, html: str) -> Optional[Dict]
        async def extract_opengraph(self, html: str) -> Dict[str, str]
@@ -1263,7 +2015,26 @@ Processing Flow:
 2. **Anime-Planet scraper** (2 days)
    ```python
    # File: src/integrations/scrapers/extractors/anime_planet.py
-   class AnimePlanetExtractor:
+   class AnimePlanetExtractor(SimpleAnimeScraper):
+       def __init__(self):
+           super().__init__()
+           self.rate_limiter = AsyncLimiter(1, 1)  # 1 req/sec
+       
+       # Anime-Planet-Specific Error Handling:
+       # 1. Slug Validation - URLs use specific slug format
+       # 2. Dynamic Content Loading - Some content loaded via JavaScript
+       # 3. Review Pagination - Reviews spread across multiple pages
+       # 4. Tag Standardization - Inconsistent tag formats
+       # 5. Content Availability - Some anime have limited data
+       # 6. Anti-Bot Detection - Sophisticated detection systems
+       
+       async def validate_anime_slug(self, slug: str) -> str
+       async def handle_javascript_content(self, url: str) -> str
+       async def scrape_paginated_reviews(self, base_url: str) -> List[dict]
+       async def standardize_tags(self, raw_tags: List[str]) -> List[str]
+       async def handle_missing_content(self, element: BeautifulSoup) -> Optional[str]
+       async def detect_and_bypass_bot_detection(self, response: aiohttp.ClientResponse) -> str
+       
        async def scrape_anime_details(self, slug: str) -> dict
        async def scrape_reviews(self, slug: str) -> List[dict]
        async def scrape_tags(self, slug: str) -> List[str]
@@ -1273,7 +2044,26 @@ Processing Flow:
    ```python
    # File: src/integrations/scrapers/extractors/livechart.py
    # Validated: LiveChart provides JSON-LD structured data
-   class LiveChartExtractor:
+   class LiveChartExtractor(SimpleAnimeScraper):
+       def __init__(self):
+           super().__init__()
+           self.rate_limiter = AsyncLimiter(1, 1)  # 1 req/sec
+       
+       # LiveChart-Specific Error Handling:
+       # 1. JSON-LD Parsing Errors - Malformed structured data
+       # 2. Schedule Data Validation - Real-time data accuracy
+       # 3. Timezone Conversion - Schedule times in different zones
+       # 4. Missing Structured Data - Fallback to HTML scraping
+       # 5. Episode Number Validation - Inconsistent episode numbering
+       # 6. Streaming Platform Changes - Links become outdated
+       
+       async def validate_json_ld_structure(self, json_data: dict) -> bool
+       async def validate_schedule_accuracy(self, schedule_data: dict) -> dict
+       async def convert_to_user_timezone(self, utc_time: str, user_tz: str) -> str
+       async def fallback_to_html_extraction(self, url: str) -> dict
+       async def normalize_episode_numbers(self, episode_data: dict) -> dict
+       async def verify_streaming_links(self, links: List[dict]) -> List[dict]
+       
        async def extract_structured_data(self, anime_id: str) -> dict
        async def extract_schedule_data(self, url: str) -> dict
        async def get_episode_countdown(self, anime_id: str) -> dict
@@ -1282,17 +2072,53 @@ Processing Flow:
 4. **Additional scrapers** (3 days)
    ```python
    # File: src/integrations/scrapers/extractors/anisearch.py
-   class AniSearchExtractor:
+   class AniSearchExtractor(SimpleAnimeScraper):
+       def __init__(self):
+           super().__init__()
+           self.rate_limiter = AsyncLimiter(1, 1)  # 1 req/sec
+       
+       # AniSearch-Specific Error Handling:
+       # 1. German Language Processing - Text encoding and translation
+       # 2. Database ID Mapping - AniSearch uses different ID format
+       # 3. Episode Data Inconsistencies - Missing or incorrect episode data
+       # 4. Search Result Disambiguation - Multiple matches for same anime
+       # 5. Content Language Detection - Mixed German/English content
+       
+       async def handle_german_text_encoding(self, text: str) -> str
+       async def map_anisearch_id_to_standard(self, anisearch_id: str) -> str
+       async def validate_episode_data_consistency(self, episodes: List[dict]) -> List[dict]
+       async def disambiguate_search_results(self, results: List[dict], target_title: str) -> dict
+       async def detect_content_language(self, content: str) -> str
+       
        async def scrape_german_synopsis(self, anime_id: str) -> dict
        async def scrape_episode_list(self, anime_id: str) -> List[dict]
    
    # File: src/integrations/scrapers/extractors/animecountdown.py  
-   class AnimeCountdownExtractor:
+   class AnimeCountdownExtractor(SimpleAnimeScraper):
+       def __init__(self):
+           super().__init__()
+           self.rate_limiter = AsyncLimiter(1, 1)  # 1 req/sec
+       
+       # AnimeCountdown-Specific Error Handling:
+       # 1. Countdown Timer Accuracy - Real-time countdown synchronization
+       # 2. Release Date Validation - Dates may change or be incorrect
+       # 3. Timezone Handling - Countdowns in different timezones
+       # 4. Schedule Changes - Last-minute anime schedule updates
+       # 5. Site Structure Changes - Frequent UI updates
+       
+       async def validate_countdown_accuracy(self, countdown_data: dict) -> dict
+       async def cross_validate_release_dates(self, date: str, anime_title: str) -> str
+       async def synchronize_timezone_offsets(self, countdown: dict, user_tz: str) -> dict
+       async def handle_schedule_updates(self, old_data: dict, new_data: dict) -> dict
+       async def adapt_to_site_changes(self, url: str) -> BeautifulSoup
+       
        async def scrape_countdown_data(self, anime_slug: str) -> dict
        async def scrape_release_schedule(self, anime_slug: str) -> dict
    ```
-   - Error handling and retries
-   - Cloudflare bypass (if aiohttp fails)
+   - Comprehensive error handling and retries using foundation infrastructure
+   - Cloudflare bypass with fallback strategies
+   - Multi-language content processing
+   - Real-time data validation
 
 5. **Scraping orchestration** (1 day)
    ```python
@@ -1309,10 +2135,17 @@ Processing Flow:
 #### Acceptance Criteria:
 - 4+ scraping sources functional (Anime-Planet, LiveChart, AniSearch, AnimeCountdown)
 - Scraping success rate >85% (based on test results: 200-500ms response times)
-- Fallback chains prevent complete failures
+- Fallback chains prevent complete failures using foundation infrastructure
 - Scraping triggered only when user specifies source or requests unavailable fields
 - JSON-LD extraction working for structured data sources
 - aiohttp-based approach proven in production scripts
+- Service-specific error handling functional for each scraper:
+  - Anime-Planet: Anti-bot detection, pagination, dynamic content
+  - LiveChart: JSON-LD validation, timezone conversion, streaming link verification
+  - AniSearch: German language processing, ID mapping, content disambiguation  
+  - AnimeCountdown: Real-time countdown accuracy, schedule change handling
+- Collaborative cache system reduces scraping load by 70%+
+- Circuit breakers prevent scraping service overload
 
 ## Phase 3: Advanced Query Understanding (4-5 weeks)
 

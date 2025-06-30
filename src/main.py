@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import admin, search, workflow
+from .api.external import anilist, mal, kitsu, animeschedule, anidb, animeplanet, anisearch, animecountdown
 
 # Import our modules
 from .config import get_settings
@@ -89,6 +90,17 @@ app.include_router(search.router, prefix="/api/search", tags=["search"])
 app.include_router(workflow.router, prefix="/api/workflow", tags=["workflow"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
+# Include external service routes
+app.include_router(anilist.router, prefix="/api", tags=["external"])
+app.include_router(mal.router, prefix="/api", tags=["external"])
+app.include_router(kitsu.router, prefix="/api", tags=["external"])
+app.include_router(animeschedule.router, prefix="/api", tags=["external"])
+app.include_router(anidb.router, prefix="/api", tags=["external"])
+app.include_router(animeplanet.router, prefix="/api", tags=["external"])
+# LiveChart router removed - unreliable schedule data
+app.include_router(anisearch.router, prefix="/api", tags=["external"])
+app.include_router(animecountdown.router, prefix="/api", tags=["external"])
+
 # LangGraph workflow already included above
 
 
@@ -103,6 +115,17 @@ async def root():
             "search": "/api/search",
             "admin": "/api/admin",
             "workflow": "/api/workflow",
+            "external": {
+                "anilist": "/api/external/anilist",
+                "mal": "/api/external/mal",
+                "kitsu": "/api/external/kitsu",
+                "animeschedule": "/api/external/animeschedule",
+                "anidb": "/api/external/anidb",
+                "animeplanet": "/api/external/animeplanet",
+                "livechart": "/api/external/livechart",
+                "anisearch": "/api/external/anisearch",
+                "animecountdown": "/api/external/animecountdown"
+            },
             "health": "/health",
             "stats": "/stats",
         },
