@@ -12,7 +12,7 @@ class KitsuClient(BaseClient):
 
     def __init__(self, **kwargs):
         """Initialize Kitsu client."""
-        super().__init__(**kwargs)
+        super().__init__(service_name="kitsu", **kwargs)
         self.base_url = "https://kitsu.io/api/edge"
 
     async def _make_request(

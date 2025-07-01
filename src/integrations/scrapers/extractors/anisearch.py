@@ -11,7 +11,7 @@ class AniSearchScraper(BaseScraper):
 
     def __init__(self, **kwargs):
         """Initialize AniSearch scraper."""
-        super().__init__(**kwargs)
+        super().__init__(service_name="anisearch", **kwargs)
         self.base_url = "https://www.anisearch.de"
 
     async def get_anime_by_id(self, anime_id: int) -> Optional[Dict[str, Any]]:

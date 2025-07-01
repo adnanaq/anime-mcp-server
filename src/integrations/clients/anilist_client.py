@@ -27,7 +27,7 @@ class AniListClient(BaseClient):
             cache_manager: Cache manager instance
             error_handler: Error handler instance
         """
-        super().__init__(circuit_breaker, rate_limiter, cache_manager, error_handler)
+        super().__init__(service_name="anilist", circuit_breaker=circuit_breaker, cache_manager=cache_manager, error_handler=error_handler)
         self.base_url = "https://graphql.anilist.co"
         self.auth_token = auth_token
 

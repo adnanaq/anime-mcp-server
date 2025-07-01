@@ -12,7 +12,7 @@ class AnimePlanetScraper(BaseScraper):
 
     def __init__(self, **kwargs):
         """Initialize Anime-Planet scraper."""
-        super().__init__(**kwargs)
+        super().__init__(service_name="animeplanet", **kwargs)
         self.base_url = "https://www.anime-planet.com"
 
     async def get_anime_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:

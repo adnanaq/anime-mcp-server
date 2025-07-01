@@ -12,7 +12,7 @@ class AnimeCountdownScraper(BaseScraper):
 
     def __init__(self, **kwargs):
         """Initialize AnimeCountdown scraper."""
-        super().__init__(**kwargs)
+        super().__init__(service_name="animecountdown", **kwargs)
         self.base_url = "https://animecountdown.com"
 
     async def get_anime_countdown_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:

@@ -15,9 +15,9 @@ from ..clients.base_client import BaseClient
 class BaseScraper(BaseClient):
     """Base class for web scraping clients using cloudscraper."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, service_name: str, **kwargs):
         """Initialize base scraper."""
-        super().__init__(**kwargs)
+        super().__init__(service_name=service_name, **kwargs)
         self.scraper = None
 
     def _create_scraper(self) -> cloudscraper.CloudScraper:

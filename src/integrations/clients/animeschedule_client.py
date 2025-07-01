@@ -13,7 +13,7 @@ class AnimeScheduleClient(BaseClient):
 
     def __init__(self, **kwargs):
         """Initialize AnimeSchedule client."""
-        super().__init__(**kwargs)
+        super().__init__(service_name="animeschedule", **kwargs)
         self.base_url = "https://animeschedule.net/api/v3"
 
     async def _make_request(
