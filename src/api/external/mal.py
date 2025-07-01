@@ -42,6 +42,50 @@ _mal_service = MALService(
 )
 
 
+async def _handle_endpoint_common_setup(
+    x_correlation_id: Optional[str], 
+    response: Response, 
+    operation: str
+) -> str:
+    """Handle common endpoint setup: correlation ID generation and circuit breaker check."""
+    # Generate correlation ID
+    correlation_id = x_correlation_id or f"mal-{operation}-{uuid.uuid4().hex[:12]}"
+    response.headers["X-Correlation-ID"] = correlation_id
+    
+    # Check circuit breaker
+    circuit_breaker_response = await _handle_circuit_breaker_check(correlation_id)
+    if circuit_breaker_response:
+        raise HTTPException(
+            status_code=503,
+            detail=circuit_breaker_response["detail"],
+            headers={"X-Correlation-ID": correlation_id}
+        )
+    
+    return correlation_id
+
+
+async def _handle_endpoint_logging(
+    correlation_id: str, 
+    operation: str, 
+    context: Dict[str, Any], 
+    is_success: bool = False
+) -> None:
+    """Handle endpoint logging for start and success."""
+    if is_success:
+        message = f"MAL {operation} completed successfully"
+        log_context = {"operation": f"mal_{operation}", "success": True, **context}
+    else:
+        message = f"MAL {operation} request started"
+        log_context = {"operation": f"mal_{operation}", **context}
+    
+    await _correlation_logger.log_with_correlation(
+        correlation_id=correlation_id,
+        level="info",
+        message=message,
+        context=log_context
+    )
+
+
 
 
 async def _create_error_response(
@@ -286,13 +330,8 @@ async def search_anime(
         HTTPException: If search service fails or validation errors occur
     """
     try:
-        # Generate or use provided correlation ID
-        correlation_id = x_correlation_id
-        if not correlation_id:
-            correlation_id = f"mal-api-{uuid.uuid4().hex[:12]}"
-        
-        # Set correlation ID in response header
-        response.headers["X-Correlation-ID"] = correlation_id
+        # Handle common setup (correlation ID + circuit breaker)
+        correlation_id = await _handle_endpoint_common_setup(x_correlation_id, response, "api")
         
         # Start execution tracing
         trace_id = await _execution_tracer.start_trace(
@@ -305,42 +344,19 @@ async def search_anime(
             }
         )
         
-        # Check circuit breaker first
-        circuit_breaker_response = await _handle_circuit_breaker_check(correlation_id)
-        if circuit_breaker_response:
-            # Circuit breaker is open - return fast failure
-            if trace_id:
-                await _execution_tracer.end_trace(
-                    trace_id=trace_id,
-                    status="circuit_breaker_open",
-                    result={"circuit_breaker_open": True}
-                )
-            
-            raise HTTPException(
-                status_code=503,
-                detail=circuit_breaker_response["detail"],
-                headers={"X-Correlation-ID": correlation_id}
-            )
-        
-        # Log request start with correlation
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL API search request started",
-            context={
-                "operation": "mal_api_search",
-                "query": q,
-                "limit": limit,
-                "trace_id": trace_id,
-                "enhanced_parameters": {
-                    "anime_type": anime_type,
-                    "score_filters": bool(score or min_score or max_score),
-                    "genre_filters": bool(genres or genres_exclude),
-                    "date_filters": bool(start_date or end_date),
-                    "sorting": bool(order_by or sort)
-                }
+        # Log request start
+        await _handle_endpoint_logging(correlation_id, "API search", {
+            "query": q,
+            "limit": limit,
+            "trace_id": trace_id,
+            "enhanced_parameters": {
+                "anime_type": anime_type,
+                "score_filters": bool(score or min_score or max_score),
+                "genre_filters": bool(genres or genres_exclude),
+                "date_filters": bool(start_date or end_date),
+                "sorting": bool(order_by or sort)
             }
-        )
+        })
         
         # Parse comma-separated lists
         genre_list = None
@@ -449,31 +465,22 @@ async def search_anime(
                 }
             )
 
-        # Log successful request with correlation
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL API search completed successfully",
-            context={
-                "operation": "mal_api_search",
-                "results_count": len(results),
-                "query": q,
-                "trace_id": trace_id,
-                "success": True
-            }
-        )
+        # Log successful completion
+        await _handle_endpoint_logging(correlation_id, "API search", {
+            "results_count": len(results),
+            "query": q,
+            "trace_id": trace_id
+        }, is_success=True)
 
-        # Enhanced response with correlation tracking and execution trace
+        # Enhanced response with execution trace
         response_data = {
             "source": "mal",
-            "correlation_id": correlation_id,
             "query": q,
             "limit": limit,
             "status": status,
             "genres": genre_list,
             "results": results,
             "total_results": len(results),
-            # Enhanced metadata
             "enhanced_parameters": {
                 "anime_type": anime_type,
                 "score": score,
@@ -505,17 +512,17 @@ async def search_anime(
                     "trace_id": trace_id,
                     "duration_ms": trace_info.get("duration_ms", 0),
                     "steps": len(trace_info.get("steps", [])),
-                    "operation": "mal_api_search"
+                    "operation": "mal_search"
                 }
 
-        # Add correlation metadata
-        response_data["correlation_metadata"] = {
-            "request_id": correlation_id,
-            "operation": "mal_api_search",
+        # Add operation metadata (but keep correlation_id in headers only)
+        response_data["operation_metadata"] = {
+            "operation": "mal_search",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
-        return response_data
+        # Return JSONResponse to preserve headers set on response object
+        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
 
     except HTTPException as http_exc:
         # Handle different types of HTTP exceptions appropriately
@@ -649,26 +656,11 @@ async def get_anime_details(
         HTTPException: If anime not found or service fails
     """
     try:
-        # Generate or use provided correlation ID
-        correlation_id = x_correlation_id or f"mal-details-{uuid.uuid4().hex[:12]}"
-        response.headers["X-Correlation-ID"] = correlation_id
-        
-        # Check circuit breaker first
-        circuit_breaker_response = await _handle_circuit_breaker_check(correlation_id)
-        if circuit_breaker_response:
-            raise HTTPException(
-                status_code=503,
-                detail=circuit_breaker_response["detail"],
-                headers={"X-Correlation-ID": correlation_id}
-            )
+        # Handle common setup (correlation ID + circuit breaker)
+        correlation_id = await _handle_endpoint_common_setup(x_correlation_id, response, "details")
 
-        # Log request start with correlation
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL anime details request started",
-            context={"operation": "mal_anime_details", "anime_id": anime_id}
-        )
+        # Log request start
+        await _handle_endpoint_logging(correlation_id, "anime details", {"anime_id": anime_id})
 
         anime_data = await _mal_service.get_anime_details(anime_id, correlation_id=correlation_id)
 
@@ -678,19 +670,21 @@ async def get_anime_details(
             )
 
         # Log successful completion
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL anime details completed successfully",
-            context={"operation": "mal_anime_details", "anime_id": anime_id, "success": True}
-        )
+        await _handle_endpoint_logging(correlation_id, "anime details", {"anime_id": anime_id}, is_success=True)
 
-        return {
+        response_data = {
             "source": "mal", 
             "anime_id": anime_id, 
-            "data": anime_data,
-            "correlation_id": correlation_id
+            "data": anime_data
         }
+        
+        # Add operation metadata (but keep correlation_id in headers only)
+        response_data["operation_metadata"] = {
+            "operation": "mal_anime_details",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
 
     except HTTPException as http_exc:
         error_correlation_id = x_correlation_id or f"details-error-{uuid.uuid4().hex[:8]}"
@@ -763,51 +757,36 @@ async def get_seasonal_anime(
         HTTPException: If service fails
     """
     try:
-        # Generate or use provided correlation ID
-        correlation_id = x_correlation_id or f"mal-seasonal-{uuid.uuid4().hex[:12]}"
-        response.headers["X-Correlation-ID"] = correlation_id
-        
-        # Check circuit breaker first
-        circuit_breaker_response = await _handle_circuit_breaker_check(correlation_id)
-        if circuit_breaker_response:
-            raise HTTPException(
-                status_code=503,
-                detail=circuit_breaker_response["detail"],
-                headers={"X-Correlation-ID": correlation_id}
-            )
+        # Handle common setup (correlation ID + circuit breaker)
+        correlation_id = await _handle_endpoint_common_setup(x_correlation_id, response, "seasonal")
 
-        # Log request start with correlation
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL seasonal anime request started",
-            context={"operation": "mal_seasonal_anime", "year": year, "season": season}
-        )
+        # Log request start
+        await _handle_endpoint_logging(correlation_id, "seasonal anime", {"year": year, "season": season})
 
         results = await _mal_service.get_seasonal_anime(year, season, correlation_id=correlation_id)
 
         # Log successful completion
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL seasonal anime completed successfully",
-            context={
-                "operation": "mal_seasonal_anime", 
-                "year": year, 
-                "season": season, 
-                "results_count": len(results),
-                "success": True
-            }
-        )
+        await _handle_endpoint_logging(correlation_id, "seasonal anime", {
+            "year": year, 
+            "season": season, 
+            "results_count": len(results)
+        }, is_success=True)
 
-        return {
+        response_data = {
             "source": "mal",
             "year": year,
             "season": season,
             "results": results,
-            "total_results": len(results),
-            "correlation_id": correlation_id
+            "total_results": len(results)
         }
+        
+        # Add operation metadata (but keep correlation_id in headers only)
+        response_data["operation_metadata"] = {
+            "operation": "mal_seasonal_anime",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
 
     except HTTPException as http_exc:
         error_correlation_id = x_correlation_id or f"seasonal-error-{uuid.uuid4().hex[:8]}"
@@ -907,13 +886,20 @@ async def get_current_season_anime(
             }
         )
 
-        return {
+        response_data = {
             "source": "mal",
             "type": "current_season",
             "results": results,
-            "total_results": len(results),
-            "correlation_id": correlation_id
+            "total_results": len(results)
         }
+        
+        # Add operation metadata (but keep correlation_id in headers only)
+        response_data["operation_metadata"] = {
+            "operation": "mal_current_season",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
 
     except HTTPException as http_exc:
         error_correlation_id = x_correlation_id or f"current-error-{uuid.uuid4().hex[:8]}"
@@ -1017,12 +1003,19 @@ async def get_anime_statistics(
             context={"operation": "mal_anime_statistics", "anime_id": anime_id, "success": True}
         )
 
-        return {
+        response_data = {
             "source": "mal", 
             "anime_id": anime_id, 
-            "statistics": stats,
-            "correlation_id": correlation_id
+            "statistics": stats
         }
+        
+        # Add operation metadata (but keep correlation_id in headers only)
+        response_data["operation_metadata"] = {
+            "operation": "mal_statistics",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
 
     except HTTPException as http_exc:
         error_correlation_id = x_correlation_id or f"stats-error-{uuid.uuid4().hex[:8]}"
