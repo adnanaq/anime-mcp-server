@@ -3,11 +3,9 @@
 import asyncio
 import json
 import time
-from typing import Dict, Any
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-import aiohttp
 
 from src.config import Settings
 from src.exceptions import DataProcessingError
@@ -49,7 +47,7 @@ def sample_anime_data():
                     "https://anilist.co/anime/16498",
                     "https://kitsu.app/anime/attack-on-titan",
                 ],
-                "synopsis": "Humanity fights against giant humanoid Titans."
+                "synopsis": "Humanity fights against giant humanoid Titans.",
             },
             {
                 "title": "Death Note",
@@ -68,7 +66,7 @@ def sample_anime_data():
                     "https://myanimelist.net/anime/1535",
                     "https://anilist.co/anime/1535",
                 ],
-                "synopsis": "A notebook that kills anyone whose name is written in it."
+                "synopsis": "A notebook that kills anyone whose name is written in it.",
             },
         ]
     }
@@ -80,9 +78,7 @@ class TestProcessingConfig:
     def test_processing_config_initialization(self):
         """Test ProcessingConfig initialization."""
         config = ProcessingConfig(
-            batch_size=100,
-            max_concurrent_batches=5,
-            processing_timeout=300
+            batch_size=100, max_concurrent_batches=5, processing_timeout=300
         )
         assert config.batch_size == 100
         assert config.max_concurrent_batches == 5
@@ -102,11 +98,13 @@ class TestAnimeDataServiceInitialization:
 
     def test_init_without_settings(self):
         """Test initialization without settings (uses default)."""
-        with patch('src.services.data_service.get_settings') as mock_get_settings:
+        with patch("src.services.data_service.get_settings") as mock_get_settings:
             mock_default_settings = Mock(spec=Settings)
-            mock_default_settings.anime_database_url = "https://example.com/default.json"
+            mock_default_settings.anime_database_url = (
+                "https://example.com/default.json"
+            )
             mock_get_settings.return_value = mock_default_settings
-            
+
             service = AnimeDataService()
             assert service.settings == mock_default_settings
             mock_get_settings.assert_called_once()
@@ -114,12 +112,12 @@ class TestAnimeDataServiceInitialization:
     def test_platform_configs_structure(self, mock_settings):
         """Test platform configurations are properly structured."""
         service = AnimeDataService(mock_settings)
-        
+
         # Test some key platforms
         assert "myanimelist" in service.platform_configs
         assert "anilist" in service.platform_configs
         assert "kitsu" in service.platform_configs
-        
+
         # Test platform config structure
         mal_config = service.platform_configs["myanimelist"]
         assert "domain" in mal_config
@@ -133,7 +131,9 @@ class TestDataDownload:
     """Test data download functionality."""
 
     @pytest.mark.asyncio
-    async def test_download_anime_database_success(self, mock_settings, sample_anime_data):
+    async def test_download_anime_database_success(
+        self, mock_settings, sample_anime_data
+    ):
         """Test successful data download."""
         service = AnimeDataService(mock_settings)
 
@@ -158,7 +158,9 @@ class TestDataDownload:
             mock_response.status = 404
             mock_get.return_value.__aenter__.return_value = mock_response
 
-            with pytest.raises(Exception, match="Failed to download database: HTTP 404"):
+            with pytest.raises(
+                Exception, match="Failed to download database: HTTP 404"
+            ):
                 await service.download_anime_database()
 
     @pytest.mark.asyncio
@@ -167,7 +169,9 @@ class TestDataDownload:
         service = AnimeDataService(mock_settings)
 
         with patch("aiohttp.ClientSession.get", side_effect=Exception("Network error")):
-            with pytest.raises(Exception, match="Failed to download anime database: Network error"):
+            with pytest.raises(
+                Exception, match="Failed to download anime database: Network error"
+            ):
                 await service.download_anime_database()
 
     @pytest.mark.asyncio
@@ -189,7 +193,9 @@ class TestAnimeEntryProcessing:
     """Test individual anime entry processing."""
 
     @pytest.mark.asyncio
-    async def test_process_anime_entry_valid_data(self, mock_settings, sample_anime_data):
+    async def test_process_anime_entry_valid_data(
+        self, mock_settings, sample_anime_data
+    ):
         """Test processing a valid anime entry."""
         service = AnimeDataService(mock_settings)
         raw_entry = sample_anime_data["data"][0]
@@ -227,7 +233,7 @@ class TestAnimeEntryProcessing:
             "episodes": 12,
             "status": "FINISHED",
             "animeSeason": {"season": "SPRING", "year": 2023},
-            "sources": []
+            "sources": [],
         }
 
         result = await service.process_anime_entry(entry)
@@ -256,7 +262,9 @@ class TestDataProcessing:
         service = AnimeDataService(mock_settings)
         empty_data = {"data": []}
 
-        with pytest.raises(DataProcessingError, match="No anime data found in raw_data"):
+        with pytest.raises(
+            DataProcessingError, match="No anime data found in raw_data"
+        ):
             await service.process_all_anime(empty_data)
 
     @pytest.mark.asyncio
@@ -265,7 +273,9 @@ class TestDataProcessing:
         service = AnimeDataService(mock_settings)
         invalid_data = {}
 
-        with pytest.raises(DataProcessingError, match="No anime data found in raw_data"):
+        with pytest.raises(
+            DataProcessingError, match="No anime data found in raw_data"
+        ):
             await service.process_all_anime(invalid_data)
 
     @pytest.mark.asyncio
@@ -274,14 +284,22 @@ class TestDataProcessing:
         service = AnimeDataService(mock_settings)
         data_with_errors = {
             "data": [
-                {"title": "Valid Anime", "type": "TV", "sources": ["https://myanimelist.net/anime/1"]},
+                {
+                    "title": "Valid Anime",
+                    "type": "TV",
+                    "sources": ["https://myanimelist.net/anime/1"],
+                },
                 {"invalid": "entry"},  # This will cause an error
-                {"title": "Another Valid", "type": "TV", "sources": ["https://myanimelist.net/anime/2"]}
+                {
+                    "title": "Another Valid",
+                    "type": "TV",
+                    "sources": ["https://myanimelist.net/anime/2"],
+                },
             ]
         }
 
         result = await service.process_all_anime(data_with_errors)
-        
+
         # Should process valid entries despite errors
         assert len(result) >= 1
 
@@ -290,10 +308,19 @@ class TestDataProcessing:
         """Test processing timeout."""
         mock_settings.processing_timeout = 0.001  # Very short timeout
         service = AnimeDataService(mock_settings)
-        
+
         # Create large dataset that would take time
-        large_data = {"data": [{"title": f"Anime {i}", "type": "TV", "sources": [f"https://example.com/{i}"]} for i in range(1000)]}
-        
+        large_data = {
+            "data": [
+                {
+                    "title": f"Anime {i}",
+                    "type": "TV",
+                    "sources": [f"https://example.com/{i}"],
+                }
+                for i in range(1000)
+            ]
+        }
+
         with pytest.raises(DataProcessingError, match="Processing timed out"):
             await service.process_all_anime(large_data)
 
@@ -304,9 +331,9 @@ class TestHelperMethods:
     def test_create_processing_config(self, mock_settings):
         """Test creating processing configuration."""
         service = AnimeDataService(mock_settings)
-        
+
         config = service._create_processing_config()
-        
+
         assert isinstance(config, ProcessingConfig)
         assert config.batch_size == mock_settings.batch_size
         assert config.max_concurrent_batches == mock_settings.max_concurrent_batches
@@ -316,9 +343,9 @@ class TestHelperMethods:
         """Test creating batches from anime list."""
         service = AnimeDataService(mock_settings)
         anime_list = [f"anime_{i}" for i in range(10)]
-        
+
         batches = service._create_batches(anime_list, 3)
-        
+
         assert len(batches) == 4  # 3 + 3 + 3 + 1
         assert len(batches[0]) == 3
         assert len(batches[1]) == 3
@@ -331,11 +358,11 @@ class TestHelperMethods:
         batch_results = [
             [{"title": "Anime 1"}, {"title": "Anime 2"}],
             [{"title": "Anime 3"}],
-            []  # Empty batch
+            [],  # Empty batch
         ]
-        
+
         result = service._aggregate_results(batch_results)
-        
+
         assert len(result) == 3
         assert result[0]["title"] == "Anime 1"
         assert result[1]["title"] == "Anime 2"
@@ -350,13 +377,13 @@ class TestUtilityMethods:
         service = AnimeDataService(mock_settings)
         title = "Attack on Titan"
         sources = ["https://myanimelist.net/anime/16498"]
-        
+
         anime_id = service._generate_anime_id(title, sources)
-        
+
         assert anime_id is not None
         assert len(anime_id) == 12
         assert isinstance(anime_id, str)
-        
+
         # Same input should produce same ID
         anime_id2 = service._generate_anime_id(title, sources)
         assert anime_id == anime_id2
@@ -366,9 +393,9 @@ class TestUtilityMethods:
         service = AnimeDataService(mock_settings)
         title = "Test Anime"
         sources = []
-        
+
         anime_id = service._generate_anime_id(title, sources)
-        
+
         assert anime_id is not None
         assert len(anime_id) == 12
 
@@ -376,18 +403,18 @@ class TestUtilityMethods:
         """Test year and season extraction."""
         service = AnimeDataService(mock_settings)
         anime_season = {"year": 2023, "season": "SPRING"}
-        
+
         year, season = service._extract_year_season(anime_season)
-        
+
         assert year == 2023
         assert season == "spring"
 
     def test_extract_year_season_none(self, mock_settings):
         """Test year and season extraction with None."""
         service = AnimeDataService(mock_settings)
-        
+
         year, season = service._extract_year_season(None)
-        
+
         assert year is None
         assert season is None
 
@@ -395,9 +422,9 @@ class TestUtilityMethods:
         """Test year and season extraction with missing fields."""
         service = AnimeDataService(mock_settings)
         anime_season = {"year": 2023}  # Missing season
-        
+
         year, season = service._extract_year_season(anime_season)
-        
+
         assert year == 2023
         assert season is None
 
@@ -406,15 +433,15 @@ class TestUtilityMethods:
         service = AnimeDataService(mock_settings)
         anime = AnimeEntry(
             title="Test Anime",
-            synopsis="A great anime", 
+            synopsis="A great anime",
             synonyms=["Test", "Anime"],
             tags=["Action", "Drama"],
             studios=["Studio A"],
-            type="TV"
+            type="TV",
         )
-        
+
         embedding_text = service._create_embedding_text(anime)
-        
+
         assert "Test Anime" in embedding_text
         assert "A great anime" in embedding_text
         assert "Action" in embedding_text
@@ -426,13 +453,11 @@ class TestUtilityMethods:
         """Test search text creation."""
         service = AnimeDataService(mock_settings)
         anime = AnimeEntry(
-            title="Test Anime",
-            synonyms=["Test", "Anime"],
-            tags=["Action", "Drama"]
+            title="Test Anime", synonyms=["Test", "Anime"], tags=["Action", "Drama"]
         )
-        
+
         search_text = service._create_search_text(anime)
-        
+
         assert "Test Anime" in search_text
         assert "Test" in search_text
         assert "Anime" in search_text
@@ -448,14 +473,14 @@ class TestPlatformIDExtraction:
         service = AnimeDataService(mock_settings)
         sources = [
             "https://myanimelist.net/anime/16498",
-            "https://anilist.co/anime/16498", 
+            "https://anilist.co/anime/16498",
             "https://kitsu.app/anime/attack-on-titan",
             "https://anidb.net/anime/9541",
-            "https://animenewsnetwork.com/encyclopedia/anime.php?id=14655"
+            "https://animenewsnetwork.com/encyclopedia/anime.php?id=14655",
         ]
-        
+
         platform_ids = service._extract_all_platform_ids(sources)
-        
+
         assert platform_ids["myanimelist_id"] == 16498
         assert platform_ids["anilist_id"] == 16498
         assert "kitsu_id" in platform_ids
@@ -469,9 +494,9 @@ class TestPlatformIDExtraction:
             "https://myanimelist.net/anime/invalid",  # Non-numeric
             "https://anilist.co/anime/12345",  # Valid numeric
         ]
-        
+
         platform_ids = service._extract_all_platform_ids(sources)
-        
+
         # Should only extract valid numeric ID
         assert "myanimelist_id" not in platform_ids
         assert platform_ids["anilist_id"] == 12345
@@ -480,18 +505,18 @@ class TestPlatformIDExtraction:
         """Test extraction with unknown platform."""
         service = AnimeDataService(mock_settings)
         sources = ["https://unknown-platform.com/anime/123"]
-        
+
         platform_ids = service._extract_all_platform_ids(sources)
-        
+
         assert len(platform_ids) == 0
 
     def test_extract_all_platform_ids_slug_type(self, mock_settings):
         """Test extraction of slug-type IDs."""
         service = AnimeDataService(mock_settings)
         sources = ["https://anime-planet.com/anime/attack-on-titan"]
-        
+
         platform_ids = service._extract_all_platform_ids(sources)
-        
+
         assert "animeplanet_id" in platform_ids
         assert platform_ids["animeplanet_id"] == "attack-on-titan"
 
@@ -510,11 +535,11 @@ class TestQualityScoring:
             tags=["Action", "Drama"],
             studios=["Studio A"],
             picture="https://example.com/image.jpg",
-            sources=["https://myanimelist.net/anime/1", "https://anilist.co/anime/1"]
+            sources=["https://myanimelist.net/anime/1", "https://anilist.co/anime/1"],
         )
-        
+
         score = service._calculate_quality_score(anime)
-        
+
         # Complete entry should have high score
         assert score >= 0.9
         assert score <= 1.0
@@ -522,27 +547,20 @@ class TestQualityScoring:
     def test_calculate_quality_score_minimal_entry(self, mock_settings):
         """Test quality score for minimal entry."""
         service = AnimeDataService(mock_settings)
-        anime = AnimeEntry(
-            title="Minimal Anime",
-            type="TV",
-            episodes=0  # No episodes
-        )
-        
+        anime = AnimeEntry(title="Minimal Anime", type="TV", episodes=0)  # No episodes
+
         score = service._calculate_quality_score(anime)
-        
+
         # Minimal entry should have lower score
         assert score <= 0.5
 
     def test_calculate_quality_score_no_title(self, mock_settings):
         """Test quality score with no title."""
         service = AnimeDataService(mock_settings)
-        anime = AnimeEntry(
-            title="",  # Empty title
-            type="TV"
-        )
-        
+        anime = AnimeEntry(title="", type="TV")  # Empty title
+
         score = service._calculate_quality_score(anime)
-        
+
         # No title should reduce score significantly
         assert score < 0.3
 
@@ -553,49 +571,47 @@ class TestLoggingAndMetrics:
     def test_log_batch_metrics(self, mock_settings):
         """Test batch metrics logging."""
         service = AnimeDataService(mock_settings)
-        
+
         # This should not raise any exceptions
         service._log_batch_metrics(
             batch_num=1,
             batch_start=time.time() - 1.0,
             total_entries=10,
             processed_entries=9,
-            error_count=1
+            error_count=1,
         )
 
     def test_log_processing_metrics(self, mock_settings):
         """Test processing metrics logging."""
         service = AnimeDataService(mock_settings)
-        
+
         # This should not raise any exceptions
         service._log_processing_metrics(
-            start_time=time.time() - 5.0,
-            total_entries=100,
-            processed_entries=95
+            start_time=time.time() - 5.0, total_entries=100, processed_entries=95
         )
 
     def test_log_batch_metrics_zero_duration(self, mock_settings):
         """Test batch metrics with zero duration."""
         service = AnimeDataService(mock_settings)
-        
+
         # Should handle zero duration gracefully
         service._log_batch_metrics(
             batch_num=1,
             batch_start=time.time(),  # Same time = zero duration
             total_entries=10,
             processed_entries=10,
-            error_count=0
+            error_count=0,
         )
 
     def test_log_processing_metrics_zero_duration(self, mock_settings):
         """Test processing metrics with zero duration."""
         service = AnimeDataService(mock_settings)
-        
+
         # Should handle zero duration gracefully
         service._log_processing_metrics(
             start_time=time.time(),  # Same time = zero duration
             total_entries=10,
-            processed_entries=10
+            processed_entries=10,
         )
 
 
@@ -606,10 +622,12 @@ class TestAsyncProcessing:
     async def test_process_batches_concurrently(self, mock_settings, sample_anime_data):
         """Test concurrent batch processing."""
         service = AnimeDataService(mock_settings)
-        config = ProcessingConfig(batch_size=1, max_concurrent_batches=2, processing_timeout=30)
-        
+        config = ProcessingConfig(
+            batch_size=1, max_concurrent_batches=2, processing_timeout=30
+        )
+
         batches = service._create_batches(sample_anime_data["data"], 1)
-        
+
         # Mock the _process_batch method to return successful results
         async def mock_process_batch(batch, batch_num, config):
             results = []
@@ -618,10 +636,10 @@ class TestAsyncProcessing:
                 if result:
                     results.append(result)
             return results
-        
-        with patch.object(service, '_process_batch', side_effect=mock_process_batch):
+
+        with patch.object(service, "_process_batch", side_effect=mock_process_batch):
             results = await service._process_batches_concurrently(batches, config)
-        
+
         assert len(results) == len(batches)
         assert all(isinstance(result, list) for result in results)
 
@@ -629,29 +647,41 @@ class TestAsyncProcessing:
     async def test_process_batch_with_semaphore(self, mock_settings, sample_anime_data):
         """Test processing a single batch."""
         service = AnimeDataService(mock_settings)
-        config = ProcessingConfig(batch_size=10, max_concurrent_batches=2, processing_timeout=30)
+        config = ProcessingConfig(
+            batch_size=10, max_concurrent_batches=2, processing_timeout=30
+        )
         batch = sample_anime_data["data"]
-        
+
         result = await service._process_batch(batch, 1, config)
-        
+
         assert isinstance(result, list)
         assert len(result) >= 0  # May filter out invalid entries
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_process_batch_with_errors(self, mock_settings):
         """Test batch processing with invalid entries."""
         service = AnimeDataService(mock_settings)
-        config = ProcessingConfig(batch_size=10, max_concurrent_batches=2, processing_timeout=30)
-        
+        config = ProcessingConfig(
+            batch_size=10, max_concurrent_batches=2, processing_timeout=30
+        )
+
         # Create batch with mix of valid and invalid entries
         batch = [
-            {"title": "Valid Anime", "type": "TV", "sources": ["https://myanimelist.net/anime/1"]},
+            {
+                "title": "Valid Anime",
+                "type": "TV",
+                "sources": ["https://myanimelist.net/anime/1"],
+            },
             {"invalid": "entry"},  # Invalid entry
-            {"title": "Another Valid", "type": "TV", "sources": ["https://myanimelist.net/anime/2"]}
+            {
+                "title": "Another Valid",
+                "type": "TV",
+                "sources": ["https://myanimelist.net/anime/2"],
+            },
         ]
-        
+
         result = await service._process_batch(batch, 1, config)
-        
+
         # Should process valid entries and skip invalid ones
         assert isinstance(result, list)
         assert len(result) >= 1  # At least one valid entry
@@ -661,13 +691,17 @@ class TestErrorHandling:
     """Test error handling scenarios."""
 
     @pytest.mark.asyncio
-    async def test_process_batches_with_exceptions(self, mock_settings, sample_anime_data):
+    async def test_process_batches_with_exceptions(
+        self, mock_settings, sample_anime_data
+    ):
         """Test handling of batch processing exceptions."""
         service = AnimeDataService(mock_settings)
-        config = ProcessingConfig(batch_size=1, max_concurrent_batches=2, processing_timeout=30)
-        
+        config = ProcessingConfig(
+            batch_size=1, max_concurrent_batches=2, processing_timeout=30
+        )
+
         batches = service._create_batches(sample_anime_data["data"], 1)
-        
+
         # Mock _process_batch to return exceptions for some batches
         async def mock_process_batch(batch, batch_num, config):
             if batch_num == 1:
@@ -678,10 +712,10 @@ class TestErrorHandling:
                 if result:
                     results.append(result)
             return results
-        
-        with patch.object(service, '_process_batch', side_effect=mock_process_batch):
+
+        with patch.object(service, "_process_batch", side_effect=mock_process_batch):
             results = await service._process_batches_concurrently(batches, config)
-        
+
         # Should handle exceptions gracefully and continue with other batches
         assert len(results) == len(batches)
         assert results[0] == []  # Failed batch returns empty list
@@ -691,15 +725,25 @@ class TestErrorHandling:
     async def test_process_batch_with_asyncio_to_thread_exception(self, mock_settings):
         """Test exception handling in asyncio.to_thread."""
         service = AnimeDataService(mock_settings)
-        config = ProcessingConfig(batch_size=10, max_concurrent_batches=2, processing_timeout=30)
-        
+        config = ProcessingConfig(
+            batch_size=10, max_concurrent_batches=2, processing_timeout=30
+        )
+
         # Create batch that will cause exceptions
-        batch = [{"title": "Test Anime", "type": "TV", "sources": ["https://myanimelist.net/anime/1"]}]
-        
+        batch = [
+            {
+                "title": "Test Anime",
+                "type": "TV",
+                "sources": ["https://myanimelist.net/anime/1"],
+            }
+        ]
+
         # Mock asyncio.to_thread to raise an exception
-        with patch('asyncio.to_thread', side_effect=Exception("Thread processing error")):
+        with patch(
+            "asyncio.to_thread", side_effect=Exception("Thread processing error")
+        ):
             result = await service._process_batch(batch, 1, config)
-            
+
             # Should handle exception and continue
             assert isinstance(result, list)
             # Result might be empty due to exception handling
@@ -708,56 +752,67 @@ class TestErrorHandling:
     async def test_process_batch_with_gather_exceptions(self, mock_settings):
         """Test handling of exceptions from asyncio.gather."""
         service = AnimeDataService(mock_settings)
-        config = ProcessingConfig(batch_size=10, max_concurrent_batches=2, processing_timeout=30)
-        
+        config = ProcessingConfig(
+            batch_size=10, max_concurrent_batches=2, processing_timeout=30
+        )
+
         # Mock the process_entry_async to return an exception
-        batch = [{"title": "Test Anime", "type": "TV", "sources": ["https://myanimelist.net/anime/1"]}]
-        
+        batch = [
+            {
+                "title": "Test Anime",
+                "type": "TV",
+                "sources": ["https://myanimelist.net/anime/1"],
+            }
+        ]
+
         # Use real implementation but force it to return exceptions
-        original_gather = asyncio.gather
-        
+        asyncio.gather
+
         async def mock_gather(*tasks, return_exceptions=True):
             # Return a mix of exceptions and None values
             return [Exception("Processing error"), None]
-        
-        with patch('asyncio.gather', side_effect=mock_gather):
+
+        with patch("asyncio.gather", side_effect=mock_gather):
             result = await service._process_batch(batch, 1, config)
-            
+
             # Should handle both exceptions and None values
             assert isinstance(result, list)
 
     def test_extract_platform_ids_value_error(self, mock_settings):
         """Test ValueError handling in numeric ID conversion."""
         service = AnimeDataService(mock_settings)
-        
+
         # Mock the regex to match but int() to fail
         sources = ["https://myanimelist.net/anime/not_a_number"]
-        
+
         # The pattern will match "not_a_number" but int() will fail
         platform_ids = service._extract_all_platform_ids(sources)
-        
+
         # Should not include the failed conversion
         assert "myanimelist_id" not in platform_ids
 
     def test_extract_platform_ids_with_invalid_numeric_conversion(self, mock_settings):
         """Test platform ID extraction with invalid numeric values."""
         service = AnimeDataService(mock_settings)
-        
+
         # Create a mock source that will match the pattern but fail numeric conversion
         # We need to temporarily modify the platform config to force a ValueError
         original_pattern = service.platform_configs["myanimelist"]["pattern"]
-        
+
         try:
             # Set a pattern that will match non-numeric values
             import re
-            service.platform_configs["myanimelist"]["pattern"] = re.compile(r"/anime/([a-z]+)")
-            
+
+            service.platform_configs["myanimelist"]["pattern"] = re.compile(
+                r"/anime/([a-z]+)"
+            )
+
             sources = ["https://myanimelist.net/anime/invalid"]
             platform_ids = service._extract_all_platform_ids(sources)
-            
+
             # Should not include the failed conversion
             assert "myanimelist_id" not in platform_ids
-            
+
         finally:
             # Restore original pattern
             service.platform_configs["myanimelist"]["pattern"] = original_pattern

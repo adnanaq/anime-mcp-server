@@ -422,11 +422,12 @@ class TestMissingCoverageEdgeCases:
     async def test_search_by_image_base64_success_path(self, sample_anime_results):
         """Test successful base64 image search - covers missing lines 188, 192."""
         import base64
+
         from src.api.search import search_anime_by_image_base64
 
         # Create base64 encoded fake image data
         fake_image_data = b"fake image data"
-        base64_data = base64.b64encode(fake_image_data).decode('utf-8')
+        base64_data = base64.b64encode(fake_image_data).decode("utf-8")
 
         with patch("src.main.qdrant_client") as mock_client:
             mock_client._supports_multi_vector = True
@@ -434,7 +435,9 @@ class TestMissingCoverageEdgeCases:
             mock_client.search_by_image = AsyncMock(return_value=sample_anime_results)
 
             # This call will cover the success path and line 192: return {
-            result = await search_anime_by_image_base64(image_data=base64_data, limit=10)
+            result = await search_anime_by_image_base64(
+                image_data=base64_data, limit=10
+            )
 
             assert len(result["results"]) == 2
             assert result["search_type"] == "image_similarity_base64"
@@ -445,18 +448,21 @@ class TestMissingCoverageEdgeCases:
     async def test_search_by_image_base64_generic_exception(self):
         """Test base64 image search generic exception handling - covers lines 201-203."""
         import base64
+
         from src.api.search import search_anime_by_image_base64
 
         fake_image_data = b"fake image data"
-        base64_data = base64.b64encode(fake_image_data).decode('utf-8')
+        base64_data = base64.b64encode(fake_image_data).decode("utf-8")
 
         with patch("src.main.qdrant_client") as mock_client:
             mock_client._supports_multi_vector = True
             # This will trigger lines 201-203: except Exception as e: logger.error... raise HTTPException
-            mock_client.search_by_image = AsyncMock(side_effect=Exception("Search failed"))
+            mock_client.search_by_image = AsyncMock(
+                side_effect=Exception("Search failed")
+            )
 
             with pytest.raises(HTTPException) as exc_info:
                 await search_anime_by_image_base64(image_data=base64_data, limit=10)
-            
+
             assert exc_info.value.status_code == 500
             assert "Base64 image search failed" in str(exc_info.value.detail)

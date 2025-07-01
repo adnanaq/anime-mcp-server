@@ -716,33 +716,34 @@ class TestMCPImageToolsIntegration:
 # COMPREHENSIVE COVERAGE TESTS FOR 100% COVERAGE
 # ============================================================================
 
+
 class TestMCPServerCompleteCoverage:
     """Test suite to achieve 100% coverage of MCP server functionality."""
 
     @pytest.mark.asyncio
     async def test_initialize_qdrant_client_function(self):
         """Test initialize_qdrant_client function."""
-        from src.mcp.server import initialize_qdrant_client
         import src.mcp.server
-        
+        from src.mcp.server import initialize_qdrant_client
+
         # Save original client
         original_client = src.mcp.server.qdrant_client
-        
+
         try:
             # Reset client to None
             src.mcp.server.qdrant_client = None
-            
+
             with patch("src.mcp.server.QdrantClient") as mock_qdrant_class:
                 mock_client = Mock()
                 mock_qdrant_class.return_value = mock_client
-                
+
                 # Call function
                 initialize_qdrant_client()
-                
+
                 # Verify client was created
                 assert src.mcp.server.qdrant_client == mock_client
                 mock_qdrant_class.assert_called_once()
-                
+
         finally:
             # Restore original client
             src.mcp.server.qdrant_client = original_client
@@ -750,25 +751,25 @@ class TestMCPServerCompleteCoverage:
     @pytest.mark.asyncio
     async def test_initialize_qdrant_client_already_initialized(self):
         """Test initialize_qdrant_client when client already exists."""
-        from src.mcp.server import initialize_qdrant_client
         import src.mcp.server
-        
+        from src.mcp.server import initialize_qdrant_client
+
         # Save original client
         original_client = src.mcp.server.qdrant_client
-        
+
         try:
             # Set existing client
             existing_client = Mock()
             src.mcp.server.qdrant_client = existing_client
-            
+
             with patch("src.mcp.server.QdrantClient") as mock_qdrant_class:
                 # Call function
                 initialize_qdrant_client()
-                
+
                 # Verify existing client wasn't replaced
                 assert src.mcp.server.qdrant_client == existing_client
                 mock_qdrant_class.assert_not_called()
-                
+
         finally:
             # Restore original client
             src.mcp.server.qdrant_client = original_client
@@ -776,10 +777,10 @@ class TestMCPServerCompleteCoverage:
     def test_parse_arguments_default(self):
         """Test parse_arguments with default values."""
         from src.mcp.server import parse_arguments
-        
+
         with patch("sys.argv", ["mcp_server.py"]):
             args = parse_arguments()
-            
+
             # Check default values are set from settings
             assert hasattr(args, "mode")
             assert hasattr(args, "host")
@@ -790,16 +791,22 @@ class TestMCPServerCompleteCoverage:
     def test_parse_arguments_custom(self):
         """Test parse_arguments with custom values."""
         from src.mcp.server import parse_arguments
-        
-        with patch("sys.argv", [
-            "mcp_server.py", 
-            "--mode", "http", 
-            "--host", "127.0.0.1", 
-            "--port", "8080", 
-            "--verbose"
-        ]):
+
+        with patch(
+            "sys.argv",
+            [
+                "mcp_server.py",
+                "--mode",
+                "http",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8080",
+                "--verbose",
+            ],
+        ):
             args = parse_arguments()
-            
+
             assert args.mode == "http"
             assert args.host == "127.0.0.1"
             assert args.port == 8080
@@ -808,32 +815,32 @@ class TestMCPServerCompleteCoverage:
     def test_build_search_filters_empty(self):
         """Test _build_search_filters with empty inputs."""
         from src.mcp.server import _build_search_filters
-        
+
         # Test with all None values
         result = _build_search_filters()
         assert result is None
-        
+
         # Test with empty lists
         result = _build_search_filters(
-            genres=[], 
-            year_range=[], 
-            anime_types=[], 
-            studios=[], 
-            exclusions=[], 
-            mood_keywords=[]
+            genres=[],
+            year_range=[],
+            anime_types=[],
+            studios=[],
+            exclusions=[],
+            mood_keywords=[],
         )
         assert result is None
 
     def test_build_search_filters_single_year(self):
         """Test _build_search_filters with single year values."""
         from src.mcp.server import _build_search_filters
-        
+
         # Test with start year only
         result = _build_search_filters(year_range=[2020, None])
         expected = {"year": {"gte": 2020}}
         assert result == expected
-        
-        # Test with end year only  
+
+        # Test with end year only
         result = _build_search_filters(year_range=[None, 2023])
         expected = {"year": {"lte": 2023}}
         assert result == expected
@@ -841,7 +848,7 @@ class TestMCPServerCompleteCoverage:
     def test_build_search_filters_exclusions(self):
         """Test _build_search_filters with exclusions."""
         from src.mcp.server import _build_search_filters
-        
+
         result = _build_search_filters(exclusions=["Horror", "Ecchi"])
         expected = {"exclude_tags": ["Horror", "Ecchi"]}
         assert result == expected
@@ -849,10 +856,9 @@ class TestMCPServerCompleteCoverage:
     def test_build_search_filters_mood_keywords_combined(self):
         """Test _build_search_filters combining mood keywords with existing tags."""
         from src.mcp.server import _build_search_filters
-        
+
         result = _build_search_filters(
-            genres=["Action", "Comedy"],
-            mood_keywords=["dark", "serious"]
+            genres=["Action", "Comedy"], mood_keywords=["dark", "serious"]
         )
         expected = {"tags": {"any": ["Action", "Comedy", "dark", "serious"]}}
         assert result == expected
@@ -866,7 +872,7 @@ class TestMCPServerCompleteCoverage:
             mock_qdrant_client.search.assert_called_with(
                 query="test", limit=50, filters=None
             )
-            
+
             # Test limit under minimum (should clamp to 1)
             await search_anime.fn(query="test", limit=-5)
             mock_qdrant_client.search.assert_called_with(
@@ -882,25 +888,23 @@ class TestMCPServerCompleteCoverage:
             mock_qdrant_client.find_similar.assert_called_with(
                 anime_id="test", limit=20
             )
-            
+
             # Test limit under minimum (should clamp to 1)
             await find_similar_anime.fn(anime_id="test", limit=-5)
-            mock_qdrant_client.find_similar.assert_called_with(
-                anime_id="test", limit=1
-            )
+            mock_qdrant_client.find_similar.assert_called_with(anime_id="test", limit=1)
 
     @pytest.mark.asyncio
     async def test_search_anime_by_image_limit_edge_cases(self, mock_qdrant_client):
         """Test search_anime_by_image limit validation edge cases."""
         mock_qdrant_client._supports_multi_vector = True
-        
+
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test limit over maximum (should clamp to 30)
             await search_anime_by_image.fn(image_data="test", limit=100)
             mock_qdrant_client.search_by_image.assert_called_with(
                 image_data="test", limit=30
             )
-            
+
             # Test limit under minimum (should clamp to 1)
             await search_anime_by_image.fn(image_data="test", limit=-5)
             mock_qdrant_client.search_by_image.assert_called_with(
@@ -908,17 +912,19 @@ class TestMCPServerCompleteCoverage:
             )
 
     @pytest.mark.asyncio
-    async def test_find_visually_similar_anime_limit_edge_cases(self, mock_qdrant_client):
+    async def test_find_visually_similar_anime_limit_edge_cases(
+        self, mock_qdrant_client
+    ):
         """Test find_visually_similar_anime limit validation edge cases."""
         mock_qdrant_client._supports_multi_vector = True
-        
+
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test limit over maximum (should clamp to 20)
             await find_visually_similar_anime.fn(anime_id="test", limit=100)
             mock_qdrant_client.find_visually_similar_anime.assert_called_with(
                 anime_id="test", limit=20
             )
-            
+
             # Test limit under minimum (should clamp to 1)
             await find_visually_similar_anime.fn(anime_id="test", limit=-5)
             mock_qdrant_client.find_visually_similar_anime.assert_called_with(
@@ -926,10 +932,12 @@ class TestMCPServerCompleteCoverage:
             )
 
     @pytest.mark.asyncio
-    async def test_search_multimodal_anime_limit_and_weight_validation(self, mock_qdrant_client):
+    async def test_search_multimodal_anime_limit_and_weight_validation(
+        self, mock_qdrant_client
+    ):
         """Test search_multimodal_anime parameter validation."""
         mock_qdrant_client._supports_multi_vector = True
-        
+
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test limit over maximum (should clamp to 25)
             await search_multimodal_anime.fn(
@@ -938,7 +946,7 @@ class TestMCPServerCompleteCoverage:
             mock_qdrant_client.search_multimodal.assert_called_with(
                 query="test", image_data="test", limit=25, text_weight=0.8
             )
-            
+
             # Test limit under minimum (should clamp to 1)
             await search_multimodal_anime.fn(
                 query="test", image_data="test", limit=-5, text_weight=0.3
@@ -946,7 +954,7 @@ class TestMCPServerCompleteCoverage:
             mock_qdrant_client.search_multimodal.assert_called_with(
                 query="test", image_data="test", limit=1, text_weight=0.3
             )
-            
+
             # Test text_weight over maximum (should clamp to 1.0)
             await search_multimodal_anime.fn(
                 query="test", image_data="test", limit=10, text_weight=1.5
@@ -954,7 +962,7 @@ class TestMCPServerCompleteCoverage:
             mock_qdrant_client.search_multimodal.assert_called_with(
                 query="test", image_data="test", limit=10, text_weight=1.0
             )
-            
+
             # Test text_weight under minimum (should clamp to 0.0)
             await search_multimodal_anime.fn(
                 query="test", image_data="test", limit=10, text_weight=-0.5
@@ -967,38 +975,42 @@ class TestMCPServerCompleteCoverage:
     async def test_search_multimodal_anime_text_only_fallback(self, mock_qdrant_client):
         """Test search_multimodal_anime fallback to text-only search."""
         mock_qdrant_client._supports_multi_vector = True
-        
+
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test with no image data - should use regular search
             await search_multimodal_anime.fn(query="test", limit=10)
             mock_qdrant_client.search.assert_called_with(query="test", limit=10)
 
-    @pytest.mark.asyncio 
-    async def test_search_multimodal_anime_multi_vector_disabled_fallback(self, mock_qdrant_client):
+    @pytest.mark.asyncio
+    async def test_search_multimodal_anime_multi_vector_disabled_fallback(
+        self, mock_qdrant_client
+    ):
         """Test search_multimodal_anime fallback when multi-vector disabled."""
         mock_qdrant_client._supports_multi_vector = False
-        
+
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test with image data but multi-vector disabled - should fallback to text search
-            await search_multimodal_anime.fn(query="test", image_data="test_image", limit=10)
+            await search_multimodal_anime.fn(
+                query="test", image_data="test_image", limit=10
+            )
             mock_qdrant_client.search.assert_called_with(query="test", limit=10)
 
     @pytest.mark.asyncio
     async def test_get_anime_details_not_found_error(self, mock_qdrant_client):
         """Test get_anime_details when anime not found."""
         mock_qdrant_client.get_by_id.return_value = None
-        
+
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             with pytest.raises(RuntimeError) as exc_info:
                 await get_anime_details.fn(anime_id="nonexistent")
-            
+
             assert "Anime not found: nonexistent" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_database_stats_resource_error_handling(self):
         """Test database_stats resource error handling."""
         from src.mcp.server import database_stats
-        
+
         with patch("src.mcp.server.qdrant_client", None):
             result = await database_stats.fn()
             assert "Database client not initialized" in result
@@ -1006,12 +1018,12 @@ class TestMCPServerCompleteCoverage:
     @pytest.mark.asyncio
     async def test_database_stats_resource_exception_handling(self, mock_qdrant_client):
         """Test database_stats resource exception handling."""
-        from src.mcp.server import database_stats, get_anime_stats
-        
+        from src.mcp.server import database_stats
+
         # Mock get_anime_stats to raise an exception
         with patch("src.mcp.server.get_anime_stats") as mock_get_stats:
             mock_get_stats.fn = AsyncMock(side_effect=Exception("Stats error"))
-            
+
             with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
                 result = await database_stats.fn()
                 assert "Error getting stats: Stats error" in result
@@ -1020,9 +1032,9 @@ class TestMCPServerCompleteCoverage:
     async def test_database_schema_resource(self):
         """Test database_schema resource function."""
         from src.mcp.server import database_schema
-        
+
         result = await database_schema.fn()
-        
+
         assert isinstance(result, str)
         assert "Anime Database Schema" in result
         assert "fields" in result
@@ -1041,9 +1053,9 @@ class TestMCPServerCompleteCoverage:
                 anime_types=["TV", "Movie"],
                 studios=["Mappa", "Wit Studio"],
                 exclusions=["Horror", "Ecchi"],
-                mood_keywords=["dark", "serious"]
+                mood_keywords=["dark", "serious"],
             )
-            
+
             # Should be called with complex filters
             mock_qdrant_client.search.assert_called_once()
             call_args = mock_qdrant_client.search.call_args
@@ -1055,31 +1067,31 @@ class TestMCPServerCompleteCoverage:
     async def test_main_function_components(self):
         """Test main function components."""
         from src.mcp.server import main
-        
+
         # Test that main function can be called and handles arguments
         with patch("src.mcp.server.parse_arguments") as mock_parse:
             with patch("src.mcp.server.logging.basicConfig") as mock_logging:
                 with patch("asyncio.run") as mock_asyncio_run:
                     with patch("src.mcp.server.mcp") as mock_mcp:
-                        
+
                         # Mock arguments
                         mock_args = Mock()
                         mock_args.verbose = False
                         mock_args.mode = "stdio"
                         mock_parse.return_value = mock_args
-                        
+
                         # Mock settings
                         with patch("src.mcp.server.settings") as mock_settings:
                             mock_settings.log_level = "INFO"
                             mock_settings.log_format = "%(message)s"
                             mock_settings.qdrant_collection_name = "test"
                             mock_settings.qdrant_url = "http://localhost:6333"
-                            
+
                             try:
                                 main()
                             except SystemExit:
                                 pass  # Expected from mcp.run()
-                            
+
                             # Verify function calls
                             mock_parse.assert_called_once()
                             mock_logging.assert_called_once()
@@ -1088,12 +1100,12 @@ class TestMCPServerCompleteCoverage:
     def test_main_function_http_mode(self):
         """Test main function with HTTP mode."""
         from src.mcp.server import main
-        
+
         with patch("src.mcp.server.parse_arguments") as mock_parse:
             with patch("src.mcp.server.logging.basicConfig"):
                 with patch("asyncio.run"):
                     with patch("src.mcp.server.mcp") as mock_mcp:
-                        
+
                         # Mock arguments for HTTP mode
                         mock_args = Mock()
                         mock_args.verbose = True
@@ -1101,31 +1113,33 @@ class TestMCPServerCompleteCoverage:
                         mock_args.host = "localhost"
                         mock_args.port = 8080
                         mock_parse.return_value = mock_args
-                        
+
                         # Mock settings
                         with patch("src.mcp.server.settings") as mock_settings:
                             mock_settings.log_level = "INFO"
                             mock_settings.log_format = "%(message)s"
                             mock_settings.qdrant_collection_name = "test"
                             mock_settings.qdrant_url = "http://localhost:6333"
-                            
+
                             try:
                                 main()
                             except SystemExit:
                                 pass  # Expected from mcp.run()
-                            
+
                             # Verify mcp.run was called with SSE transport (http mode uses SSE)
-                            mock_mcp.run.assert_called_with(transport="sse", host="localhost", port=8080)
+                            mock_mcp.run.assert_called_with(
+                                transport="sse", host="localhost", port=8080
+                            )
 
     def test_main_function_sse_mode(self):
         """Test main function with SSE mode."""
         from src.mcp.server import main
-        
+
         with patch("src.mcp.server.parse_arguments") as mock_parse:
             with patch("src.mcp.server.logging.basicConfig"):
                 with patch("asyncio.run"):
                     with patch("src.mcp.server.mcp") as mock_mcp:
-                        
+
                         # Mock arguments for SSE mode
                         mock_args = Mock()
                         mock_args.verbose = False
@@ -1133,31 +1147,33 @@ class TestMCPServerCompleteCoverage:
                         mock_args.host = "127.0.0.1"
                         mock_args.port = 3001
                         mock_parse.return_value = mock_args
-                        
+
                         # Mock settings
                         with patch("src.mcp.server.settings") as mock_settings:
                             mock_settings.log_level = "DEBUG"
                             mock_settings.log_format = "%(message)s"
                             mock_settings.qdrant_collection_name = "test"
                             mock_settings.qdrant_url = "http://localhost:6333"
-                            
+
                             try:
                                 main()
                             except SystemExit:
                                 pass  # Expected from mcp.run()
-                            
+
                             # Verify mcp.run was called with SSE transport
-                            mock_mcp.run.assert_called_with(transport="sse", host="127.0.0.1", port=3001)
+                            mock_mcp.run.assert_called_with(
+                                transport="sse", host="127.0.0.1", port=3001
+                            )
 
     def test_main_function_streamable_mode(self):
         """Test main function with streamable mode."""
         from src.mcp.server import main
-        
+
         with patch("src.mcp.server.parse_arguments") as mock_parse:
             with patch("src.mcp.server.logging.basicConfig"):
                 with patch("asyncio.run"):
                     with patch("src.mcp.server.mcp") as mock_mcp:
-                        
+
                         # Mock arguments for streamable mode
                         mock_args = Mock()
                         mock_args.verbose = False
@@ -1165,71 +1181,73 @@ class TestMCPServerCompleteCoverage:
                         mock_args.host = "0.0.0.0"
                         mock_args.port = 8000
                         mock_parse.return_value = mock_args
-                        
+
                         # Mock settings
                         with patch("src.mcp.server.settings") as mock_settings:
                             mock_settings.log_level = "INFO"
                             mock_settings.log_format = "%(message)s"
                             mock_settings.qdrant_collection_name = "test"
                             mock_settings.qdrant_url = "http://localhost:6333"
-                            
+
                             try:
                                 main()
                             except SystemExit:
                                 pass  # Expected from mcp.run()
-                            
+
                             # Verify mcp.run was called with streamable transport
-                            mock_mcp.run.assert_called_with(transport="streamable", host="0.0.0.0", port=8000)
+                            mock_mcp.run.assert_called_with(
+                                transport="streamable", host="0.0.0.0", port=8000
+                            )
 
     def test_main_function_keyboard_interrupt(self):
         """Test main function handles KeyboardInterrupt."""
         from src.mcp.server import main
-        
+
         with patch("src.mcp.server.parse_arguments") as mock_parse:
             with patch("src.mcp.server.logging.basicConfig"):
                 with patch("asyncio.run"):
                     with patch("src.mcp.server.mcp") as mock_mcp:
-                        
+
                         # Mock KeyboardInterrupt
                         mock_mcp.run.side_effect = KeyboardInterrupt()
-                        
+
                         mock_args = Mock()
                         mock_args.verbose = False
                         mock_args.mode = "stdio"
                         mock_parse.return_value = mock_args
-                        
+
                         with patch("src.mcp.server.settings") as mock_settings:
                             mock_settings.log_level = "INFO"
                             mock_settings.log_format = "%(message)s"
                             mock_settings.qdrant_collection_name = "test"
                             mock_settings.qdrant_url = "http://localhost:6333"
-                            
+
                             # Should handle KeyboardInterrupt gracefully
                             main()
 
     def test_main_function_exception_handling(self):
         """Test main function handles general exceptions."""
         from src.mcp.server import main
-        
+
         with patch("src.mcp.server.parse_arguments") as mock_parse:
             with patch("src.mcp.server.logging.basicConfig"):
                 with patch("asyncio.run"):
                     with patch("src.mcp.server.mcp") as mock_mcp:
-                        
+
                         # Mock general exception
                         mock_mcp.run.side_effect = Exception("Server error")
-                        
+
                         mock_args = Mock()
                         mock_args.verbose = False
                         mock_args.mode = "stdio"
                         mock_parse.return_value = mock_args
-                        
+
                         with patch("src.mcp.server.settings") as mock_settings:
                             mock_settings.log_level = "INFO"
                             mock_settings.log_format = "%(message)s"
                             mock_settings.qdrant_collection_name = "test"
                             mock_settings.qdrant_url = "http://localhost:6333"
-                            
+
                             # Should raise the exception
                             with pytest.raises(Exception, match="Server error"):
                                 main()
@@ -1238,32 +1256,32 @@ class TestMCPServerCompleteCoverage:
     async def test_init_and_run_function_success(self):
         """Test the nested init_and_run function success path."""
         from src.mcp.server import main
-        
+
         with patch("src.mcp.server.initialize_mcp_server") as mock_init:
             mock_init.return_value = None  # Successful initialization
-            
+
             # Extract and test the init_and_run function
             with patch("src.mcp.server.parse_arguments") as mock_parse:
                 with patch("src.mcp.server.logging.basicConfig"):
                     with patch("asyncio.run") as mock_asyncio_run:
                         with patch("src.mcp.server.mcp"):
-                            
+
                             mock_args = Mock()
                             mock_args.verbose = False
                             mock_args.mode = "stdio"
                             mock_parse.return_value = mock_args
-                            
+
                             with patch("src.mcp.server.settings") as mock_settings:
                                 mock_settings.log_level = "INFO"
                                 mock_settings.log_format = "%(message)s"
                                 mock_settings.qdrant_collection_name = "test"
                                 mock_settings.qdrant_url = "http://localhost:6333"
-                                
+
                                 try:
                                     main()
                                 except SystemExit:
                                     pass
-                                
+
                                 # Verify asyncio.run was called (which runs init_and_run)
                                 mock_asyncio_run.assert_called_once()
 
@@ -1271,26 +1289,26 @@ class TestMCPServerCompleteCoverage:
     async def test_init_and_run_function_failure(self):
         """Test the nested init_and_run function failure path."""
         from src.mcp.server import main
-        
+
         with patch("src.mcp.server.initialize_mcp_server") as mock_init:
             mock_init.side_effect = Exception("Initialization failed")
-            
+
             with patch("src.mcp.server.parse_arguments") as mock_parse:
                 with patch("src.mcp.server.logging.basicConfig"):
                     with patch("asyncio.run") as mock_asyncio_run:
                         with patch("src.mcp.server.mcp"):
-                            
+
                             mock_args = Mock()
-                            mock_args.verbose = False  
+                            mock_args.verbose = False
                             mock_args.mode = "stdio"
                             mock_parse.return_value = mock_args
-                            
+
                             with patch("src.mcp.server.settings") as mock_settings:
                                 mock_settings.log_level = "INFO"
                                 mock_settings.log_format = "%(message)s"
                                 mock_settings.qdrant_collection_name = "test"
                                 mock_settings.qdrant_url = "http://localhost:6333"
-                                
+
                                 # Should raise exception from init_and_run
                                 with pytest.raises(Exception):
                                     main()
@@ -1329,7 +1347,9 @@ class TestEnhancedSearchAnime:
         return mock_client
 
     @pytest.mark.asyncio
-    async def test_search_anime_backward_compatibility(self, mock_qdrant_client_enhanced):
+    async def test_search_anime_backward_compatibility(
+        self, mock_qdrant_client_enhanced
+    ):
         """Test that existing search_anime functionality remains intact."""
         from src.mcp.server import search_anime
 
@@ -1459,11 +1479,11 @@ class TestEnhancedSearchAnime:
 class TestMCPServerMissingCoverage:
     """Test specific missing coverage lines to reach 100%."""
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_search_anime_mood_keywords_no_genres(self):
         """Test search_anime mood keywords when no existing tags - covers line 86."""
         from src.mcp.server import _build_search_filters
-        
+
         # Test the specific case where combined_tags = mood_keywords (line 86)
         result = _build_search_filters(mood_keywords=["dark", "serious"])
         expected = {"tags": {"any": ["dark", "serious"]}}
@@ -1472,21 +1492,26 @@ class TestMCPServerMissingCoverage:
     @pytest.mark.asyncio
     async def test_all_tools_runtime_error_not_initialized(self):
         """Test RuntimeError for all tools when client not initialized - covers lines 161, 189, 213, 297, 343."""
-        from src.mcp.server import search_anime, get_anime_details, find_similar_anime, get_anime_stats
-        
+        from src.mcp.server import (
+            find_similar_anime,
+            get_anime_details,
+            get_anime_stats,
+            search_anime,
+        )
+
         with patch("src.mcp.server.qdrant_client", None):
-            # Test search_anime - line 161  
+            # Test search_anime - line 161
             with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
                 await search_anime.fn(query="test")
-            
+
             # Test get_anime_details - line 189
             with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
                 await get_anime_details.fn(anime_id="test")
-            
-            # Test find_similar_anime - line 213  
+
+            # Test find_similar_anime - line 213
             with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
                 await find_similar_anime.fn(anime_id="test")
-            
+
             # Test get_anime_stats - line 297
             with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
                 await get_anime_stats.fn()
@@ -1495,45 +1520,49 @@ class TestMCPServerMissingCoverage:
     async def test_find_similar_anime_exception_handling(self):
         """Test find_similar_anime exception handling - covers lines 200-202."""
         from src.mcp.server import find_similar_anime
-        
+
         mock_client = AsyncMock()
         mock_client.find_similar.side_effect = Exception("Similarity search failed")
-        
+
         with patch("src.mcp.server.qdrant_client", mock_client):
             with pytest.raises(RuntimeError) as exc_info:
                 await find_similar_anime.fn(anime_id="test123")
-            
-            assert "Similarity search failed: Similarity search failed" in str(exc_info.value)
 
-    @pytest.mark.asyncio  
+            assert "Similarity search failed: Similarity search failed" in str(
+                exc_info.value
+            )
+
+    @pytest.mark.asyncio
     async def test_get_anime_stats_exception_handling(self):
         """Test get_anime_stats exception handling - covers lines 233-235."""
         from src.mcp.server import get_anime_stats
-        
+
         mock_client = AsyncMock()
         mock_client.get_stats.side_effect = Exception("Stats retrieval failed")
-        
+
         with patch("src.mcp.server.qdrant_client", mock_client):
             with patch("src.mcp.server.settings") as mock_settings:
                 mock_settings.qdrant_url = "http://localhost:6333"
                 mock_settings.qdrant_collection_name = "anime_database"
                 mock_settings.fastembed_model = "BAAI/bge-small-en-v1.5"
-                
+
                 with pytest.raises(RuntimeError) as exc_info:
                     await get_anime_stats.fn()
-                
-                assert "Failed to get stats: Stats retrieval failed" in str(exc_info.value)
+
+                assert "Failed to get stats: Stats retrieval failed" in str(
+                    exc_info.value
+                )
 
     @pytest.mark.asyncio
     async def test_image_search_tools_runtime_errors(self):
-        """Test RuntimeError for image search tools when client not initialized - covers line 343."""  
-        from src.mcp.server import search_anime_by_image, find_visually_similar_anime
-        
+        """Test RuntimeError for image search tools when client not initialized - covers line 343."""
+        from src.mcp.server import find_visually_similar_anime, search_anime_by_image
+
         with patch("src.mcp.server.qdrant_client", None):
             # Test search_anime_by_image
             with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
                 await search_anime_by_image.fn(image_data="test")
-            
-            # Test find_visually_similar_anime  
+
+            # Test find_visually_similar_anime
             with pytest.raises(RuntimeError, match="Qdrant client not initialized"):
                 await find_visually_similar_anime.fn(anime_id="test")

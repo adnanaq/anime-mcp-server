@@ -20,7 +20,8 @@ class AnimeEntry(BaseModel):
         None, description="Episode duration in seconds"
     )
     score: Optional[Dict[str, float]] = Field(
-        None, description="Anime scoring data with arithmeticGeometricMean, arithmeticMean, median"
+        None,
+        description="Anime scoring data with arithmeticGeometricMean, arithmeticMean, median",
     )
 
     @field_validator("duration")

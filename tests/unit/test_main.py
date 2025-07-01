@@ -1,9 +1,9 @@
 """Tests for main.py FastAPI application module."""
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 from fastapi.testclient import TestClient
-from fastapi import HTTPException
 
 from src.main import app, lifespan
 
@@ -36,7 +36,10 @@ class TestFastAPIApplication:
         """Test that FastAPI app is created correctly."""
         assert app is not None
         assert app.title == "Anime MCP Server"
-        assert "Semantic search API for anime database with MCP integration" in app.description
+        assert (
+            "Semantic search API for anime database with MCP integration"
+            in app.description
+        )
 
     @pytest.mark.asyncio
     async def test_lifespan_startup_success(self, mock_settings):
@@ -61,7 +64,7 @@ class TestFastAPIApplication:
                 )
                 mock_client_instance.health_check.assert_called_once()
                 mock_client_instance.create_collection.assert_called_once()
-                
+
                 # Verify success logging
                 mock_logger.info.assert_any_call(
                     "✅ Qdrant connection established",
@@ -89,21 +92,24 @@ class TestFastAPIApplication:
             async with lifespan(app):
                 # Verify error logging
                 mock_logger.error.assert_called_once_with(
-                    "❌ Qdrant connection failed", 
-                    extra={"url": mock_settings.qdrant_url}
+                    "❌ Qdrant connection failed",
+                    extra={"url": mock_settings.qdrant_url},
                 )
 
     @pytest.mark.asyncio
     async def test_lifespan_shutdown_successful(self, mock_settings):
         """Test successful application shutdown with MCP client disconnect."""
         mock_disconnect = AsyncMock()
-        
+
         with (
             patch("src.main.settings", mock_settings),
             patch("src.main.QdrantClient") as mock_qdrant_client,
             patch("src.main.logger") as mock_logger,
             patch.dict("sys.modules", {"src.mcp.fastmcp_client_adapter": Mock()}),
-            patch("src.mcp.fastmcp_client_adapter.disconnect_global_adapter", mock_disconnect),
+            patch(
+                "src.mcp.fastmcp_client_adapter.disconnect_global_adapter",
+                mock_disconnect,
+            ),
         ):
             # Mock successful Qdrant client
             mock_client_instance = AsyncMock()
@@ -123,13 +129,16 @@ class TestFastAPIApplication:
     async def test_lifespan_shutdown_mcp_error(self, mock_settings):
         """Test application shutdown with MCP disconnect error."""
         mock_disconnect = AsyncMock(side_effect=Exception("MCP disconnect failed"))
-        
+
         with (
             patch("src.main.settings", mock_settings),
             patch("src.main.QdrantClient") as mock_qdrant_client,
             patch("src.main.logger") as mock_logger,
             patch.dict("sys.modules", {"src.mcp.fastmcp_client_adapter": Mock()}),
-            patch("src.mcp.fastmcp_client_adapter.disconnect_global_adapter", mock_disconnect),
+            patch(
+                "src.mcp.fastmcp_client_adapter.disconnect_global_adapter",
+                mock_disconnect,
+            ),
         ):
             # Mock successful Qdrant client
             mock_client_instance = AsyncMock()
@@ -150,6 +159,7 @@ class TestFastAPIApplication:
         with patch("src.main.logger") as mock_logger:
             # Import should work without errors
             from src.api.workflow import router as workflow_router
+
             assert workflow_router is not None
             # No warning should be logged for successful import
             mock_logger.warning.assert_not_called()
@@ -159,16 +169,19 @@ class TestFastAPIApplication:
         # Test the pattern used in main.py without complex mocking
         mock_app = Mock()
         mock_logger = Mock()
-        
+
         # Simulate the exact try/except pattern from main.py lines 95-100
         try:
             # This will definitely raise ImportError
             from src.api.nonexistent_workflow_module import router as workflow_router
-            mock_app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
+
+            mock_app.include_router(
+                workflow_router, prefix="/api/workflow", tags=["workflow"]
+            )
         except ImportError as e:
             # This is the exact pattern from lines 99-100
             mock_logger.warning(f"LangGraph workflow routes not available: {e}")
-        
+
         # Verify the error handling was triggered
         mock_logger.warning.assert_called_once()
         call_args = str(mock_logger.warning.call_args[0][0])
@@ -188,25 +201,35 @@ class TestAppEndpoints:
         with patch("src.main.lifespan"):
             response = client.get("/")
             assert response.status_code == 200
-            
+
             data = response.json()
             assert data["message"] == "Anime MCP Server"
             assert data["version"] == "1.0.0"
             assert data["status"] == "running"
             assert "endpoints" in data
             assert "features" in data
-            
+
             # Verify endpoints structure
             endpoints = data["endpoints"]
-            expected_endpoints = ["search", "recommendations", "admin", "workflow", "health", "stats"]
+            expected_endpoints = [
+                "search",
+                "recommendations",
+                "admin",
+                "workflow",
+                "health",
+                "stats",
+            ]
             for endpoint in expected_endpoints:
                 assert endpoint in endpoints
-            
+
             # Verify features structure
             features = data["features"]
             expected_features = [
-                "semantic_search", "image_search", "multimodal_search", 
-                "conversational_workflows", "mcp_protocol"
+                "semantic_search",
+                "image_search",
+                "multimodal_search",
+                "conversational_workflows",
+                "mcp_protocol",
             ]
             for feature in expected_features:
                 assert feature in features
@@ -216,20 +239,20 @@ class TestAppEndpoints:
         """Test health endpoint when Qdrant is healthy."""
         mock_client = AsyncMock()
         mock_client.health_check.return_value = True
-        
+
         with (
             patch("src.main.lifespan"),
             patch("src.main.qdrant_client", mock_client),
         ):
             response = client.get("/health")
             assert response.status_code == 200
-            
+
             data = response.json()
             assert data["status"] == "healthy"
             assert data["qdrant"] == "connected"
             assert "timestamp" in data
             assert "configuration" in data
-            
+
             config = data["configuration"]
             assert config["qdrant_url"] == mock_settings.qdrant_url
             assert config["collection_name"] == mock_settings.qdrant_collection_name
@@ -239,14 +262,14 @@ class TestAppEndpoints:
         """Test health endpoint when Qdrant is unhealthy."""
         mock_client = AsyncMock()
         mock_client.health_check.return_value = False
-        
+
         with (
             patch("src.main.lifespan"),
             patch("src.main.qdrant_client", mock_client),
         ):
             response = client.get("/health")
             assert response.status_code == 200
-            
+
             data = response.json()
             assert data["status"] == "unhealthy"
             assert data["qdrant"] == "disconnected"
@@ -259,7 +282,7 @@ class TestAppEndpoints:
         ):
             response = client.get("/health")
             assert response.status_code == 200
-            
+
             data = response.json()
             assert data["status"] == "unhealthy"
             assert data["qdrant"] == "disconnected"
@@ -269,7 +292,7 @@ class TestAppEndpoints:
         mock_client = AsyncMock()
         mock_stats = {"total_vectors": 38894, "collection_size": 1024}
         mock_client.get_stats.return_value = mock_stats
-        
+
         with (
             patch("src.main.lifespan"),
             patch("src.main.qdrant_client", mock_client),
@@ -286,7 +309,7 @@ class TestAppEndpoints:
         ):
             response = client.get("/stats")
             assert response.status_code == 503
-            
+
             data = response.json()
             assert "Qdrant client not initialized" in data["detail"]
 
@@ -297,10 +320,10 @@ class TestMainExecution:
     def test_main_execution_block(self):
         """Test the if __name__ == '__main__' block."""
         # Test by executing a module-like structure that mimics main.py
+        import os
         import subprocess
         import tempfile
-        import os
-        
+
         # Create a temporary Python file that mimics the main execution
         test_script = """
 import sys
@@ -326,151 +349,157 @@ with patch('uvicorn.run') as mock_uvicorn_run:
     with open('/tmp/test_result.txt', 'w') as f:
         f.write(str(mock_uvicorn_run.called))
 """
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(test_script)
             f.flush()
-            
+
             try:
                 # Execute the test script
-                result = subprocess.run(["python", f.name], 
-                                      capture_output=True, text=True, timeout=10)
-                
+                result = subprocess.run(
+                    ["python", f.name], capture_output=True, text=True, timeout=10
+                )
+
                 # Check if the test result file was created
-                if os.path.exists('/tmp/test_result.txt'):
-                    with open('/tmp/test_result.txt', 'r') as rf:
+                if os.path.exists("/tmp/test_result.txt"):
+                    with open("/tmp/test_result.txt", "r") as rf:
                         called_result = rf.read().strip()
                         assert called_result == "True"
-                    os.remove('/tmp/test_result.txt')
-                
+                    os.remove("/tmp/test_result.txt")
+
                 # If subprocess execution works, the __main__ block was tested
-                assert result.returncode == 0 or "uvicorn" in result.stdout or "uvicorn" in result.stderr
+                assert (
+                    result.returncode == 0
+                    or "uvicorn" in result.stdout
+                    or "uvicorn" in result.stderr
+                )
             finally:
                 # Clean up
                 os.unlink(f.name)
-                if os.path.exists('/tmp/test_result.txt'):
-                    os.remove('/tmp/test_result.txt')
-    
+                if os.path.exists("/tmp/test_result.txt"):
+                    os.remove("/tmp/test_result.txt")
+
     def test_main_execution_pattern(self):
         """Test main execution pattern directly."""
         # Test the exact pattern from main.py without complex mocking
         mock_settings = Mock()
         mock_settings.host = "0.0.0.0"
-        mock_settings.port = 8000  
+        mock_settings.port = 8000
         mock_settings.debug = True
-        
+
         # Simulate the main execution pattern
         test_name = "__main__"
         executed = False
-        
+
         if test_name == "__main__":
             # This represents line 155 (import uvicorn)
-            with patch('uvicorn.run') as mock_run:
+            with patch("uvicorn.run") as mock_run:
                 import uvicorn
+
                 # This represents lines 157-159 (uvicorn.run call)
                 uvicorn.run(
-                    "main:app", 
-                    host=mock_settings.host, 
-                    port=mock_settings.port, 
-                    reload=mock_settings.debug
+                    "main:app",
+                    host=mock_settings.host,
+                    port=mock_settings.port,
+                    reload=mock_settings.debug,
                 )
                 executed = True
-                
+
                 # Verify the run was called correctly
                 mock_run.assert_called_once_with(
-                    "main:app",
-                    host="0.0.0.0",
-                    port=8000,
-                    reload=True
+                    "main:app", host="0.0.0.0", port=8000, reload=True
                 )
-        
+
         assert executed, "Main execution block should have run"
 
     def test_import_error_coverage_exec(self):
         """Test ImportError handling by executing the exact code from main.py."""
         from unittest.mock import Mock
-        
+
         # Create mock objects that simulate the main.py environment
         mock_logger = Mock()
         mock_app = Mock()
-        
+
         # Execute the exact code from main.py lines 95-100
         # This directly tests the ImportError handling logic
         try:
             # This import will definitely fail, triggering the ImportError
-            from src.api.nonexistent_workflow_module_for_testing import router as workflow_router
-            mock_app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
+            from src.api.nonexistent_workflow_module_for_testing import (
+                router as workflow_router,
+            )
+
+            mock_app.include_router(
+                workflow_router, prefix="/api/workflow", tags=["workflow"]
+            )
         except ImportError as e:
             # This is the exact code from lines 99-100 in main.py
             mock_logger.warning(f"LangGraph workflow routes not available: {e}")
-        
+
         # Verify the ImportError handling was executed
         mock_logger.warning.assert_called_once()
         call_args = str(mock_logger.warning.call_args[0][0])
         assert "LangGraph workflow routes not available:" in call_args
-        
+
         # Also execute the code pattern using exec to ensure coverage tracking
-        exec_code = '''
+        exec_code = """
 try:
     from src.api.nonexistent_workflow_exec_test import router as workflow_router
     app.include_router(workflow_router, prefix="/api/workflow", tags=["workflow"])
 except ImportError as e:
     logger.warning(f"LangGraph workflow routes not available: {e}")
-'''
-        exec_globals = {
-            'app': mock_app,
-            'logger': mock_logger
-        }
+"""
+        exec_globals = {"app": mock_app, "logger": mock_logger}
         exec(exec_code, exec_globals)
-        
+
         # Should have been called twice now
         assert mock_logger.warning.call_count >= 1
 
     def test_main_execution_coverage_exec(self):
         """Test main execution block by executing the exact code from main.py."""
-        from unittest.mock import patch, Mock
+        from unittest.mock import patch
+
         from src.config import get_settings
-        
+
         # Get the real settings like main.py does
         settings = get_settings()
-        
+
         # Test the exact main execution pattern from main.py lines 154-159
         # Simulate __name__ == "__main__" condition
         main_name = "__main__"
-        
+
         if main_name == "__main__":
-            with patch('uvicorn.run') as mock_run:
+            with patch("uvicorn.run") as mock_run:
                 # This represents line 155: import uvicorn
                 import uvicorn
-                
+
                 # This represents lines 157-159: uvicorn.run call
                 uvicorn.run(
-                    "main:app", host=settings.host, port=settings.port, reload=settings.debug
+                    "main:app",
+                    host=settings.host,
+                    port=settings.port,
+                    reload=settings.debug,
                 )
-                
+
                 # Verify the call was made correctly
                 mock_run.assert_called_once()
                 call_args = mock_run.call_args
                 assert call_args[0][0] == "main:app"
-                assert call_args[1]['host'] == settings.host
-                assert call_args[1]['port'] == settings.port
-                assert call_args[1]['reload'] == settings.debug
-        
+                assert call_args[1]["host"] == settings.host
+                assert call_args[1]["port"] == settings.port
+                assert call_args[1]["reload"] == settings.debug
+
         # Also execute using exec to ensure coverage tracking
-        exec_code = '''
+        exec_code = """
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "main:app", host=settings.host, port=settings.port, reload=settings.debug
     )
-'''
-        with patch('uvicorn.run') as mock_run_exec:
-            exec_globals = {
-                '__name__': '__main__',
-                'settings': settings
-            }
+"""
+        with patch("uvicorn.run") as mock_run_exec:
+            exec_globals = {"__name__": "__main__", "settings": settings}
             exec(exec_code, exec_globals)
-            
+
             # Verify the exec version also called uvicorn.run
             mock_run_exec.assert_called_once()
 
@@ -491,12 +520,12 @@ class TestAppConfiguration:
         """Test that all required routes are included."""
         # Get all route paths
         routes = [route.path for route in app.routes]
-        
+
         # Check that key routes exist
         assert "/" in routes
         assert "/health" in routes
         assert "/stats" in routes
-        
+
         # Check that routers are included by verifying app has the expected router count
         # This is a basic check since routes are added by include_router calls
         assert len(app.routes) > 3  # Should have more than just the basic routes
@@ -504,7 +533,7 @@ class TestAppConfiguration:
     def test_global_qdrant_client_initialization(self):
         """Test global qdrant_client variable initialization."""
         import src.main
-        
+
         # Should start as None
         assert hasattr(src.main, "qdrant_client")
         # Initial value should be None
@@ -513,14 +542,14 @@ class TestAppConfiguration:
     def test_settings_initialization(self):
         """Test settings are properly initialized."""
         import src.main
-        
+
         assert hasattr(src.main, "settings")
         assert src.main.settings is not None
 
     def test_logger_initialization(self):
         """Test logger is properly initialized."""
         import src.main
-        
+
         assert hasattr(src.main, "logger")
         assert src.main.logger is not None
         assert src.main.logger.name == "src.main"

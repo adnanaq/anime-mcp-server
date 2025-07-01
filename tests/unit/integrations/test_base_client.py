@@ -1,802 +1,1180 @@
-"""
-Comprehensive test suite for BaseClient class.
+"""Comprehensive tests for BaseClient functionality."""
 
-Tests all functionality including:
-- Error handling infrastructure
-- Circuit breaker integration
-- Rate limiting
-- Collaborative caching
-- Request deduplication
-- LangGraph error handling
-"""
+import json
+import unittest.mock
+from unittest.mock import AsyncMock, Mock, patch
 
-import asyncio
-import pytest
 import aiohttp
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+import pytest
 
-# Import the classes we're testing (these will be implemented)
+from src.exceptions import APIError
 from src.integrations.clients.base_client import BaseClient
-from src.integrations.error_handling import ErrorContext, CircuitBreaker, GracefulDegradation
-from src.integrations.cache_manager import CollaborativeCacheSystem, RequestDeduplication
-from src.integrations.execution_tracing import LangGraphErrorHandler
-
-
-class TestErrorContext:
-    """Test the three-layer error context preservation."""
-    
-    def test_error_context_creation(self):
-        """Test creating an ErrorContext with all layers."""
-        context = ErrorContext(
-            user_message="Unable to fetch anime data. Please try again.",
-            debug_info="AniList API returned 429: Rate limit exceeded",
-            trace_data={"execution_id": "abc123", "tool": "search_anime", "timestamp": "2025-01-01T12:00:00Z"}
-        )
-        
-        assert context.user_message == "Unable to fetch anime data. Please try again."
-        assert context.debug_info == "AniList API returned 429: Rate limit exceeded"
-        assert context.trace_data["execution_id"] == "abc123"
-    
-    def test_error_context_from_exception(self):
-        """Test creating ErrorContext from an exception."""
-        try:
-            raise ValueError("Invalid anime ID format")
-        except ValueError as e:
-            context = ErrorContext.from_exception(
-                e,
-                user_message="Invalid input provided",
-                trace_data={"tool": "get_anime_by_id", "input": "invalid_id"}
-            )
-            
-            assert context.user_message == "Invalid input provided"
-            assert "ValueError: Invalid anime ID format" in context.debug_info
-            assert context.trace_data["tool"] == "get_anime_by_id"
-
-
-class TestCircuitBreaker:
-    """Test circuit breaker functionality for API failure prevention."""
-    
-    @pytest.fixture
-    def circuit_breaker(self):
-        return CircuitBreaker(failure_threshold=3, recovery_timeout=300)
-    
-    def test_circuit_breaker_initialization(self, circuit_breaker):
-        """Test circuit breaker initializes with correct parameters."""
-        assert circuit_breaker.failure_threshold == 3
-        assert circuit_breaker.recovery_timeout == 300
-        assert circuit_breaker.state == "closed"
-        assert circuit_breaker.failure_count == 0
-    
-    @pytest.mark.asyncio
-    async def test_circuit_breaker_success_path(self, circuit_breaker):
-        """Test circuit breaker allows calls when closed."""
-        mock_func = AsyncMock(return_value={"data": "success"})
-        
-        result = await circuit_breaker.call_with_breaker(mock_func)
-        
-        assert result == {"data": "success"}
-        assert circuit_breaker.failure_count == 0
-        assert circuit_breaker.state == "closed"
-    
-    @pytest.mark.asyncio
-    async def test_circuit_breaker_failure_counting(self, circuit_breaker):
-        """Test circuit breaker counts failures correctly."""
-        mock_func = AsyncMock(side_effect=aiohttp.ClientError("Connection failed"))
-        
-        # First 2 failures should not open circuit
-        for i in range(2):
-            with pytest.raises(aiohttp.ClientError):
-                await circuit_breaker.call_with_breaker(mock_func)
-        
-        assert circuit_breaker.failure_count == 2
-        assert circuit_breaker.state == "closed"
-        
-        # Third failure should open circuit
-        with pytest.raises(aiohttp.ClientError):
-            await circuit_breaker.call_with_breaker(mock_func)
-        
-        assert circuit_breaker.failure_count == 3
-        assert circuit_breaker.state == "open"
-    
-    @pytest.mark.asyncio
-    async def test_circuit_breaker_open_state_blocks_calls(self, circuit_breaker):
-        """Test circuit breaker blocks calls when open."""
-        mock_func = AsyncMock(side_effect=aiohttp.ClientError("Connection failed"))
-        
-        # Trigger circuit breaker to open
-        for i in range(3):
-            with pytest.raises(aiohttp.ClientError):
-                await circuit_breaker.call_with_breaker(mock_func)
-        
-        # Now circuit should be open and block calls
-        mock_func.reset_mock()
-        mock_func.side_effect = None
-        mock_func.return_value = {"data": "success"}
-        
-        with pytest.raises(Exception) as exc_info:
-            await circuit_breaker.call_with_breaker(mock_func)
-        
-        assert "Circuit breaker is open" in str(exc_info.value)
-        mock_func.assert_not_called()
-    
-    @pytest.mark.asyncio
-    async def test_circuit_breaker_half_open_recovery(self, circuit_breaker):
-        """Test circuit breaker recovery through half-open state."""
-        mock_func = AsyncMock(side_effect=aiohttp.ClientError("Connection failed"))
-        
-        # Open the circuit
-        for i in range(3):
-            with pytest.raises(aiohttp.ClientError):
-                await circuit_breaker.call_with_breaker(mock_func)
-        
-        # Fast-forward time to trigger half-open state
-        circuit_breaker.last_failure_time = datetime.utcnow() - timedelta(seconds=301)
-        circuit_breaker.state = "half_open"
-        
-        # Success should close the circuit
-        mock_func.side_effect = None
-        mock_func.return_value = {"data": "recovered"}
-        
-        result = await circuit_breaker.call_with_breaker(mock_func)
-        
-        assert result == {"data": "recovered"}
-        assert circuit_breaker.state == "closed"
-        assert circuit_breaker.failure_count == 0
-
-
-class TestCollaborativeCacheSystem:
-    """Test collaborative community caching functionality."""
-    
-    @pytest.fixture
-    def cache_system(self):
-        return CollaborativeCacheSystem()
-    
-    @pytest.mark.asyncio
-    async def test_get_enhanced_data_with_personal_quota(self, cache_system):
-        """Test getting enhanced data when user has personal quota."""
-        cache_system.has_personal_quota = AsyncMock(return_value=True)
-        cache_system.fetch_with_user_quota = AsyncMock(return_value={"synopsis": "Enhanced data"})
-        cache_system.share_with_community = AsyncMock()
-        
-        result = await cache_system.get_enhanced_data("anime123", "user456", "anilist")
-        
-        assert result == {"synopsis": "Enhanced data"}
-        cache_system.has_personal_quota.assert_called_once_with("user456", "anilist")
-        cache_system.fetch_with_user_quota.assert_called_once_with("anime123", "anilist", "user456")
-        cache_system.share_with_community.assert_called_once_with("anime123", "anilist", {"synopsis": "Enhanced data"})
-    
-    @pytest.mark.asyncio
-    async def test_get_enhanced_data_from_community_cache(self, cache_system):
-        """Test getting enhanced data from community cache when no personal quota."""
-        cache_system.has_personal_quota = AsyncMock(return_value=False)
-        cache_system.community_cache = AsyncMock()
-        cache_system.community_cache.get = AsyncMock(return_value={
-            "data": {"synopsis": "Community cached data"},
-            "fetched_at": datetime.utcnow(),
-            "source": "anilist"
-        })
-        cache_system.track_cache_usage = AsyncMock()
-        
-        result = await cache_system.get_enhanced_data("anime123", "user456", "anilist")
-        
-        assert result == {"synopsis": "Community cached data"}
-        cache_system.track_cache_usage.assert_called_once_with("user456", "anime123", "community_hit")
-    
-    @pytest.mark.asyncio
-    async def test_get_enhanced_data_with_quota_donor(self, cache_system):
-        """Test getting enhanced data using quota donor when no cache available."""
-        cache_system.has_personal_quota = AsyncMock(return_value=False)
-        cache_system.community_cache = AsyncMock()
-        cache_system.community_cache.get = AsyncMock(return_value=None)
-        cache_system.find_quota_donor = AsyncMock(return_value="donor_user789")
-        cache_system.fetch_with_user_quota = AsyncMock(return_value={"synopsis": "Donor fetched data"})
-        cache_system.share_with_community = AsyncMock()
-        cache_system.credit_donor = AsyncMock()
-        
-        result = await cache_system.get_enhanced_data("anime123", "user456", "anilist")
-        
-        assert result == {"synopsis": "Donor fetched data"}
-        cache_system.find_quota_donor.assert_called_once_with("anilist")
-        cache_system.fetch_with_user_quota.assert_called_once_with("anime123", "anilist", "donor_user789")
-        cache_system.credit_donor.assert_called_once_with("donor_user789", "anime123")
-    
-    @pytest.mark.asyncio
-    async def test_get_enhanced_data_fallback_to_degraded(self, cache_system):
-        """Test fallback to degraded data when all options exhausted."""
-        cache_system.has_personal_quota = AsyncMock(return_value=False)
-        cache_system.community_cache = AsyncMock()
-        cache_system.community_cache.get = AsyncMock(return_value=None)
-        cache_system.find_quota_donor = AsyncMock(return_value=None)
-        cache_system.get_degraded_data = AsyncMock(return_value={"title": "Basic offline data"})
-        
-        result = await cache_system.get_enhanced_data("anime123", "user456", "anilist")
-        
-        assert result == {"title": "Basic offline data"}
-        cache_system.get_degraded_data.assert_called_once_with("anime123")
-
-
-class TestRequestDeduplication:
-    """Test request deduplication functionality."""
-    
-    @pytest.fixture
-    def deduplicator(self):
-        return RequestDeduplication()
-    
-    @pytest.mark.asyncio
-    async def test_deduplicate_request_first_call(self, deduplicator):
-        """Test first call to deduplicate_request executes function."""
-        mock_fetch = AsyncMock(return_value={"data": "fetched"})
-        
-        result = await deduplicator.deduplicate_request("key1", mock_fetch)
-        
-        assert result == {"data": "fetched"}
-        mock_fetch.assert_called_once()
-        assert "key1" not in deduplicator.active_requests  # Should be cleaned up
-    
-    @pytest.mark.asyncio
-    async def test_deduplicate_request_concurrent_calls(self, deduplicator):
-        """Test concurrent calls with same key share result."""
-        call_count = 0
-        
-        async def mock_fetch():
-            nonlocal call_count
-            call_count += 1
-            await asyncio.sleep(0.1)  # Simulate async work
-            return {"data": f"fetched_{call_count}"}
-        
-        # Start multiple concurrent requests with same key
-        tasks = [
-            deduplicator.deduplicate_request("key1", mock_fetch),
-            deduplicator.deduplicate_request("key1", mock_fetch),
-            deduplicator.deduplicate_request("key1", mock_fetch)
-        ]
-        
-        results = await asyncio.gather(*tasks)
-        
-        # All should return the same result
-        assert all(result == {"data": "fetched_1"} for result in results)
-        # Function should only be called once
-        assert call_count == 1
-    
-    @pytest.mark.asyncio
-    async def test_deduplicate_request_different_keys(self, deduplicator):
-        """Test different keys execute separately."""
-        mock_fetch1 = AsyncMock(return_value={"data": "fetch1"})
-        mock_fetch2 = AsyncMock(return_value={"data": "fetch2"})
-        
-        task1 = deduplicator.deduplicate_request("key1", mock_fetch1)
-        task2 = deduplicator.deduplicate_request("key2", mock_fetch2)
-        
-        result1, result2 = await asyncio.gather(task1, task2)
-        
-        assert result1 == {"data": "fetch1"}
-        assert result2 == {"data": "fetch2"}
-        mock_fetch1.assert_called_once()
-        mock_fetch2.assert_called_once()
-
-
-class TestLangGraphErrorHandler:
-    """Test LangGraph-specific error handling."""
-    
-    @pytest.fixture
-    def error_handler(self):
-        return LangGraphErrorHandler()
-    
-    @pytest.mark.asyncio
-    async def test_detect_tool_selection_loop(self, error_handler):
-        """Test detection of tool selection loops."""
-        # No loop - different tools
-        history1 = ["search_anime", "get_anime_details", "find_similar"]
-        assert not await error_handler.detect_tool_selection_loop(history1)
-        
-        # Loop detected - same tool called 3+ times
-        history2 = ["search_anime", "search_anime", "search_anime"]
-        assert await error_handler.detect_tool_selection_loop(history2)
-        
-        # Edge case - 2 consecutive calls should not trigger
-        history3 = ["search_anime", "search_anime", "get_anime_details"]
-        assert not await error_handler.detect_tool_selection_loop(history3)
-    
-    @pytest.mark.asyncio
-    async def test_handle_parameter_extraction_failure(self, error_handler):
-        """Test parameter extraction failure handling."""
-        result = await error_handler.handle_parameter_extraction_failure("complex query", attempt=1)
-        
-        assert "simplified" in result
-        assert result["attempt"] == 1
-        assert result["fallback_strategy"] is True
-    
-    @pytest.mark.asyncio
-    async def test_detect_state_corruption(self, error_handler):
-        """Test state corruption detection."""
-        # Valid state
-        valid_state = {
-            "messages": [{"role": "user", "content": "test"}],
-            "current_tool": "search_anime",
-            "results": []
-        }
-        assert not await error_handler.detect_state_corruption(valid_state)
-        
-        # Corrupted state - missing required fields
-        corrupted_state = {
-            "messages": None,
-            "current_tool": "",
-            "results": "invalid_type"
-        }
-        assert await error_handler.detect_state_corruption(corrupted_state)
-    
-    @pytest.mark.asyncio
-    async def test_handle_graph_timeout(self, error_handler):
-        """Test graph timeout handling."""
-        partial_results = {
-            "partial_data": [{"title": "Anime 1"}],
-            "completed_steps": ["search", "filter"]
-        }
-        
-        result = await error_handler.handle_graph_timeout("exec123", partial_results)
-        
-        assert result["timeout"] is True
-        assert result["execution_id"] == "exec123"
-        assert result["partial_results"] == partial_results
-        assert "timeout_message" in result
-    
-    @pytest.mark.asyncio
-    async def test_detect_memory_explosion(self, error_handler):
-        """Test memory explosion detection."""
-        # Normal state size
-        assert not await error_handler.detect_memory_explosion(1000, 10000)
-        
-        # Memory explosion
-        assert await error_handler.detect_memory_explosion(15000, 10000)
-    
-    @pytest.mark.asyncio
-    async def test_prune_conversation_history(self, error_handler):
-        """Test conversation history pruning."""
-        large_state = {
-            "messages": [f"message_{i}" for i in range(20)],
-            "other_data": "preserved"
-        }
-        
-        result = await error_handler.prune_conversation_history(large_state, keep_last_n=5)
-        
-        assert len(result["messages"]) == 5
-        assert result["messages"] == [f"message_{i}" for i in range(15, 20)]
-        assert result["other_data"] == "preserved"
+from src.integrations.error_handling import (
+    CircuitBreaker,
+    CorrelationLogger,
+    ErrorContext,
+    ErrorSeverity,
+    ExecutionTracer,
+    GracefulDegradation,
+)
 
 
 class TestBaseClient:
-    """Test the BaseClient class that integrates all error handling components."""
-    
+    """Test BaseClient comprehensive functionality."""
+
     @pytest.fixture
-    def mock_dependencies(self):
-        return {
-            "circuit_breaker": Mock(spec=CircuitBreaker),
-            "rate_limiter": Mock(),
-            "cache_manager": Mock(spec=CollaborativeCacheSystem),
-            "error_handler": Mock(spec=ErrorContext)
-        }
-    
+    def circuit_breaker(self):
+        """Create circuit breaker for testing."""
+        return CircuitBreaker()
+
     @pytest.fixture
-    def base_client(self, mock_dependencies):
-        return BaseClient(**mock_dependencies)
-    
-    def test_base_client_initialization(self, base_client, mock_dependencies):
-        """Test BaseClient initializes with all dependencies."""
-        assert base_client.circuit_breaker == mock_dependencies["circuit_breaker"]
-        assert base_client.rate_limiter == mock_dependencies["rate_limiter"]
-        assert base_client.cache_manager == mock_dependencies["cache_manager"]
-        assert base_client.error_handler == mock_dependencies["error_handler"]
-    
+    def cache_manager(self):
+        """Create mock cache manager."""
+        cache = Mock()
+        cache.get = AsyncMock(return_value=None)
+        cache.set = AsyncMock()
+        return cache
+
+    @pytest.fixture
+    def error_handler(self):
+        """Create mock error handler."""
+        handler = Mock()
+        handler.handle_error = AsyncMock()
+        return handler
+
+    @pytest.fixture
+    def base_client(self, circuit_breaker, cache_manager, error_handler):
+        """Create BaseClient instance for testing."""
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            return BaseClient(
+                service_name="test_service",
+                circuit_breaker=circuit_breaker,
+                cache_manager=cache_manager,
+                error_handler=error_handler,
+                timeout=10.0,
+            )
+
+    def test_base_client_initialization(
+        self, base_client, circuit_breaker, cache_manager, error_handler
+    ):
+        """Test BaseClient initializes correctly."""
+        assert base_client.service_name == "test_service"
+        assert base_client.timeout == 10.0
+        assert base_client.circuit_breaker is circuit_breaker
+        assert base_client.cache_manager is cache_manager
+        assert base_client.error_handler is error_handler
+        assert base_client.logger.name == "integrations.test_service"
+
+    def test_base_client_default_initialization(self):
+        """Test BaseClient with default parameters."""
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            client = BaseClient("test")
+            assert client.service_name == "test"
+            assert client.timeout == 30.0
+            assert isinstance(client.circuit_breaker, CircuitBreaker)
+            assert client.cache_manager is None
+            assert client.error_handler is None
+
     @pytest.mark.asyncio
-    async def test_make_request_success_path(self, base_client):
-        """Test successful request through BaseClient."""
-        base_client.circuit_breaker.call_with_breaker = AsyncMock(return_value={"data": "success"})
-        
-        with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session = AsyncMock()
-            mock_response = AsyncMock()
-            mock_response.status = 200
-            mock_response.json = AsyncMock(return_value={"data": "success"})
-            mock_session.get = AsyncMock(return_value=mock_response)
-            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            result = await base_client.make_request("https://api.example.com/anime/123")
-            
-            assert result == {"data": "success"}
-    
+    async def test_make_request_success_json(self, base_client):
+        """Test successful HTTP request with JSON response."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(
+                    return_value={"data": "success", "id": 123}
+                )
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                result = await base_client.make_request(
+                    "https://api.example.com/test", method="POST", priority=2
+                )
+
+                assert result == {"data": "success", "id": 123}
+                mock_rate_manager.acquire.assert_called_once_with(
+                    service_name="test_service", priority=2, endpoint=""
+                )
+                mock_rate_manager.record_response.assert_called_once_with(
+                    "test_service", 200, 0
+                )
+
     @pytest.mark.asyncio
-    async def test_make_request_with_rate_limiting(self, base_client):
-        """Test request with rate limiting."""
-        # Mock rate limiter
-        rate_limiter_mock = AsyncMock()
-        base_client.rate_limiter = rate_limiter_mock
-        
-        # Mock circuit breaker to actually call the function
+    async def test_make_request_success_text(self, base_client):
+        """Test successful HTTP request with text response."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "text/plain"}
+                mock_response.text = AsyncMock(return_value="plain text response")
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                result = await base_client.make_request("https://api.example.com/test")
+
+                assert result == "plain text response"
+
+    @pytest.mark.asyncio
+    async def test_make_request_rate_limit_exceeded(self, base_client):
+        """Test rate limit exceeded scenario."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=False)
+
+            with pytest.raises(APIError) as exc_info:
+                await base_client.make_request("https://api.example.com/test")
+
+            assert "Rate limit exceeded for test_service" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_make_request_http_error_with_json(self, base_client):
+        """Test HTTP error response with JSON error details."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 404
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(
+                    return_value={"error": "Resource not found", "code": "NOT_FOUND"}
+                )
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                with pytest.raises(APIError) as exc_info:
+                    await base_client.make_request("https://api.example.com/test")
+
+                assert "test_service API error: 404 - Resource not found" in str(
+                    exc_info.value
+                )
+
+    @pytest.mark.asyncio
+    async def test_make_request_http_error_with_message(self, base_client):
+        """Test HTTP error response with message field."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 400
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(
+                    return_value={"message": "Bad request parameters"}
+                )
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                with pytest.raises(APIError) as exc_info:
+                    await base_client.make_request("https://api.example.com/test")
+
+                assert "test_service API error: 400 - Bad request parameters" in str(
+                    exc_info.value
+                )
+
+    @pytest.mark.asyncio
+    async def test_make_request_connection_error(self, base_client):
+        """Test connection error handling."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session_class.side_effect = aiohttp.ClientError(
+                    "Connection failed"
+                )
+
+                with pytest.raises(APIError) as exc_info:
+                    await base_client.make_request("https://api.example.com/test")
+
+                assert "test_service connection error: Connection failed" in str(
+                    exc_info.value
+                )
+
+    @pytest.mark.asyncio
+    async def test_make_request_with_circuit_breaker(self, base_client):
+        """Test request with circuit breaker."""
+
+        # Mock circuit breaker call
         async def mock_circuit_call(func):
             return await func()
-        base_client.circuit_breaker.call_with_breaker = AsyncMock(side_effect=mock_circuit_call)
-        
-        with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session = AsyncMock()
-            mock_response = AsyncMock()
-            mock_response.status = 200
-            mock_response.json = AsyncMock(return_value={"data": "success"})
-            mock_response.raise_for_status = Mock()
-            mock_session.request = Mock(return_value=mock_response)
-            mock_response.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_response.__aexit__ = AsyncMock(return_value=None)
-            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            result = await base_client.make_request("https://api.example.com/anime/123")
-            
-            # Rate limiter should be called
-            rate_limiter_mock.__aenter__.assert_called_once()
-            assert result == {"data": "success"}
-    
-    @pytest.mark.asyncio
-    async def test_make_request_with_circuit_breaker_open(self, base_client):
-        """Test request when circuit breaker is open."""
+
         base_client.circuit_breaker.call_with_breaker = AsyncMock(
-            side_effect=Exception("Circuit breaker is open")
+            side_effect=mock_circuit_call
         )
-        
-        with pytest.raises(Exception) as exc_info:
-            await base_client.make_request("https://api.example.com/anime/123")
-        
-        assert "Circuit breaker is open" in str(exc_info.value)
-    
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(return_value={"success": True})
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                result = await base_client.make_request("https://api.example.com/test")
+
+                assert result == {"success": True}
+                base_client.circuit_breaker.call_with_breaker.assert_called_once()
+
     @pytest.mark.asyncio
-    async def test_make_request_handles_rate_limit_response(self, base_client):
-        """Test handling of 429 rate limit responses."""
-        # Mock rate limiter
-        base_client.rate_limiter = AsyncMock()
-        
-        with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session = AsyncMock()
-            mock_response = AsyncMock()
-            mock_response.status = 429
-            mock_response.headers = {"Retry-After": "60"}
-            mock_response.raise_for_status = Mock(side_effect=Exception("Rate limited: 429"))
-            mock_session.request = Mock(return_value=mock_response)
-            mock_response.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_response.__aexit__ = AsyncMock(return_value=None)
-            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            # Mock circuit breaker to actually call the function
-            async def mock_circuit_call(func):
-                return await func()
-            base_client.circuit_breaker.call_with_breaker = AsyncMock(side_effect=mock_circuit_call)
-            
-            with pytest.raises(Exception, match="Rate limited: 429"):
-                await base_client.make_request("https://api.example.com/anime/123")
-    
+    async def test_make_request_without_circuit_breaker(self):
+        """Test request without circuit breaker directly calls _request function."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            # Manually set circuit_breaker to None after initialization to test the else branch
+            client = BaseClient("test")
+            client.circuit_breaker = None
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(return_value={"direct": True})
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                result = await client.make_request("https://api.example.com/test")
+
+                assert result == {"direct": True}
+                # Verify we manually set circuit breaker to None
+                assert client.circuit_breaker is None
+            assert client.correlation_logger is None
+            assert client.execution_tracer is None
+
     @pytest.mark.asyncio
-    async def test_with_circuit_breaker_decorator(self, base_client):
-        """Test the circuit breaker decorator functionality."""
-        mock_func = AsyncMock(return_value="success")
-        base_client.circuit_breaker.call_with_breaker = AsyncMock(return_value="success")
-        
-        result = await base_client.with_circuit_breaker(mock_func)
-        
-        assert result == "success"
-        base_client.circuit_breaker.call_with_breaker.assert_called_once_with(mock_func)
-    
+    async def test_with_circuit_breaker_method(self, base_client):
+        """Test with_circuit_breaker method."""
+
+        async def test_func():
+            return {"test": "result"}
+
+        base_client.circuit_breaker.call_with_breaker = AsyncMock(
+            return_value={"test": "result"}
+        )
+
+        result = await base_client.with_circuit_breaker(test_func)
+
+        assert result == {"test": "result"}
+        base_client.circuit_breaker.call_with_breaker.assert_called_once_with(test_func)
+
     @pytest.mark.asyncio
-    async def test_error_context_integration(self, base_client):
-        """Test error context creation during failures."""
-        # Mock rate limiter
-        base_client.rate_limiter = AsyncMock()
-        
-        base_client.error_handler.from_exception = Mock(return_value=ErrorContext(
-            user_message="Service temporarily unavailable",
-            debug_info="Connection timeout after 30s",
-            trace_data={"url": "https://api.example.com", "timeout": 30}
-        ))
-        
-        with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session = AsyncMock()
-            mock_response = AsyncMock()
-            mock_session.request = Mock(side_effect=asyncio.TimeoutError("Request timeout"))
-            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
-            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            # Mock circuit breaker to let exception through
-            async def mock_circuit_call(func):
-                return await func()
-            base_client.circuit_breaker.call_with_breaker = AsyncMock(side_effect=mock_circuit_call)
-            
-            with pytest.raises(asyncio.TimeoutError):
-                await base_client.make_request("https://api.example.com/anime/123")
+    async def test_with_circuit_breaker_without_breaker(self):
+        """Test with_circuit_breaker method when no circuit breaker."""
+        client = BaseClient("test")
+        client.circuit_breaker = None  # Manually set to None to test else branch
+
+        async def test_func():
+            return {"direct": "call"}
+
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            result = await client.with_circuit_breaker(test_func)
+
+        assert result == {"direct": "call"}
+
+    @pytest.mark.asyncio
+    async def test_handle_graceful_degradation_success(self, base_client):
+        """Test graceful degradation when primary succeeds."""
+
+        async def primary_func():
+            return {"primary": "success"}
+
+        async def fallback_func():
+            return {"fallback": "success"}
+
+        result = await base_client.handle_graceful_degradation(
+            primary_func, fallback_func
+        )
+
+        assert result == {"primary": "success"}
+
+    @pytest.mark.asyncio
+    async def test_handle_graceful_degradation_cache_fallback(self, base_client):
+        """Test graceful degradation with cache fallback."""
+
+        async def primary_func():
+            raise APIError("Primary failed")
+
+        # Mock cache returning data
+        base_client.cache_manager.get = AsyncMock(return_value={"cached": "data"})
+
+        with patch.object(base_client.logger, "info") as mock_log:
+            result = await base_client.handle_graceful_degradation(
+                primary_func, cache_key="test_key"
+            )
+
+        assert result == {"cached": "data"}
+        base_client.cache_manager.get.assert_called_once_with("test_key")
+
+    @pytest.mark.asyncio
+    async def test_handle_graceful_degradation_fallback_service(self, base_client):
+        """Test graceful degradation with fallback service."""
+
+        async def primary_func():
+            raise APIError("Primary failed")
+
+        async def fallback_func():
+            return {"fallback": "success"}
+
+        # Mock cache miss
+        base_client.cache_manager.get = AsyncMock(return_value=None)
+
+        with patch.object(base_client.logger, "info") as mock_log:
+            result = await base_client.handle_graceful_degradation(
+                primary_func, fallback_func, cache_key="test_key"
+            )
+
+        assert result == {"fallback": "success"}
+
+    @pytest.mark.asyncio
+    async def test_handle_graceful_degradation_no_fallback(self, base_client):
+        """Test graceful degradation with no fallback available."""
+
+        async def primary_func():
+            raise APIError("Primary failed")
+
+        # Mock cache miss
+        base_client.cache_manager.get = AsyncMock(return_value=None)
+
+        with patch.object(base_client.logger, "error") as mock_log:
+            with pytest.raises(APIError) as exc_info:
+                await base_client.handle_graceful_degradation(primary_func)
+
+        assert "Primary failed" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_parse_response_json(self, base_client):
+        """Test _parse_response with JSON content."""
+        mock_response = AsyncMock()
+        mock_response.headers = {"content-type": "application/json"}
+        mock_response.json = AsyncMock(return_value={"parsed": "json"})
+
+        result = await base_client._parse_response(mock_response)
+
+        assert result == {"parsed": "json"}
+        mock_response.json.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_parse_response_xml(self, base_client):
+        """Test _parse_response with XML content."""
+        mock_response = AsyncMock()
+        mock_response.headers = {"content-type": "application/xml"}
+        mock_response.text = AsyncMock(return_value="<xml>data</xml>")
+
+        result = await base_client._parse_response(mock_response)
+
+        assert result == "<xml>data</xml>"
+        mock_response.text.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_parse_response_text(self, base_client):
+        """Test _parse_response with plain text content."""
+        mock_response = AsyncMock()
+        mock_response.headers = {"content-type": "text/plain"}
+        mock_response.text = AsyncMock(return_value="plain text")
+
+        result = await base_client._parse_response(mock_response)
+
+        assert result == "plain text"
+        mock_response.text.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_parse_response_fallback_on_json_error(self, base_client):
+        """Test _parse_response fallback when JSON parsing fails."""
+        mock_response = AsyncMock()
+        mock_response.headers = {"content-type": "application/json"}
+        mock_response.json = AsyncMock(
+            side_effect=json.JSONDecodeError("Invalid JSON", "", 0)
+        )
+        mock_response.text = AsyncMock(return_value="fallback text")
+
+        result = await base_client._parse_response(mock_response)
+
+        assert result == "fallback text"
+        mock_response.json.assert_called_once()
+        mock_response.text.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_parse_response_complete_failure(self, base_client):
+        """Test _parse_response when all parsing fails."""
+        mock_response = AsyncMock()
+        mock_response.headers = {"content-type": "application/json"}
+        mock_response.json = AsyncMock(side_effect=Exception("JSON failed"))
+        mock_response.text = AsyncMock(side_effect=Exception("Text failed"))
+
+        result = await base_client._parse_response(mock_response)
+
+        assert result == {"raw_response": "Unable to parse response"}
+
+    @pytest.mark.asyncio
+    async def test_make_request_custom_timeout(self, base_client):
+        """Test make_request with custom timeout."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(return_value={"success": True})
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                result = await base_client.make_request(
+                    "https://api.example.com/test",
+                    timeout=aiohttp.ClientTimeout(total=5),
+                )
+
+                assert result == {"success": True}
+                # Verify timeout was passed through
+                call_args = mock_session.request.call_args
+                assert "timeout" in call_args[1]
+
+    @pytest.mark.asyncio
+    async def test_handle_graceful_degradation_cache_error_fallback_service(
+        self, base_client
+    ):
+        """Test graceful degradation when cache fails but fallback service works."""
+
+        async def primary_func():
+            raise APIError("Primary failed")
+
+        async def fallback_func():
+            return {"fallback": "service"}
+
+        # Mock cache raising exception
+        base_client.cache_manager.get = AsyncMock(side_effect=Exception("Cache error"))
+
+        result = await base_client.handle_graceful_degradation(
+            primary_func, fallback_func, cache_key="test_key"
+        )
+
+        assert result == {"fallback": "service"}
+
+    @pytest.mark.asyncio
+    async def test_handle_graceful_degradation_fallback_service_fails(
+        self, base_client
+    ):
+        """Test graceful degradation when fallback service also fails."""
+
+        async def primary_func():
+            raise APIError("Primary failed")
+
+        async def fallback_func():
+            raise Exception("Fallback also failed")
+
+        # Mock cache miss
+        base_client.cache_manager.get = AsyncMock(return_value=None)
+
+        with pytest.raises(APIError) as exc_info:
+            await base_client.handle_graceful_degradation(
+                primary_func, fallback_func, cache_key="test_key"
+            )
+
+        assert "Primary failed" in str(exc_info.value)
 
 
-class TestIntegrationScenarios:
-    """Test complete integration scenarios combining all components."""
-    
-    @pytest.mark.asyncio
-    async def test_complete_error_recovery_flow(self):
-        """Test complete error recovery flow with all components."""
-        # Setup all components
-        circuit_breaker = CircuitBreaker(failure_threshold=2, recovery_timeout=300)
-        cache_system = CollaborativeCacheSystem()
-        deduplicator = RequestDeduplication()
-        error_handler = LangGraphErrorHandler()
-        
-        # Mock external dependencies
-        cache_system.has_personal_quota = AsyncMock(return_value=False)
-        cache_system.community_cache = AsyncMock()
-        cache_system.community_cache.get = AsyncMock(return_value={
-            "data": {"title": "Cached Anime", "synopsis": "From cache"},
-            "fetched_at": datetime.utcnow()
-        })
-        cache_system.track_cache_usage = AsyncMock()
-        
-        # Test degraded service with cache fallback
-        result = await cache_system.get_enhanced_data("anime123", "user456", "anilist")
-        
-        assert result["title"] == "Cached Anime"
-        assert result["synopsis"] == "From cache"
-        cache_system.track_cache_usage.assert_called_once_with("user456", "anime123", "community_hit")
-    
-    @pytest.mark.asyncio
-    async def test_langgraph_error_handling_integration(self):
-        """Test LangGraph error handling with circuit breaker integration."""
-        error_handler = LangGraphErrorHandler()
-        circuit_breaker = CircuitBreaker(failure_threshold=1, recovery_timeout=60)
-        
-        # Simulate tool selection loop
-        execution_history = ["search_anime", "search_anime", "search_anime"]
-        loop_detected = await error_handler.detect_tool_selection_loop(execution_history)
-        
-        assert loop_detected
-        
-        # Test forced tool change
-        new_tool = await error_handler.force_tool_change("search_anime", ["get_anime_details", "find_similar"])
-        
-        assert new_tool in ["get_anime_details", "find_similar"]
-        assert new_tool != "search_anime"
-    
-    @pytest.mark.asyncio
-    async def test_request_deduplication_with_cache_integration(self):
-        """Test request deduplication working with collaborative cache."""
-        deduplicator = RequestDeduplication()
-        cache_system = CollaborativeCacheSystem()
-        
-        # Mock cache to return data for one call
-        cache_system.get_enhanced_data = AsyncMock(return_value={"title": "Shared Result"})
-        
-        # Multiple concurrent requests should be deduplicated
-        async def fetch_func():
-            return await cache_system.get_enhanced_data("anime123", "user456", "anilist")
-        
-        tasks = [
-            deduplicator.deduplicate_request("anime123:anilist", fetch_func),
-            deduplicator.deduplicate_request("anime123:anilist", fetch_func),
-            deduplicator.deduplicate_request("anime123:anilist", fetch_func)
-        ]
-        
-        results = await asyncio.gather(*tasks)
-        
-        # All should return same result
-        assert all(result == {"title": "Shared Result"} for result in results)
-        # Cache should only be called once due to deduplication
-        assert cache_system.get_enhanced_data.call_count == 1
+class TestBaseClientEnhancedErrorHandling:
+    """Test BaseClient integration with enhanced error handling infrastructure."""
 
-
-@pytest.mark.asyncio
-async def test_full_base_client_integration():
-    """Test complete BaseClient integration with all error handling components."""
-    # Create real instances (not mocks) for integration test
-    circuit_breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=300)
-    cache_system = CollaborativeCacheSystem()
-    error_handler = LangGraphErrorHandler()
-    
-    # Mock the external dependencies that aren't implemented yet
-    mock_rate_limiter = AsyncMock()
-    mock_rate_limiter.__aenter__ = AsyncMock(return_value=None)
-    mock_rate_limiter.__aexit__ = AsyncMock(return_value=None)
-    
-    base_client = BaseClient(
-        circuit_breaker=circuit_breaker,
-        rate_limiter=mock_rate_limiter,
-        cache_manager=cache_system,
-        error_handler=error_handler
-    )
-    
-    # Test that all components are properly integrated
-    assert base_client.circuit_breaker == circuit_breaker
-    assert base_client.cache_manager == cache_system
-    assert base_client.error_handler == error_handler
-    
-    # Test error handling integration
-    assert hasattr(base_client, 'make_request')
-    assert hasattr(base_client, 'with_circuit_breaker')
-    assert hasattr(base_client, 'handle_rate_limit')
-
-
-# Additional tests for BaseScraper coverage
-class TestBaseScraperCoverage:
-    """Test cases for BaseScraper coverage (added to base_client tests to avoid new files)."""
-    
     @pytest.fixture
-    def mock_dependencies(self):
-        """Create mock dependencies for testing."""
-        return {
-            "circuit_breaker": Mock(),
-            "rate_limiter": AsyncMock(),
-            "cache_manager": AsyncMock(),
-            "error_handler": AsyncMock()
+    def circuit_breaker(self):
+        """Create circuit breaker for testing."""
+        return CircuitBreaker()
+
+    @pytest.fixture
+    def cache_manager(self):
+        """Create mock cache manager."""
+        cache = Mock()
+        cache.get = AsyncMock(return_value=None)
+        cache.set = AsyncMock()
+        return cache
+
+    @pytest.fixture
+    def correlation_logger(self):
+        """Create correlation logger for testing."""
+        return CorrelationLogger()
+
+    @pytest.fixture
+    def execution_tracer(self):
+        """Create execution tracer for testing."""
+        return ExecutionTracer()
+
+    @pytest.fixture
+    def enhanced_client(
+        self, circuit_breaker, cache_manager, correlation_logger, execution_tracer
+    ):
+        """Create BaseClient instance with enhanced error handling."""
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            return BaseClient(
+                service_name="enhanced_service",
+                circuit_breaker=circuit_breaker,
+                cache_manager=cache_manager,
+                correlation_logger=correlation_logger,
+                execution_tracer=execution_tracer,
+                timeout=15.0,
+            )
+
+    def test_enhanced_client_initialization(
+        self, enhanced_client, correlation_logger, execution_tracer
+    ):
+        """Test BaseClient initializes with enhanced error handling components."""
+        assert enhanced_client.service_name == "enhanced_service"
+        assert enhanced_client.correlation_logger is correlation_logger
+        assert enhanced_client.execution_tracer is execution_tracer
+        assert enhanced_client.timeout == 15.0
+
+    @pytest.mark.asyncio
+    async def test_make_request_with_correlation_logging(self, enhanced_client):
+        """Test make_request uses correlation logging."""
+        correlation_id = "test-corr-123"
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(return_value={"data": "success"})
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
+
+                result = await enhanced_client.make_request_with_correlation(
+                    "https://api.example.com/test",
+                    correlation_id=correlation_id,
+                    method="GET",
+                )
+
+                assert result == {"data": "success"}
+                # Verify correlation logging was called
+                enhanced_client.correlation_logger.log_with_correlation.assert_called()
+                call_args = (
+                    enhanced_client.correlation_logger.log_with_correlation.call_args_list
+                )
+                assert any(correlation_id in str(call) for call in call_args)
+
+    @pytest.mark.asyncio
+    async def test_make_request_with_execution_tracing(self, enhanced_client):
+        """Test make_request uses execution tracing."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(return_value={"traced": "data"})
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                enhanced_client.execution_tracer.start_trace = AsyncMock(
+                    return_value="trace-123"
+                )
+                enhanced_client.execution_tracer.add_trace_step = AsyncMock()
+                enhanced_client.execution_tracer.end_trace = AsyncMock()
+
+                result = await enhanced_client.make_request_with_tracing(
+                    "https://api.example.com/test", operation="api_request"
+                )
+
+                assert result == {"traced": "data"}
+                # Verify tracing was used
+                enhanced_client.execution_tracer.start_trace.assert_called_once_with(
+                    operation="api_request",
+                    context={
+                        "url": "https://api.example.com/test",
+                        "service": "enhanced_service",
+                        "method": "GET",
+                    },
+                )
+                enhanced_client.execution_tracer.end_trace.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_handle_error_with_context(self, enhanced_client):
+        """Test error handling creates proper ErrorContext."""
+        error = APIError("Test API error")
+
+        with patch.object(
+            enhanced_client.correlation_logger, "log_with_correlation"
+        ) as mock_log:
+            error_context = await enhanced_client.create_error_context(
+                error,
+                correlation_id="err-123",
+                user_message="Service temporarily unavailable",
+                trace_data={"endpoint": "/test", "status": 500},
+            )
+
+            assert isinstance(error_context, ErrorContext)
+            assert error_context.correlation_id == "err-123"
+            assert error_context.user_message == "Service temporarily unavailable"
+            assert error_context.debug_info == "APIError: Test API error"
+            assert error_context.trace_data["endpoint"] == "/test"
+            assert error_context.severity == ErrorSeverity.ERROR
+
+            # Verify error was logged with correlation
+            mock_log.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_enhanced_graceful_degradation(self, enhanced_client):
+        """Test graceful degradation uses enhanced GracefulDegradation."""
+        correlation_id = "deg-456"
+
+        async def failing_primary():
+            raise APIError("Primary service down")
+
+        with patch.object(
+            GracefulDegradation, "execute_degradation_cascade"
+        ) as mock_cascade:
+            mock_cascade.return_value = {
+                "strategy": "secondary_cache",
+                "data": {"cached": "result"},
+                "quality_score": 0.8,
+            }
+
+            result = await enhanced_client.handle_enhanced_graceful_degradation(
+                failing_primary,
+                correlation_id=correlation_id,
+                context={"operation": "get_data", "service": "enhanced_service"},
+            )
+
+            assert result["data"] == {"cached": "result"}
+            assert result["strategy"] == "secondary_cache"
+            assert result["quality_score"] == 0.8
+
+            # Verify cascade was called with proper context
+            mock_cascade.assert_called_once()
+            call_args = mock_cascade.call_args[0][0]
+            assert call_args["correlation_id"] == correlation_id
+            assert call_args["operation"] == "get_data"
+            assert call_args["service"] == "enhanced_service"
+
+    @pytest.mark.asyncio
+    async def test_make_request_error_with_enhanced_handling(self, enhanced_client):
+        """Test make_request error creates enhanced ErrorContext."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 500
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(
+                    return_value={"error": "Internal server error"}
+                )
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
+                enhanced_client.execution_tracer.start_trace = AsyncMock(
+                    return_value="trace-err"
+                )
+                enhanced_client.execution_tracer.end_trace = AsyncMock()
+
+                with pytest.raises(APIError) as exc_info:
+                    await enhanced_client.make_request_with_enhanced_error_handling(
+                        "https://api.example.com/error", correlation_id="err-789"
+                    )
+
+                # Verify error context was created (correlation logger called)
+                enhanced_client.correlation_logger.log_with_correlation.assert_called()
+                # Verify trace was completed with error
+                enhanced_client.execution_tracer.end_trace.assert_called_with(
+                    trace_id="trace-err", status="error", error=unittest.mock.ANY
+                )
+
+    @pytest.mark.asyncio
+    async def test_propagate_correlation_id_through_request_chain(
+        self, enhanced_client
+    ):
+        """Test correlation ID propagation through request chains."""
+        parent_correlation_id = "parent-123"
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(return_value={"chain": "success"})
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
+
+                # Simulate request chain with parent correlation ID
+                result = await enhanced_client.make_request_with_correlation_chain(
+                    "https://api.example.com/chain",
+                    parent_correlation_id=parent_correlation_id,
+                )
+
+                assert result == {"chain": "success"}
+
+                # Verify parent correlation ID was used in logging
+                log_calls = (
+                    enhanced_client.correlation_logger.log_with_correlation.call_args_list
+                )
+                assert any(
+                    call[1].get("parent_correlation_id") == parent_correlation_id
+                    for call in log_calls
+                )
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_integration_with_enhanced_error_context(
+        self, enhanced_client
+    ):
+        """Test circuit breaker integration creates enhanced error context."""
+        # Mock circuit breaker to trigger failure
+        enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        # Mock the rate limiter to allow request but have the HTTP request fail
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with pytest.raises(APIError) as exc_info:
+                await enhanced_client.make_request_with_enhanced_error_handling(
+                    "https://api.example.com/breaker", correlation_id="breaker-123"
+                )
+
+            # Verify error was logged with correlation
+            enhanced_client.correlation_logger.log_with_correlation.assert_called()
+            log_calls = (
+                enhanced_client.correlation_logger.log_with_correlation.call_args_list
+            )
+            assert any("breaker-123" in str(call) for call in log_calls)
+
+    @pytest.mark.asyncio
+    async def test_parse_response_methods_coverage(self, enhanced_client):
+        """Test _parse_response method edge cases for coverage."""
+        # Test various response types for complete coverage
+        mock_response = AsyncMock()
+
+        # Test JSON response
+        mock_response.headers = {"content-type": "application/json"}
+        mock_response.json = AsyncMock(return_value={"test": "json"})
+        result = await enhanced_client._parse_response(mock_response)
+        assert result == {"test": "json"}
+
+        # Test XML response
+        mock_response.headers = {"content-type": "application/xml"}
+        mock_response.text = AsyncMock(return_value="<xml>test</xml>")
+        result = await enhanced_client._parse_response(mock_response)
+        assert result == "<xml>test</xml>"
+
+        # Test plain text response
+        mock_response.headers = {"content-type": "text/plain"}
+        mock_response.text = AsyncMock(return_value="plain text")
+        result = await enhanced_client._parse_response(mock_response)
+        assert result == "plain text"
+
+    @pytest.mark.asyncio
+    async def test_graceful_degradation_cache_exception_coverage(self, enhanced_client):
+        """Test graceful degradation when cache manager throws exception."""
+
+        async def failing_primary():
+            raise APIError("Primary failed")
+
+        async def working_fallback():
+            return {"fallback": "data"}
+
+        # Mock cache manager to throw exception
+        enhanced_client.cache_manager.get = AsyncMock(
+            side_effect=Exception("Cache error")
+        )
+
+        result = await enhanced_client.handle_enhanced_graceful_degradation(
+            primary_func=failing_primary,
+            correlation_id="cache-err-123",
+            context={"operation": "test_cache_error"},
+            fallback_func=working_fallback,
+            cache_key="test_cache_key",
+        )
+
+        # Should use GracefulDegradation.execute_degradation_cascade
+        assert "source" in result  # GracefulDegradation returns source field
+        assert result["degraded"] is True
+
+    @pytest.mark.asyncio
+    async def test_circuit_breaker_correlation_logging_coverage(self, enhanced_client):
+        """Test circuit breaker error logging with correlation ID."""
+        # Set a correlation ID attribute to trigger the circuit breaker logging path
+        enhanced_client._current_correlation_id = "circuit-123"
+        enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        # Mock circuit breaker to fail
+        enhanced_client.circuit_breaker.call_with_breaker = AsyncMock(
+            side_effect=Exception("Circuit breaker open")
+        )
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+
+            with pytest.raises(Exception, match="Circuit breaker open"):
+                await enhanced_client.make_request("https://api.example.com/circuit")
+
+            # Verify circuit breaker error was logged with correlation
+            enhanced_client.correlation_logger.log_with_correlation.assert_called()
+
+    def test_base_client_without_enhanced_components(self):
+        """Test BaseClient initialization without enhanced error handling components."""
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            client = BaseClient(
+                service_name="basic_service",
+                correlation_logger=None,
+                execution_tracer=None,
+            )
+
+            assert client.service_name == "basic_service"
+            assert client.correlation_logger is None
+            assert client.execution_tracer is None
+            assert client.timeout == 30.0  # Default timeout
+
+    @pytest.mark.asyncio
+    async def test_make_request_methods_without_enhanced_components(
+        self, enhanced_client
+    ):
+        """Test enhanced methods gracefully handle missing components."""
+        # Remove enhanced components
+        enhanced_client.correlation_logger = None
+        enhanced_client.execution_tracer = None
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(return_value={"no_enhanced": "success"})
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                # Should work without enhanced components
+                result = await enhanced_client.make_request_with_correlation(
+                    "https://api.example.com/basic", correlation_id="basic-123"
+                )
+
+                assert result == {"no_enhanced": "success"}
+
+                # Should work without tracing
+                result = await enhanced_client.make_request_with_tracing(
+                    "https://api.example.com/basic", operation="basic_operation"
+                )
+
+                assert result == {"no_enhanced": "success"}
+
+    @pytest.mark.asyncio
+    async def test_make_request_with_correlation_exception_coverage(
+        self, enhanced_client
+    ):
+        """Test make_request_with_correlation exception path for coverage."""
+        enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(
+                return_value=False
+            )  # Force rate limit failure
+
+            with pytest.raises(APIError, match="Rate limit exceeded"):
+                await enhanced_client.make_request_with_correlation(
+                    "https://api.example.com/fail", correlation_id="fail-123"
+                )
+
+            # Verify error was logged
+            enhanced_client.correlation_logger.log_with_correlation.assert_called()
+            calls = (
+                enhanced_client.correlation_logger.log_with_correlation.call_args_list
+            )
+            error_calls = [call for call in calls if call[1].get("level") == "error"]
+            assert len(error_calls) > 0
+
+    @pytest.mark.asyncio
+    async def test_make_request_with_tracing_exception_coverage(self, enhanced_client):
+        """Test make_request_with_tracing exception path for coverage."""
+        enhanced_client.execution_tracer.start_trace = AsyncMock(
+            return_value="trace-fail"
+        )
+        enhanced_client.execution_tracer.end_trace = AsyncMock()
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(
+                return_value=False
+            )  # Force rate limit failure
+
+            with pytest.raises(APIError, match="Rate limit exceeded"):
+                await enhanced_client.make_request_with_tracing(
+                    "https://api.example.com/trace-fail", operation="fail_operation"
+                )
+
+            # Verify trace was ended with error
+            enhanced_client.execution_tracer.end_trace.assert_called_with(
+                trace_id="trace-fail", status="error", error=unittest.mock.ANY
+            )
+
+    @pytest.mark.asyncio
+    async def test_enhanced_graceful_degradation_primary_success_coverage(
+        self, enhanced_client
+    ):
+        """Test enhanced graceful degradation primary success path for coverage."""
+
+        async def successful_primary():
+            return {"primary": "success"}
+
+        result = await enhanced_client.handle_enhanced_graceful_degradation(
+            primary_func=successful_primary,
+            correlation_id="success-123",
+            context={"operation": "test_primary_success"},
+        )
+
+        # Should return primary success path
+        assert result == {
+            "data": {"primary": "success"},
+            "strategy": "primary",
+            "quality_score": 1.0,
         }
-    
-    @pytest.fixture
-    def base_scraper(self, mock_dependencies):
-        """Create BaseScraper instance for testing."""
-        from src.integrations.scrapers.base_scraper import BaseScraper
-        mock_dependencies["circuit_breaker"].is_open = Mock(return_value=False)
-        return BaseScraper(**mock_dependencies)
-    
+
     @pytest.mark.asyncio
-    async def test_make_request_http_error_coverage(self, base_scraper):
-        """Test HTTP error handling coverage (line 67)."""
-        url = "https://example.com/test"
-        
-        with patch('cloudscraper.create_scraper') as mock_create:
-            mock_scraper = Mock()
-            mock_response = Mock()
-            mock_response.status_code = 404
-            mock_scraper.get.return_value = mock_response
-            mock_create.return_value = mock_scraper
-            
-            with pytest.raises(Exception, match="HTTP 404 error"):
-                await base_scraper._make_request(url)
-    
+    async def test_make_request_with_enhanced_error_handling_success_coverage(
+        self, enhanced_client
+    ):
+        """Test make_request_with_enhanced_error_handling success path for coverage."""
+        enhanced_client.execution_tracer.start_trace = AsyncMock(
+            return_value="success-trace"
+        )
+        enhanced_client.execution_tracer.end_trace = AsyncMock()
+        enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            with patch("aiohttp.ClientSession") as mock_session_class:
+                mock_session = AsyncMock()
+                mock_response = AsyncMock()
+                mock_response.status = 200
+                mock_response.headers = {"content-type": "application/json"}
+                mock_response.json = AsyncMock(return_value={"enhanced": "success"})
+                mock_session.request = Mock(return_value=mock_response)
+                mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+                mock_response.__aexit__ = AsyncMock(return_value=None)
+                mock_session_class.return_value.__aenter__ = AsyncMock(
+                    return_value=mock_session
+                )
+                mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+
+                result = (
+                    await enhanced_client.make_request_with_enhanced_error_handling(
+                        "https://api.example.com/enhanced-success",
+                        correlation_id="enhanced-success-123",
+                    )
+                )
+
+                assert result == {"enhanced": "success"}
+
+                # Verify successful trace completion
+                enhanced_client.execution_tracer.end_trace.assert_called_with(
+                    trace_id="success-trace",
+                    status="success",
+                    result={
+                        "response_size": unittest.mock.ANY,
+                        "response_type": "dict",
+                    },
+                )
+
     @pytest.mark.asyncio
-    async def test_make_request_exception_with_error_handler(self, base_scraper):
-        """Test exception handling with error handler (lines 82-87)."""
-        url = "https://example.com/test"
-        
-        with patch('cloudscraper.create_scraper') as mock_create:
-            mock_scraper = Mock()
-            mock_scraper.get.side_effect = Exception("Network error")
-            mock_create.return_value = mock_scraper
-            
-            with pytest.raises(Exception, match="Scraping error for"):
-                await base_scraper._make_request(url)
-            
-            # Verify error handler was called
-            base_scraper.error_handler.handle_error.assert_called_once()
-    
-    def test_extract_json_ld_no_script_string(self, base_scraper):
-        """Test JSON-LD extraction with empty script (lines 109-110)."""
-        from bs4 import BeautifulSoup
-        html = '<script type="application/ld+json"></script>'
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        result = base_scraper._extract_json_ld(soup)
-        assert result is None
-    
-    def test_extract_json_ld_invalid_json(self, base_scraper):
-        """Test JSON-LD extraction with invalid JSON (lines 127-128)."""
-        from bs4 import BeautifulSoup
-        html = '<script type="application/ld+json">invalid json{</script>'
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        result = base_scraper._extract_json_ld(soup)
-        assert result is None
-    
-    def test_extract_json_ld_list_with_matching_type(self, base_scraper):
-        """Test JSON-LD extraction with list containing matching type (lines 120-126)."""
-        from bs4 import BeautifulSoup
-        import json
-        json_data = [
-            {"@type": "Organization", "name": "Test"},
-            {"@type": "TVSeries", "name": "Anime", "description": "Test anime"}
-        ]
-        html = f'<script type="application/ld+json">{json.dumps(json_data)}</script>'
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        result = base_scraper._extract_json_ld(soup)
-        assert result is not None
-        assert result["@type"] == "TVSeries"
-        assert result["name"] == "Anime"
-    
-    def test_extract_meta_tags_coverage(self, base_scraper):
-        """Test meta tags extraction edge cases (lines 148-157)."""
-        from bs4 import BeautifulSoup
-        html = '''
-        <html>
-        <head>
-            <meta name="description" content="Test description">
-            <meta name="keywords">
-            <meta name="author" content="">
-            <meta name="title" content="Test title">
-        </head>
-        </html>
-        '''
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        result = base_scraper._extract_meta_tags(soup)
-        
-        assert result["description"] == "Test description"
-        assert result["title"] == "Test title"
-        assert "keywords" not in result  # No content
-        assert "author" not in result  # Empty content
-    
-    def test_clean_text_empty_input(self, base_scraper):
-        """Test text cleaning with empty input (line 162)."""
-        result = base_scraper._clean_text("")
-        assert result == ""
-        
-        result = base_scraper._clean_text(None)
-        assert result == ""
-    
-    def test_extract_base_data_no_json_ld(self, base_scraper):
-        """Test base data extraction without JSON-LD (line 199)."""
-        from bs4 import BeautifulSoup
-        html = '''
-        <html>
-        <head>
-            <title>Test Page</title>
-            <meta name="description" content="Test description">
-        </head>
-        </html>
-        '''
-        soup = BeautifulSoup(html, 'html.parser')
-        url = "https://example.com/test"
-        
-        result = base_scraper._extract_base_data(soup, url)
-        
-        assert result["json_ld"] is None
-        assert result["page_title"] == "Test Page"
-        assert result["meta_description"] == "Test description"
-    
+    async def test_make_request_with_correlation_chain_exception_coverage(
+        self, enhanced_client
+    ):
+        """Test make_request_with_correlation_chain exception path for coverage."""
+        enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager:
+            mock_rate_manager.acquire = AsyncMock(
+                return_value=False
+            )  # Force rate limit failure
+
+            with pytest.raises(APIError, match="Rate limit exceeded"):
+                await enhanced_client.make_request_with_correlation_chain(
+                    "https://api.example.com/chain-fail",
+                    parent_correlation_id="parent-123",
+                )
+
+            # Verify error was logged in chain context
+            enhanced_client.correlation_logger.log_with_correlation.assert_called()
+            calls = (
+                enhanced_client.correlation_logger.log_with_correlation.call_args_list
+            )
+            error_calls = [call for call in calls if call[1].get("level") == "error"]
+            assert len(error_calls) > 0
+            # Verify parent correlation ID was used
+            parent_calls = [
+                call
+                for call in calls
+                if call[1].get("parent_correlation_id") == "parent-123"
+            ]
+            assert len(parent_calls) > 0
+
     @pytest.mark.asyncio
-    async def test_close_method_coverage(self, base_scraper):
-        """Test close method coverage (lines 210-212)."""
-        # Set up a scraper instance
-        base_scraper.scraper = Mock()
+    async def test_correlation_chain_header_propagation(self, enhanced_client):
+        """Test correlation chain adds proper HTTP headers."""
+        parent_id = "parent-123"
+        mock_response = {"data": "test"}
+        enhanced_client.correlation_logger.log_with_correlation = AsyncMock()
         
-        await base_scraper.close()
-        
-        assert base_scraper.scraper is None
-    
-    def test_extract_json_ld_dict_matching_type_coverage(self, base_scraper):
-        """Test JSON-LD extraction with dict having matching type (lines 117-119)."""
-        from bs4 import BeautifulSoup
-        import json
-        json_data = {"@type": "Movie", "name": "Anime Movie", "description": "Test movie"}
-        html = f'<script type="application/ld+json">{json.dumps(json_data)}</script>'
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        result = base_scraper._extract_json_ld(soup)
-        assert result is not None
-        assert result["@type"] == "Movie"
-        assert result["name"] == "Anime Movie"
-    
-    def test_extract_base_data_with_json_ld_coverage(self, base_scraper):
-        """Test base data extraction with JSON-LD present (line 199)."""
-        from bs4 import BeautifulSoup
-        import json
-        json_data = {"@type": "TVSeries", "name": "Test Series"}
-        html = f'''
-        <html>
-        <head>
-            <title>Test Page</title>
-            <meta name="description" content="Test description">
-            <script type="application/ld+json">{json.dumps(json_data)}</script>
-        </head>
-        </html>
-        '''
-        soup = BeautifulSoup(html, 'html.parser')
-        url = "https://example.com/test"
-        
-        result = base_scraper._extract_base_data(soup, url)
-        
-        assert result["json_ld"] is not None
-        assert result["json_ld"]["@type"] == "TVSeries"
-        assert result["page_title"] == "Test Page"
-        assert result["meta_description"] == "Test description"
+        with patch.object(
+            enhanced_client, "make_request", return_value=mock_response
+        ) as mock_request:
+            await enhanced_client.make_request_with_correlation_chain(
+                url="https://api.test.com/endpoint",
+                parent_correlation_id=parent_id,
+                method="GET",
+                endpoint="/test"
+            )
+            
+            # Check that headers were added to the request
+            mock_request.assert_called_once()
+            call_args = mock_request.call_args
+            headers = call_args.kwargs.get("headers", {})
+            
+            # Should have correlation headers
+            assert "X-Correlation-ID" in headers
+            assert "X-Parent-Correlation-ID" in headers
+            assert headers["X-Parent-Correlation-ID"] == parent_id
+            assert "X-Request-Chain-Depth" in headers
+            assert headers["X-Request-Chain-Depth"] == "1"  # First level

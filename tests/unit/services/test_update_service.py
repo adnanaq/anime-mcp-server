@@ -117,7 +117,12 @@ class TestUpdateChecking:
             patch("json.dump"),
         ):
             # Mock the specific method call that actually gets called
-            with patch.object(service.data_service, "download_anime_database", new_callable=AsyncMock, return_value=sample_anime_data):
+            with patch.object(
+                service.data_service,
+                "download_anime_database",
+                new_callable=AsyncMock,
+                return_value=sample_anime_data,
+            ):
                 result = await service.check_for_updates()
 
                 assert result is True
@@ -254,7 +259,9 @@ class TestIncrementalUpdate:
 
         service = UpdateService(qdrant_client=mock_qdrant_client)
 
-        with patch.object(service, "load_current_data", side_effect=Exception("File error")):
+        with patch.object(
+            service, "load_current_data", side_effect=Exception("File error")
+        ):
             result = await service.perform_incremental_update()
 
             assert result is False
@@ -511,7 +518,7 @@ class TestFileOperations:
         service = UpdateService(qdrant_client=mock_qdrant_client)
 
         data = {"data": [{"title": "Test"}]}
-        current_file = service.data_dir / "raw" / "anime-offline-database.json"
+        service.data_dir / "raw" / "anime-offline-database.json"
 
         with (
             patch("pathlib.Path.exists", return_value=True),
@@ -530,7 +537,7 @@ class TestFileOperations:
         mock_data_service_class.return_value = Mock()
         service = UpdateService(qdrant_client=mock_qdrant_client)
 
-        current_file = service.data_dir / "raw" / "anime-offline-database.json"
+        service.data_dir / "raw" / "anime-offline-database.json"
 
         with patch("pathlib.Path.exists", return_value=False):
             result = service.load_current_data()
@@ -544,7 +551,7 @@ class TestFileOperations:
         service = UpdateService(qdrant_client=mock_qdrant_client)
 
         data = {"data": [{"title": "Test"}]}
-        latest_file = service.data_dir / "raw" / "anime-offline-database-latest.json"
+        service.data_dir / "raw" / "anime-offline-database-latest.json"
 
         with (
             patch("pathlib.Path.exists", return_value=True),
@@ -563,7 +570,7 @@ class TestFileOperations:
         mock_data_service_class.return_value = Mock()
         service = UpdateService(qdrant_client=mock_qdrant_client)
 
-        latest_file = service.data_dir / "raw" / "anime-offline-database-latest.json"
+        service.data_dir / "raw" / "anime-offline-database-latest.json"
 
         with patch("pathlib.Path.exists", return_value=False):
             result = service.load_latest_data()
@@ -654,14 +661,16 @@ class TestEntryRemoval:
 
         # Create 10 entries to trigger batch processing
         entries = [{"anime_id": f"anime_{i}", "title": f"Test {i}"} for i in range(10)]
-        
+
         # Mock first batch success, second batch failure
         mock_delete_result_success = Mock()
         mock_delete_result_success.status = "completed"
         mock_delete_result_failure = Mock()
         mock_delete_result_failure.status = "failed"
-        
-        mock_qdrant_client.client.delete.side_effect = [mock_delete_result_success] * 8 + [mock_delete_result_failure] * 2
+
+        mock_qdrant_client.client.delete.side_effect = [
+            mock_delete_result_success
+        ] * 8 + [mock_delete_result_failure] * 2
         mock_qdrant_client._generate_point_id.side_effect = lambda x: f"point_{x}"
 
         result = await service.remove_entries(entries)
@@ -678,7 +687,7 @@ class TestEntryRemoval:
         service = UpdateService(qdrant_client=mock_qdrant_client)
 
         entries = [{"anime_id": "anime_1", "title": "Test"}]
-        
+
         # Mock delete result with non-completed status
         mock_delete_result = Mock()
         mock_delete_result.status = "failed"
@@ -696,14 +705,14 @@ class TestEntryRemoval:
     ):
         """Test entry removal with critical exception that should raise VectorDatabaseError."""
         from src.exceptions import VectorDatabaseError
-        
+
         mock_data_service_class.return_value = Mock()
         service = UpdateService(qdrant_client=mock_qdrant_client)
 
         # Mock range() to raise an exception before batch processing starts
         with patch("builtins.range", side_effect=Exception("Critical system error")):
             entries = [{"anime_id": "anime_1", "title": "Test"}]
-            
+
             with pytest.raises(VectorDatabaseError):
                 await service.remove_entries(entries)
 

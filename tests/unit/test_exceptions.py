@@ -1,12 +1,12 @@
 """Comprehensive unit tests for custom exception classes."""
 
 import asyncio
-from typing import Any, Dict
 from unittest.mock import Mock, patch
 
 import pytest
 
 from src.exceptions import (
+    HTTP_EXCEPTION_MAP,
     AnimeDataDownloadError,
     AnimeDataValidationError,
     AnimeNotFoundError,
@@ -28,9 +28,8 @@ from src.exceptions import (
     UpdateSchedulingError,
     UpdateServiceError,
     VectorDatabaseError,
-    map_to_http_exception,
     handle_exception_safely,
-    HTTP_EXCEPTION_MAP,
+    map_to_http_exception,
 )
 
 
@@ -72,7 +71,7 @@ class TestAnimeServerError:
         """Test the to_dict method."""
         details = {"field": "test_field", "value": "test_value"}
         error = AnimeServerError("Test error", error_code="TEST_ERROR", details=details)
-        
+
         result = error.to_dict()
         expected = {
             "error": "AnimeServerError",
@@ -143,9 +142,12 @@ class TestVectorDatabaseErrors:
         """Test EmbeddingGenerationError."""
         text = "test anime description"
         model = "BAAI/bge-small-en-v1.5"
-        
+
         error = EmbeddingGenerationError(text, model)
-        assert f"Failed to generate embedding for text using model {model}" in error.message
+        assert (
+            f"Failed to generate embedding for text using model {model}"
+            in error.message
+        )
         assert error.error_code == "EMBEDDING_GENERATION_FAILED"
         assert error.details["model"] == model
         assert error.details["text_length"] == len(text)
@@ -157,7 +159,7 @@ class TestVectorDatabaseErrors:
         text = "test text"
         model = "test-model"
         custom_message = "Custom embedding error"
-        
+
         error = EmbeddingGenerationError(text, model, custom_message)
         assert error.message == custom_message
         assert error.text == text
@@ -199,7 +201,10 @@ class TestDataProcessingErrors:
         url = "https://example.com/anime.json"
         status_code = 404
         error = AnimeDataDownloadError(url, status_code)
-        assert f"Failed to download anime data from {url} (HTTP {status_code})" in error.message
+        assert (
+            f"Failed to download anime data from {url} (HTTP {status_code})"
+            in error.message
+        )
         assert error.status_code == status_code
 
     def test_anime_data_download_error_custom_message(self):
@@ -493,16 +498,16 @@ class TestHTTPExceptionMapping:
         assert isinstance(result, InvalidSearchQueryError)
         assert result.query == "unknown"
         assert result.reason == "Bad request"
-        
+
         result = map_to_http_exception(404, "Not found")
         assert isinstance(result, AnimeNotFoundError)
         assert result.identifier == "unknown"
         assert result.identifier_type == "anime_id"
-        
+
         result = map_to_http_exception(503, "Service unavailable")
         assert isinstance(result, QdrantConnectionError)
         assert result.url == "unknown"
-        
+
         result = map_to_http_exception(429, "Rate limit")
         assert isinstance(result, RateLimitExceededError)
         assert result.limit == 100
@@ -514,24 +519,24 @@ class TestExceptionHandlerDecorator:
 
     def test_async_function_pass_through_custom_exception(self):
         """Test async function passes through custom exceptions."""
-        
+
         @handle_exception_safely
         async def test_function():
             raise QdrantConnectionError("http://localhost:6333")
-        
+
         with pytest.raises(QdrantConnectionError):
             asyncio.run(test_function())
 
     def test_async_function_wraps_generic_exception(self):
         """Test async function wraps generic exceptions."""
-        
+
         @handle_exception_safely
         async def test_function():
             raise ValueError("Generic error")
-        
+
         with pytest.raises(AnimeServerError) as exc_info:
             asyncio.run(test_function())
-        
+
         assert "Unexpected error in test_function: Generic error" in str(exc_info.value)
         assert exc_info.value.error_code == "UNEXPECTED_ERROR"
         assert exc_info.value.details["function"] == "test_function"
@@ -539,60 +544,60 @@ class TestExceptionHandlerDecorator:
 
     def test_sync_function_pass_through_custom_exception(self):
         """Test sync function passes through custom exceptions."""
-        
+
         @handle_exception_safely
         def test_function():
             raise InvalidSearchQueryError("test query", "invalid")
-        
+
         with pytest.raises(InvalidSearchQueryError):
             test_function()
 
     def test_sync_function_wraps_generic_exception(self):
         """Test sync function wraps generic exceptions."""
-        
+
         @handle_exception_safely
         def test_function():
             raise RuntimeError("Runtime error")
-        
+
         with pytest.raises(AnimeServerError) as exc_info:
             test_function()
-        
+
         assert "Unexpected error in test_function: Runtime error" in str(exc_info.value)
         assert exc_info.value.error_code == "UNEXPECTED_ERROR"
 
     def test_async_function_success_case(self):
         """Test async function success case."""
-        
+
         @handle_exception_safely
         async def test_function():
             return "success"
-        
+
         result = asyncio.run(test_function())
         assert result == "success"
 
     def test_sync_function_success_case(self):
         """Test sync function success case."""
-        
+
         @handle_exception_safely
         def test_function():
             return "success"
-        
+
         result = test_function()
         assert result == "success"
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_decorator_logging(self, mock_get_logger):
         """Test that decorator logs errors properly."""
         mock_logger = Mock()
         mock_get_logger.return_value = mock_logger
-        
+
         @handle_exception_safely
         def test_function():
             raise RuntimeError("Test error")
-        
+
         with pytest.raises(AnimeServerError):
             test_function()
-        
+
         mock_logger.error.assert_called_once()
         call_args = mock_logger.error.call_args
         assert "Unexpected error in test_function: Test error" in call_args[0][0]
@@ -600,12 +605,12 @@ class TestExceptionHandlerDecorator:
 
     def test_decorator_preserves_function_metadata(self):
         """Test that decorator preserves function metadata."""
-        
+
         @handle_exception_safely
         def test_function():
             """Test function docstring."""
             return "test"
-        
+
         assert test_function.__name__ == "test_function"
         assert test_function.__doc__ == "Test function docstring."
 
@@ -637,7 +642,7 @@ class TestExceptionInheritanceHierarchy:
             UpdateSchedulingError,
             ConcurrentUpdateError,
         ]
-        
+
         for exception_class in exception_classes:
             # Create instance and check inheritance
             if exception_class == InvalidConfigurationError:
@@ -674,6 +679,6 @@ class TestExceptionInheritanceHierarchy:
                 instance = exception_class("operation")
             else:
                 instance = exception_class("Test error")
-            
+
             assert isinstance(instance, AnimeServerError)
             assert isinstance(instance, Exception)

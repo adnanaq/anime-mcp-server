@@ -1,558 +1,1082 @@
-"""Tests for MAL/Jikan REST client."""
+"""Tests for unified MAL/Jikan REST client API."""
+
+import asyncio
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, Optional
-import json
 
+from src.exceptions import APIError
 from src.integrations.clients.mal_client import MALClient
-from src.integrations.error_handling import ErrorContext, CircuitBreaker
-from src.integrations.cache_manager import CollaborativeCacheSystem
+from src.integrations.error_handling import (
+    CorrelationLogger,
+    ExecutionTracer,
+)
 
 
-class TestMALClient:
-    """Test the MAL/Jikan REST client."""
-    
+class TestMALClientUnifiedAPI:
+    """Test MAL client unified API with auto-enabled enhancements."""
+
     @pytest.fixture
-    def mock_dependencies(self):
-        """Mock dependencies for MAL client."""
-        cache_manager = Mock(spec=CollaborativeCacheSystem)
-        cache_manager.get = AsyncMock(return_value=None)
-        
-        circuit_breaker = Mock(spec=CircuitBreaker)
-        circuit_breaker.is_open = Mock(return_value=False)
-        
-        return {
-            "circuit_breaker": circuit_breaker,
-            "rate_limiter": Mock(),
-            "cache_manager": cache_manager,
-            "error_handler": Mock(spec=ErrorContext)
+    def mal_client(self):
+        """Create basic MAL client for testing."""
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            return MALClient()
+
+    @pytest.fixture
+    def enhanced_mal_client(self):
+        """Create MAL client with enhanced error handling components."""
+        correlation_logger = CorrelationLogger()
+        execution_tracer = ExecutionTracer()
+
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            return MALClient(
+                client_id="test_client_id",
+                client_secret="test_client_secret",
+                correlation_logger=correlation_logger,
+                execution_tracer=execution_tracer,
+            )
+
+    def test_mal_client_initialization(self, mal_client):
+        """Test basic MAL client initializes correctly."""
+        assert mal_client.service_name == "mal"
+        assert mal_client.mal_base_url == "https://api.myanimelist.net/v2"
+        assert mal_client.jikan_base_url == "https://api.jikan.moe/v4"
+        assert mal_client.client_id is None
+        assert mal_client.access_token is None
+
+    @pytest.mark.asyncio
+    async def test_get_anime_by_id_basic_usage(self, mal_client):
+        """Test get_anime_by_id works without any enhancements."""
+        sample_response = {
+            "data": {"mal_id": 21, "title": "One Piece", "synopsis": "Test synopsis"}
         }
-    
-    @pytest.fixture
-    def mal_client(self, mock_dependencies):
-        """Create MAL client with mocked dependencies."""
-        return MALClient(**mock_dependencies)
-    
-    @pytest.fixture
-    def mal_client_with_auth(self, mock_dependencies):
-        """Create MAL client with OAuth2 credentials."""
-        return MALClient(
-            client_id="195a1bf1e8043ed0507576d020e9e17d",
-            client_secret="1b6bf289306de009ebb73533811500c88d75c527800cf5048f535c6966af53b0",
-            **mock_dependencies
-        )
-    
-    @pytest.fixture
-    def sample_mal_anime_response(self):
-        """Sample MAL API anime response."""
-        return {
-            "id": 21,
-            "title": "One Piece",
-            "main_picture": {
-                "medium": "https://cdn.myanimelist.net/images/anime/6/73245.jpg",
-                "large": "https://cdn.myanimelist.net/images/anime/6/73245l.jpg"
-            },
-            "alternative_titles": {
-                "synonyms": ["OP"],
-                "en": "One Piece",
-                "ja": "ワンピース"
-            },
-            "start_date": "1999-10-20",
-            "end_date": None,
-            "synopsis": "Gold Roger was known as the Pirate King...",
-            "mean": 9.0,
-            "rank": 5,
-            "popularity": 11,
-            "num_list_users": 1300000,
-            "num_scoring_users": 850000,
-            "nsfw": "white",
-            "media_type": "tv",
-            "status": "currently_airing",
-            "genres": [
-                {"id": 1, "name": "Action"},
-                {"id": 2, "name": "Adventure"}
-            ],
-            "num_episodes": 0,
-            "start_season": {
-                "year": 1999,
-                "season": "fall"
-            },
-            "studios": [
-                {"id": 18, "name": "Toei Animation"}
+
+        with patch.object(
+            mal_client, "_make_jikan_request", return_value=sample_response
+        ) as mock_jikan:
+            result = await mal_client.get_anime_by_id(21)
+
+            assert result == sample_response["data"]
+            mock_jikan.assert_called_once_with("/anime/21")
+
+    @pytest.mark.asyncio
+    async def test_get_anime_by_id_with_correlation_auto_enabled(
+        self, enhanced_mal_client
+    ):
+        """Test get_anime_by_id auto-enables correlation logging when available."""
+        correlation_id = "test-123"
+        sample_response = {"data": {"mal_id": 21, "title": "One Piece"}}
+
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", return_value=sample_response
+        ) as mock_jikan:
+            result = await enhanced_mal_client.get_anime_by_id(
+                21, correlation_id=correlation_id
+            )
+
+            assert result == sample_response["data"]
+
+            # Verify correlation logging was auto-enabled
+            enhanced_mal_client.correlation_logger.log_with_correlation.assert_called()
+            log_calls = (
+                enhanced_mal_client.correlation_logger.log_with_correlation.call_args_list
+            )
+            assert any(correlation_id in str(call) for call in log_calls)
+
+    @pytest.mark.asyncio
+    async def test_get_anime_by_id_auto_generates_correlation_id(
+        self, enhanced_mal_client
+    ):
+        """Test get_anime_by_id auto-generates correlation ID when none provided."""
+        sample_response = {"data": {"mal_id": 21, "title": "One Piece"}}
+
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            result = await enhanced_mal_client.get_anime_by_id(21)
+
+            assert result == sample_response["data"]
+
+            # Should auto-generate correlation ID and use it
+            enhanced_mal_client.correlation_logger.log_with_correlation.assert_called()
+            log_calls = (
+                enhanced_mal_client.correlation_logger.log_with_correlation.call_args_list
+            )
+            # Check that some correlation ID was used (auto-generated)
+            assert len(log_calls) > 0
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_tracing_auto_enabled(self, enhanced_mal_client):
+        """Test search_anime auto-enables tracing when available."""
+        sample_response = {
+            "data": [
+                {"mal_id": 1, "title": "Cowboy Bebop"},
+                {"mal_id": 2, "title": "Trigun"},
             ]
         }
-    
-    @pytest.fixture
-    def sample_jikan_anime_response(self):
-        """Sample Jikan API anime response."""
-        return {
-            "data": {
-                "mal_id": 21,
-                "url": "https://myanimelist.net/anime/21/One_Piece",
-                "images": {
-                    "jpg": {
-                        "image_url": "https://cdn.myanimelist.net/images/anime/6/73245.jpg",
-                        "small_image_url": "https://cdn.myanimelist.net/images/anime/6/73245t.jpg",
-                        "large_image_url": "https://cdn.myanimelist.net/images/anime/6/73245l.jpg"
-                    }
-                },
-                "title": "One Piece",
-                "title_english": "One Piece",
-                "title_japanese": "ワンピース",
-                "type": "TV",
-                "source": "Manga",
-                "episodes": None,
-                "status": "Currently Airing",
-                "airing": True,
-                "aired": {
-                    "from": "1999-10-20T00:00:00+00:00",
-                    "to": None
-                },
-                "duration": "24 min",
-                "rating": "PG-13 - Teens 13 or older",
-                "score": 9.0,
-                "scored_by": 850000,
-                "rank": 5,
-                "popularity": 11,
-                "synopsis": "Gold Roger was known as the Pirate King...",
-                "genres": [
-                    {"mal_id": 1, "type": "anime", "name": "Action", "url": "https://myanimelist.net/anime/genre/1/Action"},
-                    {"mal_id": 2, "type": "anime", "name": "Adventure", "url": "https://myanimelist.net/anime/genre/2/Adventure"}
-                ],
-                "studios": [
-                    {"mal_id": 18, "type": "anime", "name": "Toei Animation", "url": "https://myanimelist.net/anime/producer/18/Toei_Animation"}
-                ]
-            }
-        }
-    
-    @pytest.fixture
-    def sample_jikan_search_response(self):
-        """Sample Jikan search response."""
-        return {
-            "data": [
-                {
-                    "mal_id": 21,
-                    "title": "One Piece",
-                    "score": 9.0,
-                    "episodes": None,
-                    "status": "Currently Airing"
-                },
-                {
-                    "mal_id": 11757,
-                    "title": "Sword Art Online",
-                    "score": 7.2,
-                    "episodes": 25,
-                    "status": "Finished Airing"
-                }
-            ],
-            "pagination": {
-                "last_visible_page": 100,
-                "has_next_page": True,
-                "current_page": 1,
-                "items": {
-                    "count": 25,
-                    "total": 2500,
-                    "per_page": 25
-                }
-            }
-        }
 
-    def test_client_initialization_without_auth(self, mock_dependencies):
-        """Test MAL client initialization without authentication."""
-        client = MALClient(**mock_dependencies)
-        
-        assert client.circuit_breaker == mock_dependencies["circuit_breaker"]
-        assert client.rate_limiter == mock_dependencies["rate_limiter"]
-        assert client.cache_manager == mock_dependencies["cache_manager"]
-        assert client.error_handler == mock_dependencies["error_handler"]
-        assert client.mal_base_url == "https://api.myanimelist.net/v2"
-        assert client.jikan_base_url == "https://api.jikan.moe/v4"
-        assert client.client_id is None
-        assert client.client_secret is None
-        assert client.access_token is None
-
-    def test_client_initialization_with_auth(self, mock_dependencies):
-        """Test MAL client initialization with OAuth2 credentials."""
-        client_id = "195a1bf1e8043ed0507576d020e9e17d"
-        client_secret = "1b6bf289306de009ebb73533811500c88d75c527800cf5048f535c6966af53b0"
-        
-        client = MALClient(
-            client_id=client_id,
-            client_secret=client_secret,
-            **mock_dependencies
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(
+            return_value="trace-123"
         )
-        
-        assert client.client_id == client_id
-        assert client.client_secret == client_secret
-        assert client.access_token is None
+        enhanced_mal_client.execution_tracer.add_trace_step = AsyncMock()
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
+
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            result = await enhanced_mal_client.search_anime(query="cowboy", limit=2)
+
+            assert len(result) == 2
+            assert result[0]["title"] == "Cowboy Bebop"
+
+            # Verify tracing was auto-enabled
+            enhanced_mal_client.execution_tracer.start_trace.assert_called_once()
+            enhanced_mal_client.execution_tracer.end_trace.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_anime_by_id_official_mal_success(self, mal_client_with_auth, sample_mal_anime_response):
-        """Test successful anime retrieval using official MAL API."""
-        anime_id = 21
-        
-        with patch.object(mal_client_with_auth, '_make_mal_request', new_callable=AsyncMock) as mock_mal_request:
-            mock_mal_request.return_value = sample_mal_anime_response
-            
-            result = await mal_client_with_auth.get_anime_by_id(anime_id)
-            
-            assert result is not None
-            assert result["id"] == 21
-            assert result["title"] == "One Piece"
-            assert result["mean"] == 9.0
-            assert len(result["genres"]) == 2
-            
-            # Verify MAL API was called with correct parameters
-            mock_mal_request.assert_called_once()
-            call_args = mock_mal_request.call_args
-            assert f"/anime/{anime_id}" in call_args[0][0]
+    async def test_parent_correlation_id_chaining(self, enhanced_mal_client):
+        """Test parent_correlation_id enables request chaining."""
+        parent_id = "parent-123"
+        sample_response = {"data": {"mal_id": 1, "title": "Test Anime"}}
+
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        with patch.object(
+            enhanced_mal_client,
+            "make_request_with_correlation_chain",
+            return_value=sample_response,
+        ) as mock_chain:
+            result = await enhanced_mal_client.get_anime_by_id(
+                1, parent_correlation_id=parent_id
+            )
+
+            assert result == sample_response["data"]
+            mock_chain.assert_called_once()
+            call_args = mock_chain.call_args
+            assert call_args.kwargs["parent_correlation_id"] == parent_id
 
     @pytest.mark.asyncio
-    async def test_get_anime_by_id_jikan_fallback(self, mal_client, sample_jikan_anime_response):
-        """Test anime retrieval falling back to Jikan API."""
-        anime_id = 21
-        
-        with patch.object(mal_client, '_make_jikan_request', new_callable=AsyncMock) as mock_jikan_request:
-            mock_jikan_request.return_value = sample_jikan_anime_response
-            
-            result = await mal_client.get_anime_by_id(anime_id)
-            
-            assert result is not None
-            assert result["mal_id"] == 21
-            assert result["title"] == "One Piece"
-            assert result["score"] == 9.0
-            
-            # Verify Jikan API was called
-            mock_jikan_request.assert_called_once()
-            call_args = mock_jikan_request.call_args
-            assert f"/anime/{anime_id}" in call_args[0][0]
+    async def test_cache_integration_seamless(self, enhanced_mal_client):
+        """Test cache integration works seamlessly."""
+        cached_data = {"mal_id": 5, "title": "Cached Anime"}
+
+        # Mock cache hit
+        mock_cache = AsyncMock()
+        mock_cache.get.return_value = cached_data
+        enhanced_mal_client.cache_manager = mock_cache
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        result = await enhanced_mal_client.get_anime_by_id(
+            5, correlation_id="cache-test"
+        )
+
+        assert result == cached_data
+        mock_cache.get.assert_called_once_with("mal_anime_5")
 
     @pytest.mark.asyncio
-    async def test_get_anime_by_id_mal_failure_jikan_fallback(self, mal_client_with_auth, sample_jikan_anime_response):
-        """Test MAL API failure with successful Jikan fallback."""
-        anime_id = 21
-        
-        with patch.object(mal_client_with_auth, '_make_mal_request', new_callable=AsyncMock) as mock_mal_request:
-            with patch.object(mal_client_with_auth, '_make_jikan_request', new_callable=AsyncMock) as mock_jikan_request:
-                # MAL API fails
-                mock_mal_request.side_effect = Exception("MAL API rate limit exceeded")
-                # Jikan API succeeds
-                mock_jikan_request.return_value = sample_jikan_anime_response
-                
-                result = await mal_client_with_auth.get_anime_by_id(anime_id)
-                
-                assert result is not None
-                assert result["mal_id"] == 21
-                
-                # Verify both APIs were called
-                mock_mal_request.assert_called_once()
-                mock_jikan_request.assert_called_once()
+    async def test_enhanced_error_handling_automatic(self, enhanced_mal_client):
+        """Test enhanced error handling is automatic with correlation_id."""
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(
+            return_value="trace-error"
+        )
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
+
+        with patch.object(
+            enhanced_mal_client,
+            "_make_jikan_request",
+            side_effect=APIError("API failed"),
+        ):
+            with patch.object(
+                enhanced_mal_client, "_create_enhanced_error_context"
+            ) as mock_error:
+                result = await enhanced_mal_client.get_anime_by_id(
+                    1, correlation_id="error-test"
+                )
+
+                assert result is None  # Should return None on error
+                mock_error.assert_called()  # Enhanced error context should be created
 
     @pytest.mark.asyncio
-    async def test_search_anime_jikan(self, mal_client, sample_jikan_search_response):
-        """Test anime search using Jikan API."""
-        query = "One Piece"
-        
-        with patch.object(mal_client, '_make_jikan_request', new_callable=AsyncMock) as mock_jikan_request:
-            mock_jikan_request.return_value = sample_jikan_search_response
-            
-            results = await mal_client.search_anime(query=query, limit=10)
-            
-            assert len(results) == 2
-            assert results[0]["mal_id"] == 21
-            assert results[0]["title"] == "One Piece"
-            assert results[1]["mal_id"] == 11757
-            
-            # Verify search parameters
-            call_args = mock_jikan_request.call_args
-            assert "/anime" in call_args[0][0]
+    async def test_graceful_degradation_automatic(self, enhanced_mal_client):
+        """Test graceful degradation kicks in automatically."""
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        # Mock both APIs to fail
+        with patch.object(
+            enhanced_mal_client,
+            "_make_jikan_request",
+            side_effect=APIError("API failed"),
+        ):
+            with patch.object(
+                enhanced_mal_client, "handle_enhanced_graceful_degradation"
+            ) as mock_degradation:
+                mock_degradation.return_value = {"data": {"degraded": True}}
+
+                result = await enhanced_mal_client.get_anime_by_id(
+                    1, correlation_id="degradation-test"
+                )
+
+                # Should attempt graceful degradation
+                assert "degraded" in str(result) or result is None
 
     @pytest.mark.asyncio
-    async def test_search_anime_with_filters(self, mal_client, sample_jikan_search_response):
-        """Test anime search with genre and status filters."""
-        query = "action"
+    async def test_refresh_access_token_enhanced(self, enhanced_mal_client):
+        """Test refresh_access_token with optional correlation tracking."""
+        enhanced_mal_client.refresh_token = "old_token"
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(
+            return_value="refresh-trace"
+        )
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
+
+        token_response = {
+            "access_token": "new_token",
+            "refresh_token": "new_refresh_token",
+        }
+
+        with patch.object(
+            enhanced_mal_client, "make_request", return_value=token_response
+        ):
+            await enhanced_mal_client.refresh_access_token(
+                correlation_id="refresh-test"
+            )
+
+            assert enhanced_mal_client.access_token == "new_token"
+
+            # Verify enhanced features were used
+            enhanced_mal_client.correlation_logger.log_with_correlation.assert_called()
+            enhanced_mal_client.execution_tracer.start_trace.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_anime_statistics_enhanced(self, enhanced_mal_client):
+        """Test get_anime_statistics with enhancements."""
+        stats_response = {"data": {"watching": 100, "completed": 500}}
+
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", return_value=stats_response
+        ):
+            result = await enhanced_mal_client.get_anime_statistics(
+                1, correlation_id="stats-test"
+            )
+
+            assert result == stats_response["data"]
+
+    @pytest.mark.asyncio
+    async def test_backward_compatibility(self, mal_client):
+        """Test all methods work without enhanced components (backward compatibility)."""
+        sample_response = {"data": {"mal_id": 21, "title": "One Piece"}}
+
+        with patch.object(
+            mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            # All methods should work without enhanced components
+            result = await mal_client.get_anime_by_id(21)
+            assert result == sample_response["data"]
+
+            search_result = await mal_client.search_anime("test")
+            assert search_result == sample_response["data"]
+
+            stats_result = await mal_client.get_anime_statistics(21)
+            assert stats_result == sample_response["data"]
+
+    @pytest.mark.asyncio
+    async def test_dual_api_strategy_still_works(self, enhanced_mal_client):
+        """Test dual API strategy (MAL -> Jikan fallback) still works."""
+        jikan_response = {"data": {"mal_id": 1, "title": "Fallback Anime"}}
+
+        # Mock MAL API failure and Jikan success
+        with patch.object(
+            enhanced_mal_client, "_make_mal_request", side_effect=APIError("MAL failed")
+        ):
+            with patch.object(
+                enhanced_mal_client, "_make_jikan_request", return_value=jikan_response
+            ):
+                result = await enhanced_mal_client.get_anime_by_id(
+                    1, correlation_id="dual-test"
+                )
+
+                assert result == jikan_response["data"]
+
+    @pytest.mark.asyncio
+    async def test_no_correlation_fallback_behavior(self, enhanced_mal_client):
+        """Test behavior when no correlation_id provided but enhanced components available."""
+        sample_response = {"data": {"mal_id": 21, "title": "One Piece"}}
+
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            # Should auto-generate correlation ID when logger available
+            result = await enhanced_mal_client.get_anime_by_id(21)
+
+            assert result == sample_response["data"]
+            # Should have called correlation logger with auto-generated ID
+            enhanced_mal_client.correlation_logger.log_with_correlation.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_mal_api_authentication_headers(self, enhanced_mal_client):
+        """Test MAL API request with authentication headers."""
+        enhanced_mal_client.access_token = "test_token"
+        sample_response = {"mal_id": 1, "title": "Test Anime"}
+
+        with patch.object(
+            enhanced_mal_client, "make_request", return_value=sample_response
+        ) as mock_request:
+            result = await enhanced_mal_client._make_mal_request("/anime/1")
+
+            assert result == sample_response
+            mock_request.assert_called_once()
+            call_args = mock_request.call_args
+            headers = call_args.kwargs["headers"]
+            assert "Authorization" in headers
+            assert headers["Authorization"] == "Bearer test_token"
+
+    @pytest.mark.asyncio
+    async def test_mal_api_client_id_only(self, enhanced_mal_client):
+        """Test MAL API request with client_id only (no access token)."""
+        enhanced_mal_client.access_token = None  # Clear access token
+        sample_response = {"mal_id": 1, "title": "Test Anime"}
+
+        with patch.object(
+            enhanced_mal_client, "make_request", return_value=sample_response
+        ) as mock_request:
+            result = await enhanced_mal_client._make_mal_request("/anime/1")
+
+            assert result == sample_response
+            mock_request.assert_called_once()
+            call_args = mock_request.call_args
+            headers = call_args.kwargs["headers"]
+            assert "X-MAL-CLIENT-ID" in headers
+            assert headers["X-MAL-CLIENT-ID"] == "test_client_id"
+
+    @pytest.mark.asyncio
+    async def test_mal_api_no_credentials(self):
+        """Test MAL API request fails without credentials."""
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            client = MALClient()  # No credentials
+
+        with pytest.raises(Exception, match="MAL API requires either client_id or access_token"):
+            await client._make_mal_request("/anime/1")
+
+    @pytest.mark.asyncio
+    async def test_jikan_request_with_params(self, mal_client):
+        """Test Jikan API request with query parameters."""
+        sample_response = {"data": [{"mal_id": 1, "title": "Test"}]}
+        params = {"q": "cowboy", "limit": 5}
+
+        with patch.object(
+            mal_client, "make_request", return_value=sample_response
+        ) as mock_request:
+            result = await mal_client._make_jikan_request("/anime", params=params)
+
+            assert result == sample_response
+            mock_request.assert_called_once()
+            call_args = mock_request.call_args
+            assert call_args.kwargs["params"] == params
+
+    @pytest.mark.asyncio
+    async def test_jikan_request_with_retry_success(self, mal_client):
+        """Test Jikan request with retry mechanism - eventual success."""
+        sample_response = {"data": [{"mal_id": 1, "title": "Test"}]}
+
+        # Mock: First call fails with 500, second succeeds
+        with patch.object(
+            mal_client, "_make_jikan_request", side_effect=[Exception("500 Server Error"), sample_response]
+        ):
+            result = await mal_client._make_jikan_request_with_retry("/anime/1", max_retries=3)
+
+            assert result == sample_response
+
+    @pytest.mark.asyncio
+    async def test_jikan_request_with_retry_max_retries(self, mal_client):
+        """Test Jikan request with retry mechanism - max retries exceeded."""
+        # Mock: All calls fail with 500 error
+        with patch.object(
+            mal_client, "_make_jikan_request", side_effect=Exception("500 Server Error")
+        ):
+            with pytest.raises(Exception, match="500 Server Error"):
+                await mal_client._make_jikan_request_with_retry("/anime/1", max_retries=2)
+
+    @pytest.mark.asyncio
+    async def test_jikan_request_with_retry_non_server_error(self, mal_client):
+        """Test Jikan request with retry - non-server error doesn't retry."""
+        # Mock: First call fails with 404 (should not retry)
+        with patch.object(
+            mal_client, "_make_jikan_request", side_effect=Exception("404 Not Found")
+        ):
+            with pytest.raises(Exception, match="404 Not Found"):
+                await mal_client._make_jikan_request_with_retry("/anime/1", max_retries=3)
+
+    @pytest.mark.asyncio
+    async def test_cache_error_handling(self, enhanced_mal_client):
+        """Test cache error handling doesn't break the flow."""
+        sample_response = {"data": {"mal_id": 21, "title": "One Piece"}}
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+
+        # Mock cache manager to throw error
+        mock_cache = AsyncMock()
+        mock_cache.get.side_effect = Exception("Cache connection failed")
+        enhanced_mal_client.cache_manager = mock_cache
+
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            result = await enhanced_mal_client.get_anime_by_id(
+                21, correlation_id="cache-error-test"
+            )
+
+            assert result == sample_response["data"]
+            # Should log cache error
+            enhanced_mal_client.correlation_logger.log_with_correlation.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_search_anime_api_error_with_correlation(self, enhanced_mal_client):
+        """Test search_anime handles APIError with correlation logging."""
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(return_value="trace-123")
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
+
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", side_effect=APIError("Search failed")
+        ):
+            with patch.object(
+                enhanced_mal_client, "_create_enhanced_error_context"
+            ) as mock_error:
+                result = await enhanced_mal_client.search_anime(
+                    query="test", correlation_id="search-error"
+                )
+
+                assert result == []
+                mock_error.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_search_anime_api_error_without_correlation(self, mal_client):
+        """Test search_anime handles APIError without correlation logging."""
+        with patch.object(
+            mal_client, "_make_jikan_request", side_effect=APIError("Search failed")
+        ):
+            result = await mal_client.search_anime(query="test")
+            assert result == []
+
+    @pytest.mark.asyncio
+    async def test_search_anime_general_exception(self, mal_client):
+        """Test search_anime handles general exceptions."""
+        with patch.object(
+            mal_client, "_make_jikan_request", side_effect=Exception("Unexpected error")
+        ):
+            result = await mal_client.search_anime(query="test")
+            assert result == []
+
+    @pytest.mark.asyncio
+    async def test_search_anime_with_all_params(self, mal_client):
+        """Test search_anime with all possible parameters."""
+        sample_response = {"data": [{"mal_id": 1, "title": "Test"}]}
+
+        with patch.object(
+            mal_client, "_make_jikan_request", return_value=sample_response
+        ) as mock_request:
+            result = await mal_client.search_anime(
+                query="cowboy", genres=[1, 2], status="completed", limit=25
+            )
+
+            assert result == sample_response["data"]
+            call_args = mock_request.call_args
+            params = call_args.kwargs["params"]
+            assert params["q"] == "cowboy"
+            assert params["genres"] == "1,2"
+            assert params["status"] == "completed"
+            assert params["limit"] == 25
+
+    @pytest.mark.asyncio
+    async def test_search_anime_outer_exception(self, enhanced_mal_client):
+        """Test search_anime handles outer exception and traces it."""
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(return_value="trace-123")
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
+
+        # Mock the execution tracer start_trace to raise an exception
+        enhanced_mal_client.execution_tracer.start_trace.side_effect = RuntimeError("Outer error")
+
+        with pytest.raises(RuntimeError, match="Outer error"):
+            await enhanced_mal_client.search_anime(query="test")
+
+        # start_trace should have been called before the exception
+        enhanced_mal_client.execution_tracer.start_trace.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_seasonal_anime_success(self, mal_client):
+        """Test get_seasonal_anime successful response."""
+        sample_response = {
+            "data": [
+                {"mal_id": 1, "title": "Spring Anime 1"},
+                {"mal_id": 2, "title": "Spring Anime 2"},
+            ]
+        }
+
+        with patch.object(
+            mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            result = await mal_client.get_seasonal_anime(2023, "spring")
+
+            assert len(result) == 2
+            assert result[0]["title"] == "Spring Anime 1"
+
+    @pytest.mark.asyncio
+    async def test_get_seasonal_anime_error(self, mal_client):
+        """Test get_seasonal_anime handles errors gracefully."""
+        with patch.object(
+            mal_client, "_make_jikan_request", side_effect=Exception("Seasonal API failed")
+        ):
+            result = await mal_client.get_seasonal_anime(2023, "spring")
+            assert result == []
+
+    @pytest.mark.asyncio
+    async def test_handle_mal_error_400(self, mal_client):
+        """Test _handle_mal_error for 400 Bad Request."""
+        response_data = {"error_description": "Invalid parameters"}
+        error_info = await mal_client._handle_mal_error(400, response_data)
+
+        assert error_info["service"] == "mal"
+        assert error_info["status"] == 400
+        assert error_info["error_type"] == "invalid_parameters"
+        assert error_info["recoverable"] == False
+        assert "Invalid parameters" in error_info["message"]
+
+    @pytest.mark.asyncio
+    async def test_handle_mal_error_401(self, mal_client):
+        """Test _handle_mal_error for 401 Unauthorized."""
+        response_data = {"error_description": "Invalid token"}
+        error_info = await mal_client._handle_mal_error(401, response_data)
+
+        assert error_info["error_type"] == "authentication_error"
+        assert error_info["recoverable"] == True
+        assert error_info["suggested_action"] == "refresh_token"
+
+    @pytest.mark.asyncio
+    async def test_handle_mal_error_403(self, mal_client):
+        """Test _handle_mal_error for 403 Forbidden (DoS)."""
+        response_data = {"error_description": "DoS detected"}
+        error_info = await mal_client._handle_mal_error(403, response_data)
+
+        assert error_info["error_type"] == "rate_limit_exceeded"
+        assert error_info["retry_after"] == 300
+        assert error_info["suggested_action"] == "backoff_and_retry"
+
+    @pytest.mark.asyncio
+    async def test_handle_mal_error_404(self, mal_client):
+        """Test _handle_mal_error for 404 Not Found."""
+        response_data = {"error_description": "Resource not found"}
+        error_info = await mal_client._handle_mal_error(404, response_data)
+
+        assert error_info["error_type"] == "not_found"
+        assert error_info["recoverable"] == False
+
+    @pytest.mark.asyncio
+    async def test_handle_mal_error_500(self, mal_client):
+        """Test _handle_mal_error for 500 Server Error."""
+        response_data = {"error_description": "Internal server error"}
+        error_info = await mal_client._handle_mal_error(500, response_data)
+
+        assert error_info["error_type"] == "api_error"
+        assert error_info["recoverable"] == True  # Server errors are recoverable
+
+    @pytest.mark.asyncio
+    async def test_handle_mal_error_other(self, mal_client):
+        """Test _handle_mal_error for other status codes."""
+        response_data = {"error_description": "Unknown error"}
+        error_info = await mal_client._handle_mal_error(422, response_data)
+
+        assert error_info["error_type"] == "api_error"
+        assert error_info["recoverable"] == False  # Client errors are not recoverable
+
+    @pytest.mark.asyncio
+    async def test_handle_jikan_error_429(self, mal_client):
+        """Test _handle_jikan_error for 429 Rate Limit."""
+        response_data = {
+            "type": "RateLimitException",
+            "message": "Too many requests",
+            "error": "Rate limit exceeded",
+            "report_url": "https://github.com/jikan-me/jikan/issues"
+        }
+        error_info = await mal_client._handle_jikan_error(429, response_data)
+
+        assert error_info["service"] == "jikan"
+        assert error_info["error_type"] == "rate_limit_exceeded"
+        assert error_info["retry_after"] == 60
+        assert error_info["report_url"] == "https://github.com/jikan-me/jikan/issues"
+
+    @pytest.mark.asyncio
+    async def test_handle_jikan_error_500(self, mal_client):
+        """Test _handle_jikan_error for 500 Server Error."""
+        response_data = {
+            "type": "ServerException",
+            "message": "Server error",
+            "error": "Internal server error"
+        }
+        error_info = await mal_client._handle_jikan_error(500, response_data)
+
+        assert error_info["error_type"] == "server_error"
+        assert error_info["recoverable"] == True
+        assert error_info["retry_after"] == 30
+
+    @pytest.mark.asyncio
+    async def test_handle_jikan_error_404(self, mal_client):
+        """Test _handle_jikan_error for 404 Not Found."""
+        response_data = {
+            "type": "NotFoundException",
+            "message": "Not found",
+            "error": "Resource not found"
+        }
+        error_info = await mal_client._handle_jikan_error(404, response_data)
+
+        assert error_info["error_type"] == "not_found"
+        assert error_info["recoverable"] == False
+
+    @pytest.mark.asyncio
+    async def test_handle_jikan_error_400(self, mal_client):
+        """Test _handle_jikan_error for 400 Bad Request."""
+        response_data = {
+            "type": "BadRequestException",
+            "message": "Bad request",
+            "error": "Invalid parameters"
+        }
+        error_info = await mal_client._handle_jikan_error(400, response_data)
+
+        assert error_info["error_type"] == "invalid_parameters"
+        assert error_info["recoverable"] == False
+
+    @pytest.mark.asyncio
+    async def test_handle_jikan_error_other(self, mal_client):
+        """Test _handle_jikan_error for other status codes."""
+        response_data = {
+            "type": "UnknownException",
+            "message": "Unknown error",
+            "error": "Something went wrong"
+        }
+        error_info = await mal_client._handle_jikan_error(418, response_data)
+
+        assert error_info["error_type"] == "api_error"
+        assert error_info["recoverable"] == False
+
+    @pytest.mark.asyncio
+    async def test_create_mal_error_context_401(self, enhanced_mal_client):
+        """Test create_mal_error_context for 401 authentication error."""
+        error = Exception("401 Unauthorized - invalid_token")
         
-        with patch.object(mal_client, '_make_jikan_request', new_callable=AsyncMock) as mock_jikan_request:
-            mock_jikan_request.return_value = sample_jikan_search_response
-            
-            results = await mal_client.search_anime(
-                query=query,
-                genres=[1, 2],  # Action, Adventure
-                status="airing",
-                limit=5
+        with patch.object(
+            enhanced_mal_client, "create_error_context", return_value=AsyncMock()
+        ) as mock_create:
+            await enhanced_mal_client.create_mal_error_context(
+                error=error,
+                correlation_id="test-401",
+                endpoint="/anime/1",
+                operation="get_anime"
             )
             
-            assert isinstance(results, list)
-            
-            # Verify filter parameters were included
-            call_args = mock_jikan_request.call_args
-            assert "/anime" in call_args[0][0]
+            mock_create.assert_called_once()
+            call_args = mock_create.call_args.kwargs
+            assert "MAL authentication failed" in call_args["user_message"]
 
     @pytest.mark.asyncio
-    async def test_get_seasonal_anime(self, mal_client):
-        """Test retrieving seasonal anime."""
-        year = 2023
-        season = "fall"
-        seasonal_response = {
-            "data": [
-                {
-                    "mal_id": 12345,
-                    "title": "Fall 2023 Anime",
-                    "score": 8.5,
-                    "episodes": 12,
-                    "status": "Currently Airing"
-                }
-            ]
-        }
+    async def test_create_mal_error_context_403(self, enhanced_mal_client):
+        """Test create_mal_error_context for 403 forbidden error."""
+        error = Exception("403 Forbidden")
         
-        with patch.object(mal_client, '_make_jikan_request', new_callable=AsyncMock) as mock_jikan_request:
-            mock_jikan_request.return_value = seasonal_response
+        with patch.object(
+            enhanced_mal_client, "create_error_context", return_value=AsyncMock()
+        ) as mock_create:
+            await enhanced_mal_client.create_mal_error_context(
+                error=error,
+                correlation_id="test-403",
+                endpoint="/anime/1",
+                operation="get_anime"
+            )
             
-            results = await mal_client.get_seasonal_anime(year, season)
-            
-            assert len(results) == 1
-            assert results[0]["mal_id"] == 12345
-            assert results[0]["title"] == "Fall 2023 Anime"
-            
-            # Verify seasonal endpoint was called
-            call_args = mock_jikan_request.call_args
-            assert f"/seasons/{year}/{season}" in call_args[0][0]
+            mock_create.assert_called_once()
+            call_args = mock_create.call_args.kwargs
+            assert "access denied" in call_args["user_message"]
 
     @pytest.mark.asyncio
-    async def test_get_anime_statistics(self, mal_client):
-        """Test retrieving anime statistics."""
-        anime_id = 21
-        stats_response = {
-            "data": {
-                "watching": 500000,
-                "completed": 300000,
-                "on_hold": 50000,
-                "dropped": 25000,
-                "plan_to_watch": 200000,
-                "total": 1075000,
-                "scores": {
-                    "1": {"votes": 1000, "percentage": 0.1},
-                    "10": {"votes": 150000, "percentage": 15.0}
-                }
-            }
-        }
+    async def test_create_mal_error_context_429(self, enhanced_mal_client):
+        """Test create_mal_error_context for 429 rate limit error."""
+        error = Exception("429 rate limit exceeded")
         
-        with patch.object(mal_client, '_make_jikan_request', new_callable=AsyncMock) as mock_jikan_request:
-            mock_jikan_request.return_value = stats_response
+        with patch.object(
+            enhanced_mal_client, "create_error_context", return_value=AsyncMock()
+        ) as mock_create:
+            await enhanced_mal_client.create_mal_error_context(
+                error=error,
+                correlation_id="test-429",
+                endpoint="/anime/1",
+                operation="get_anime"
+            )
             
-            stats = await mal_client.get_anime_statistics(anime_id)
-            
-            assert stats["watching"] == 500000
-            assert stats["completed"] == 300000
-            assert stats["total"] == 1075000
-            
-            # Verify statistics endpoint was called
-            call_args = mock_jikan_request.call_args
-            assert f"/anime/{anime_id}/statistics" in call_args[0][0]
+            mock_create.assert_called_once()
+            call_args = mock_create.call_args.kwargs
+            assert "rate limit exceeded" in call_args["user_message"]
 
     @pytest.mark.asyncio
-    async def test_mal_request_with_auth(self, mal_client_with_auth):
-        """Test MAL API request with authentication."""
-        endpoint = "/anime/21"
+    async def test_create_mal_error_context_500(self, enhanced_mal_client):
+        """Test create_mal_error_context for 500 server error."""
+        error = Exception("500 Internal Server Error")
         
-        with patch('aiohttp.ClientSession.get') as mock_get:
-            mock_response = Mock()
-            mock_response.json = AsyncMock(return_value={"id": 21, "title": "One Piece"})
-            mock_response.status = 200
-            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch.object(
+            enhanced_mal_client, "create_error_context", return_value=AsyncMock()
+        ) as mock_create:
+            await enhanced_mal_client.create_mal_error_context(
+                error=error,
+                correlation_id="test-500",
+                endpoint="/anime/1",
+                operation="get_anime"
+            )
             
-            # Mock access token
-            mal_client_with_auth.access_token = "test_access_token"
-            
-            result = await mal_client_with_auth._make_mal_request(endpoint)
-            
-            # Verify authorization header was included
-            call_args = mock_get.call_args
-            headers = call_args[1]["headers"]
-            assert headers["Authorization"] == "Bearer test_access_token"
-            assert result["id"] == 21
+            mock_create.assert_called_once()
+            call_args = mock_create.call_args.kwargs
+            assert "server error" in call_args["user_message"]
 
     @pytest.mark.asyncio
-    async def test_mal_request_without_auth_fails(self, mal_client):
-        """Test MAL API request without authentication fails."""
-        endpoint = "/anime/21"
+    async def test_create_jikan_error_context_429(self, enhanced_mal_client):
+        """Test create_jikan_error_context for 429 rate limit error."""
+        error = Exception("429 rate limit")
         
-        with pytest.raises(Exception) as exc_info:
-            await mal_client._make_mal_request(endpoint)
-        
-        assert "client_id or access_token" in str(exc_info.value).lower()
+        with patch.object(
+            enhanced_mal_client, "create_error_context", return_value=AsyncMock()
+        ) as mock_create:
+            await enhanced_mal_client.create_jikan_error_context(
+                error=error,
+                correlation_id="test-jikan-429",
+                endpoint="/anime/1",
+                operation="get_anime",
+                query_params={"q": "test"}
+            )
+            
+            mock_create.assert_called_once()
+            call_args = mock_create.call_args.kwargs
+            assert "rate limit exceeded" in call_args["user_message"]
 
     @pytest.mark.asyncio
-    async def test_jikan_request_success(self, mal_client):
-        """Test successful Jikan API request."""
-        endpoint = "/anime/21"
+    async def test_create_jikan_error_context_404(self, enhanced_mal_client):
+        """Test create_jikan_error_context for 404 not found error."""
+        error = Exception("404 not found")
         
-        with patch('aiohttp.ClientSession.get') as mock_get:
-            mock_response = Mock()
-            mock_response.json = AsyncMock(return_value={"data": {"mal_id": 21, "title": "One Piece"}})
-            mock_response.status = 200
-            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch.object(
+            enhanced_mal_client, "create_error_context", return_value=AsyncMock()
+        ) as mock_create:
+            await enhanced_mal_client.create_jikan_error_context(
+                error=error,
+                correlation_id="test-jikan-404",
+                endpoint="/anime/1",
+                operation="get_anime"
+            )
             
-            result = await mal_client._make_jikan_request(endpoint)
-            
-            # Verify no authentication header needed for Jikan
-            call_args = mock_get.call_args
-            headers = call_args[1].get("headers", {})
-            assert "Authorization" not in headers
-            assert result["data"]["mal_id"] == 21
+            mock_create.assert_called_once()
+            call_args = mock_create.call_args.kwargs
+            assert "not found" in call_args["user_message"]
 
     @pytest.mark.asyncio
-    async def test_rate_limit_handling_mal(self, mal_client_with_auth):
-        """Test MAL API rate limit handling."""
-        endpoint = "/anime/21"
+    async def test_create_jikan_error_context_500(self, enhanced_mal_client):
+        """Test create_jikan_error_context for 500 server error."""
+        error = Exception("500 server error")
         
-        with patch('aiohttp.ClientSession.get') as mock_get:
-            mock_response = Mock()
-            mock_response.status = 429
-            mock_response.headers = {"Retry-After": "60"}
-            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
+        with patch.object(
+            enhanced_mal_client, "create_error_context", return_value=AsyncMock()
+        ) as mock_create:
+            await enhanced_mal_client.create_jikan_error_context(
+                error=error,
+                correlation_id="test-jikan-500",
+                endpoint="/anime/1",
+                operation="get_anime"
+            )
             
-            mal_client_with_auth.access_token = "test_token"
-            
-            with pytest.raises(Exception) as exc_info:
-                await mal_client_with_auth._make_mal_request(endpoint)
-            
-            assert "rate limit" in str(exc_info.value).lower()
+            mock_create.assert_called_once()
+            call_args = mock_create.call_args.kwargs
+            assert "server error" in call_args["user_message"]
 
     @pytest.mark.asyncio
-    async def test_rate_limit_handling_jikan(self, mal_client):
-        """Test Jikan API rate limit handling."""
-        endpoint = "/anime/21"
+    async def test_refresh_access_token_missing_credentials(self):
+        """Test refresh_access_token fails without required credentials."""
+        with patch("src.integrations.clients.base_client.rate_limit_manager"):
+            client = MALClient()  # No credentials
         
-        with patch('aiohttp.ClientSession.get') as mock_get:
-            mock_response = Mock()
-            mock_response.status = 429
-            mock_response.headers = {"Retry-After": "60"}
-            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            with pytest.raises(Exception) as exc_info:
-                await mal_client._make_jikan_request(endpoint)
-            
-            assert "rate limit" in str(exc_info.value).lower()
+        with pytest.raises(Exception, match="OAuth2 credentials required"):
+            await client.refresh_access_token()
 
     @pytest.mark.asyncio
-    async def test_circuit_breaker_integration(self, mal_client):
-        """Test circuit breaker integration."""
-        # Mock circuit breaker to simulate open state
-        mal_client.circuit_breaker.is_open = Mock(return_value=True)
-        
-        with pytest.raises(Exception) as exc_info:
-            await mal_client.get_anime_by_id(21)
-        
-        assert "circuit breaker" in str(exc_info.value).lower()
+    async def test_refresh_access_token_auto_correlation_id(self, enhanced_mal_client):
+        """Test refresh_access_token auto-generates correlation ID."""
+        enhanced_mal_client.refresh_token = "old_token"
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(return_value="trace-123")
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
 
-    @pytest.mark.asyncio
-    async def test_cache_integration(self, mal_client, sample_jikan_anime_response):
-        """Test cache integration."""
-        anime_id = 21
-        cache_key = f"mal_anime_{anime_id}"
-        
-        # Mock cache hit
-        mal_client.cache_manager.get = AsyncMock(return_value=sample_jikan_anime_response["data"])
-        
-        result = await mal_client.get_anime_by_id(anime_id)
-        
-        assert result["mal_id"] == 21
-        mal_client.cache_manager.get.assert_called_once_with(cache_key)
-
-    @pytest.mark.asyncio
-    async def test_oauth2_token_refresh(self, mal_client_with_auth):
-        """Test OAuth2 token refresh functionality."""
-        refresh_token = "test_refresh_token"
-        mal_client_with_auth.refresh_token = refresh_token
-        
         token_response = {
-            "access_token": "new_access_token",
+            "access_token": "new_token",
             "refresh_token": "new_refresh_token",
-            "token_type": "Bearer",
-            "expires_in": 3600
         }
-        
-        with patch('aiohttp.ClientSession.post') as mock_post:
-            mock_response = Mock()
-            mock_response.json = AsyncMock(return_value=token_response)
-            mock_response.status = 200
-            mock_post.return_value.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_post.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            await mal_client_with_auth.refresh_access_token()
-            
-            assert mal_client_with_auth.access_token == "new_access_token"
-            assert mal_client_with_auth.refresh_token == "new_refresh_token"
+
+        with patch.object(
+            enhanced_mal_client, "make_request", return_value=token_response
+        ):
+            # Call without correlation_id - should auto-generate
+            await enhanced_mal_client.refresh_access_token()
+
+            assert enhanced_mal_client.access_token == "new_token"
+            enhanced_mal_client.correlation_logger.log_with_correlation.assert_called()
 
     @pytest.mark.asyncio
-    async def test_mal_error_handling(self, mal_client_with_auth):
-        """Test MAL API specific error handling."""
-        endpoint = "/anime/21"
-        
-        with patch('aiohttp.ClientSession.get') as mock_get:
-            mock_response = Mock()
-            mock_response.status = 401
-            mock_response.json = AsyncMock(return_value={"error": "unauthorized"})
-            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            mal_client_with_auth.access_token = "invalid_token"
-            
-            with pytest.raises(Exception) as exc_info:
-                await mal_client_with_auth._make_mal_request(endpoint)
-            
-            assert "unauthorized" in str(exc_info.value).lower()
+    async def test_refresh_access_token_failure(self, enhanced_mal_client):
+        """Test refresh_access_token handles failure properly."""
+        enhanced_mal_client.refresh_token = "old_token"
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(return_value="trace-123")
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
+
+        with patch.object(
+            enhanced_mal_client, "make_request", side_effect=Exception("Token refresh failed")
+        ):
+            with pytest.raises(Exception, match="Token refresh failed"):
+                await enhanced_mal_client.refresh_access_token(correlation_id="refresh-error")
+
+            # Should log error and trace failure
+            enhanced_mal_client.correlation_logger.log_with_correlation.assert_called()
+            enhanced_mal_client.execution_tracer.end_trace.assert_called_once()
+            call_args = enhanced_mal_client.execution_tracer.end_trace.call_args
+            assert call_args.kwargs["status"] == "error"
 
     @pytest.mark.asyncio
-    async def test_jikan_error_handling(self, mal_client):
-        """Test Jikan API specific error handling."""
-        endpoint = "/anime/999999"
-        
-        with patch('aiohttp.ClientSession.get') as mock_get:
-            mock_response = Mock()
-            mock_response.status = 404
-            mock_response.json = AsyncMock(return_value={
-                "status": 404,
-                "type": "BadResponseException",
-                "message": "Resource does not exist",
-                "error": None
-            })
-            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
-            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            with pytest.raises(Exception) as exc_info:
-                await mal_client._make_jikan_request(endpoint)
-            
-            assert "resource does not exist" in str(exc_info.value).lower()
+    async def test_get_anime_statistics_correlation_chain_success(self, enhanced_mal_client):
+        """Test get_anime_statistics with correlation chaining success."""
+        parent_id = "parent-stats-123"
+        stats_response = {"data": {"watching": 100, "completed": 500}}
+
+        with patch.object(
+            enhanced_mal_client,
+            "make_request_with_correlation_chain",
+            return_value=stats_response,
+        ) as mock_chain:
+            result = await enhanced_mal_client.get_anime_statistics(
+                1, parent_correlation_id=parent_id
+            )
+
+            assert result == stats_response["data"]
+            mock_chain.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_exponential_backoff_retry(self, mal_client):
-        """Test exponential backoff retry logic."""
-        endpoint = "/anime/21"
+    async def test_get_anime_statistics_correlation_chain_failure(self, enhanced_mal_client):
+        """Test get_anime_statistics falls back when correlation chaining fails."""
+        parent_id = "parent-stats-fail"
+        stats_response = {"data": {"watching": 100, "completed": 500}}
+
+        # Mock correlation chain to fail, regular request to succeed
+        with patch.object(
+            enhanced_mal_client,
+            "make_request_with_correlation_chain",
+            side_effect=Exception("Chain failed"),
+        ):
+            with patch.object(
+                enhanced_mal_client, "_make_jikan_request", return_value=stats_response
+            ):
+                result = await enhanced_mal_client.get_anime_statistics(
+                    1, parent_correlation_id=parent_id
+                )
+
+                assert result == stats_response["data"]
+
+    @pytest.mark.asyncio
+    async def test_get_anime_statistics_error_with_correlation(self, enhanced_mal_client):
+        """Test get_anime_statistics handles errors with correlation."""
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", side_effect=Exception("Stats failed")
+        ):
+            with patch.object(
+                enhanced_mal_client, "_create_enhanced_error_context"
+            ) as mock_error:
+                result = await enhanced_mal_client.get_anime_statistics(
+                    1, correlation_id="stats-error"
+                )
+
+                assert result == {}
+                mock_error.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_anime_statistics_error_without_correlation(self, mal_client):
+        """Test get_anime_statistics handles errors without correlation."""
+        with patch.object(
+            mal_client, "_make_jikan_request", side_effect=Exception("Stats failed")
+        ):
+            result = await mal_client.get_anime_statistics(1)
+            assert result == {}
+
+    @pytest.mark.asyncio
+    async def test_get_anime_by_id_correlation_chain_fallback(self, enhanced_mal_client):
+        """Test get_anime_by_id correlation chain fallback when exception occurs."""
+        parent_id = "parent-fail-123"
+        sample_response = {"data": {"mal_id": 1, "title": "Fallback Anime"}}
         
-        with patch('aiohttp.ClientSession.get') as mock_get:
-            # First call fails with 500
-            mock_response_fail = Mock()
-            mock_response_fail.status = 500
-            mock_response_fail.json = AsyncMock(return_value={"error": "internal server error"})
-            
-            # Second call succeeds
-            mock_response_success = Mock()
-            mock_response_success.status = 200
-            mock_response_success.json = AsyncMock(return_value={"data": {"mal_id": 21}})
-            
-            mock_get.return_value.__aenter__ = AsyncMock(side_effect=[mock_response_fail, mock_response_success])
-            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
-            
-            with patch('asyncio.sleep') as mock_sleep:
-                result = await mal_client._make_jikan_request_with_retry(endpoint, max_retries=2)
+        # Mock correlation chain to fail, then regular flow to succeed
+        with patch.object(
+            enhanced_mal_client,
+            "make_request_with_correlation_chain", 
+            side_effect=Exception("Chain failed")
+        ):
+            with patch.object(
+                enhanced_mal_client, "_make_jikan_request", return_value=sample_response
+            ):
+                result = await enhanced_mal_client.get_anime_by_id(
+                    1, parent_correlation_id=parent_id
+                )
                 
-                assert result["data"]["mal_id"] == 21
-                assert mock_get.call_count == 2
-                mock_sleep.assert_called_once()  # Exponential backoff sleep
+                assert result == sample_response["data"]
+
+    @pytest.mark.asyncio
+    async def test_get_anime_by_id_no_data_in_response(self, mal_client):
+        """Test get_anime_by_id when response has no 'data' field."""
+        # Response without 'data' field
+        sample_response = {"error": "Some error occurred"}
+        
+        with patch.object(
+            mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            result = await mal_client.get_anime_by_id(1)
+            assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_anime_by_id_mal_api_success_with_tracing(self, enhanced_mal_client):
+        """Test get_anime_by_id MAL API success with execution tracing."""
+        enhanced_mal_client.access_token = "test_token"
+        sample_response = {"mal_id": 1, "title": "Test Anime"}
+        
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(return_value="trace-123")
+        enhanced_mal_client.execution_tracer.add_trace_step = AsyncMock()
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
+        
+        with patch.object(
+            enhanced_mal_client, "_make_mal_request", return_value=sample_response
+        ):
+            result = await enhanced_mal_client.get_anime_by_id(
+                1, correlation_id="mal-success-test"
+            )
+            
+            assert result == sample_response
+            # Should have traced MAL API success steps
+            assert enhanced_mal_client.execution_tracer.add_trace_step.call_count >= 2
+            enhanced_mal_client.execution_tracer.end_trace.assert_called_once()
+
+    @pytest.mark.asyncio 
+    async def test_get_anime_by_id_basic_error_handling_without_correlation(self, enhanced_mal_client):
+        """Test get_anime_by_id basic error handling when no correlation_id provided."""
+        # Clear correlation_logger to test basic error path
+        enhanced_mal_client.correlation_logger = None
+        
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", side_effect=APIError("API failed")
+        ):
+            result = await enhanced_mal_client.get_anime_by_id(1)
+            assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_anime_by_id_graceful_degradation_failure(self, enhanced_mal_client):
+        """Test get_anime_by_id when graceful degradation also fails."""
+        enhanced_mal_client.correlation_logger.log_with_correlation = AsyncMock()
+        
+        # Mock both APIs to fail
+        with patch.object(
+            enhanced_mal_client, "_make_jikan_request", side_effect=APIError("API failed")
+        ):
+            # Mock graceful degradation to also fail
+            with patch.object(
+                enhanced_mal_client, "handle_enhanced_graceful_degradation",
+                side_effect=Exception("Degradation failed")
+            ):
+                result = await enhanced_mal_client.get_anime_by_id(
+                    1, correlation_id="degradation-fail-test"
+                )
+                
+                assert result is None
+
+    @pytest.mark.asyncio
+    async def test_search_anime_no_response_data(self, mal_client):
+        """Test search_anime when response has no 'data' field."""
+        # Response without 'data' field
+        sample_response = {"error": "Search failed"}
+        
+        with patch.object(
+            mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            result = await mal_client.search_anime(query="test")
+            assert result == []
+
+    @pytest.mark.asyncio
+    async def test_search_anime_exception_in_try_block(self, enhanced_mal_client):
+        """Test search_anime exception in the main try block."""
+        enhanced_mal_client.execution_tracer.start_trace = AsyncMock(return_value="trace-123")
+        enhanced_mal_client.execution_tracer.add_trace_step = AsyncMock()
+        enhanced_mal_client.execution_tracer.end_trace = AsyncMock()
+        
+        # Mock add_trace_step to raise an exception after start_trace succeeds
+        enhanced_mal_client.execution_tracer.add_trace_step.side_effect = Exception("Trace step failed")
+        
+        with pytest.raises(Exception, match="Trace step failed"):
+            await enhanced_mal_client.search_anime(query="test")
+            
+        # Should have traced the error
+        enhanced_mal_client.execution_tracer.end_trace.assert_called_once()
+        call_args = enhanced_mal_client.execution_tracer.end_trace.call_args
+        assert call_args.kwargs["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_get_anime_statistics_no_data_response(self, mal_client):
+        """Test get_anime_statistics when response has no 'data' field."""
+        # Response without 'data' field
+        sample_response = {"error": "Stats not available"}
+        
+        with patch.object(
+            mal_client, "_make_jikan_request", return_value=sample_response
+        ):
+            result = await mal_client.get_anime_statistics(1)
+            assert result == {}
+
+    @pytest.mark.asyncio
+    async def test_get_anime_by_id_correlation_chain_no_data(self, enhanced_mal_client):
+        """Test get_anime_by_id correlation chain when response has no data field."""
+        parent_id = "parent-no-data-123"
+        # Response without data field
+        response_without_data = {"error": "No data available"}
+        
+        with patch.object(
+            enhanced_mal_client,
+            "make_request_with_correlation_chain",
+            return_value=response_without_data,
+        ) as mock_chain:
+            result = await enhanced_mal_client.get_anime_by_id(
+                1, parent_correlation_id=parent_id
+            )
+            
+            # Should return None when correlation chain response has no data
+            assert result is None
+            mock_chain.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_anime_statistics_correlation_chain_no_data(self, enhanced_mal_client):
+        """Test get_anime_statistics correlation chain when response has no data field."""
+        parent_id = "parent-stats-no-data-123"
+        # Response without data field
+        response_without_data = {"error": "Stats not available"}
+        
+        with patch.object(
+            enhanced_mal_client,
+            "make_request_with_correlation_chain",
+            return_value=response_without_data,
+        ) as mock_chain:
+            result = await enhanced_mal_client.get_anime_statistics(
+                1, parent_correlation_id=parent_id
+            )
+            
+            # Should return {} when correlation chain response has no data
+            assert result == {}
+            mock_chain.assert_called_once()

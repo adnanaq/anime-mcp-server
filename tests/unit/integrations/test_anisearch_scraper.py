@@ -382,19 +382,19 @@ class TestAniSearchScraper:
         """Test cache exception handling coverage (lines 26-27, 49-50)."""
         scraper.cache_manager.get = AsyncMock(side_effect=Exception("Cache error"))
         scraper.cache_manager.set = AsyncMock(side_effect=Exception("Cache error"))
-        
+
         with patch.object(scraper, "_make_request") as mock_request:
             mock_request.return_value = {
                 "status_code": 200,
-                "content": '<html><h1>Test Anime</h1></html>',
+                "content": "<html><h1>Test Anime</h1></html>",
                 "is_cloudflare_protected": False,
             }
-            
+
             # Test slug method - should handle cache exceptions gracefully
             result = await scraper.get_anime_by_slug("test")
             assert result is not None
-            
-            # Test ID method - should handle cache exceptions gracefully  
+
+            # Test ID method - should handle cache exceptions gracefully
             result = await scraper.get_anime_by_id(123)
             assert result is not None
 
@@ -403,11 +403,11 @@ class TestAniSearchScraper:
         """Test circuit breaker exception propagation (lines 68-70, 95-98)."""
         with patch.object(scraper, "_make_request") as mock_request:
             mock_request.side_effect = Exception("Circuit breaker is open")
-            
+
             # Should re-raise circuit breaker exceptions
             with pytest.raises(Exception, match="Circuit breaker is open"):
                 await scraper.get_anime_by_slug("test")
-            
+
             with pytest.raises(Exception, match="Circuit breaker is open"):
                 await scraper.get_anime_by_id(123)
 
@@ -417,19 +417,19 @@ class TestAniSearchScraper:
         with patch.object(scraper, "_make_request") as mock_request:
             mock_request.return_value = {
                 "status_code": 200,
-                "content": '<html><div>No title here</div></html>',
+                "content": "<html><div>No title here</div></html>",
                 "is_cloudflare_protected": False,
             }
-            
+
             result = await scraper.get_anime_by_slug("test")
             assert result is None
-            
+
             result = await scraper.get_anime_by_id(123)
             assert result is None
 
     def test_extract_anime_data_no_german_text_coverage(self, scraper):
         """Test anime data extraction without German text (lines 214-215, 244)."""
-        html = '''
+        html = """
         <html>
             <body>
                 <h1>Test Anime</h1>
@@ -437,29 +437,31 @@ class TestAniSearchScraper:
                 <div class="description">English description only</div>
             </body>
         </html>
-        '''
-        soup = BeautifulSoup(html, 'html.parser')
-        
-        result = scraper._extract_anime_data(soup)
-        assert 'german_description' not in result or result['german_description'] is None
+        """
+        soup = BeautifulSoup(html, "html.parser")
 
-    @pytest.mark.asyncio  
+        result = scraper._extract_anime_data(soup)
+        assert (
+            "german_description" not in result or result["german_description"] is None
+        )
+
+    @pytest.mark.asyncio
     async def test_non_circuit_breaker_exception_coverage(self, scraper):
         """Test non-circuit breaker exception handling (lines 68, 98)."""
-        with patch.object(scraper, '_make_request') as mock_request:
+        with patch.object(scraper, "_make_request") as mock_request:
             mock_request.side_effect = Exception("Regular network error")
-            
+
             # Should not re-raise non-circuit breaker exceptions
             result = await scraper.get_anime_by_slug("test")
             assert result is None
-            
+
             result = await scraper.get_anime_by_id(123)
             assert result is None
 
     def test_remaining_missing_lines_100_percent_coverage(self, scraper):
         """Test remaining missing lines for 100% coverage (lines 214-215, 244)."""
         # Test lines 214-215, 244 - German description extraction edge cases
-        html_german = '''
+        html_german = """
         <html>
             <body>
                 <h1>Deutscher Anime</h1>
@@ -471,15 +473,15 @@ class TestAniSearchScraper:
                 </div>
             </body>
         </html>
-        '''
-        soup = BeautifulSoup(html_german, 'html.parser')
+        """
+        soup = BeautifulSoup(html_german, "html.parser")
         result = scraper._extract_anime_data(soup)
-        
+
         # Should find German text in description
-        assert result.get('title') == 'Deutscher Anime'
-        
+        assert result.get("title") == "Deutscher Anime"
+
         # Test when no German description found - this should cover missing lines
-        html_no_german = '''
+        html_no_german = """
         <html>
             <body>
                 <h1>English Anime</h1>
@@ -488,17 +490,17 @@ class TestAniSearchScraper:
                 </div>
             </body>
         </html>
-        '''
-        soup_no_german = BeautifulSoup(html_no_german, 'html.parser')
+        """
+        soup_no_german = BeautifulSoup(html_no_german, "html.parser")
         result_no_german = scraper._extract_anime_data(soup_no_german)
-        assert result_no_german.get('title') == 'English Anime'
+        assert result_no_german.get("title") == "English Anime"
 
     @pytest.mark.asyncio
     async def test_anisearch_lines_68_exact_coverage(self, scraper):
         """Test exact coverage for line 68 - exception handling in get_anime_by_id."""
-        with patch.object(scraper, '_make_request') as mock_request:
+        with patch.object(scraper, "_make_request") as mock_request:
             mock_request.side_effect = Exception("Network error for line 68")
-            
+
             result = await scraper.get_anime_by_id(123)
             # Line 68 should execute for exception handling
             assert result is None
@@ -506,7 +508,7 @@ class TestAniSearchScraper:
     def test_anisearch_lines_214_215_244_exact_coverage(self, scraper):
         """Test exact coverage for lines 214-215, 244 - German text extraction."""
         # Test lines 214-215, 244 - German text extraction edge cases
-        html_german_edge = '''
+        html_german_edge = """
         <html>
             <body>
                 <h1>German Edge Test</h1>
@@ -518,25 +520,25 @@ class TestAniSearchScraper:
                 </div>
             </body>
         </html>
-        '''
-        
+        """
+
         from bs4 import BeautifulSoup
-        soup = BeautifulSoup(html_german_edge, 'html.parser')
+
+        soup = BeautifulSoup(html_german_edge, "html.parser")
         result = scraper._extract_anime_data(soup)
-        
+
         # Lines 214-215, 244 should execute for German text processing
-        assert result.get('title') == 'German Edge Test'
+        assert result.get("title") == "German Edge Test"
         # Verify German text was processed
-        assert 'description' in result
+        assert "description" in result
 
     def test_anisearch_final_100_percent_coverage(self, scraper):
         """Test final missing lines to achieve exactly 100% coverage."""
         from bs4 import BeautifulSoup
-        
+
         # Test all remaining missing lines 68, 214-215, 244
-        
         # Create HTML with specific German text patterns to hit lines 214-215, 244
-        html_german_specific = '''
+        html_german_specific = """
         <html>
             <body>
                 <h1>German Specific Test</h1>
@@ -551,36 +553,39 @@ class TestAniSearchScraper:
                 </div>
             </body>
         </html>
-        '''
-        
-        soup_german = BeautifulSoup(html_german_specific, 'html.parser')
+        """
+
+        soup_german = BeautifulSoup(html_german_specific, "html.parser")
         result_german = scraper._extract_anime_data(soup_german)
-        
+
         # Lines 214-215, 244 should execute for German text extraction patterns
-        assert result_german.get('title') == 'German Specific Test'
+        assert result_german.get("title") == "German Specific Test"
         # Should have description
-        assert 'description' in result_german
+        assert "description" in result_german
 
     def test_anisearch_exact_missing_lines_coverage(self, scraper):
         """Test the exact missing lines 68, 214-215, 244."""
         from bs4 import BeautifulSoup
-        
+
         # Test line 68 - cache hit in get_anime_by_slug
-        with patch.object(scraper.cache_manager, 'get', new_callable=AsyncMock) as mock_cache:
-            mock_cache.return_value = {'title': 'Cached Result', 'domain': 'anisearch'}
-            
+        with patch.object(
+            scraper.cache_manager, "get", new_callable=AsyncMock
+        ) as mock_cache:
+            mock_cache.return_value = {"title": "Cached Result", "domain": "anisearch"}
+
             import asyncio
+
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                result = loop.run_until_complete(scraper.get_anime_by_slug('test-slug'))
+                result = loop.run_until_complete(scraper.get_anime_by_slug("test-slug"))
                 # Line 68 should execute when cache hit occurs
-                assert result['title'] == 'Cached Result'
+                assert result["title"] == "Cached Result"
             finally:
                 loop.close()
-        
+
         # Test lines 214-215 - genre extraction
-        html_genre = '''
+        html_genre = """
         <html>
             <div class="anime-info">
                 <div class="info-item">
@@ -589,66 +594,72 @@ class TestAniSearchScraper:
                 </div>
             </div>
         </html>
-        '''
-        soup_genre = BeautifulSoup(html_genre, 'html.parser')
+        """
+        soup_genre = BeautifulSoup(html_genre, "html.parser")
         result_genre = scraper._extract_anime_data(soup_genre)
-        
+
         # Lines 214-215 should execute for genre field extraction
-        assert 'genre' in result_genre
-        
+        assert "genre" in result_genre
+
         # Test line 244 - genre list iteration
-        html_genre_list = '''
+        html_genre_list = """
         <html>
             <div class="anime-genres">
                 <a href="/genre/action">Action</a>
                 <a href="/genre/drama">Drama</a>
             </div>
         </html>
-        '''
-        soup_genre_list = BeautifulSoup(html_genre_list, 'html.parser')
+        """
+        soup_genre_list = BeautifulSoup(html_genre_list, "html.parser")
         result_genre_list = scraper._extract_anime_data(soup_genre_list)
-        
+
         # Line 244 should execute for genre link processing
-        assert 'genres' in result_genre_list
-        assert 'Action' in result_genre_list['genres']
-        assert 'Drama' in result_genre_list['genres']
+        assert "genres" in result_genre_list
+        assert "Action" in result_genre_list["genres"]
+        assert "Drama" in result_genre_list["genres"]
 
     def test_anisearch_line_244_exact_coverage(self, scraper):
         """Test exact coverage for line 244 - genre list iteration."""
         from bs4 import BeautifulSoup
-        
+
         # Force line 244 to execute by patching _extract_genres
         original_method = scraper._extract_genres
+
         def patched_extract_genres(soup):
             genres = []
             # Create a mock list container to hit line 244
-            mock_links = [type('MockLink', (), {'text': 'Action'}), type('MockLink', (), {'text': 'Drama'})]
+            mock_links = [
+                type("MockLink", (), {"text": "Action"}),
+                type("MockLink", (), {"text": "Drama"}),
+            ]
             container = mock_links  # This is a list
-            
+
             if isinstance(container, list):
                 # List of genre links (lines 241-244)
                 for link in container:  # Line 241
-                    genre_text = scraper._clean_text(link.text)  # Line 242  
+                    genre_text = scraper._clean_text(link.text)  # Line 242
                     if genre_text and genre_text not in genres:  # Line 243
                         genres.append(genre_text)  # Line 244 - TARGET
-            
+
             return genres
-        
+
         scraper._extract_genres = patched_extract_genres
-        result = scraper._extract_anime_data(BeautifulSoup('<html></html>', 'html.parser'))
+        result = scraper._extract_anime_data(
+            BeautifulSoup("<html></html>", "html.parser")
+        )
         scraper._extract_genres = original_method
-        
+
         # Line 244 should have executed
-        if 'genres' in result:
-            assert 'Action' in result['genres']
-            assert 'Drama' in result['genres']
+        if "genres" in result:
+            assert "Action" in result["genres"]
+            assert "Drama" in result["genres"]
 
     def test_anisearch_line_244_direct_genre_links(self, scraper):
-        """Test line 244 by having soup.find_all return direct genre links as a list."""  
+        """Test line 244 by having soup.find_all return direct genre links as a list."""
         from bs4 import BeautifulSoup
-        
+
         # Create HTML with direct genre links that will be found by soup.find_all()
-        html_direct_links = '''
+        html_direct_links = """
         <html>
             <body>
                 <a class="genre-tag" href="/genre/action">Action</a>
@@ -656,17 +667,17 @@ class TestAniSearchScraper:
                 <a class="genre-tag" href="/genre/action">Action</a>
             </body>
         </html>
-        '''
-        
-        soup = BeautifulSoup(html_direct_links, 'html.parser')
-        
+        """
+
+        soup = BeautifulSoup(html_direct_links, "html.parser")
+
         # This should trigger line 244 because soup.find_all("a", class_="genre-tag") returns a list
         # and line 239 checks isinstance(container, list) which will be True
         result = scraper._extract_anime_data(soup)
-        
+
         # Line 244 should execute - genres.append(genre_text)
-        assert 'genres' in result
-        assert 'Action' in result['genres']
-        assert 'Drama' in result['genres']
+        assert "genres" in result
+        assert "Action" in result["genres"]
+        assert "Drama" in result["genres"]
         # Should deduplicate Action
-        assert result['genres'].count('Action') == 1
+        assert result["genres"].count("Action") == 1

@@ -7,7 +7,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import admin, search, workflow
-from .api.external import anilist, mal, kitsu, animeschedule, anidb, animeplanet, anisearch, animecountdown
+from .api.external import (
+    anidb,
+    anilist,
+    animecountdown,
+    animeplanet,
+    animeschedule,
+    anisearch,
+    kitsu,
+    mal,
+)
 
 # Import our modules
 from .config import get_settings
@@ -58,10 +67,11 @@ async def lifespan(app: FastAPI):
 
     # Cleanup (if needed)
     logger.info("🛑 Shutting down MCP server")
-    
+
     # Disconnect global MCP client if connected
     try:
         from .mcp.fastmcp_client_adapter import disconnect_global_adapter
+
         await disconnect_global_adapter()
         logger.info("✅ MCP client disconnected gracefully")
     except Exception as e:
@@ -124,7 +134,7 @@ async def root():
                 "animeplanet": "/api/external/animeplanet",
                 "livechart": "/api/external/livechart",
                 "anisearch": "/api/external/anisearch",
-                "animecountdown": "/api/external/animecountdown"
+                "animecountdown": "/api/external/animecountdown",
             },
             "health": "/health",
             "stats": "/stats",

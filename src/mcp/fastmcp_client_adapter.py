@@ -230,31 +230,31 @@ _global_adapter: Optional[FastMCPClientAdapter] = None
 
 async def _ensure_global_connection() -> FastMCPClientAdapter:
     """Ensure global adapter is connected and return it.
-    
+
     Returns:
         Connected FastMCP client adapter
-        
+
     Raises:
         Exception: If connection fails
     """
     global _global_adapter
-    
+
     if _global_adapter is None:
         _global_adapter = create_fastmcp_adapter()
-        
+
     if not _global_adapter.is_connected():
         await _global_adapter.connect()
-        
+
     return _global_adapter
 
 
 async def disconnect_global_adapter() -> None:
     """Disconnect the global adapter if connected.
-    
+
     This should be called during application shutdown.
     """
     global _global_adapter
-    
+
     if _global_adapter and _global_adapter.is_connected():
         await _global_adapter.disconnect()
         _global_adapter = None
@@ -266,7 +266,7 @@ async def get_all_mcp_tools() -> Dict[str, Callable]:
 
     This function provides backward compatibility with the existing
     get_all_mcp_tools() interface while using modern FastMCP client.
-    
+
     The connection is maintained persistently to ensure tools remain functional.
 
     Returns:

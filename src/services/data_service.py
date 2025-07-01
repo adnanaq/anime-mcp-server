@@ -132,16 +132,16 @@ class AnimeDataService:
 
     async def _download_image(self, url: str) -> Optional[str]:
         """Download image from URL and return base64 encoded data.
-        
+
         Args:
             url: Image URL to download
-            
+
         Returns:
             Base64 encoded image data or None if failed
         """
         if not url:
             return None
-            
+
         try:
             session = await self._get_http_session()
             async with session.get(url) as response:
@@ -149,7 +149,7 @@ class AnimeDataService:
                     content_type = response.headers.get("content-type", "")
                     if "image" in content_type.lower():
                         image_data = await response.read()
-                        
+
                         # Verify it's a valid image
                         try:
                             Image.open(io.BytesIO(image_data)).verify()
@@ -158,7 +158,9 @@ class AnimeDataService:
                             logger.debug(f"Invalid image data from {url}")
                             return None
                     else:
-                        logger.debug(f"Non-image content type: {content_type} for {url}")
+                        logger.debug(
+                            f"Non-image content type: {content_type} for {url}"
+                        )
                         return None
                 else:
                     logger.debug(f"HTTP {response.status} for {url}")
@@ -216,8 +218,12 @@ class AnimeDataService:
             platform_ids = self._extract_all_platform_ids(anime.sources)
 
             # Download images for embedding processing
-            picture_data = await self._download_image(anime.picture) if anime.picture else None
-            thumbnail_data = await self._download_image(anime.thumbnail) if anime.thumbnail else None
+            picture_data = (
+                await self._download_image(anime.picture) if anime.picture else None
+            )
+            thumbnail_data = (
+                await self._download_image(anime.thumbnail) if anime.thumbnail else None
+            )
 
             # Create processed document for Qdrant
             processed_doc = {

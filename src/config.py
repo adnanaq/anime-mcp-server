@@ -129,10 +129,11 @@ class Settings(BaseSettings):
         default=None, description="AniList OAuth2 Client ID for user data"
     )
     anilist_client_secret: Optional[str] = Field(
-        default=None, description="AniList OAuth2 Client Secret for user data"  
+        default=None, description="AniList OAuth2 Client Secret for user data"
     )
     anilist_auth_token: Optional[str] = Field(
-        default=None, description="AniList OAuth2 Bearer Token for authenticated requests"
+        default=None,
+        description="AniList OAuth2 Bearer Token for authenticated requests",
     )
     anidb_client: Optional[str] = Field(
         default="dimeapi", description="AniDB client name for API requests"

@@ -1,23 +1,25 @@
 """AniList GraphQL client implementation."""
 
-import aiohttp
 from typing import Any, Dict, List, Optional
+
+import aiohttp
+
 from .base_client import BaseClient
 
 
 class AniListClient(BaseClient):
     """AniList GraphQL API client."""
-    
+
     def __init__(
         self,
         auth_token: Optional[str] = None,
         circuit_breaker=None,
         rate_limiter=None,
         cache_manager=None,
-        error_handler=None
+        error_handler=None,
     ):
         """Initialize AniList client.
-        
+
         Args:
             auth_token: Optional OAuth2 bearer token for authenticated requests
             circuit_breaker: Circuit breaker instance
@@ -28,37 +30,38 @@ class AniListClient(BaseClient):
         super().__init__(circuit_breaker, rate_limiter, cache_manager, error_handler)
         self.base_url = "https://graphql.anilist.co"
         self.auth_token = auth_token
-    
-    async def _make_graphql_request(self, query: str, variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    async def _make_graphql_request(
+        self, query: str, variables: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Make GraphQL request to AniList API."""
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
-        
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+
         if self.auth_token:
             headers["Authorization"] = f"Bearer {self.auth_token}"
-        
-        payload = {
-            "query": query
-        }
-        
+
+        payload = {"query": query}
+
         if variables:
             payload["variables"] = variables
-        
+
         async with aiohttp.ClientSession() as session:
-            async with session.post(self.base_url, json=payload, headers=headers) as response:
+            async with session.post(
+                self.base_url, json=payload, headers=headers
+            ) as response:
                 if response.status == 429:
                     retry_after = response.headers.get("Retry-After", "60")
-                    raise Exception(f"Rate limit exceeded. Retry after {retry_after} seconds")
-                
+                    raise Exception(
+                        f"Rate limit exceeded. Retry after {retry_after} seconds"
+                    )
+
                 result = await response.json()
-                
+
                 if "errors" in result:
                     raise Exception(f"GraphQL error: {result['errors'][0]['message']}")
-                
+
                 return result
-    
+
     async def get_anime_by_id(self, anime_id: int) -> Optional[Dict[str, Any]]:
         """Get anime by AniList ID."""
         # Check cache first
@@ -71,11 +74,11 @@ class AniListClient(BaseClient):
             except:
                 # Cache miss or error, continue to API call
                 pass
-        
+
         # Check circuit breaker before making API call
         if self.circuit_breaker and self.circuit_breaker.is_open():
             raise Exception("Circuit breaker is open")
-        
+
         query = """
         query ($id: Int) {
             Media(id: $id, type: ANIME) {
@@ -115,20 +118,20 @@ class AniListClient(BaseClient):
             }
         }
         """
-        
+
         variables = {"id": anime_id}
         response = await self._make_graphql_request(query=query, variables=variables)
-        
+
         if response and "data" in response and response["data"]["Media"]:
             return response["data"]["Media"]
         return None
-    
+
     async def search_anime(
         self,
         query: Optional[str] = None,
         genres: Optional[List[str]] = None,
         year: Optional[int] = None,
-        limit: int = 10
+        limit: int = 10,
     ) -> List[Dict[str, Any]]:
         """Search anime by various criteria."""
         search_query = """
@@ -146,20 +149,22 @@ class AniListClient(BaseClient):
             }
         }
         """
-        
+
         variables = {
             "search": query,
             "genre_in": genres,
             "seasonYear": year,
-            "perPage": limit
+            "perPage": limit,
         }
-        
-        response = await self._make_graphql_request(query=search_query, variables=variables)
-        
+
+        response = await self._make_graphql_request(
+            query=search_query, variables=variables
+        )
+
         if response and "data" in response and "Page" in response["data"]:
             return response["data"]["Page"]["media"]
         return []
-    
+
     async def get_anime_characters(self, anime_id: int) -> List[Dict[str, Any]]:
         """Get anime characters."""
         query = """
@@ -182,15 +187,23 @@ class AniListClient(BaseClient):
             }
         }
         """
-        
+
         variables = {"id": anime_id}
         response = await self._make_graphql_request(query=query, variables=variables)
-        
+
         if response and "data" in response and response["data"]["Media"]:
             edges = response["data"]["Media"]["characters"]["edges"]
-            return [{"name": edge["node"]["name"], "role": edge["role"], "id": edge["node"]["id"], "image": edge["node"]["image"]} for edge in edges]
+            return [
+                {
+                    "name": edge["node"]["name"],
+                    "role": edge["role"],
+                    "id": edge["node"]["id"],
+                    "image": edge["node"]["image"],
+                }
+                for edge in edges
+            ]
         return []
-    
+
     async def get_anime_staff(self, anime_id: int) -> List[Dict[str, Any]]:
         """Get anime staff."""
         query = """
@@ -210,11 +223,18 @@ class AniListClient(BaseClient):
             }
         }
         """
-        
+
         variables = {"id": anime_id}
         response = await self._make_graphql_request(query=query, variables=variables)
-        
+
         if response and "data" in response and response["data"]["Media"]:
             edges = response["data"]["Media"]["staff"]["edges"]
-            return [{"name": edge["node"]["name"], "role": edge["role"], "id": edge["node"]["id"]} for edge in edges]
+            return [
+                {
+                    "name": edge["node"]["name"],
+                    "role": edge["role"],
+                    "id": edge["node"]["id"],
+                }
+                for edge in edges
+            ]
         return []

@@ -125,7 +125,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             mood_keywords: Optional[List[str]] = None,
         ) -> Any:
             """Search for anime using semantic search with natural language queries."""
-            
+
             try:
                 validated_input = SearchAnimeInput(
                     query=query,
@@ -140,13 +140,13 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
                 validated_params = validated_input.model_dump()
                 # Handle both MCP tools (with .ainvoke) and test mocks (direct callable)
                 tool_func = mcp_tools["search_anime"]
-                if hasattr(tool_func, 'ainvoke'):
+                if hasattr(tool_func, "ainvoke"):
                     result = await tool_func.ainvoke(validated_params)
                 else:
                     # For tests: call function directly with unpacked parameters
                     result = await tool_func(**validated_params)
                 return result
-                
+
             except Exception as e:
                 logger.error(f"SearchAnimeInput validation failed: {e}")
                 raise
@@ -161,7 +161,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             """Get detailed information about a specific anime by its ID."""
             validated_input = GetAnimeDetailsInput(anime_id=anime_id)
             tool_func = mcp_tools["get_anime_details"]
-            if hasattr(tool_func, 'ainvoke'):
+            if hasattr(tool_func, "ainvoke"):
                 return await tool_func.ainvoke(validated_input.model_dump())
             else:
                 return await tool_func(**validated_input.model_dump())
@@ -176,7 +176,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
             """Find anime similar to a given anime based on content and metadata."""
             validated_input = FindSimilarAnimeInput(anime_id=anime_id, limit=limit)
             tool_func = mcp_tools["find_similar_anime"]
-            if hasattr(tool_func, 'ainvoke'):
+            if hasattr(tool_func, "ainvoke"):
                 return await tool_func.ainvoke(validated_input.model_dump())
             else:
                 return await tool_func(**validated_input.model_dump())
@@ -190,7 +190,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
         async def get_anime_stats() -> Any:
             """Get database statistics and health information."""
             tool_func = mcp_tools["get_anime_stats"]
-            if hasattr(tool_func, 'ainvoke'):
+            if hasattr(tool_func, "ainvoke"):
                 return await tool_func.ainvoke({})
             else:
                 return await tool_func()
@@ -207,7 +207,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
                 image_data=image_data, limit=limit
             )
             tool_func = mcp_tools["search_anime_by_image"]
-            if hasattr(tool_func, 'ainvoke'):
+            if hasattr(tool_func, "ainvoke"):
                 return await tool_func.ainvoke(validated_input.model_dump())
             else:
                 return await tool_func(**validated_input.model_dump())
@@ -224,7 +224,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
                 anime_id=anime_id, limit=limit
             )
             tool_func = mcp_tools["find_visually_similar_anime"]
-            if hasattr(tool_func, 'ainvoke'):
+            if hasattr(tool_func, "ainvoke"):
                 return await tool_func.ainvoke(validated_input.model_dump())
             else:
                 return await tool_func(**validated_input.model_dump())
@@ -246,7 +246,7 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
                 query=query, image_data=image_data, text_weight=text_weight, limit=limit
             )
             tool_func = mcp_tools["search_multimodal_anime"]
-            if hasattr(tool_func, 'ainvoke'):
+            if hasattr(tool_func, "ainvoke"):
                 return await tool_func.ainvoke(validated_input.model_dump())
             else:
                 return await tool_func(**validated_input.model_dump())

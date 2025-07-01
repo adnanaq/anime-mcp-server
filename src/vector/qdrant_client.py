@@ -344,7 +344,8 @@ class QdrantClient:
                         payload = {
                             k: v
                             for k, v in doc.items()
-                            if k not in ("embedding_text", "picture_data", "thumbnail_data")
+                            if k
+                            not in ("embedding_text", "picture_data", "thumbnail_data")
                         }
 
                         # Create point with single or multi-vector
@@ -355,7 +356,9 @@ class QdrantClient:
                             # Add picture vector if picture data available
                             picture_data = doc.get("picture_data")
                             if picture_data:
-                                picture_embedding = self._create_image_embedding(picture_data)
+                                picture_embedding = self._create_image_embedding(
+                                    picture_data
+                                )
                                 if picture_embedding:
                                     vectors["picture"] = picture_embedding
                                 else:
@@ -367,11 +370,15 @@ class QdrantClient:
                             # Add thumbnail vector if thumbnail data available
                             thumbnail_data = doc.get("thumbnail_data")
                             if thumbnail_data:
-                                thumbnail_embedding = self._create_image_embedding(thumbnail_data)
+                                thumbnail_embedding = self._create_image_embedding(
+                                    thumbnail_data
+                                )
                                 if thumbnail_embedding:
                                     vectors["thumbnail"] = thumbnail_embedding
                                 else:
-                                    vectors["thumbnail"] = [0.0] * self._image_vector_size
+                                    vectors["thumbnail"] = [
+                                        0.0
+                                    ] * self._image_vector_size
                             else:
                                 # Use zero vector for missing thumbnail
                                 vectors["thumbnail"] = [0.0] * self._image_vector_size
@@ -569,7 +576,7 @@ class QdrantClient:
         """
         if not filters:
             return None
-            
+
         conditions = []
 
         for key, value in filters.items():
@@ -722,11 +729,11 @@ class QdrantClient:
             delete_success = await self.delete_collection()
             if not delete_success:
                 return False
-            
+
             create_success = await self.create_collection()
             if not create_success:
                 return False
-                
+
             logger.info(f"Cleared and recreated collection: {self.collection_name}")
             return True
         except Exception as e:

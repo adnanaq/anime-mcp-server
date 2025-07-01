@@ -409,7 +409,6 @@ class TestQdrantClient:
 # ============================================================================
 
 from qdrant_client.models import (
-    NamedVector,
     PointStruct,
     ScoredPoint,
 )
@@ -487,7 +486,7 @@ class TestQdrantMultiVector:
 
         # Reset the mock to clear the init call
         mock_qdrant_sdk.create_collection.reset_mock()
-        
+
         # Now test create_collection directly
         result = await multi_vector_client.create_collection()
 
@@ -502,8 +501,12 @@ class TestQdrantMultiVector:
         """Test image-based search functionality."""
         # Mock search results
         mock_points = [
-            ScoredPoint(id="anime1", version=1, score=0.95, payload={"title": "Attack on Titan"}),
-            ScoredPoint(id="anime2", version=1, score=0.87, payload={"title": "Death Note"}),
+            ScoredPoint(
+                id="anime1", version=1, score=0.95, payload={"title": "Attack on Titan"}
+            ),
+            ScoredPoint(
+                id="anime2", version=1, score=0.87, payload={"title": "Death Note"}
+            ),
         ]
         mock_qdrant_sdk.search.return_value = mock_points
 
@@ -542,8 +545,12 @@ class TestQdrantMultiVector:
 
         # Mock similar anime search results
         mock_points = [
-            ScoredPoint(id="anime1", version=1, score=0.93, payload={"title": "Similar Anime 1"}),
-            ScoredPoint(id="anime2", version=1, score=0.89, payload={"title": "Similar Anime 2"}),
+            ScoredPoint(
+                id="anime1", version=1, score=0.93, payload={"title": "Similar Anime 1"}
+            ),
+            ScoredPoint(
+                id="anime2", version=1, score=0.89, payload={"title": "Similar Anime 2"}
+            ),
         ]
         mock_qdrant_sdk.search.return_value = mock_points
 
@@ -563,7 +570,7 @@ class TestQdrantMultiVector:
         search_call = mock_qdrant_sdk.search.call_args
         # Check that query_vector is a NamedVector for image
         query_vector = search_call[1]["query_vector"]
-        assert hasattr(query_vector, 'name')
+        assert hasattr(query_vector, "name")
         assert query_vector.name == "image"
 
         # Verify results
@@ -581,14 +588,20 @@ class TestQdrantMultiVector:
         """Test multimodal search combining text and image."""
         # Mock text and image search results
         text_points = [
-            ScoredPoint(id="anime1", version=1, score=0.91, payload={"title": "Text Match 1"}),
-            ScoredPoint(id="anime2", version=1, score=0.85, payload={"title": "Text Match 2"}),
+            ScoredPoint(
+                id="anime1", version=1, score=0.91, payload={"title": "Text Match 1"}
+            ),
+            ScoredPoint(
+                id="anime2", version=1, score=0.85, payload={"title": "Text Match 2"}
+            ),
         ]
         image_points = [
             ScoredPoint(
                 id="anime1", version=1, score=0.88, payload={"title": "Text Match 1"}
             ),  # Same anime
-            ScoredPoint(id="anime3", version=1, score=0.82, payload={"title": "Image Match 1"}),
+            ScoredPoint(
+                id="anime3", version=1, score=0.82, payload={"title": "Image Match 1"}
+            ),
         ]
 
         # Mock multiple search calls
@@ -666,7 +679,9 @@ class TestQdrantMultiVector:
 
         # Mock search results
         mock_points = [
-            ScoredPoint(id="anime1", version=1, score=0.95, payload={"title": "Attack on Titan"})
+            ScoredPoint(
+                id="anime1", version=1, score=0.95, payload={"title": "Attack on Titan"}
+            )
         ]
         mock_qdrant_sdk.search.return_value = mock_points
 
@@ -698,10 +713,15 @@ class TestQdrantMultiVector:
             assert client._supports_multi_vector is False
             assert client.vision_processor is None
 
-    def test_multi_vector_settings_validation(self, mock_settings, mock_qdrant_sdk, mock_text_embedding):
+    def test_multi_vector_settings_validation(
+        self, mock_settings, mock_qdrant_sdk, mock_text_embedding
+    ):
         """Test that multi-vector settings are properly validated."""
         with (
-            patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_text_embedding),
+            patch(
+                "src.vector.qdrant_client.TextEmbedding",
+                return_value=mock_text_embedding,
+            ),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
         ):
             # Test with valid multi-vector settings
@@ -738,7 +758,9 @@ class TestQdrantMultiVector:
         """Test multimodal search when one modality fails."""
         # Mock text search success, image search failure
         text_points = [
-            ScoredPoint(id="anime1", version=1, score=0.9, payload={"title": "Text Result"})
+            ScoredPoint(
+                id="anime1", version=1, score=0.9, payload={"title": "Text Result"}
+            )
         ]
         mock_qdrant_sdk.search.side_effect = [
             text_points,
@@ -991,29 +1013,33 @@ class TestQdrantClientErrorHandling:
         """Test initialization with cache directory setting."""
         mock_encoder = Mock()
         mock_qdrant_sdk = Mock()
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
-            patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder) as mock_te,
+            patch(
+                "src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder
+            ) as mock_te,
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
         ):
             client = QdrantClient(settings=mock_settings)
-            
+
             # Verify TextEmbedding was called with cache_dir
             mock_te.assert_called_once_with(
-                model_name="BAAI/bge-small-en-v1.5",
-                cache_dir="/tmp/fastembed_cache"
+                model_name="BAAI/bge-small-en-v1.5", cache_dir="/tmp/fastembed_cache"
             )
 
     def test_init_fastembed_error(self, mock_settings):
         """Test initialization when FastEmbed fails."""
         with (
-            patch("src.vector.qdrant_client.TextEmbedding", side_effect=Exception("FastEmbed error")),
+            patch(
+                "src.vector.qdrant_client.TextEmbedding",
+                side_effect=Exception("FastEmbed error"),
+            ),
             patch("src.vector.qdrant_client.QdrantSDK"),
         ):
             with pytest.raises(Exception, match="FastEmbed error"):
@@ -1023,20 +1049,23 @@ class TestQdrantClientErrorHandling:
         """Test initialization when VisionProcessor fails."""
         mock_encoder = Mock()
         mock_qdrant_sdk = Mock()
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
-            patch("src.vector.vision_processor.VisionProcessor", side_effect=Exception("Vision error")),
+            patch(
+                "src.vector.vision_processor.VisionProcessor",
+                side_effect=Exception("Vision error"),
+            ),
         ):
             client = QdrantClient(settings=mock_settings)
-            
+
             # Should disable multi-vector support on vision processor error
             assert client._supports_multi_vector is False
             assert client.vision_processor is None
@@ -1046,13 +1075,13 @@ class TestQdrantClientErrorHandling:
         mock_encoder = Mock()
         mock_encoder.embed.side_effect = Exception("Embedding error")
         mock_qdrant_sdk = Mock()
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1060,7 +1089,7 @@ class TestQdrantClientErrorHandling:
             client = QdrantClient(
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
-            
+
             # Should return zero vector on error
             embedding = client._create_embedding("test text")
             assert len(embedding) == 384
@@ -1072,13 +1101,13 @@ class TestQdrantClientErrorHandling:
         mock_qdrant_sdk = Mock()
         mock_vision = Mock()
         mock_vision.encode_image.side_effect = Exception("Image processing error")
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1088,7 +1117,7 @@ class TestQdrantClientErrorHandling:
             )
             client._supports_multi_vector = True
             client.vision_processor = mock_vision
-            
+
             # Should return zero vector on error
             embedding = client._create_image_embedding("base64_image")
             assert len(embedding) == 512
@@ -1098,13 +1127,13 @@ class TestQdrantClientErrorHandling:
         """Test _create_image_embedding when multi-vector not supported."""
         mock_encoder = Mock()
         mock_qdrant_sdk = Mock()
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1113,7 +1142,7 @@ class TestQdrantClientErrorHandling:
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
             client._supports_multi_vector = False
-            
+
             # Should return None when multi-vector not supported
             embedding = client._create_image_embedding("base64_image")
             assert embedding is None
@@ -1122,13 +1151,13 @@ class TestQdrantClientErrorHandling:
         """Test _create_image_embedding with empty image data."""
         mock_encoder = Mock()
         mock_qdrant_sdk = Mock()
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1138,7 +1167,7 @@ class TestQdrantClientErrorHandling:
             )
             client._supports_multi_vector = True
             client.vision_processor = Mock()
-            
+
             # Should return zero vector for empty data
             embedding = client._create_image_embedding("")
             assert len(embedding) == 512
@@ -1150,13 +1179,13 @@ class TestQdrantClientErrorHandling:
         mock_qdrant_sdk = Mock()
         mock_vision = Mock()
         mock_vision.encode_image.return_value = None
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1166,7 +1195,7 @@ class TestQdrantClientErrorHandling:
             )
             client._supports_multi_vector = True
             client.vision_processor = mock_vision
-            
+
             # Should return zero vector when None returned
             embedding = client._create_image_embedding("base64_image")
             assert len(embedding) == 512
@@ -1179,13 +1208,13 @@ class TestQdrantClientErrorHandling:
         mock_vision = Mock()
         # Return wrong size embedding (256 instead of 512)
         mock_vision.encode_image.return_value = [0.1] * 256
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1195,7 +1224,7 @@ class TestQdrantClientErrorHandling:
             )
             client._supports_multi_vector = True
             client.vision_processor = mock_vision
-            
+
             # Should pad to correct size
             embedding = client._create_image_embedding("base64_image")
             assert len(embedding) == 512
@@ -1210,13 +1239,13 @@ class TestQdrantClientErrorHandling:
         mock_vision = Mock()
         # Return oversized embedding (1024 instead of 512)
         mock_vision.encode_image.return_value = [0.1] * 1024
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1226,7 +1255,7 @@ class TestQdrantClientErrorHandling:
             )
             client._supports_multi_vector = True
             client.vision_processor = mock_vision
-            
+
             # Should truncate to correct size
             embedding = client._create_image_embedding("base64_image")
             assert len(embedding) == 512
@@ -1241,13 +1270,13 @@ class TestQdrantClientCollectionOps:
         """Create QdrantClient for testing."""
         mock_encoder = Mock()
         mock_qdrant_sdk = Mock()
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1262,7 +1291,7 @@ class TestQdrantClientCollectionOps:
     async def test_clear_index_delete_failure(self, client):
         """Test clear_index when delete_collection fails."""
         client.client.delete_collection.side_effect = Exception("Delete failed")
-        
+
         result = await client.clear_index()
         assert result is False
 
@@ -1270,8 +1299,8 @@ class TestQdrantClientCollectionOps:
     async def test_clear_index_create_failure(self, client):
         """Test clear_index when create_collection fails after successful delete."""
         # Mock successful delete but failed create
-        with patch.object(client, 'delete_collection', return_value=True):
-            with patch.object(client, 'create_collection', return_value=False):
+        with patch.object(client, "delete_collection", return_value=True):
+            with patch.object(client, "create_collection", return_value=False):
                 result = await client.clear_index()
                 assert result is False
 
@@ -1279,14 +1308,16 @@ class TestQdrantClientCollectionOps:
     async def test_delete_collection_error(self, client):
         """Test delete_collection error handling."""
         client.client.delete_collection.side_effect = Exception("Delete error")
-        
+
         result = await client.delete_collection()
         assert result is False
 
     @pytest.mark.asyncio
     async def test_create_collection_error(self, client):
         """Test create_collection error handling."""
-        with patch.object(client, '_ensure_collection_exists', side_effect=Exception("Create error")):
+        with patch.object(
+            client, "_ensure_collection_exists", side_effect=Exception("Create error")
+        ):
             result = await client.create_collection()
             assert result is False
 
@@ -1294,7 +1325,7 @@ class TestQdrantClientCollectionOps:
     async def test_search_by_image_no_multi_vector(self, client):
         """Test search_by_image when multi-vector not supported."""
         client._supports_multi_vector = False
-        
+
         results = await client.search_by_image("base64_image")
         assert results == []
 
@@ -1302,8 +1333,8 @@ class TestQdrantClientCollectionOps:
     async def test_search_by_image_no_embedding(self, client):
         """Test search_by_image when image embedding fails."""
         client._supports_multi_vector = True
-        
-        with patch.object(client, '_create_image_embedding', return_value=None):
+
+        with patch.object(client, "_create_image_embedding", return_value=None):
             results = await client.search_by_image("base64_image")
             assert results == []
 
@@ -1316,13 +1347,13 @@ class TestQdrantClientMultimodalEdgeCases:
         """Create multi-vector QdrantClient for testing."""
         mock_encoder = Mock()
         mock_qdrant_sdk = Mock()
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1338,14 +1369,20 @@ class TestQdrantClientMultimodalEdgeCases:
     async def test_multimodal_search_no_multi_vector(self, multi_vector_client):
         """Test multimodal search fallback when multi-vector disabled."""
         multi_vector_client._supports_multi_vector = False
-        
+
         # Mock text search result
         mock_points = [
-            ScoredPoint(id="anime1", version=1, score=0.9, payload={"title": "Test Anime"})
+            ScoredPoint(
+                id="anime1", version=1, score=0.9, payload={"title": "Test Anime"}
+            )
         ]
         multi_vector_client.client.search.return_value = mock_points
-        
-        with patch.object(multi_vector_client, 'search', return_value=[{"title": "Test Anime", "_score": 0.9}]):
+
+        with patch.object(
+            multi_vector_client,
+            "search",
+            return_value=[{"title": "Test Anime", "_score": 0.9}],
+        ):
             results = await multi_vector_client.search_multimodal(
                 query="test query", image_data="base64_image"
             )
@@ -1356,7 +1393,11 @@ class TestQdrantClientMultimodalEdgeCases:
     async def test_multimodal_search_no_image_data(self, multi_vector_client):
         """Test multimodal search when no image data provided."""
         # Mock text search result
-        with patch.object(multi_vector_client, 'search', return_value=[{"title": "Test Anime", "_score": 0.9}]):
+        with patch.object(
+            multi_vector_client,
+            "search",
+            return_value=[{"title": "Test Anime", "_score": 0.9}],
+        ):
             results = await multi_vector_client.search_multimodal(
                 query="test query", image_data=None
             )
@@ -1368,8 +1409,8 @@ class TestQdrantClientMultimodalEdgeCases:
         """Test multimodal search when no combined results available."""
         # Mock searches returning empty results
         with (
-            patch.object(multi_vector_client, 'search', return_value=[]),
-            patch.object(multi_vector_client, 'search_by_image', return_value=[]),
+            patch.object(multi_vector_client, "search", return_value=[]),
+            patch.object(multi_vector_client, "search_by_image", return_value=[]),
         ):
             results = await multi_vector_client.search_multimodal(
                 query="test query", image_data="base64_image"
@@ -1383,11 +1424,15 @@ class TestQdrantClientMultimodalEdgeCases:
         # Mock search results with anime IDs
         text_results = [{"anime_id": "anime1", "_score": 0.9}]
         image_results = [{"anime_id": "anime1", "visual_similarity_score": 0.8}]
-        
+
         with (
-            patch.object(multi_vector_client, 'search', return_value=text_results),
-            patch.object(multi_vector_client, 'search_by_image', return_value=image_results),
-            patch.object(multi_vector_client, 'get_by_id', return_value=None),  # Anime data not found
+            patch.object(multi_vector_client, "search", return_value=text_results),
+            patch.object(
+                multi_vector_client, "search_by_image", return_value=image_results
+            ),
+            patch.object(
+                multi_vector_client, "get_by_id", return_value=None
+            ),  # Anime data not found
         ):
             results = await multi_vector_client.search_multimodal(
                 query="test query", image_data="base64_image"
@@ -1399,8 +1444,12 @@ class TestQdrantClientMultimodalEdgeCases:
     async def test_find_visually_similar_no_multi_vector(self, multi_vector_client):
         """Test find_visually_similar_anime fallback when multi-vector disabled."""
         multi_vector_client._supports_multi_vector = False
-        
-        with patch.object(multi_vector_client, 'find_similar', return_value=[{"title": "Similar Anime"}]):
+
+        with patch.object(
+            multi_vector_client,
+            "find_similar",
+            return_value=[{"title": "Similar Anime"}],
+        ):
             results = await multi_vector_client.find_visually_similar_anime("anime123")
             assert len(results) == 1
             assert results[0]["title"] == "Similar Anime"
@@ -1410,7 +1459,7 @@ class TestQdrantClientMultimodalEdgeCases:
         """Test find_visually_similar_anime when reference anime not found."""
         # Mock retrieve returning empty result
         multi_vector_client.client.retrieve.return_value = []
-        
+
         results = await multi_vector_client.find_visually_similar_anime("nonexistent")
         assert results == []
 
@@ -1419,13 +1468,14 @@ class TestQdrantClientMultimodalEdgeCases:
         """Test find_visually_similar_anime when no image vector available."""
         # Mock reference point without image vector
         from qdrant_client.models import PointStruct
+
         reference_point = PointStruct(
-            id="ref123", 
-            payload={"title": "Reference Anime"}, 
-            vector={"text": [0.1] * 384}  # Only text vector, no image
+            id="ref123",
+            payload={"title": "Reference Anime"},
+            vector={"text": [0.1] * 384},  # Only text vector, no image
         )
         multi_vector_client.client.retrieve.return_value = [reference_point]
-        
+
         results = await multi_vector_client.find_visually_similar_anime("ref123")
         assert results == []
 
@@ -1434,13 +1484,14 @@ class TestQdrantClientMultimodalEdgeCases:
         """Test find_visually_similar_anime when image vector is all zeros."""
         # Mock reference point with zero image vector
         from qdrant_client.models import PointStruct
+
         reference_point = PointStruct(
-            id="ref123", 
-            payload={"title": "Reference Anime"}, 
-            vector={"image": [0.0] * 512}  # All zeros - no image processed
+            id="ref123",
+            payload={"title": "Reference Anime"},
+            vector={"image": [0.0] * 512},  # All zeros - no image processed
         )
         multi_vector_client.client.retrieve.return_value = [reference_point]
-        
+
         results = await multi_vector_client.find_visually_similar_anime("ref123")
         assert results == []
 
@@ -1449,8 +1500,12 @@ class TestQdrantClientMultimodalEdgeCases:
         """Test find_visually_similar_anime error handling and fallback."""
         # Mock retrieve throwing an exception
         multi_vector_client.client.retrieve.side_effect = Exception("Retrieve error")
-        
-        with patch.object(multi_vector_client, 'find_similar', return_value=[{"title": "Fallback Result"}]):
+
+        with patch.object(
+            multi_vector_client,
+            "find_similar",
+            return_value=[{"title": "Fallback Result"}],
+        ):
             results = await multi_vector_client.find_visually_similar_anime("anime123")
             assert len(results) == 1
             assert results[0]["title"] == "Fallback Result"
@@ -1466,7 +1521,7 @@ class TestQdrantSimpleErrorCases:
         mock_qdrant_sdk = MagicMock()
         mock_qdrant_sdk.get_collections.return_value.collections = []
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1474,7 +1529,7 @@ class TestQdrantSimpleErrorCases:
             client = QdrantClient(
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
-            
+
             # Test _build_filter with None - should return None (covers missing line)
             result = client._build_filter(None)
             assert result is None
@@ -1485,7 +1540,7 @@ class TestQdrantSimpleErrorCases:
         mock_qdrant_sdk = MagicMock()
         mock_qdrant_sdk.get_collections.return_value.collections = []
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1493,17 +1548,17 @@ class TestQdrantSimpleErrorCases:
             client = QdrantClient(
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
-            
+
             # Test empty text (covers missing lines)
             result = client._create_embedding("")
             assert len(result) == 384
             assert all(val == 0.0 for val in result)
-            
+
             # Test None text (covers missing lines)
             result = client._create_embedding(None)
             assert len(result) == 384
             assert all(val == 0.0 for val in result)
-            
+
             # Test whitespace only (covers missing lines)
             result = client._create_embedding("   \n\t   ")
             assert len(result) == 384
@@ -1516,7 +1571,7 @@ class TestQdrantSimpleErrorCases:
         mock_qdrant_sdk = MagicMock()
         mock_qdrant_sdk.get_collections.return_value.collections = []
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1524,7 +1579,7 @@ class TestQdrantSimpleErrorCases:
             client = QdrantClient(
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
-            
+
             # Test error handling in _create_embedding (covers missing lines)
             result = client._create_embedding("test text")
             assert len(result) == 384
@@ -1538,7 +1593,7 @@ class TestQdrantSimpleErrorCases:
         mock_qdrant_sdk = MagicMock()
         mock_qdrant_sdk.get_collections.return_value.collections = []
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1546,7 +1601,7 @@ class TestQdrantSimpleErrorCases:
             client = QdrantClient(
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
-            
+
             # Test when embed returns empty list (covers missing lines)
             result = client._create_embedding("test text")
             assert len(result) == 384
@@ -1560,7 +1615,7 @@ class TestQdrantSimpleErrorCases:
         mock_qdrant_sdk.get_collections.return_value.collections = []
         mock_qdrant_sdk.create_collection.return_value = True
         mock_qdrant_sdk.search.side_effect = Exception("Search failed")
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1568,7 +1623,7 @@ class TestQdrantSimpleErrorCases:
             client = QdrantClient(
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
-            
+
             # Test search error handling (covers missing lines)
             results = await client.search("test query")
             assert results == []
@@ -1581,7 +1636,7 @@ class TestQdrantSimpleErrorCases:
         mock_qdrant_sdk.get_collections.return_value.collections = []
         mock_qdrant_sdk.create_collection.return_value = True
         mock_qdrant_sdk.retrieve.side_effect = Exception("Retrieve failed")
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1589,7 +1644,7 @@ class TestQdrantSimpleErrorCases:
             client = QdrantClient(
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
-            
+
             # Test get_by_id error handling (covers missing lines)
             result = await client.get_by_id("test_id")
             assert result is None
@@ -1598,12 +1653,12 @@ class TestQdrantSimpleErrorCases:
         """Test collection existence check logging."""
         mock_encoder = MagicMock()
         mock_qdrant_sdk = MagicMock()
-        
+
         # Mock collection that already exists
         mock_collection = MagicMock()
         mock_collection.name = "test_anime"
         mock_qdrant_sdk.get_collections.return_value.collections = [mock_collection]
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1622,7 +1677,7 @@ class TestQdrantSimpleErrorCases:
         mock_qdrant_sdk.get_collections.return_value.collections = []
         mock_qdrant_sdk.create_collection.return_value = True
         mock_qdrant_sdk.upsert.side_effect = Exception("Upsert failed")
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1630,11 +1685,11 @@ class TestQdrantSimpleErrorCases:
             client = QdrantClient(
                 url="http://test-qdrant:6333", collection_name="test_anime"
             )
-            
+
             documents = [
                 {"anime_id": "test1", "embedding_text": "test anime", "title": "Test"}
             ]
-            
+
             # Test add_documents error handling (covers missing lines 622-624)
             result = await client.add_documents(documents)
             assert result is False
@@ -1642,19 +1697,19 @@ class TestQdrantSimpleErrorCases:
 
 class TestQdrantComprehensiveCoverage:
     """Comprehensive tests to achieve 100% code coverage."""
-    
+
     @pytest.fixture
     def client(self):
         """Create QdrantClient for comprehensive testing."""
         mock_encoder = Mock()
         mock_qdrant_sdk = Mock()
-        
+
         # Properly mock the collection existence check
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
             patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
@@ -1664,82 +1719,88 @@ class TestQdrantComprehensiveCoverage:
             )
             client.client = mock_qdrant_sdk
             return client
-    
+
     @pytest.mark.asyncio
     async def test_get_stats_error_handling(self, client):
         """Test get_stats error handling path."""
         # Mock get_collection to raise exception
         client.client.get_collection.side_effect = Exception("Collection not found")
-        
+
         result = await client.get_stats()
-        
+
         # Should return error dict when exception occurs
         assert "error" in result
         assert result["error"] == "Collection not found"
-    
+
     @pytest.mark.asyncio
     async def test_add_documents_with_multi_vector_image_missing(self, client):
         """Test add_documents when image_data is missing in multi-vector mode."""
         client._supports_multi_vector = True
         client.vision_processor = Mock()
-        
+
         # Document without image_data field
-        documents = [{
-            "anime_id": "test123",
-            "title": "Test Anime",
-            "embedding_text": "action adventure anime"
-        }]
-        
+        documents = [
+            {
+                "anime_id": "test123",
+                "title": "Test Anime",
+                "embedding_text": "action adventure anime",
+            }
+        ]
+
         result = await client.add_documents(documents)
         assert result is True
-        
+
         # Verify that upsert was called with zero vector for missing image
         client.client.upsert.assert_called_once()
         call_args = client.client.upsert.call_args[1]
         points = call_args["points"]
-        
+
         # Should have both text and image vectors (image as zero vector)
         assert "image" in points[0].vector
         assert points[0].vector["image"] == [0.0] * 512  # Default image vector size
-    
-    @pytest.mark.asyncio  
+
+    @pytest.mark.asyncio
     async def test_search_multimodal_fallback_to_text_only(self, client):
         """Test search_multimodal fallback when image search fails."""
         client._supports_multi_vector = True
         client.vision_processor = Mock()
-        
+
         # Mock text search success, image search failure
         from qdrant_client.models import ScoredPoint
+
         text_points = [
-            ScoredPoint(id="anime1", version=1, score=0.9, payload={"title": "Text Result"})
+            ScoredPoint(
+                id="anime1", version=1, score=0.9, payload={"title": "Text Result"}
+            )
         ]
-        
+
         # First call for text search succeeds, second call for image search fails
-        client.client.search.side_effect = [text_points, Exception("Image search failed")]
-        
+        client.client.search.side_effect = [
+            text_points,
+            Exception("Image search failed"),
+        ]
+
         result = await client.search_multimodal(
-            query="action anime", 
-            image_data="base64_image_data", 
-            limit=5
+            query="action anime", image_data="base64_image_data", limit=5
         )
-        
+
         # Should fall back to text-only results
         assert len(result) == 1
         assert result[0]["title"] == "Text Result"
-    
+
     @pytest.mark.asyncio
     async def test_find_visually_similar_with_no_image_embedding(self, client):
         """Test find_visually_similar_anime when create_image_embedding returns None."""
         client._supports_multi_vector = True
         client.vision_processor = Mock()
-        
+
         # Mock _create_image_embedding to return None
-        with patch.object(client, '_create_image_embedding', return_value=None):
+        with patch.object(client, "_create_image_embedding", return_value=None):
             result = await client.find_visually_similar_anime("base64_image", limit=5)
-            
+
         # Should return empty list when no image embedding
         assert result == []
-    
+
     def test_init_encoder_with_cache_dir_none(self):
         """Test _init_encoder when cache_dir is None."""
         mock_encoder = Mock()
@@ -1752,34 +1813,36 @@ class TestQdrantComprehensiveCoverage:
         mock_settings.qdrant_vector_size = 384
         mock_settings.qdrant_distance_metric = "cosine"
         mock_settings.enable_multi_vector = False
-        
+
         # Properly mock collections
         mock_collections_response = Mock()
         mock_collections_response.collections = []
         mock_qdrant_sdk.get_collections.return_value = mock_collections_response
         mock_qdrant_sdk.create_collection.return_value = True
-        
+
         with (
-            patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder) as mock_te,
+            patch(
+                "src.vector.qdrant_client.TextEmbedding", return_value=mock_encoder
+            ) as mock_te,
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
         ):
             client = QdrantClient(settings=mock_settings)
-            
+
             # Verify TextEmbedding was called without cache_dir when None
             mock_te.assert_called_once_with(model_name="BAAI/bge-small-en-v1.5")
-    
+
     @pytest.mark.asyncio
     async def test_create_collection_method(self, client):
         """Test create_collection method directly."""
         # Test the public create_collection method
         result = await client.create_collection()
         assert result is True
-        
+
         # Test error handling in create_collection
         client.client.create_collection.side_effect = Exception("Create failed")
         result = await client.create_collection()
         assert result is False
-    
+
     @pytest.mark.asyncio
     async def test_delete_collection_method(self, client):
         """Test delete_collection method directly."""
@@ -1787,50 +1850,51 @@ class TestQdrantComprehensiveCoverage:
         client.client.delete_collection.return_value = True
         result = await client.delete_collection()
         assert result is True
-        
+
         # Test error handling
         client.client.delete_collection.side_effect = Exception("Delete failed")
         result = await client.delete_collection()
         assert result is False
-    
+
     def test_create_multi_vector_config_with_custom_distance(self, client):
         """Test _create_multi_vector_config with different distance metrics."""
         # Test with 'euclid' distance metric
         client._distance_metric = "euclid"
-        
+
         config = client._create_multi_vector_config()
-        
+
         # Verify both text and image vectors have euclid distance
         from qdrant_client.models import Distance
+
         assert config["text"].distance == Distance.EUCLID
         assert config["image"].distance == Distance.EUCLID
-    
+
     def test_generate_point_id_edge_cases(self, client):
         """Test _generate_point_id with edge case inputs."""
         # Test with special characters
         point_id = client._generate_point_id("Special@#$%Characters")
         assert isinstance(point_id, str)
         assert len(point_id) > 0
-        
+
         # Test with very long title
         long_title = "A" * 1000
         point_id = client._generate_point_id(long_title)
         assert isinstance(point_id, str)
-        
+
         # Test with empty string
         point_id = client._generate_point_id("")
         assert isinstance(point_id, str)
-    
+
     @pytest.mark.asyncio
     async def test_search_by_image_invalid_embedding(self, client):
         """Test search_by_image when image embedding creation fails."""
         client._supports_multi_vector = True
         client.vision_processor = Mock()
-        
+
         # Mock _create_image_embedding to return invalid embedding
-        with patch.object(client, '_create_image_embedding', return_value=[]):
+        with patch.object(client, "_create_image_embedding", return_value=[]):
             result = await client.search_by_image("invalid_image", limit=5)
-            
+
         # Should return empty list for invalid embedding
         assert result == []
 
@@ -1842,7 +1906,9 @@ class TestQdrantClientMissingCoverage:
     def single_vector_client(self, mock_fastembed, mock_qdrant_sdk):
         """Create QdrantClient with single vector support for backward compatibility tests."""
         with (
-            patch("src.vector.qdrant_client.TextEmbedding", return_value=mock_fastembed),
+            patch(
+                "src.vector.qdrant_client.TextEmbedding", return_value=mock_fastembed
+            ),
             patch("src.vector.qdrant_client.QdrantSDK", return_value=mock_qdrant_sdk),
         ):
             client = QdrantClient(url="http://test:6333", collection_name="test")
@@ -1858,11 +1924,11 @@ class TestQdrantClientMissingCoverage:
             "synopsis": "A test anime",
             "tags": ["action", "drama"],
         }
-        
+
         point = single_vector_client._create_point(anime_data)
-        
+
         # Should create single vector point (line 371)
-        assert hasattr(point, 'vector')
+        assert hasattr(point, "vector")
         assert isinstance(point.vector, list)
         assert len(point.vector) == 384  # Single text vector
 
@@ -1874,13 +1940,13 @@ class TestQdrantClientMissingCoverage:
             {"invalid_doc": "missing_required_fields"},  # Will cause error
             {"anime_id": "valid2", "title": "Another Valid"},
         ]
-        
+
         # Mock upsert to work normally
         mock_qdrant_sdk.upsert.return_value = True
-        
+
         # Should handle document processing errors gracefully
         result = await client.process_documents(documents)
-        
+
         # Should succeed for valid documents despite some errors
         assert result is True
         mock_qdrant_sdk.upsert.assert_called()
@@ -1889,17 +1955,19 @@ class TestQdrantClientMissingCoverage:
     async def test_search_multimodal_query_construction(self, client, mock_qdrant_sdk):
         """Test multimodal search query construction - covers line 514."""
         client._supports_multi_vector = True
-        
+
         # Mock search results
         mock_qdrant_sdk.search.return_value = []
-        
+
         # Create mock vision processor
         mock_vision = Mock()
         mock_vision.encode_image.return_value = [0.1] * 512
         client.vision_processor = mock_vision
-        
-        await client.search_multimodal("test query", "image_data", limit=10, text_weight=0.7)
-        
+
+        await client.search_multimodal(
+            "test query", "image_data", limit=10, text_weight=0.7
+        )
+
         # Should construct proper query (line 514 coverage)
         assert mock_qdrant_sdk.search.call_count >= 1
 
@@ -1907,11 +1975,10 @@ class TestQdrantClientMissingCoverage:
         """Test _build_search_filters edge cases - covers lines 569, 576-580."""
         # Test with None values in arrays (line 569)
         filters = client._build_search_filters(
-            genres=["Action", None, "Drama"],
-            year_range=[2020, None]
+            genres=["Action", None, "Drama"], year_range=[2020, None]
         )
         assert filters is not None
-        
+
         # Test with edge case filter conditions (lines 576-580)
         complex_filters = client._build_search_filters(
             genres=["Action"],
@@ -1919,7 +1986,7 @@ class TestQdrantClientMissingCoverage:
             anime_types=["TV", "Movie"],
             studios=["Studio A"],
             exclusions=["Horror"],
-            mood_keywords=["dark"]
+            mood_keywords=["dark"],
         )
         assert complex_filters is not None
         assert isinstance(complex_filters, dict)
@@ -1929,39 +1996,41 @@ class TestQdrantClientMissingCoverage:
         """Test get_by_id when anime not found - covers line 624."""
         # Mock retrieve returning empty list (anime not found)
         mock_qdrant_sdk.retrieve.return_value = []
-        
+
         result = await client.get_by_id("nonexistent_anime")
-        
+
         # Should return None when anime not found (line 624)
         assert result is None
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_find_similar_method_implementation(self, client, mock_qdrant_sdk):
         """Test find_similar method - covers lines 650-703."""
         # Mock successful retrieval of reference anime
         from qdrant_client.models import PointStruct
+
         reference_point = PointStruct(
             id="ref_id",
             payload={"anime_id": "ref123", "title": "Reference"},
-            vector=[0.1] * 384
+            vector=[0.1] * 384,
         )
         mock_qdrant_sdk.retrieve.return_value = [reference_point]
-        
+
         # Mock search results
         from qdrant_client.models import ScoredPoint
+
         mock_points = [
             ScoredPoint(
-                id="similar1", 
+                id="similar1",
                 version=1,
-                score=0.85, 
-                payload={"anime_id": "sim1", "title": "Similar 1"}
+                score=0.85,
+                payload={"anime_id": "sim1", "title": "Similar 1"},
             )
         ]
         mock_qdrant_sdk.search.return_value = mock_points
-        
+
         # Test find_similar method
         results = await client.find_similar("ref123", limit=5)
-        
+
         # Should implement the entire find_similar method (lines 650-703)
         assert isinstance(results, list)
         if results:  # If implementation returns results
@@ -1973,9 +2042,9 @@ class TestQdrantClientMissingCoverage:
         """Test find_similar when reference anime not found."""
         # Mock retrieve returning empty (reference not found)
         mock_qdrant_sdk.retrieve.return_value = []
-        
+
         results = await client.find_similar("nonexistent", limit=5)
-        
+
         # Should handle reference not found gracefully
         assert results == []
 
@@ -1984,30 +2053,31 @@ class TestQdrantClientMissingCoverage:
         """Test search with complex filter combinations."""
         # Mock search results
         from qdrant_client.models import ScoredPoint
+
         mock_points = [
             ScoredPoint(
                 id="filtered1",
-                version=1, 
+                version=1,
                 score=0.9,
-                payload={"anime_id": "filt1", "title": "Filtered Result"}
+                payload={"anime_id": "filt1", "title": "Filtered Result"},
             )
         ]
         mock_qdrant_sdk.search.return_value = mock_points
-        
+
         # Test search with complex filters
         filters = {
             "year": {"gte": 2020, "lte": 2023},
             "tags": {"any": ["Action", "Drama"]},
             "type": {"any": ["TV", "Movie"]},
-            "exclude_tags": ["Horror", "Ecchi"]
+            "exclude_tags": ["Horror", "Ecchi"],
         }
-        
+
         results = await client.search("action anime", limit=10, filters=filters)
-        
+
         # Should handle complex filters properly
         assert isinstance(results, list)
         mock_qdrant_sdk.search.assert_called_once()
-        
+
         # Verify filters were passed correctly
         call_args = mock_qdrant_sdk.search.call_args
         assert "query_filter" in call_args[1] or len(call_args[0]) > 3

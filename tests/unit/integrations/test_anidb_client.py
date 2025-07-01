@@ -1,48 +1,44 @@
 """Tests for AniDB XML client."""
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, Optional
-import json
 import asyncio
-from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
-from src.integrations.clients.anidb_client import AniDBClient
-from src.integrations.error_handling import ErrorContext, CircuitBreaker
+import pytest
+
 from src.integrations.cache_manager import CollaborativeCacheSystem
+from src.integrations.clients.anidb_client import AniDBClient
+from src.integrations.error_handling import CircuitBreaker, ErrorContext
 
 
 class TestAniDBClient:
     """Test the AniDB XML client."""
-    
+
     @pytest.fixture
     def mock_dependencies(self):
         """Mock dependencies for AniDB client."""
         cache_manager = Mock(spec=CollaborativeCacheSystem)
         cache_manager.get = AsyncMock(return_value=None)
-        
+
         circuit_breaker = Mock(spec=CircuitBreaker)
         circuit_breaker.is_open = Mock(return_value=False)
-        
+
         rate_limiter = Mock()
         rate_limiter.acquire = AsyncMock()
-        
+
         return {
             "circuit_breaker": circuit_breaker,
             "rate_limiter": rate_limiter,  # 1 req/sec
             "cache_manager": cache_manager,
-            "error_handler": Mock(spec=ErrorContext)
+            "error_handler": Mock(spec=ErrorContext),
         }
-    
+
     @pytest.fixture
     def anidb_client(self, mock_dependencies):
         """Create AniDB client with mocked dependencies."""
         return AniDBClient(
-            client_name="animemcp",
-            client_version="1.0.0",
-            **mock_dependencies
+            client_name="animemcp", client_version="1.0.0", **mock_dependencies
         )
-    
+
     @pytest.fixture
     def anidb_client_with_auth(self, mock_dependencies):
         """Create AniDB client with authentication credentials."""
@@ -51,9 +47,9 @@ class TestAniDBClient:
             client_version="1.0.0",
             username="testuser",
             password="testpass",
-            **mock_dependencies
+            **mock_dependencies,
         )
-    
+
     @pytest.fixture
     def sample_anime_xml_response(self):
         """Sample AniDB XML anime response."""
@@ -120,7 +116,7 @@ class TestAniDBClient:
         </episode>
     </episodes>
 </anime>"""
-    
+
     @pytest.fixture
     def sample_auth_response(self):
         """Sample AniDB authentication response."""
@@ -129,7 +125,7 @@ class TestAniDBClient:
     <session>S12345ABCDEF</session>
     <salt>randomsalt123</salt>
 </response>"""
-    
+
     @pytest.fixture
     def sample_episode_xml_response(self):
         """Sample AniDB episode XML response."""
@@ -151,7 +147,7 @@ class TestAniDBClient:
         </resource>
     </resources>
 </episode>"""
-    
+
     @pytest.fixture
     def sample_character_xml_response(self):
         """Sample AniDB character XML response."""
@@ -176,11 +172,9 @@ class TestAniDBClient:
     def test_client_initialization_without_auth(self, mock_dependencies):
         """Test AniDB client initialization without authentication."""
         client = AniDBClient(
-            client_name="animemcp",
-            client_version="1.0.0",
-            **mock_dependencies
+            client_name="animemcp", client_version="1.0.0", **mock_dependencies
         )
-        
+
         assert client.circuit_breaker == mock_dependencies["circuit_breaker"]
         assert client.rate_limiter == mock_dependencies["rate_limiter"]
         assert client.cache_manager == mock_dependencies["cache_manager"]
@@ -196,30 +190,34 @@ class TestAniDBClient:
         """Test AniDB client initialization with authentication."""
         username = "testuser"
         password = "testpass"
-        
+
         client = AniDBClient(
             client_name="animemcp",
             client_version="1.0.0",
             username=username,
             password=password,
-            **mock_dependencies
+            **mock_dependencies,
         )
-        
+
         assert client.username == username
         assert client.password == password
         assert client.session_key is None
 
     @pytest.mark.asyncio
-    async def test_authenticate_success(self, anidb_client_with_auth, sample_auth_response):
+    async def test_authenticate_success(
+        self, anidb_client_with_auth, sample_auth_response
+    ):
         """Test successful authentication."""
-        with patch.object(anidb_client_with_auth, '_make_request', new_callable=AsyncMock) as mock_request:
+        with patch.object(
+            anidb_client_with_auth, "_make_request", new_callable=AsyncMock
+        ) as mock_request:
             mock_request.return_value = sample_auth_response
-            
+
             session_key = await anidb_client_with_auth.authenticate()
-            
+
             assert session_key == "S12345ABCDEF"
             assert anidb_client_with_auth.session_key == "S12345ABCDEF"
-            
+
             # Verify auth request was made
             mock_request.assert_called_once()
             call_args = mock_request.call_args
@@ -232,26 +230,30 @@ class TestAniDBClient:
         """Test authentication fails without credentials."""
         with pytest.raises(Exception) as exc_info:
             await anidb_client.authenticate()
-        
+
         assert "credentials required" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
-    async def test_get_anime_by_id_success(self, anidb_client, sample_anime_xml_response):
+    async def test_get_anime_by_id_success(
+        self, anidb_client, sample_anime_xml_response
+    ):
         """Test successful anime retrieval by ID."""
         anime_id = 1
-        
-        with patch.object(anidb_client, '_make_request', new_callable=AsyncMock) as mock_request:
+
+        with patch.object(
+            anidb_client, "_make_request", new_callable=AsyncMock
+        ) as mock_request:
             mock_request.return_value = sample_anime_xml_response
-            
+
             result = await anidb_client.get_anime_by_id(anime_id)
-            
+
             assert result is not None
             assert result["id"] == "1"
             assert result["titles"]["main"] == "Cowboy Bebop"
             assert result["episodecount"] == "26"
             assert result["type"] == "TV Series"
             assert len(result["tags"]) == 3
-            
+
             # Verify API was called with correct parameters
             mock_request.assert_called_once()
             call_args = mock_request.call_args
@@ -263,34 +265,40 @@ class TestAniDBClient:
     async def test_get_anime_by_id_not_found(self, anidb_client):
         """Test anime retrieval with non-existent ID."""
         anime_id = 999999
-        
+
         error_response = """<?xml version="1.0" encoding="UTF-8"?>
 <error code="330">No such anime</error>"""
-        
-        with patch.object(anidb_client, '_make_request', new_callable=AsyncMock) as mock_request:
+
+        with patch.object(
+            anidb_client, "_make_request", new_callable=AsyncMock
+        ) as mock_request:
             mock_request.return_value = error_response
-            
+
             result = await anidb_client.get_anime_by_id(anime_id)
-            
+
             assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_episode_by_id_success(self, anidb_client, sample_episode_xml_response):
+    async def test_get_episode_by_id_success(
+        self, anidb_client, sample_episode_xml_response
+    ):
         """Test successful episode retrieval by ID."""
         episode_id = 1
-        
-        with patch.object(anidb_client, '_make_request', new_callable=AsyncMock) as mock_request:
+
+        with patch.object(
+            anidb_client, "_make_request", new_callable=AsyncMock
+        ) as mock_request:
             mock_request.return_value = sample_episode_xml_response
-            
+
             result = await anidb_client.get_episode_by_id(episode_id)
-            
+
             assert result is not None
             assert result["id"] == "1"
             assert result["titles"]["en"] == "Asteroid Blues"
             assert result["epno"] == "1"
             assert result["length"] == "24"
             assert result["airdate"] == "1998-10-23"
-            
+
             # Verify episode request was made
             mock_request.assert_called_once()
             call_args = mock_request.call_args
@@ -299,22 +307,26 @@ class TestAniDBClient:
             assert params["eid"] == episode_id
 
     @pytest.mark.asyncio
-    async def test_get_anime_characters_success(self, anidb_client, sample_character_xml_response):
+    async def test_get_anime_characters_success(
+        self, anidb_client, sample_character_xml_response
+    ):
         """Test successful anime characters retrieval."""
         anime_id = 1
-        
-        with patch.object(anidb_client, '_make_request', new_callable=AsyncMock) as mock_request:
+
+        with patch.object(
+            anidb_client, "_make_request", new_callable=AsyncMock
+        ) as mock_request:
             mock_request.return_value = sample_character_xml_response
-            
+
             characters = await anidb_client.get_anime_characters(anime_id)
-            
+
             assert len(characters) == 2
             assert characters[0]["name"] == "Spike Spiegel"
             assert characters[0]["type"] == "main character"
             assert characters[0]["gender"] == "male"
             assert characters[1]["name"] == "Jet Black"
             assert characters[0]["seiyuu"]["name"] == "Yamadera Koichi"
-            
+
             # Verify character request was made
             mock_request.assert_called_once()
 
@@ -322,15 +334,17 @@ class TestAniDBClient:
     async def test_search_anime_by_name(self, anidb_client, sample_anime_xml_response):
         """Test anime search by name."""
         anime_name = "Cowboy Bebop"
-        
-        with patch.object(anidb_client, '_make_request', new_callable=AsyncMock) as mock_request:
+
+        with patch.object(
+            anidb_client, "_make_request", new_callable=AsyncMock
+        ) as mock_request:
             mock_request.return_value = sample_anime_xml_response
-            
+
             result = await anidb_client.search_anime_by_name(anime_name)
-            
+
             assert result is not None
             assert result["titles"]["main"] == "Cowboy Bebop"
-            
+
             # Verify search request was made
             mock_request.assert_called_once()
             call_args = mock_request.call_args
@@ -341,21 +355,23 @@ class TestAniDBClient:
     @pytest.mark.asyncio
     async def test_xml_request_success(self, anidb_client):
         """Test successful XML API request."""
-        with patch('aiohttp.ClientSession.get') as mock_get:
+        with patch("aiohttp.ClientSession.get") as mock_get:
             mock_response = Mock()
-            mock_response.text = AsyncMock(return_value='<?xml version="1.0"?><response>success</response>')
+            mock_response.text = AsyncMock(
+                return_value='<?xml version="1.0"?><response>success</response>'
+            )
             mock_response.status = 200
             mock_response.headers = {"Content-Type": "text/xml"}
             mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
             mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+
             params = {"request": "anime", "aid": 1}
             result = await anidb_client._make_request(params)
-            
+
             # Verify XML response was returned
             assert '<?xml version="1.0"?>' in result
-            assert '<response>success</response>' in result
-            
+            assert "<response>success</response>" in result
+
             # Verify client parameters were included
             call_args = mock_get.call_args
             request_params = call_args[1]["params"]
@@ -368,35 +384,37 @@ class TestAniDBClient:
         """Test that rate limiting is enforced (1 req/sec)."""
         # AniDB has strict 1 req/sec rate limiting
         assert anidb_client.rate_limiter is not None
-        
+
         # Mock the actual HTTP session to avoid real network calls
-        with patch('aiohttp.ClientSession.get') as mock_get:
+        with patch("aiohttp.ClientSession.get") as mock_get:
             mock_response = Mock()
-            mock_response.text = AsyncMock(return_value='<?xml version="1.0"?><anime id="1"></anime>')
+            mock_response.text = AsyncMock(
+                return_value='<?xml version="1.0"?><anime id="1"></anime>'
+            )
             mock_response.status = 200
             mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
             mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+
             # Make multiple requests
             await anidb_client.get_anime_by_id(1)
             await anidb_client.get_anime_by_id(2)
-            
+
             # Verify rate limiter was called for each request
             assert anidb_client.rate_limiter.acquire.call_count == 2
 
     @pytest.mark.asyncio
     async def test_error_handling_xml_parsing(self, anidb_client):
         """Test XML parsing error handling."""
-        with patch('aiohttp.ClientSession.get') as mock_get:
+        with patch("aiohttp.ClientSession.get") as mock_get:
             mock_response = Mock()
-            mock_response.text = AsyncMock(return_value='invalid xml content')
+            mock_response.text = AsyncMock(return_value="invalid xml content")
             mock_response.status = 200
             mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
             mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+
             with pytest.raises(Exception) as exc_info:
                 await anidb_client.get_anime_by_id(1)
-            
+
             assert "xml parsing" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
@@ -409,17 +427,21 @@ class TestAniDBClient:
             ("330", "No such anime"),
             ("340", "No such episode"),
             ("350", "No such file"),
-            ("555", "Banned")
+            ("555", "Banned"),
         ]
-        
+
         for error_code, error_msg in error_cases:
-            error_response = f'<?xml version="1.0"?><error code="{error_code}">{error_msg}</error>'
-            
-            with patch.object(anidb_client, '_make_request', new_callable=AsyncMock) as mock_request:
+            error_response = (
+                f'<?xml version="1.0"?><error code="{error_code}">{error_msg}</error>'
+            )
+
+            with patch.object(
+                anidb_client, "_make_request", new_callable=AsyncMock
+            ) as mock_request:
                 mock_request.return_value = error_response
-                
+
                 result = await anidb_client.get_anime_by_id(1)
-                
+
                 assert result is None
 
     @pytest.mark.asyncio
@@ -427,10 +449,10 @@ class TestAniDBClient:
         """Test circuit breaker integration."""
         # Mock circuit breaker to simulate open state
         anidb_client.circuit_breaker.is_open = Mock(return_value=True)
-        
+
         with pytest.raises(Exception) as exc_info:
             await anidb_client.get_anime_by_id(1)
-        
+
         assert "circuit breaker" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
@@ -438,20 +460,20 @@ class TestAniDBClient:
         """Test cache integration."""
         anime_id = 1
         cache_key = f"anidb_anime_{anime_id}"
-        
+
         # Mock parsed response for cache
         parsed_response = {
             "id": "1",
             "titles": {"main": "Cowboy Bebop"},
             "type": "TV Series",
-            "episodecount": "26"
+            "episodecount": "26",
         }
-        
+
         # Mock cache hit
         anidb_client.cache_manager.get = AsyncMock(return_value=parsed_response)
-        
+
         result = await anidb_client.get_anime_by_id(anime_id)
-        
+
         assert result["id"] == "1"
         assert result["titles"]["main"] == "Cowboy Bebop"
         anidb_client.cache_manager.get.assert_called_once_with(cache_key)
@@ -460,35 +482,41 @@ class TestAniDBClient:
     async def test_session_management(self, anidb_client_with_auth):
         """Test session management and logout."""
         # Mock authentication
-        with patch.object(anidb_client_with_auth, '_make_request', new_callable=AsyncMock) as mock_request:
+        with patch.object(
+            anidb_client_with_auth, "_make_request", new_callable=AsyncMock
+        ) as mock_request:
             # First call: authentication
-            auth_response = '<?xml version="1.0"?><response><session>S12345</session></response>'
+            auth_response = (
+                '<?xml version="1.0"?><response><session>S12345</session></response>'
+            )
             # Second call: logout
             logout_response = '<?xml version="1.0"?><response>Logged out</response>'
-            
+
             mock_request.side_effect = [auth_response, logout_response]
-            
+
             # Authenticate
             session_key = await anidb_client_with_auth.authenticate()
             assert session_key == "S12345"
-            
+
             # Logout
             result = await anidb_client_with_auth.logout()
             assert result is True
             assert anidb_client_with_auth.session_key is None
-            
+
             # Verify both calls were made
             assert mock_request.call_count == 2
 
     @pytest.mark.asyncio
     async def test_connection_timeout_handling(self, anidb_client):
         """Test connection timeout handling."""
-        with patch('aiohttp.ClientSession.get') as mock_get:
+        with patch("aiohttp.ClientSession.get") as mock_get:
             mock_get.side_effect = asyncio.TimeoutError("Connection timeout")
-            
+
             with pytest.raises(Exception) as exc_info:
-                await anidb_client._make_request({"request": "anime", "aid": 1}, timeout=5)
-            
+                await anidb_client._make_request(
+                    {"request": "anime", "aid": 1}, timeout=5
+                )
+
             assert "timeout" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
@@ -499,12 +527,14 @@ class TestAniDBClient:
     <title xml:lang="en">Test Anime</title>
     <description>Test description with üñíçødé characters</description>
 </anime>"""
-        
-        with patch.object(anidb_client, '_make_request', new_callable=AsyncMock) as mock_request:
+
+        with patch.object(
+            anidb_client, "_make_request", new_callable=AsyncMock
+        ) as mock_request:
             mock_request.return_value = xml_with_namespace
-            
+
             result = await anidb_client.get_anime_by_id(1)
-            
+
             # Should handle XML namespaces and unicode properly
             assert result is not None
 
@@ -514,17 +544,19 @@ class TestAniDBClient:
         # AniDB requires client registration
         assert anidb_client.client_name is not None
         assert anidb_client.client_version is not None
-        
+
         # Client parameters should be included in all requests
-        with patch('aiohttp.ClientSession.get') as mock_get:
+        with patch("aiohttp.ClientSession.get") as mock_get:
             mock_response = Mock()
-            mock_response.text = AsyncMock(return_value='<?xml version="1.0"?><response></response>')
+            mock_response.text = AsyncMock(
+                return_value='<?xml version="1.0"?><response></response>'
+            )
             mock_response.status = 200
             mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
             mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
-            
+
             await anidb_client._make_request({"request": "anime", "aid": 1})
-            
+
             # Verify client parameters were included
             call_args = mock_get.call_args
             params = call_args[1]["params"]

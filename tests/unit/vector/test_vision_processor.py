@@ -6,8 +6,7 @@ functionality for anime image vector search.
 
 import base64
 import io
-import sys
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 import pytest
 from PIL import Image
@@ -46,8 +45,8 @@ class TestVisionProcessor:
         mock_model = Mock()
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
-        
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
 
             assert processor.model_name == "ViT-B/32"
@@ -68,8 +67,8 @@ class TestVisionProcessor:
         mock_model = Mock()
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
-        
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor(model_name="ViT-L/14", cache_dir="/tmp/clip")
 
             assert processor.model_name == "ViT-L/14"
@@ -81,13 +80,14 @@ class TestVisionProcessor:
 
     def test_init_missing_dependencies(self):
         """Test VisionProcessor initialization when CLIP dependencies are missing."""
+
         # Mock import error for clip
         def mock_import(name, *args, **kwargs):
-            if name == 'clip':
+            if name == "clip":
                 raise ImportError("No module named 'clip'")
             return __import__(name, *args, **kwargs)
-        
-        with patch('builtins.__import__', side_effect=mock_import):
+
+        with patch("builtins.__import__", side_effect=mock_import):
             with pytest.raises(ImportError, match="CLIP dependencies missing"):
                 VisionProcessor()
 
@@ -97,8 +97,8 @@ class TestVisionProcessor:
         mock_torch = Mock()
         mock_torch.cuda.is_available.return_value = False
         mock_clip.load.side_effect = Exception("Model loading failed")
-        
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             with pytest.raises(Exception, match="Model loading failed"):
                 VisionProcessor()
 
@@ -110,8 +110,8 @@ class TestVisionProcessor:
         mock_model = Mock()
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
-        
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image(sample_image_base64)
 
@@ -128,8 +128,8 @@ class TestVisionProcessor:
         mock_model = Mock()
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
-        
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image(sample_image_data_url)
 
@@ -145,8 +145,8 @@ class TestVisionProcessor:
         mock_model = Mock()
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
-        
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image("invalid_base64_data")
 
@@ -160,15 +160,15 @@ class TestVisionProcessor:
         mock_model = Mock()
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
-        
+
         # Create RGBA image
         img = Image.new("RGBA", (50, 50), color=(255, 0, 0, 128))
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
         img_bytes = buffer.getvalue()
         img_base64 = base64.b64encode(img_bytes).decode("utf-8")
-        
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image(img_base64)
 
@@ -182,14 +182,14 @@ class TestVisionProcessor:
         mock_torch.cuda.is_available.return_value = False
         mock_model = Mock()
         mock_preprocess = Mock()
-        
+
         # Mock preprocessing pipeline
         mock_tensor = Mock()
         mock_tensor.unsqueeze.return_value.to.return_value = mock_tensor
         mock_preprocess.return_value = mock_tensor
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image(sample_image_base64)
             processed = processor._preprocess_image(image)
@@ -205,10 +205,10 @@ class TestVisionProcessor:
         mock_model = Mock()
         mock_clip.load.return_value = (mock_model, None)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             processor.preprocess = None
-            
+
             img = Image.new("RGB", (100, 100), color="red")
             processed = processor._preprocess_image(img)
 
@@ -224,7 +224,7 @@ class TestVisionProcessor:
         mock_preprocess.side_effect = Exception("Preprocessing failed")
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             image = processor._decode_base64_image(sample_image_base64)
             processed = processor._preprocess_image(image)
@@ -238,7 +238,7 @@ class TestVisionProcessor:
         mock_torch.cuda.is_available.return_value = False
         mock_torch.no_grad.return_value.__enter__ = Mock()
         mock_torch.no_grad.return_value.__exit__ = Mock(return_value=None)
-        
+
         mock_model = Mock()
         mock_preprocess = Mock()
 
@@ -246,12 +246,14 @@ class TestVisionProcessor:
         mock_features = Mock()
         mock_features.norm.return_value = mock_features
         mock_features.__truediv__ = Mock(return_value=mock_features)
-        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 512
+        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [
+            0.1
+        ] * 512
         mock_model.encode_image.return_value = mock_features
 
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
 
             # Mock processed image tensor
@@ -270,13 +272,13 @@ class TestVisionProcessor:
         mock_torch.cuda.is_available.return_value = False
         mock_torch.no_grad.return_value.__enter__ = Mock()
         mock_torch.no_grad.return_value.__exit__ = Mock(return_value=None)
-        
+
         mock_model = Mock()
         mock_preprocess = Mock()
         mock_model.encode_image.side_effect = Exception("Encoding failed")
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
 
             mock_tensor = Mock()
@@ -293,10 +295,10 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             processor.model = None  # Simulate uninitialized model
-            
+
             embedding = processor.encode_image("test_data")
             assert embedding is None
 
@@ -319,12 +321,14 @@ class TestVisionProcessor:
         mock_features = Mock()
         mock_features.norm.return_value = mock_features
         mock_features.__truediv__ = Mock(return_value=mock_features)
-        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 512
+        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [
+            0.1
+        ] * 512
         mock_model.encode_image.return_value = mock_features
 
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             embedding = processor.encode_image(sample_image_base64)
 
@@ -341,7 +345,7 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
 
             # Test with invalid base64 data
@@ -357,12 +361,14 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
-            
+
             # Mock _decode_base64_image to raise an exception
-            processor._decode_base64_image = Mock(side_effect=Exception("Unexpected error"))
-            
+            processor._decode_base64_image = Mock(
+                side_effect=Exception("Unexpected error")
+            )
+
             embedding = processor.encode_image(sample_image_base64)
             assert embedding is None
 
@@ -375,12 +381,12 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
-            
+
             # Mock _preprocess_image to return None
             processor._preprocess_image = Mock(return_value=None)
-            
+
             embedding = processor.encode_image(sample_image_base64)
             assert embedding is None
 
@@ -403,12 +409,14 @@ class TestVisionProcessor:
         mock_features = Mock()
         mock_features.norm.return_value = mock_features
         mock_features.__truediv__ = Mock(return_value=mock_features)
-        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 512
+        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [
+            0.1
+        ] * 512
         mock_model.encode_image.return_value = mock_features
 
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
 
             # Test batch processing
@@ -428,15 +436,15 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
-            
+
             # Mock encode_image to raise an exception
             processor.encode_image = Mock(side_effect=Exception("Batch error"))
-            
+
             image_list = ["image1", "image2"]
             embeddings = processor.encode_images_batch(image_list)
-            
+
             # Should return list of None values
             assert len(embeddings) == 2
             assert all(emb is None for emb in embeddings)
@@ -450,7 +458,7 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
 
             # Test valid image data
@@ -469,10 +477,12 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
-            processor._decode_base64_image = Mock(side_effect=Exception("Validation error"))
-            
+            processor._decode_base64_image = Mock(
+                side_effect=Exception("Validation error")
+            )
+
             assert processor.validate_image_data("test_data") is False
 
     def test_get_supported_formats(self):
@@ -484,7 +494,7 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             formats = processor.get_supported_formats()
 
@@ -502,7 +512,7 @@ class TestVisionProcessor:
         mock_preprocess = Mock()
         mock_clip.load.return_value = (mock_model, mock_preprocess)
 
-        with patch.dict('sys.modules', {'clip': mock_clip, 'torch': mock_torch}):
+        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
             processor = VisionProcessor()
             info = processor.get_model_info()
 

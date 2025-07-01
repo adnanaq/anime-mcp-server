@@ -91,6 +91,66 @@ This plan outlines a complete architectural transformation from a static tool-ba
 
 ### 2. Core Endpoint Specifications
 
+#### Correlation ID & Tracing Architecture
+
+**End-to-End Request Tracing Strategy:**
+
+All API endpoints generate correlation IDs at the FastAPI level for complete request traceability across two distinct request flows:
+
+**Static Request Flow (Direct API Access):**
+```
+User → FastAPI Endpoints → Clients → External APIs
+     ↓
+   Generate correlation ID at API level
+```
+
+**Enhanced Request Flow (MCP + LLM Driven):**
+```
+User → FastAPI Endpoints → MCP Server → LLM → LangGraph → Tools → MCP Tools → Clients → External APIs
+     ↓
+   Generate correlation ID at API level and propagate through entire chain
+```
+
+**Implementation Details:**
+```python
+# FastAPI Middleware - Applied to ALL endpoints
+@app.middleware("http")
+async def correlation_middleware(request, call_next):
+    correlation_id = f"api-{uuid.uuid4().hex[:12]}"
+    request.state.correlation_id = correlation_id
+    
+    # Add correlation headers to response
+    response = await call_next(request)
+    response.headers["X-Correlation-ID"] = correlation_id
+    return response
+
+# Static API Usage (src/api/search.py, src/api/external/*.py)
+@router.post("/semantic")
+async def semantic_search(request: SearchRequest):
+    correlation_id = request.state.correlation_id
+    # Pass directly to clients with correlation context
+    results = await qdrant_client.search(
+        query=request.query, 
+        correlation_id=correlation_id
+    )
+
+# Enhanced API Usage (src/api/workflow.py) 
+@router.post("/conversation")
+async def process_conversation(request: ConversationRequest):
+    correlation_id = request.state.correlation_id
+    # Pass through entire MCP + LLM chain
+    result = await engine.process_conversation(
+        message=request.message,
+        correlation_id=correlation_id  # Propagates to all layers
+    )
+```
+
+**Key Architecture Principles:**
+- ✅ **Single Source of Truth**: FastAPI endpoints (`src/api/`) always generate correlation IDs
+- ✅ **No Circular Dependencies**: Enhanced endpoints use MCP tools, NOT static API endpoints  
+- ✅ **Unified Tracing**: Both flows end at the same client layer with correlation headers
+- ✅ **HTTP Standards Compliance**: `X-Correlation-ID`, `X-Parent-Correlation-ID`, `X-Request-Chain-Depth` headers
+
 #### `/api/query` - Universal LLM Endpoint
 
 **Request Schema:**

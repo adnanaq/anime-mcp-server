@@ -106,7 +106,7 @@ class AniSearchScraper(BaseScraper):
         - Page shows: "Du benötigst JavaScript, um aniSearch in vollem Funktionsumfang nutzen zu können!"
         - Tested URL: /anime/index?q=query returns 0 results consistently
         - Individual anime pages work perfectly with rich JSON-LD data
-        
+
         CONCLUSION: Search functionality cannot work with static HTML scraping.
         Individual anime page parsing remains fully functional.
         """

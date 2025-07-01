@@ -52,15 +52,16 @@ class TestCreateAnimeLangChainTools:
     @pytest.mark.asyncio
     async def test_tool_execution_with_parameters(self):
         """Test that tools execute with proper parameter passing."""
+
         # Mock search function (create a simple callable without .ainvoke method)
         async def mock_search(**kwargs):
             return [{"anime_id": "test1", "title": "Action Anime"}]
-        
+
         # Wrap it to track calls
         mock_search = AsyncMock(side_effect=mock_search)
         # Remove ainvoke attribute to force direct call path
-        if hasattr(mock_search, 'ainvoke'):
-            delattr(mock_search, 'ainvoke')
+        if hasattr(mock_search, "ainvoke"):
+            delattr(mock_search, "ainvoke")
 
         mcp_tools = {"search_anime": mock_search}
         tools = create_anime_langchain_tools(mcp_tools)
@@ -86,14 +87,13 @@ class TestCreateAnimeLangChainTools:
     @pytest.mark.asyncio
     async def test_multimodal_tool_creation(self):
         """Test multimodal search tool creation and parameter handling."""
+
         async def mock_multimodal(**kwargs):
-            return [
-                {"anime_id": "mm1", "title": "Multimodal Match", "score": 0.9}
-            ]
-        
+            return [{"anime_id": "mm1", "title": "Multimodal Match", "score": 0.9}]
+
         mock_multimodal = AsyncMock(side_effect=mock_multimodal)
-        if hasattr(mock_multimodal, 'ainvoke'):
-            delattr(mock_multimodal, 'ainvoke')
+        if hasattr(mock_multimodal, "ainvoke"):
+            delattr(mock_multimodal, "ainvoke")
 
         mcp_tools = {"search_multimodal_anime": mock_multimodal}
         tools = create_anime_langchain_tools(mcp_tools)
@@ -182,15 +182,15 @@ class TestAnimeToolNodeWorkflow:
         search_mock = AsyncMock(return_value=[{"anime_id": "t1", "title": "Test"}])
         details_mock = AsyncMock(return_value={"anime_id": "t1", "details": "test"})
         stats_mock = AsyncMock(return_value={"total": 100})
-        
+
         # Remove ainvoke to force direct call path for testing
-        if hasattr(search_mock, 'ainvoke'):
-            delattr(search_mock, 'ainvoke')
-        if hasattr(details_mock, 'ainvoke'):
-            delattr(details_mock, 'ainvoke')
-        if hasattr(stats_mock, 'ainvoke'):
-            delattr(stats_mock, 'ainvoke')
-        
+        if hasattr(search_mock, "ainvoke"):
+            delattr(search_mock, "ainvoke")
+        if hasattr(details_mock, "ainvoke"):
+            delattr(details_mock, "ainvoke")
+        if hasattr(stats_mock, "ainvoke"):
+            delattr(stats_mock, "ainvoke")
+
         return {
             "search_anime": search_mock,
             "get_anime_details": details_mock,
@@ -349,13 +349,14 @@ class TestEnhancedSearchIntentParameters:
     @pytest.mark.asyncio
     async def test_search_anime_tool_accepts_enhanced_parameters(self):
         """Test that search_anime tool accepts and passes enhanced parameters."""
+
         async def mock_search(**kwargs):
             return [{"anime_id": "test1", "title": "Enhanced Test"}]
-        
+
         mock_search = AsyncMock(side_effect=mock_search)
-        if hasattr(mock_search, 'ainvoke'):
-            delattr(mock_search, 'ainvoke')
-            
+        if hasattr(mock_search, "ainvoke"):
+            delattr(mock_search, "ainvoke")
+
         mcp_tools = {"search_anime": mock_search}
 
         tools = create_anime_langchain_tools(mcp_tools)
@@ -394,13 +395,14 @@ class TestEnhancedSearchIntentParameters:
     @pytest.mark.asyncio
     async def test_search_anime_backward_compatibility(self):
         """Test that search_anime maintains backward compatibility."""
+
         async def mock_search(**kwargs):
             return [{"anime_id": "compat1", "title": "Compatible"}]
-        
+
         mock_search = AsyncMock(side_effect=mock_search)
-        if hasattr(mock_search, 'ainvoke'):
-            delattr(mock_search, 'ainvoke')
-            
+        if hasattr(mock_search, "ainvoke"):
+            delattr(mock_search, "ainvoke")
+
         mcp_tools = {"search_anime": mock_search}
 
         tools = create_anime_langchain_tools(mcp_tools)
@@ -430,13 +432,14 @@ class TestMigrationCompatibility:
     @pytest.mark.asyncio
     async def test_toolnode_produces_correct_results(self):
         """Test that ToolNode produces correct results."""
+
         # Mock MCP function
         async def mock_search(**kwargs):
             return [{"anime_id": "comp1", "title": "Compatibility Test"}]
-        
+
         mock_search = AsyncMock(side_effect=mock_search)
-        if hasattr(mock_search, 'ainvoke'):
-            delattr(mock_search, 'ainvoke')
+        if hasattr(mock_search, "ainvoke"):
+            delattr(mock_search, "ainvoke")
 
         mcp_tools = {"search_anime": mock_search}
 
@@ -504,31 +507,32 @@ class TestExceptionHandling:
 
     @pytest.mark.asyncio
     async def test_search_anime_exception_handling(self):
-        """Test exception handling in search anime tool execution.""" 
+        """Test exception handling in search anime tool execution."""
+
         # Test by simulating an exception in the underlying function
         async def failing_search(**kwargs):
             raise Exception("Search function failed")
-        
+
         mock_search = AsyncMock(side_effect=failing_search)
-        if hasattr(mock_search, 'ainvoke'):
-            delattr(mock_search, 'ainvoke')
-            
+        if hasattr(mock_search, "ainvoke"):
+            delattr(mock_search, "ainvoke")
+
         mcp_tools = {"search_anime": mock_search}
         tools = create_anime_langchain_tools(mcp_tools)
         search_tool = next(t for t in tools if t.name == "search_anime")
-        
+
         # Test that exceptions during execution are properly raised
         with pytest.raises(Exception, match="Search function failed"):
             await search_tool.ainvoke({"query": "test", "limit": 5})
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_get_anime_details_validation_error(self):
         """Test validation error handling in get_anime_details."""
         mock_details = AsyncMock()
         mcp_tools = {"get_anime_details": mock_details}
         tools = create_anime_langchain_tools(mcp_tools)
         details_tool = next(t for t in tools if t.name == "get_anime_details")
-        
+
         # Test with missing anime_id
         with pytest.raises(Exception):
             await details_tool.ainvoke({})
@@ -540,7 +544,7 @@ class TestExceptionHandling:
         mcp_tools = {"search_anime_by_image": mock_image_search}
         tools = create_anime_langchain_tools(mcp_tools)
         image_tool = next(t for t in tools if t.name == "search_anime_by_image")
-        
+
         # Test with missing image_data
         with pytest.raises(Exception):
             await image_tool.ainvoke({"limit": 5})
@@ -553,14 +557,16 @@ class TestMCPToolsWithAinvokeMethod:
     async def test_search_anime_with_ainvoke_method(self):
         """Test search_anime tool execution when MCP function has .ainvoke method."""
         mock_search = AsyncMock()
-        mock_search.ainvoke = AsyncMock(return_value=[{"anime_id": "test", "title": "Test Anime"}])
-        
+        mock_search.ainvoke = AsyncMock(
+            return_value=[{"anime_id": "test", "title": "Test Anime"}]
+        )
+
         mcp_tools = {"search_anime": mock_search}
         tools = create_anime_langchain_tools(mcp_tools)
         search_tool = next(t for t in tools if t.name == "search_anime")
-        
+
         result = await search_tool.ainvoke({"query": "test", "limit": 5})
-        
+
         # Should call .ainvoke method with model_dump() output
         mock_search.ainvoke.assert_called_once()
         assert result[0]["title"] == "Test Anime"
@@ -569,14 +575,16 @@ class TestMCPToolsWithAinvokeMethod:
     async def test_get_anime_details_with_ainvoke_method(self):
         """Test get_anime_details with .ainvoke method."""
         mock_details = AsyncMock()
-        mock_details.ainvoke = AsyncMock(return_value={"anime_id": "test", "title": "Test Details"})
-        
+        mock_details.ainvoke = AsyncMock(
+            return_value={"anime_id": "test", "title": "Test Details"}
+        )
+
         mcp_tools = {"get_anime_details": mock_details}
         tools = create_anime_langchain_tools(mcp_tools)
         details_tool = next(t for t in tools if t.name == "get_anime_details")
-        
+
         result = await details_tool.ainvoke({"anime_id": "test123"})
-        
+
         mock_details.ainvoke.assert_called_once_with({"anime_id": "test123"})
         assert result["title"] == "Test Details"
 
@@ -585,13 +593,13 @@ class TestMCPToolsWithAinvokeMethod:
         """Test find_similar_anime with .ainvoke method."""
         mock_similar = AsyncMock()
         mock_similar.ainvoke = AsyncMock(return_value=[{"anime_id": "similar1"}])
-        
+
         mcp_tools = {"find_similar_anime": mock_similar}
         tools = create_anime_langchain_tools(mcp_tools)
         similar_tool = next(t for t in tools if t.name == "find_similar_anime")
-        
+
         result = await similar_tool.ainvoke({"anime_id": "ref123", "limit": 8})
-        
+
         mock_similar.ainvoke.assert_called_once_with({"anime_id": "ref123", "limit": 8})
         assert len(result) == 1
 
@@ -600,13 +608,13 @@ class TestMCPToolsWithAinvokeMethod:
         """Test get_anime_stats with .ainvoke method."""
         mock_stats = AsyncMock()
         mock_stats.ainvoke = AsyncMock(return_value={"total_documents": 500})
-        
+
         mcp_tools = {"get_anime_stats": mock_stats}
         tools = create_anime_langchain_tools(mcp_tools)
         stats_tool = next(t for t in tools if t.name == "get_anime_stats")
-        
+
         result = await stats_tool.ainvoke({})
-        
+
         mock_stats.ainvoke.assert_called_once_with({})
         assert result["total_documents"] == 500
 
@@ -615,14 +623,16 @@ class TestMCPToolsWithAinvokeMethod:
         """Test search_anime_by_image with .ainvoke method."""
         mock_image_search = AsyncMock()
         mock_image_search.ainvoke = AsyncMock(return_value=[{"anime_id": "img1"}])
-        
+
         mcp_tools = {"search_anime_by_image": mock_image_search}
         tools = create_anime_langchain_tools(mcp_tools)
         image_tool = next(t for t in tools if t.name == "search_anime_by_image")
-        
+
         result = await image_tool.ainvoke({"image_data": "base64data", "limit": 5})
-        
-        mock_image_search.ainvoke.assert_called_once_with({"image_data": "base64data", "limit": 5})
+
+        mock_image_search.ainvoke.assert_called_once_with(
+            {"image_data": "base64data", "limit": 5}
+        )
         assert len(result) == 1
 
     @pytest.mark.asyncio
@@ -630,13 +640,13 @@ class TestMCPToolsWithAinvokeMethod:
         """Test find_visually_similar_anime with .ainvoke method."""
         mock_visual = AsyncMock()
         mock_visual.ainvoke = AsyncMock(return_value=[{"anime_id": "visual1"}])
-        
+
         mcp_tools = {"find_visually_similar_anime": mock_visual}
         tools = create_anime_langchain_tools(mcp_tools)
         visual_tool = next(t for t in tools if t.name == "find_visually_similar_anime")
-        
+
         result = await visual_tool.ainvoke({"anime_id": "ref456", "limit": 12})
-        
+
         mock_visual.ainvoke.assert_called_once_with({"anime_id": "ref456", "limit": 12})
         assert len(result) == 1
 
@@ -644,24 +654,28 @@ class TestMCPToolsWithAinvokeMethod:
     async def test_search_multimodal_anime_with_ainvoke_method(self):
         """Test search_multimodal_anime with .ainvoke method."""
         mock_multimodal = AsyncMock()
-        mock_multimodal.ainvoke = AsyncMock(return_value=[{"anime_id": "multi1", "score": 0.85}])
-        
+        mock_multimodal.ainvoke = AsyncMock(
+            return_value=[{"anime_id": "multi1", "score": 0.85}]
+        )
+
         mcp_tools = {"search_multimodal_anime": mock_multimodal}
         tools = create_anime_langchain_tools(mcp_tools)
         multimodal_tool = next(t for t in tools if t.name == "search_multimodal_anime")
-        
-        result = await multimodal_tool.ainvoke({
-            "query": "mecha robots", 
-            "image_data": "base64img", 
-            "text_weight": 0.8, 
-            "limit": 15
-        })
-        
+
+        result = await multimodal_tool.ainvoke(
+            {
+                "query": "mecha robots",
+                "image_data": "base64img",
+                "text_weight": 0.8,
+                "limit": 15,
+            }
+        )
+
         expected_params = {
-            "query": "mecha robots", 
-            "image_data": "base64img", 
-            "text_weight": 0.8, 
-            "limit": 15
+            "query": "mecha robots",
+            "image_data": "base64img",
+            "text_weight": 0.8,
+            "limit": 15,
         }
         mock_multimodal.ainvoke.assert_called_once_with(expected_params)
         assert result[0]["score"] == 0.85
@@ -680,7 +694,7 @@ class TestChatbotNodeComplexMessageHandling:
         """Test chatbot node with empty messages."""
         state = {"messages": []}
         result = await simple_workflow._chatbot_node(state)
-        
+
         # Should return state unchanged
         assert result == state
 
@@ -688,33 +702,31 @@ class TestChatbotNodeComplexMessageHandling:
     async def test_chatbot_node_list_content_processing(self, simple_workflow):
         """Test chatbot node handling of list content."""
         from langchain_core.messages import HumanMessage
-        
-        message_with_list = HumanMessage(content=[
-            {"text": "find anime"}, 
-            "about mechs",
-            {"text": " with robots"}
-        ])
-        
+
+        message_with_list = HumanMessage(
+            content=[{"text": "find anime"}, "about mechs", {"text": " with robots"}]
+        )
+
         state = {"messages": [message_with_list]}
         result = await simple_workflow._chatbot_node(state)
-        
+
         # Should extract text and process correctly
         assert len(result["messages"]) > 1
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_chatbot_node_non_string_content(self, simple_workflow):
         """Test chatbot node with non-string content conversion."""
         from langchain_core.messages import HumanMessage
-        
+
         # Create a message that gets to the non-string content conversion part
         # We'll modify the message after creation to test the code path
         message = HumanMessage(content="initial content")
         # Simulate what would happen if content was not a string
         message.content = {"type": "request", "text": "find anime"}
-        
+
         state = {"messages": [message]}
         result = await simple_workflow._chatbot_node(state)
-        
+
         # Should convert to string and process
         assert len(result["messages"]) > 1
 
@@ -722,35 +734,37 @@ class TestChatbotNodeComplexMessageHandling:
     async def test_chatbot_node_tool_message_processing(self, simple_workflow):
         """Test chatbot node processing ToolMessage results."""
         from langchain_core.messages import ToolMessage
-        
+
         tool_message = ToolMessage(
             content=[{"title": "Test Anime", "synopsis": "A test anime"}],
-            tool_call_id="call_123"
+            tool_call_id="call_123",
         )
-        
+
         state = {"messages": [tool_message]}
         result = await simple_workflow._chatbot_node(state)
-        
+
         # Should add AI summary message
         assert len(result["messages"]) == 2
         # Check that AI message was added
         from langchain_core.messages import AIMessage
+
         assert isinstance(result["messages"][1], AIMessage)
 
     @pytest.mark.asyncio
     async def test_chatbot_node_direct_response(self, simple_workflow):
         """Test chatbot node providing direct response without tools."""
         from langchain_core.messages import HumanMessage
-        
+
         # Message that doesn't trigger anime search
         human_message = HumanMessage(content="Hello, how are you?")
-        
+
         state = {"messages": [human_message]}
         result = await simple_workflow._chatbot_node(state)
-        
+
         # Should add direct response
         assert len(result["messages"]) == 2
         from langchain_core.messages import AIMessage
+
         assert isinstance(result["messages"][1], AIMessage)
         assert "search for anime" in result["messages"][1].content
 
@@ -792,11 +806,11 @@ class TestSearchParameterExtraction:
         params = workflow._extract_search_parameters("find 15 anime")
         assert params["limit"] == 15
         assert params["query"] == "find 15 anime"
-        
+
         # Test with "results"
         params = workflow._extract_search_parameters("show me 8 results")
         assert params["limit"] == 8
-        
+
         # Test with "shows"
         params = workflow._extract_search_parameters("find 25 shows")
         assert params["limit"] == 25
@@ -822,32 +836,36 @@ class TestToolResultResponseCreation:
 
     def test_create_response_single_result(self, workflow):
         """Test response creation from single result."""
-        single_result = [{"title": "Test Anime", "synopsis": "A test anime about heroes"}]
+        single_result = [
+            {"title": "Test Anime", "synopsis": "A test anime about heroes"}
+        ]
         response = workflow._create_response_from_tool_result(single_result, "call_1")
-        
+
         assert "Test Anime" in response
         assert "A test anime about heroes" in response
 
     def test_create_response_multiple_results(self, workflow):
         """Test response creation from multiple results."""
         multiple_results = [
-            {"title": "Anime 1"}, 
-            {"title": "Anime 2"}, 
+            {"title": "Anime 1"},
+            {"title": "Anime 2"},
             {"title": "Anime 3"},
-            {"title": "Anime 4"}
+            {"title": "Anime 4"},
         ]
-        response = workflow._create_response_from_tool_result(multiple_results, "call_2")
-        
+        response = workflow._create_response_from_tool_result(
+            multiple_results, "call_2"
+        )
+
         assert "4 anime" in response
         assert "Anime 1" in response
-        assert "Anime 2" in response  
+        assert "Anime 2" in response
         assert "Anime 3" in response
 
     def test_create_response_dict_result(self, workflow):
         """Test response creation from dict result."""
         dict_result = {"title": "Single Anime", "synopsis": "Description of the anime"}
         response = workflow._create_response_from_tool_result(dict_result, "call_3")
-        
+
         assert "Single Anime" in response
         assert "Description of the anime" in response
 
@@ -855,10 +873,10 @@ class TestToolResultResponseCreation:
         """Test response creation from empty/invalid result."""
         response = workflow._create_response_from_tool_result([], "call_4")
         assert "couldn't find" in response
-        
+
         response = workflow._create_response_from_tool_result(None, "call_5")
         assert "couldn't find" in response
-        
+
         response = workflow._create_response_from_tool_result("invalid", "call_6")
         assert "couldn't find" in response
 
@@ -870,9 +888,9 @@ class TestConversationProcessing:
     def mock_mcp_tools(self):
         """Mock MCP tools for testing."""
         search_mock = AsyncMock(return_value=[{"anime_id": "t1", "title": "Test"}])
-        if hasattr(search_mock, 'ainvoke'):
-            delattr(search_mock, 'ainvoke')
-        
+        if hasattr(search_mock, "ainvoke"):
+            delattr(search_mock, "ainvoke")
+
         return {"search_anime": search_mock}
 
     @pytest.fixture
@@ -884,10 +902,9 @@ class TestConversationProcessing:
     async def test_process_conversation_basic(self, workflow):
         """Test basic conversation processing."""
         result = await workflow.process_conversation(
-            session_id="test_session",
-            message="find anime"
+            session_id="test_session", message="find anime"
         )
-        
+
         assert result["session_id"] == "test_session"
         assert len(result["messages"]) > 0
 
@@ -895,11 +912,9 @@ class TestConversationProcessing:
     async def test_process_conversation_with_thread_id(self, workflow):
         """Test conversation processing with custom thread ID."""
         result = await workflow.process_conversation(
-            session_id="test_session",
-            message="find anime",
-            thread_id="custom_thread"
+            session_id="test_session", message="find anime", thread_id="custom_thread"
         )
-        
+
         assert result["session_id"] == "test_session"
         assert len(result["messages"]) > 0
 
@@ -909,10 +924,10 @@ class TestConversationProcessing:
         # Mock a workflow that raises an exception in graph execution
         failing_mock = AsyncMock(side_effect=Exception("Graph processing error"))
         workflow = AnimeToolNodeWorkflow({"search_anime": failing_mock})
-        
+
         # Mock the graph to raise an exception
         workflow.graph.ainvoke = AsyncMock(side_effect=Exception("Processing error"))
-        
+
         with pytest.raises(Exception, match="Processing error"):
             await workflow.process_conversation("session", "test message")
 
@@ -922,11 +937,13 @@ class TestFactoryFunction:
 
     def test_create_toolnode_workflow_from_mcp_tools(self):
         """Test factory function for creating workflow from MCP tools."""
-        from src.langgraph.langchain_tools import create_toolnode_workflow_from_mcp_tools
-        
+        from src.langgraph.langchain_tools import (
+            create_toolnode_workflow_from_mcp_tools,
+        )
+
         mock_tools = {"search_anime": AsyncMock(), "get_anime_stats": AsyncMock()}
         workflow = create_toolnode_workflow_from_mcp_tools(mock_tools)
-        
+
         assert isinstance(workflow, AnimeToolNodeWorkflow)
         assert len(workflow.tools) == 2
         assert workflow.mcp_tools == mock_tools
@@ -938,7 +955,7 @@ class TestInputSchemas:
     def test_empty_input_schemas(self):
         """Test input schemas with no parameters."""
         from src.langgraph.langchain_tools import GetAnimeStatsInput
-        
+
         # Should create successfully with no parameters
         schema = GetAnimeStatsInput()
         assert schema is not None
@@ -946,43 +963,44 @@ class TestInputSchemas:
     def test_input_schema_validation(self):
         """Test input schema field validation."""
         from src.langgraph.langchain_tools import (
-            SearchAnimeInput, GetAnimeDetailsInput, FindSimilarAnimeInput,
-            SearchAnimeByImageInput, FindVisuallySimilarAnimeInput, SearchMultimodalAnimeInput
+            FindSimilarAnimeInput,
+            FindVisuallySimilarAnimeInput,
+            GetAnimeDetailsInput,
+            SearchAnimeByImageInput,
+            SearchAnimeInput,
+            SearchMultimodalAnimeInput,
         )
-        
+
         # Test SearchAnimeInput
         search_input = SearchAnimeInput(query="test", limit=5)
         assert search_input.query == "test"
         assert search_input.limit == 5
-        
-        # Test GetAnimeDetailsInput  
+
+        # Test GetAnimeDetailsInput
         details_input = GetAnimeDetailsInput(anime_id="test123")
         assert details_input.anime_id == "test123"
-        
+
         # Test FindSimilarAnimeInput
         similar_input = FindSimilarAnimeInput(anime_id="ref456", limit=8)
         assert similar_input.anime_id == "ref456"
         assert similar_input.limit == 8
-        
+
         # Test SearchAnimeByImageInput
         image_input = SearchAnimeByImageInput(image_data="base64data", limit=12)
         assert image_input.image_data == "base64data"
         assert image_input.limit == 12
-        
+
         # Test FindVisuallySimilarAnimeInput
         visual_input = FindVisuallySimilarAnimeInput(anime_id="vis789")
         assert visual_input.anime_id == "vis789"
         assert visual_input.limit == 10  # Default value
-        
+
         # Test SearchMultimodalAnimeInput
         multimodal_input = SearchMultimodalAnimeInput(
-            query="test query", 
-            image_data="imgdata", 
-            text_weight=0.6, 
-            limit=20
+            query="test query", image_data="imgdata", text_weight=0.6, limit=20
         )
         assert multimodal_input.query == "test query"
-        assert multimodal_input.image_data == "imgdata" 
+        assert multimodal_input.image_data == "imgdata"
         assert multimodal_input.text_weight == 0.6
         assert multimodal_input.limit == 20
 
@@ -993,20 +1011,21 @@ class TestDirectFunctionCallPaths:
     @pytest.mark.asyncio
     async def test_get_anime_details_direct_call(self):
         """Test get_anime_details direct function call path (line 167)."""
+
         async def mock_details(**kwargs):
             return {"anime_id": kwargs["anime_id"], "title": "Direct Call Test"}
-        
+
         mock_details_func = AsyncMock(side_effect=mock_details)
         # Ensure it doesn't have .ainvoke to force direct call path
-        if hasattr(mock_details_func, 'ainvoke'):
-            delattr(mock_details_func, 'ainvoke')
-        
+        if hasattr(mock_details_func, "ainvoke"):
+            delattr(mock_details_func, "ainvoke")
+
         mcp_tools = {"get_anime_details": mock_details_func}
         tools = create_anime_langchain_tools(mcp_tools)
         details_tool = next(t for t in tools if t.name == "get_anime_details")
-        
+
         result = await details_tool.ainvoke({"anime_id": "test123"})
-        
+
         # Should call direct function
         mock_details_func.assert_called_once_with(anime_id="test123")
         assert result["title"] == "Direct Call Test"
@@ -1014,38 +1033,40 @@ class TestDirectFunctionCallPaths:
     @pytest.mark.asyncio
     async def test_find_similar_anime_direct_call(self):
         """Test find_similar_anime direct function call path (line 182)."""
+
         async def mock_similar(**kwargs):
             return [{"anime_id": "similar_" + kwargs["anime_id"]}]
-        
+
         mock_similar_func = AsyncMock(side_effect=mock_similar)
-        if hasattr(mock_similar_func, 'ainvoke'):
-            delattr(mock_similar_func, 'ainvoke')
-        
+        if hasattr(mock_similar_func, "ainvoke"):
+            delattr(mock_similar_func, "ainvoke")
+
         mcp_tools = {"find_similar_anime": mock_similar_func}
         tools = create_anime_langchain_tools(mcp_tools)
         similar_tool = next(t for t in tools if t.name == "find_similar_anime")
-        
+
         result = await similar_tool.ainvoke({"anime_id": "ref456", "limit": 10})
-        
+
         mock_similar_func.assert_called_once_with(anime_id="ref456", limit=10)
         assert result[0]["anime_id"] == "similar_ref456"
 
     @pytest.mark.asyncio
     async def test_get_anime_stats_direct_call(self):
-        """Test get_anime_stats direct function call path (line 196).""" 
+        """Test get_anime_stats direct function call path (line 196)."""
+
         async def mock_stats():
             return {"total_documents": 12345}
-        
+
         mock_stats_func = AsyncMock(side_effect=mock_stats)
-        if hasattr(mock_stats_func, 'ainvoke'):
-            delattr(mock_stats_func, 'ainvoke')
-        
+        if hasattr(mock_stats_func, "ainvoke"):
+            delattr(mock_stats_func, "ainvoke")
+
         mcp_tools = {"get_anime_stats": mock_stats_func}
         tools = create_anime_langchain_tools(mcp_tools)
         stats_tool = next(t for t in tools if t.name == "get_anime_stats")
-        
+
         result = await stats_tool.ainvoke({})
-        
+
         # Should call function with no arguments
         mock_stats_func.assert_called_once_with()
         assert result["total_documents"] == 12345
@@ -1053,38 +1074,40 @@ class TestDirectFunctionCallPaths:
     @pytest.mark.asyncio
     async def test_search_anime_by_image_direct_call(self):
         """Test search_anime_by_image direct function call path (line 213)."""
+
         async def mock_image_search(**kwargs):
             return [{"anime_id": "img_result", "image_data": kwargs["image_data"]}]
-        
+
         mock_image_func = AsyncMock(side_effect=mock_image_search)
-        if hasattr(mock_image_func, 'ainvoke'):
-            delattr(mock_image_func, 'ainvoke')
-        
+        if hasattr(mock_image_func, "ainvoke"):
+            delattr(mock_image_func, "ainvoke")
+
         mcp_tools = {"search_anime_by_image": mock_image_func}
         tools = create_anime_langchain_tools(mcp_tools)
         image_tool = next(t for t in tools if t.name == "search_anime_by_image")
-        
+
         result = await image_tool.ainvoke({"image_data": "base64test", "limit": 15})
-        
+
         mock_image_func.assert_called_once_with(image_data="base64test", limit=15)
         assert result[0]["image_data"] == "base64test"
 
     @pytest.mark.asyncio
     async def test_find_visually_similar_anime_direct_call(self):
         """Test find_visually_similar_anime direct function call path (line 230)."""
+
         async def mock_visual_similar(**kwargs):
             return [{"anime_id": "visual_" + kwargs["anime_id"], "similarity": 0.9}]
-        
+
         mock_visual_func = AsyncMock(side_effect=mock_visual_similar)
-        if hasattr(mock_visual_func, 'ainvoke'):
-            delattr(mock_visual_func, 'ainvoke')
-        
+        if hasattr(mock_visual_func, "ainvoke"):
+            delattr(mock_visual_func, "ainvoke")
+
         mcp_tools = {"find_visually_similar_anime": mock_visual_func}
         tools = create_anime_langchain_tools(mcp_tools)
         visual_tool = next(t for t in tools if t.name == "find_visually_similar_anime")
-        
+
         result = await visual_tool.ainvoke({"anime_id": "ref789", "limit": 20})
-        
+
         mock_visual_func.assert_called_once_with(anime_id="ref789", limit=20)
         assert result[0]["anime_id"] == "visual_ref789"
         assert result[0]["similarity"] == 0.9
@@ -1102,12 +1125,12 @@ class TestChatbotNodeDefaultReturn:
     async def test_chatbot_node_default_return_path(self, simple_workflow):
         """Test chatbot node default return path (line 385)."""
         from langchain_core.messages import AIMessage
-        
+
         # Create an AI message that doesn't match any specific handling paths
         ai_message = AIMessage(content="This is a response from AI")
-        
+
         state = {"messages": [ai_message]}
         result = await simple_workflow._chatbot_node(state)
-        
+
         # Should return state unchanged (default path)
         assert result == state

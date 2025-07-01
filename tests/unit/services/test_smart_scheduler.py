@@ -332,8 +332,14 @@ class TestUpdateSafetyChecking:
         recent_releases = {"has_recent_releases": False, "recent_releases": []}
 
         with (
-            patch.object(scheduler, "check_recent_releases", return_value=recent_releases),
-            patch.object(scheduler, "check_commit_activity", return_value={"has_recent_commits": False, "recent_commits": []})
+            patch.object(
+                scheduler, "check_recent_releases", return_value=recent_releases
+            ),
+            patch.object(
+                scheduler,
+                "check_commit_activity",
+                return_value={"has_recent_commits": False, "recent_commits": []},
+            ),
         ):
             result = await scheduler.is_safe_to_update(min_hours_after_release=2)
 
@@ -348,12 +354,18 @@ class TestUpdateSafetyChecking:
         recent_releases = {
             "has_recent_releases": True,
             "recent_releases": [{"tag_name": "v1.2.3", "hours_ago": 1}],
-            "latest_release_hours_ago": 1
+            "latest_release_hours_ago": 1,
         }
 
         with (
-            patch.object(scheduler, "check_recent_releases", return_value=recent_releases),
-            patch.object(scheduler, "check_commit_activity", return_value={"has_recent_commits": False, "recent_commits": []})
+            patch.object(
+                scheduler, "check_recent_releases", return_value=recent_releases
+            ),
+            patch.object(
+                scheduler,
+                "check_commit_activity",
+                return_value={"has_recent_commits": False, "recent_commits": []},
+            ),
         ):
             result = await scheduler.is_safe_to_update(min_hours_after_release=2)
 
@@ -368,12 +380,18 @@ class TestUpdateSafetyChecking:
         recent_releases = {
             "has_recent_releases": True,
             "recent_releases": [{"tag_name": "v1.2.3", "hours_ago": 5}],
-            "latest_release_hours_ago": 5
+            "latest_release_hours_ago": 5,
         }
 
         with (
-            patch.object(scheduler, "check_recent_releases", return_value=recent_releases),
-            patch.object(scheduler, "check_commit_activity", return_value={"has_recent_commits": False, "recent_commits": []})
+            patch.object(
+                scheduler, "check_recent_releases", return_value=recent_releases
+            ),
+            patch.object(
+                scheduler,
+                "check_commit_activity",
+                return_value={"has_recent_commits": False, "recent_commits": []},
+            ),
         ):
             result = await scheduler.is_safe_to_update(min_hours_after_release=2)
 
@@ -389,12 +407,18 @@ class TestUpdateSafetyChecking:
                 {"tag_name": "v1.2.3", "hours_ago": 1},
                 {"tag_name": "v1.2.2", "hours_ago": 0.5},
             ],
-            "latest_release_hours_ago": 0.5
+            "latest_release_hours_ago": 0.5,
         }
 
         with (
-            patch.object(scheduler, "check_recent_releases", return_value=recent_releases),
-            patch.object(scheduler, "check_commit_activity", return_value={"has_recent_commits": False, "recent_commits": []})
+            patch.object(
+                scheduler, "check_recent_releases", return_value=recent_releases
+            ),
+            patch.object(
+                scheduler,
+                "check_commit_activity",
+                return_value={"has_recent_commits": False, "recent_commits": []},
+            ),
         ):
             result = await scheduler.is_safe_to_update(min_hours_after_release=2)
 
@@ -598,23 +622,27 @@ class TestSmartSchedulerMissingCoverage:
     async def test_check_commit_activity_complex_recent_analysis(self, scheduler):
         """Test complex recent commit analysis - covers lines 160-169."""
         now = datetime.utcnow()
-        
+
         # Create commits with complex timing patterns to trigger analysis logic
         complex_commits = [
             {
                 "sha": "recent1",
                 "commit": {
                     "author": {
-                        "date": (now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                        "date": (now - timedelta(hours=1)).strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        )
                     },
                     "message": "Recent commit 1",
                 },
             },
             {
-                "sha": "recent2", 
+                "sha": "recent2",
                 "commit": {
                     "author": {
-                        "date": (now - timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                        "date": (now - timedelta(hours=3)).strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        )
                     },
                     "message": "Recent commit 2",
                 },
@@ -623,7 +651,9 @@ class TestSmartSchedulerMissingCoverage:
                 "sha": "recent3",
                 "commit": {
                     "author": {
-                        "date": (now - timedelta(hours=12)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                        "date": (now - timedelta(hours=12)).strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        )
                     },
                     "message": "Recent commit 3",
                 },
@@ -661,14 +691,17 @@ class TestSmartSchedulerMissingCoverage:
         with (
             patch.object(
                 scheduler,
-                "check_recent_releases", 
-                return_value={"has_recent_releases": False, "recent_releases": []}
+                "check_recent_releases",
+                return_value={"has_recent_releases": False, "recent_releases": []},
             ),
             patch.object(
                 scheduler,
                 "check_commit_activity",
-                return_value={"has_recent_commits": True, "recent_commits": [{"sha": "abc"}]}
-            )
+                return_value={
+                    "has_recent_commits": True,
+                    "recent_commits": [{"sha": "abc"}],
+                },
+            ),
         ):
             result = await scheduler.is_safe_to_update()
 
@@ -684,7 +717,7 @@ class TestSmartSchedulerMissingCoverage:
             "has_recent_releases": True,
             "recent_releases": [{"hours_ago": 12, "tag_name": "v1.2.3"}],
         }
-        
+
         commit_activity = {
             "recent_commits": [
                 {"sha": "abc", "hours_ago": 6},
@@ -701,14 +734,14 @@ class TestSmartSchedulerMissingCoverage:
                 scheduler, "check_commit_activity", return_value=commit_activity
             ),
             patch.object(
-                scheduler, 
+                scheduler,
                 "analyze_release_patterns",
                 return_value={
                     "pattern_detected": "regular",
                     "average_interval_days": 7,
-                    "confidence": "high"
-                }
-            )
+                    "confidence": "high",
+                },
+            ),
         ):
             result = await scheduler.get_optimal_update_schedule()
 
@@ -718,7 +751,7 @@ class TestSmartSchedulerMissingCoverage:
             assert "reasoning" in result
             assert "cron_schedule" in result
             assert "analysis" in result
-            
+
             # Should have detailed analysis
             analysis = result["analysis"]
             assert "recent_activity" in analysis
