@@ -15,7 +15,10 @@ This plan outlines a complete architectural transformation from a static tool-ba
 #### **API-Based Sources (5 platforms)**
 1. **MyAnimeList (MAL) API v2**: https://myanimelist.net/apiconfig/references/api/v2#section/Versioning
 2. **AniList GraphQL API**: https://docs.anilist.co/reference/
-3. **Kitsu JSON:API**: https://kitsu.docs.apiary.io/ (Base URL: `https://kitsu.io/api/edge/`)
+3. **Kitsu JSON:API**: ⚠️ **Documentation Issues** - Official docs at https://kitsu.docs.apiary.io/ are outdated/incomplete
+   - **Base URL**: `https://kitsu.io/api/edge/`
+   - **Standard**: Follows JSON:API specification (https://jsonapi.org/)
+   - **Discovery Method**: Reverse engineering via API exploration and network inspection
 4. **AniDB API**: https://wiki.anidb.net/HTTP_API_Definition
 5. **AnimeNewsNetwork API**: https://www.animenewsnetwork.com/encyclopedia/api.php
 
@@ -36,6 +39,55 @@ This plan outlines a complete architectural transformation from a static tool-ba
 - **AniDB**: Client registration required, 1 req/sec
 - **AnimeNewsNetwork**: No auth required, 1 req/sec
 - **AnimeSchedule**: No authentication required, unlimited requests
+
+### Kitsu JSON:API Deep Dive & Discovery Notes
+
+**Documentation Challenges:**
+- Official Apiary docs are incomplete/outdated
+- No comprehensive endpoint documentation available
+- Community knowledge scattered across forums/GitHub
+
+**JSON:API Standard Understanding:**
+- **Specification**: https://jsonapi.org/format/
+- **Key Concepts**:
+  - Standardized response format: `{data, relationships, links, meta}`
+  - Resource relationships and includes
+  - Pagination, filtering, sorting conventions
+  - Sparse fieldsets and compound documents
+
+**Discovered Kitsu API Patterns:**
+```bash
+# Basic anime search (requires URL encoding)
+GET /anime?filter%5Btext%5D=naruto&page%5Blimit%5D=20
+
+# Advanced filtering
+GET /anime?filter%5Bsubtype%5D=TV&filter%5Bstatus%5D=finished&filter%5BageRating%5D=PG
+
+# Relationship data
+GET /anime/1555/mappings          # External ID mappings (MAL, AniList, AniDB)
+GET /anime/1555/genres            # Genre relationships
+GET /anime/1555/categories        # Category/tag relationships
+GET /anime/1555/characters        # Character relationships
+GET /anime/1555/staff             # Staff relationships
+GET /anime/1555/streaming-links   # Streaming platform links
+
+# JSON:API includes (compound documents)
+GET /anime/1555?include=genres,categories,mappings
+```
+
+**Unique Kitsu Capabilities Discovered:**
+1. **Rich Rating Analytics**: `ratingFrequencies` with 2-20 scale distribution
+2. **Total Runtime**: `totalLength` for complete series duration
+3. **Visual Customization**: `coverImageTopOffset` for optimal display
+4. **Release Planning**: `nextRelease`, `tba` (To Be Announced) fields
+5. **Cross-Platform Mapping**: Comprehensive external ID relationships
+6. **Age Rating Details**: Both code (`ageRating`) and description (`ageRatingGuide`)
+
+**API Exploration Resources:**
+- **Base endpoint inspection**: https://kitsu.io/api/edge/
+- **JSON:API learning**: https://jsonapi.org/examples/
+- **Browser DevTools**: Network tab on kitsu.app for reverse engineering
+- **Community GitHub**: https://github.com/hummingbird-me/kitsu-tools
 
 ## Current State Analysis
 
@@ -87,6 +139,99 @@ This plan outlines a complete architectural transformation from a static tool-ba
 ✅ /api/batch          # Bulk operations endpoint
 ✅ /api/admin/*        # Keep all 8 admin endpoints unchanged
 ✅ /health, /stats     # Keep utility endpoints
+
+# Phase 1: Additional MAL External API Endpoints for Direct User Access (Verified against Jikan API v4)
+✅ /api/external/mal/top           # Top anime rankings with type and filter parameters
+✅ /api/external/mal/recommendations/{mal_id}  # Get anime recommendations based on specific anime
+✅ /api/external/mal/random        # Random anime discovery (no filters available in Jikan)
+✅ /api/external/mal/schedules     # Broadcasting schedules by day of week with filters
+✅ /api/external/mal/genres        # Get list of all available anime genres with optional filter
+✅ /api/external/mal/characters/{mal_id}  # Get characters for specific anime (no additional params)
+✅ /api/external/mal/staff/{mal_id}       # Get staff/crew for specific anime (no additional params)
+✅ /api/external/mal/seasons/{year}/{season}  # Get seasonal anime with type filtering and pagination
+✅ /api/external/mal/recommendations/recent    # Get recent community anime recommendations with pagination
+
+# AniList GraphQL API Enhanced Search Parameters
+📝 /api/external/anilist/search - ENHANCE with GraphQL filtering capabilities:
+    - format_in: [TV, MOVIE, OVA, ONA, SPECIAL, TV_SHORT, MUSIC]
+    - status_in: [FINISHED, RELEASING, NOT_YET_RELEASED, CANCELLED]  
+    - min_score/max_score: 0-100 average score filtering
+    - min_popularity: popularity threshold filtering
+    - genres/genres_exclude: include/exclude specific genres
+    - season + year: seasonal filtering (WINTER/SPRING/SUMMER/FALL)
+    - min_episodes/max_episodes: episode count filtering
+    - sort: POPULARITY_DESC, SCORE_DESC, TRENDING_DESC, etc.
+    - is_adult: boolean for adult content filtering
+    
+    GraphQL Schema Reference: https://docs.anilist.co/reference/
+    Rate Limit: 90 req/min burst limit
+
+📝 /api/external/anilist/anime/{id} - ENHANCE with comprehensive GraphQL data:
+    Core Media Enhancement:
+    - format: TV, MOVIE, OVA, ONA, SPECIAL, TV_SHORT, MUSIC
+    - season: WINTER, SPRING, SUMMER, FALL  
+    - startDate/endDate: {year, month, day} objects
+    - source: MANGA, LIGHT_NOVEL, VISUAL_NOVEL, VIDEO_GAME, etc.
+    - countryOfOrigin: JP, CN, KR country codes
+    - meanScore: more accurate than averageScore
+    - favourites: user favorite count
+    - trending: current trending score
+    - synonyms: alternative titles array
+    - hashtag: official hashtag
+    - isAdult: adult content flag
+    
+    Rankings & Statistics:
+    - rankings: {id, rank, type, format, year, season, allTime, context}
+    - stats: {statusDistribution, scoreDistribution} with amounts
+    
+    Enhanced Media Assets:
+    - coverImage: {extraLarge, large, medium, color} (currently only large)
+    - bannerImage: high-resolution banner
+    - trailer: {id, site, thumbnail} video trailer info
+    
+    Enhanced Relations:
+    - characters: enhanced with {id, name, image, description, dateOfBirth, age, gender}
+    - voiceActors: {id, name, image, languageV2} for each character
+    - staff: detailed {id, name, image, description, primaryOccupations, role}
+    - relations: {node{id, title, type, format, status}, relationType} for sequels/prequels
+    
+    Additional Data:
+    - streamingEpisodes: {title, thumbnail, url, site}
+    - externalLinks: {id, url, site, type} for official links
+    - updatedAt: last update timestamp
+
+# Universal Schema Design (Property Consistency Analysis)
+📝 CRITICAL: Multi-source property mapping for consistent LLM interface
+
+## Key Inconsistencies Identified:
+### Property Names:
+- Description: `synopsis` (MAL/Kitsu) vs `description` (AniList/AniDB) 
+- Score: `score` (MAL) vs `averageScore` (AniList) vs `averageRating` (Kitsu)
+- Format: `type` (MAL) vs `format` (AniList) vs `subtype` (Kitsu)
+
+### Status Values:
+- Airing: "Currently Airing" (MAL) vs "RELEASING" (AniList) vs "current" (Kitsu)
+- Completed: "Finished Airing" vs "FINISHED" vs "finished"  
+- Upcoming: "Not yet aired" vs "NOT_YET_RELEASED" vs "upcoming"
+
+### Format Values:
+- TV: "TV" (universal) vs "TV Series" (AniDB)
+- Movie: "Movie" vs "MOVIE" vs "movie"
+- Web: "ONA" vs "Web" (AniDB)
+
+## Universal Schema Requirements:
+- Standardized property names (LLM sees consistent `description`, `status`, `format`)
+- Normalized enum values (`AIRING`, `COMPLETED`, `UPCOMING` for all sources)
+- Source mappers handle property name translation
+- Response harmonizers ensure consistent output structure
+- Platform ID cross-referencing (mal_id, anilist_id, kitsu_id, etc.)
+
+Reference: property_mapping_analysis.md for complete mapping table
+
+# AnimeSchedule.net API Endpoints (Enhanced Scheduling Data)
+✅ /api/external/animeschedule/anime        # Enhanced anime search with detailed filtering
+✅ /api/external/animeschedule/anime/{slug} # Get specific anime details by slug identifier
+✅ /api/external/animeschedule/timetables   # Weekly anime schedules with timezone support
 ```
 
 ### 2. Core Endpoint Specifications
@@ -226,6 +371,393 @@ class BatchRequest(BaseModel):
 - Mass rating comparisons
 - Batch image similarity searches
 - Parallel complex query processing
+
+#### Phase 1: New MAL External API Endpoints (Verified against Jikan API v4 Specification)
+
+**1. `/api/external/mal/top` - Top Anime Rankings**
+```python
+@router.get("/external/mal/top")
+async def get_top_anime(
+    type: Optional[str] = Query(None, description="Type: tv, movie, ova, special, ona, music"),
+    filter: Optional[str] = Query(None, description="Filter: airing, upcoming, bypopularity, favorite"),
+    rating: Optional[str] = Query(None, description="Rating: g, pg, pg13, r17, r, rx"),
+    page: Optional[int] = Query(None, description="Page number for pagination"),
+    limit: Optional[int] = Query(25, le=25, description="Number of results per page (max 25)")
+) -> MALTopAnimeResponse:
+    """Get top anime rankings from Jikan API. 
+    
+    Jikan Endpoint: /top/anime
+    Documentation: https://docs.api.jikan.moe/#tag/top/operation/getTopAnime
+    """
+```
+
+**2. `/api/external/mal/recommendations/{mal_id}` - Anime Recommendations**
+```python
+@router.get("/external/mal/recommendations/{mal_id}")
+async def get_anime_recommendations(
+    mal_id: int = Path(..., description="MAL anime ID")
+) -> MALRecommendationsResponse:
+    """Get anime recommendations based on specific anime ID.
+    
+    Jikan Endpoint: /anime/{id}/recommendations
+    Documentation: https://docs.api.jikan.moe/#tag/anime/operation/getAnimeRecommendations
+    Note: No pagination - returns all recommendations for the anime
+    """
+```
+
+**3. `/api/external/mal/random` - Random Anime Discovery**
+```python
+@router.get("/external/mal/random")
+async def get_random_anime() -> MALRandomAnimeResponse:
+    """Get random anime for discovery.
+    
+    Jikan Endpoint: /random/anime
+    Documentation: https://docs.api.jikan.moe/#tag/random/operation/getRandomAnime
+    Note: No parameters - returns single random anime
+    """
+```
+
+**4. `/api/external/mal/schedules` - Broadcasting Schedules**
+```python
+@router.get("/external/mal/schedules")
+async def get_anime_schedules(
+    filter: Optional[str] = Query(None, description="Day of week: monday, tuesday, wednesday, thursday, friday, saturday, sunday, other, unknown"),
+    kids: Optional[bool] = Query(None, description="Filter kids genre"),
+    sfw: Optional[bool] = Query(None, description="Safe for work filter"),
+    unapproved: Optional[bool] = Query(None, description="Include unapproved entries"),
+    page: Optional[int] = Query(None, description="Page number for pagination"),
+    limit: Optional[int] = Query(25, le=25, description="Number of results per page (max 25)")
+) -> MALScheduleResponse:
+    """Get anime broadcasting schedules.
+    
+    Jikan Endpoint: /schedules
+    Documentation: https://docs.api.jikan.moe/#tag/schedules/operation/getSchedules
+    """
+```
+
+**5. `/api/external/mal/genres` - Available Anime Genres**
+```python
+@router.get("/external/mal/genres")
+async def get_anime_genres(
+    filter: Optional[str] = Query(None, description="Filter genres by name")
+) -> MALGenresResponse:
+    """Get list of all available anime genres.
+    
+    Jikan Endpoint: /genres/anime
+    Documentation: https://docs.api.jikan.moe/#tag/genres/operation/getAnimeGenres
+    Note: Returns complete genre list with counts
+    """
+```
+
+**6. `/api/external/mal/characters/{mal_id}` - Anime Characters**
+```python
+@router.get("/external/mal/characters/{mal_id}")
+async def get_anime_characters(
+    mal_id: int = Path(..., description="MAL anime ID")
+) -> MALCharactersResponse:
+    """Get characters for specific anime.
+    
+    Jikan Endpoint: /anime/{id}/characters
+    Documentation: https://docs.api.jikan.moe/#tag/anime/operation/getAnimeCharacters
+    Note: No pagination - returns all characters for the anime
+    """
+```
+
+**7. `/api/external/mal/staff/{mal_id}` - Anime Staff/Crew**
+```python
+@router.get("/external/mal/staff/{mal_id}")
+async def get_anime_staff(
+    mal_id: int = Path(..., description="MAL anime ID")
+) -> MALStaffResponse:
+    """Get staff/crew information for specific anime.
+    
+    Jikan Endpoint: /anime/{id}/staff
+    Documentation: https://docs.api.jikan.moe/#tag/anime/operation/getAnimeStaff
+    Note: No pagination - returns all staff for the anime
+    """
+```
+
+**8. `/api/external/mal/seasons/{year}/{season}` - Enhanced Seasonal Anime**
+```python
+@router.get("/external/mal/seasons/{year}/{season}")
+async def get_seasonal_anime(
+    year: int = Path(..., description="Year (e.g., 2024)"),
+    season: str = Path(..., description="Season: winter, spring, summer, fall"),
+    filter: Optional[str] = Query(None, description="Anime type filter: tv, movie, ova, special, ona, music"),
+    sfw: Optional[bool] = Query(None, description="Safe for work filter"),
+    unapproved: Optional[bool] = Query(None, description="Include unapproved entries"),
+    continuing: Optional[bool] = Query(None, description="Filter continuing anime"),
+    page: Optional[int] = Query(None, description="Page number for pagination"),
+    limit: Optional[int] = Query(25, le=25, description="Number of results per page (max 25)")
+) -> MALSeasonalResponse:
+    """Get seasonal anime with enhanced filtering.
+    
+    Jikan Endpoint: /seasons/{year}/{season}
+    Documentation: https://docs.api.jikan.moe/#tag/seasons/operation/getSeason
+    """
+```
+
+**9. `/api/external/mal/recommendations/recent` - Recent Community Recommendations**
+```python
+@router.get("/external/mal/recommendations/recent")
+async def get_recent_anime_recommendations(
+    page: Optional[int] = Query(None, description="Page number for pagination"),
+    limit: Optional[int] = Query(25, le=25, description="Number of results per page (max 25)")
+) -> MALRecentRecommendationsResponse:
+    """Get recent anime-to-anime recommendations from the community.
+    
+    Jikan Endpoint: /recommendations/anime
+    Documentation: https://docs.api.jikan.moe/#tag/recommendations/operation/getRecentAnimeRecommendations
+    Note: Returns recent user-submitted recommendation pairs with reasoning text
+    """
+```
+
+#### AnimeSchedule.net API Endpoints (Enhanced Scheduling Data)
+
+**10. `/api/external/animeschedule/anime` - Enhanced Anime Search**
+```python
+@router.get("/external/animeschedule/anime")
+async def get_animeschedule_anime(
+    title: Optional[str] = Query(None, description="Search by title"),
+    airing_status: Optional[str] = Query(None, description="Status: airing, finished, upcoming, cancelled"),
+    season: Optional[str] = Query(None, description="Season: winter, spring, summer, fall"),
+    year: Optional[int] = Query(None, description="Year filter"),
+    genres: Optional[str] = Query(None, description="Comma-separated genre list"),
+    genre_match: Optional[str] = Query("any", description="Genre matching: any, all"),
+    studios: Optional[str] = Query(None, description="Comma-separated studio list"),
+    sources: Optional[str] = Query(None, description="Source material: manga, light_novel, original, etc."),
+    media_type: Optional[str] = Query(None, description="Media type: tv, movie, ova, ona, special"),
+    sort: Optional[str] = Query("popularity", description="Sort by: popularity, score, alphabetic, premiere"),
+    limit: Optional[int] = Query(25, le=100, description="Number of results (1-100)")
+) -> AnimeScheduleAnimeResponse:
+    """Enhanced anime search with detailed filtering and scheduling metadata.
+    
+    AnimeSchedule Endpoint: /anime
+    Documentation: https://animeschedule.net/api/v3/documentation/anime
+    Note: Provides detailed premiere dates, delays, and streaming platform data
+    """
+```
+
+**11. `/api/external/animeschedule/anime/{slug}` - Specific Anime Details**
+```python
+@router.get("/external/animeschedule/anime/{slug}")
+async def get_animeschedule_anime_by_slug(
+    slug: str = Path(..., description="Anime slug identifier (e.g., 'one-piece')"),
+    fields: Optional[str] = Query(None, description="Comma-separated fields to include")
+) -> AnimeScheduleAnimeDetailResponse:
+    """Get detailed information for a specific anime by slug.
+    
+    AnimeSchedule Endpoint: /anime/{slug}
+    Documentation: https://animeschedule.net/api/v3/documentation/anime
+    Note: Provides comprehensive anime metadata with relationships and streaming data
+    """
+```
+
+**12. `/api/external/animeschedule/timetables` - Weekly Anime Schedules**
+```python
+@router.get("/external/animeschedule/timetables")
+async def get_animeschedule_timetables(
+    week: Optional[str] = Query("current", description="Week: current, next, or YYYY-MM-DD"),
+    year: Optional[int] = Query(None, description="Year for weekly schedule"),
+    air_type: Optional[str] = Query(None, description="Air type: raw, sub, dub"),
+    timezone: Optional[str] = Query("UTC", description="Timezone for schedule times")
+) -> AnimeScheduleTimetableResponse:
+    """Get weekly anime timetables with timezone support and detailed scheduling.
+    
+    AnimeSchedule Endpoint: /timetables
+    Documentation: https://animeschedule.net/api/v3/documentation/anime
+    Note: More detailed than Jikan schedules with delay tracking and timezone conversion
+    """
+```
+
+**Response Schemas (Verified against Jikan API v4):**
+```python
+class MALTopAnimeResponse(BaseModel):
+    source: str = "mal"
+    type: Optional[str]  # Type filter applied
+    filter: Optional[str]  # Filter applied (airing, upcoming, bypopularity, favorite)
+    rating: Optional[str]  # Rating filter applied
+    page: Optional[int]
+    results: List[AnimeResult]
+    pagination: Dict[str, Any]  # Jikan pagination info
+    operation_metadata: OperationMetadata
+
+class MALRecommendationsResponse(BaseModel):
+    source: str = "mal"
+    based_on_anime_id: int
+    recommendations: List[AnimeResult]
+    operation_metadata: OperationMetadata
+
+class MALRandomAnimeResponse(BaseModel):
+    source: str = "mal"
+    result: AnimeResult  # Single random anime
+    operation_metadata: OperationMetadata
+
+class MALScheduleResponse(BaseModel):
+    source: str = "mal"
+    filter: Optional[str]  # Day filter applied
+    kids: Optional[bool]
+    sfw: Optional[bool]
+    page: Optional[int]
+    schedules: List[ScheduleEntry]
+    operation_metadata: OperationMetadata
+
+class MALGenresResponse(BaseModel):
+    source: str = "mal"
+    filter: Optional[str]  # Name filter applied
+    genres: List[Genre]
+    operation_metadata: OperationMetadata
+
+class MALCharactersResponse(BaseModel):
+    source: str = "mal"
+    anime_id: int
+    characters: List[CharacterInfo]
+    operation_metadata: OperationMetadata
+
+class MALStaffResponse(BaseModel):
+    source: str = "mal"
+    anime_id: int
+    staff: List[StaffInfo]
+    operation_metadata: OperationMetadata
+
+class MALSeasonalResponse(BaseModel):
+    source: str = "mal"
+    year: int
+    season: str
+    filter: Optional[str]  # Type filter applied
+    sfw: Optional[bool]
+    unapproved: Optional[bool]
+    continuing: Optional[bool]
+    page: Optional[int]
+    results: List[AnimeResult]
+    pagination: Dict[str, Any]  # Jikan pagination info
+    operation_metadata: OperationMetadata
+
+class MALRecentRecommendationsResponse(BaseModel):
+    source: str = "mal"
+    page: Optional[int]
+    recommendations: List[RecommendationPair]
+    pagination: Dict[str, Any]  # Jikan pagination info
+    operation_metadata: OperationMetadata
+
+# Supporting Models
+class Genre(BaseModel):
+    mal_id: int
+    name: str
+    count: Optional[int]  # Number of anime in this genre
+
+class CharacterInfo(BaseModel):
+    mal_id: int
+    name: str
+    role: str  # Main, Supporting, etc.
+    image_url: Optional[str]
+    voice_actors: Optional[List[VoiceActor]] = None
+
+class VoiceActor(BaseModel):
+    mal_id: int
+    name: str
+    language: str
+    image_url: Optional[str]
+
+class StaffInfo(BaseModel):
+    mal_id: int
+    name: str
+    role: str  # Director, Producer, etc.
+    image_url: Optional[str]
+
+class ScheduleEntry(BaseModel):
+    mal_id: int
+    title: str
+    day_of_week: str
+    time: Optional[str]
+    timezone: str
+    episode_number: Optional[int]
+
+class RecommendationPair(BaseModel):
+    mal_id: str  # Unique recommendation ID
+    entry: List[AnimeEntry]  # Two anime being compared
+    content: str  # User's recommendation text/reasoning
+    date: str  # When recommendation was made
+    user: UserInfo  # User who made the recommendation
+
+class AnimeEntry(BaseModel):
+    mal_id: int
+    title: str
+    url: str
+    images: Dict[str, Any]
+
+class UserInfo(BaseModel):
+    url: str
+    username: str
+
+# AnimeSchedule.net Response Schemas
+class AnimeScheduleAnimeResponse(BaseModel):
+    source: str = "animeschedule"
+    anime: List[AnimeScheduleEntry]
+    filters_applied: Dict[str, Any]
+    operation_metadata: OperationMetadata
+
+class AnimeScheduleAnimeDetailResponse(BaseModel):
+    source: str = "animeschedule"
+    slug: str
+    fields_requested: Optional[str]
+    anime: AnimeScheduleDetailEntry
+    operation_metadata: OperationMetadata
+
+class AnimeScheduleTimetableResponse(BaseModel):
+    source: str = "animeschedule"
+    week: str
+    year: Optional[int]
+    air_type: Optional[str]
+    timezone: str
+    timetables: List[TimetableEntry]
+    operation_metadata: OperationMetadata
+
+class AnimeScheduleEntry(BaseModel):
+    title: str
+    slug: str
+    premier: Dict[str, Any]  # Japanese/Sub/Dub premiere dates
+    airing_status: str
+    episode_duration: Optional[int]
+    genres: List[str]
+    studios: List[str]
+    sources: List[str]
+    media_type: str
+    description: Optional[str]
+    websites: List[Dict[str, str]]
+    streaming_platforms: List[str]
+    relations: List[Dict[str, Any]]
+
+class AnimeScheduleDetailEntry(BaseModel):
+    title: str
+    slug: str
+    premier: Dict[str, Any]  # Japanese/Sub/Dub premiere dates with detailed info
+    airing_status: str
+    score: Optional[float]
+    episode_duration: Optional[int]
+    total_episodes: Optional[int]
+    genres: List[str]
+    studios: List[str]
+    sources: List[str]
+    media_type: str
+    description: str
+    websites: List[Dict[str, str]]  # Official sites, MAL, AniList, etc.
+    streaming_platforms: List[str]
+    relations: List[Dict[str, Any]]  # Sequels, prequels, etc.
+    images: List[str]
+    tags: List[str]
+
+class TimetableEntry(BaseModel):
+    title: str
+    slug: str
+    air_time: str
+    air_type: str  # raw, sub, dub
+    timezone: str
+    delayed: bool
+    delay_reason: Optional[str]
+    episode_number: Optional[int]
+    streaming_platforms: List[str]
+```
 
 ### 3. Enhanced MCP Tool Architecture
 
@@ -394,7 +926,306 @@ async def get_streaming_info(
     """
 ```
 
-### 4. Project Structure for External APIs
+### 4. Universal Schema Foundation
+
+#### Critical Implementation Strategy
+
+Based on comprehensive property mapping analysis of 9 anime data sources, we need to implement a **Universal Schema abstraction layer** before building individual source APIs. This ensures consistency, reduces LLM complexity, and enables intelligent source fallback.
+
+#### Universal Schema Architecture
+
+```python
+# src/models/universal_anime.py
+from typing import Optional, List, Literal
+from pydantic import BaseModel, Field
+from enum import Enum
+
+class AnimeStatus(str, Enum):
+    AIRING = "AIRING"
+    COMPLETED = "COMPLETED" 
+    UPCOMING = "UPCOMING"
+    CANCELLED = "CANCELLED"
+    HIATUS = "HIATUS"
+    UNKNOWN = "UNKNOWN"
+
+class AnimeFormat(str, Enum):
+    TV = "TV"
+    TV_SHORT = "TV_SHORT"
+    MOVIE = "MOVIE"
+    SPECIAL = "SPECIAL"
+    OVA = "OVA"
+    ONA = "ONA"
+    MUSIC = "MUSIC"
+    UNKNOWN = "UNKNOWN"
+
+class UniversalAnime(BaseModel):
+    """Universal anime schema with guaranteed properties across all 9 sources."""
+    
+    # GUARANTEED UNIVERSAL PROPERTIES (9/9 sources)
+    id: str = Field(..., description="Unique identifier")
+    title: str = Field(..., description="Primary anime title")
+    type_format: AnimeFormat = Field(..., description="Media format")
+    episodes: Optional[int] = Field(None, description="Total episode count")
+    status: AnimeStatus = Field(..., description="Current airing status")
+    genres: List[str] = Field(default=[], description="Genre/category tags")
+    score: Optional[float] = Field(None, description="Average rating")
+    image_url: Optional[str] = Field(None, description="Cover image URL")
+    image_large: Optional[str] = Field(None, description="Large cover image URL")
+    year: Optional[int] = Field(None, description="Release year")
+    synonyms: List[str] = Field(default=[], description="Alternative titles")
+    studios: List[str] = Field(default=[], description="Production studios")
+    
+    # HIGH-CONFIDENCE PROPERTIES (7-8/9 sources)
+    description: Optional[str] = Field(None, description="Synopsis/description")
+    url: Optional[str] = Field(None, description="Canonical URL")
+    score_count: Optional[int] = Field(None, description="Number of ratings")
+    title_english: Optional[str] = Field(None, description="English title")
+    title_native: Optional[str] = Field(None, description="Native title")
+    start_date: Optional[str] = Field(None, description="Start date (ISO format)")
+    season: Optional[str] = Field(None, description="Anime season")
+    end_date: Optional[str] = Field(None, description="End date (ISO format)")
+    duration: Optional[int] = Field(None, description="Episode duration (minutes)")
+    
+    # MEDIUM-CONFIDENCE PROPERTIES (4-6/9 sources)
+    source: Optional[str] = Field(None, description="Source material")
+    rank: Optional[int] = Field(None, description="Anime ranking")
+    staff: Optional[List[Dict]] = Field(None, description="Staff information")
+    
+    # METADATA
+    source_used: str = Field(..., description="Data source used")
+    last_updated: Optional[str] = Field(None, description="Last update timestamp")
+    data_quality_score: Optional[float] = Field(None, description="Completeness score 0-1")
+
+class UniversalSearchParams(BaseModel):
+    """Universal search parameters that map to all sources."""
+    
+    # Text search
+    query: Optional[str] = None
+    title: Optional[str] = None
+    
+    # Classification
+    genres: Optional[List[str]] = None
+    status: Optional[AnimeStatus] = None
+    type_format: Optional[AnimeFormat] = None
+    
+    # Temporal
+    year: Optional[int] = None
+    season: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    
+    # Quality filters
+    min_score: Optional[float] = None
+    max_score: Optional[float] = None
+    min_episodes: Optional[int] = None
+    max_episodes: Optional[int] = None
+    
+    # Source preferences
+    preferred_source: Optional[str] = None
+    fallback_sources: Optional[List[str]] = None
+    
+    # Pagination
+    limit: int = Field(default=20, le=100)
+    offset: int = Field(default=0, ge=0)
+```
+
+#### Source Mapping Layer
+
+```python
+# src/integrations/mappers/base_mapper.py
+from abc import ABC, abstractmethod
+from typing import Dict, Any, List
+from src.models.universal_anime import UniversalAnime, UniversalSearchParams
+
+class BaseMapper(ABC):
+    """Base class for source-specific mappers."""
+    
+    @abstractmethod
+    def to_universal(self, source_data: Dict[str, Any]) -> UniversalAnime:
+        """Convert source-specific data to universal schema."""
+        pass
+    
+    @abstractmethod
+    def from_universal_search(self, params: UniversalSearchParams) -> Dict[str, Any]:
+        """Convert universal search params to source-specific format."""
+        pass
+    
+    @abstractmethod
+    def get_supported_properties(self) -> List[str]:
+        """Return list of properties supported by this source."""
+        pass
+
+# src/integrations/mappers/anilist_mapper.py
+class AniListMapper(BaseMapper):
+    """AniList-specific mapping implementation."""
+    
+    def to_universal(self, anilist_data: Dict[str, Any]) -> UniversalAnime:
+        return UniversalAnime(
+            id=str(anilist_data["id"]),
+            title=anilist_data["title"]["romaji"],
+            title_english=anilist_data["title"].get("english"),
+            title_native=anilist_data["title"].get("native"),
+            type_format=self._map_format(anilist_data.get("format")),
+            episodes=anilist_data.get("episodes"),
+            status=self._map_status(anilist_data.get("status")),
+            description=anilist_data.get("description"),
+            genres=anilist_data.get("genres", []),
+            score=anilist_data.get("averageScore"),
+            year=anilist_data.get("seasonYear"),
+            image_url=anilist_data.get("coverImage", {}).get("large"),
+            image_large=anilist_data.get("coverImage", {}).get("extraLarge"),
+            studios=[studio["name"] for studio in anilist_data.get("studios", {}).get("nodes", [])],
+            source_used="anilist",
+            last_updated=datetime.utcnow().isoformat()
+        )
+    
+    def from_universal_search(self, params: UniversalSearchParams) -> str:
+        """Convert universal params to AniList GraphQL query."""
+        variables = {}
+        
+        if params.query:
+            variables["search"] = params.query
+        if params.genres:
+            variables["genre_in"] = params.genres
+        if params.year:
+            variables["seasonYear"] = params.year
+        if params.status:
+            variables["status"] = self._map_status_to_anilist(params.status)
+        
+        return self._build_graphql_query(variables)
+```
+
+#### Source Selection & Fallback Manager
+
+```python
+# src/services/source_manager.py
+class SourceManager:
+    """Intelligent source selection and fallback management."""
+    
+    DEFAULT_SOURCE_PRIORITY = [
+        "anilist",      # Best coverage + reliability 
+        "mal_api_v2",   # Official MAL API
+        "jikan",        # MAL mirror
+        "kitsu",        # Good basic coverage
+        "anime_planet", # JSON-LD structured data
+        "offline_db"    # Fallback baseline
+    ]
+    
+    def __init__(self):
+        self.mappers = {
+            "anilist": AniListMapper(),
+            "mal_api_v2": MALMapper(),
+            "offline_db": OfflineDBMapper()
+        }
+        self.clients = {
+            "anilist": AniListClient(),
+            "mal_api_v2": MALClient(),
+            "offline_db": OfflineDatabase()
+        }
+        self.failed_sources = set()
+    
+    async def search(self, params: UniversalSearchParams) -> List[UniversalAnime]:
+        """Execute search with intelligent source selection."""
+        
+        # 1. Select best source based on requested properties
+        target_source = self._select_best_source(params)
+        
+        # 2. Execute search with fallback
+        return await self._search_with_fallback(params, target_source)
+    
+    def _select_best_source(self, params: UniversalSearchParams) -> str:
+        """Score sources based on parameter coverage and reliability."""
+        
+        if params.preferred_source and params.preferred_source not in self.failed_sources:
+            return params.preferred_source
+        
+        # Score sources based on property support
+        source_scores = {}
+        requested_props = [k for k, v in params.dict().items() if v is not None]
+        
+        for source, mapper in self.mappers.items():
+            if source in self.failed_sources:
+                continue
+                
+            supported_props = mapper.get_supported_properties()
+            coverage = len(set(requested_props) & set(supported_props)) / len(requested_props)
+            reliability_bonus = self.DEFAULT_SOURCE_PRIORITY.index(source) / len(self.DEFAULT_SOURCE_PRIORITY)
+            
+            source_scores[source] = coverage + reliability_bonus
+        
+        return max(source_scores, key=source_scores.get) if source_scores else "offline_db"
+    
+    async def _search_with_fallback(self, params: UniversalSearchParams, source: str) -> List[UniversalAnime]:
+        """Execute search with automatic fallback on failure."""
+        
+        try:
+            # Get source-specific client and mapper
+            client = self.clients[source]
+            mapper = self.mappers[source]
+            
+            # Convert universal params to source format
+            source_params = mapper.from_universal_search(params)
+            
+            # Execute search
+            raw_results = await client.search(source_params)
+            
+            # Convert results to universal format
+            universal_results = [mapper.to_universal(result) for result in raw_results]
+            
+            return universal_results
+            
+        except Exception as e:
+            # Mark source as failed and try fallback
+            self.failed_sources.add(source)
+            
+            fallback_source = self._select_best_source(params)
+            if fallback_source != source:
+                return await self._search_with_fallback(params, fallback_source)
+            
+            raise AllSourcesFailedException(f"All sources failed. Last error: {e}")
+```
+
+#### Enhanced AniList Implementation
+
+Looking at the current AniList client, we need to expand it to support all the parameters from our universal schema. The current implementation only supports basic search parameters.
+
+**Current AniList Parameters (Limited):**
+- `query` (text search)
+- `genres` (genre filter)  
+- `year` (season year)
+- `limit` (results limit)
+
+**Missing AniList Parameters for Universal Schema:**
+```python
+# Enhanced AniList search method
+async def search_anime(
+    self,
+    # Current params ✅
+    query: Optional[str] = None,
+    genres: Optional[List[str]] = None,
+    year: Optional[int] = None,
+    limit: int = 10,
+    
+    # Missing universal params ❌
+    status: Optional[str] = None,           # RELEASING, FINISHED, etc.
+    format: Optional[str] = None,          # TV, MOVIE, OVA, etc.  
+    season: Optional[str] = None,          # WINTER, SPRING, etc.
+    min_score: Optional[int] = None,       # averageScore filter
+    max_score: Optional[int] = None,
+    episodes_greater: Optional[int] = None,
+    episodes_lesser: Optional[int] = None,
+    start_date_greater: Optional[str] = None,
+    start_date_lesser: Optional[str] = None,
+    is_adult: Optional[bool] = None,       # NSFW content filter
+    source: Optional[str] = None,          # MANGA, LIGHT_NOVEL, etc.
+    country_of_origin: Optional[str] = None, # JP, CN, KR
+    tags: Optional[List[str]] = None,      # More specific than genres
+    studios: Optional[List[str]] = None,   # Studio filter
+    sort: Optional[List[str]] = None,      # POPULARITY_DESC, SCORE_DESC, etc.
+) -> List[Dict[str, Any]]:
+```
+
+### 5. Project Structure for External APIs
 
 #### New Integration Directory Structure
 
@@ -611,6 +1442,130 @@ class EnhancedAnimeData(BaseModel):
     # Validation Metadata (NEW)
     validation_metadata: Optional[ValidationMetadata] = None
 ```
+
+## Implementation Phases
+
+### Phase 1: Universal Schema Foundation (Week 1-2) 🚀 **PRIORITY**
+
+**Goal**: Establish universal schema and AniList integration as proof of concept
+
+**Tasks**:
+1. **Define Universal Models** (`src/models/universal_anime.py`)
+   - Create `UniversalAnime` with 12 guaranteed + 9 high-confidence properties
+   - Create `UniversalSearchParams` with all possible search parameters
+   - Create enum classes for `AnimeStatus`, `AnimeFormat`, etc.
+
+2. **Create Mapping Framework** (`src/integrations/mappers/`)
+   - Implement `BaseMapper` abstract class
+   - Create `AniListMapper` with bidirectional mapping
+   - Implement property coverage tracking
+
+3. **Enhance AniList Client** (`src/integrations/clients/anilist_client.py`)
+   - Add all missing GraphQL parameters (status, format, season, score filters, etc.)
+   - Expand GraphQL queries to fetch all universal properties
+   - Add comprehensive error handling
+
+4. **Source Manager Implementation** (`src/services/source_manager.py`)
+   - Implement intelligent source selection logic
+   - Add fallback mechanisms
+   - Create property coverage analysis
+
+**Success Criteria**:
+- ✅ LLM tools can use universal schema parameters
+- ✅ AniList integration provides 8.5/9 property coverage
+- ✅ Automatic fallback to offline DB when AniList fails
+- ✅ All existing MCP tools work with universal schema
+
+### Phase 2: Dynamic Database Enrichment (Week 3-4)
+
+**Goal**: Implement dynamic enrichment and backup systems
+
+**Tasks**:
+1. **Enrichment Pipeline** (`src/services/enrichment_service.py`)
+   - Background task queue for property updates
+   - Smart update detection (missing/stale properties)
+   - Embedding regeneration on content changes
+
+2. **Backup & Recovery System** (`src/services/backup_manager.py`)
+   - Real-time change tracking
+   - Incremental backup strategy
+   - Qdrant snapshot management
+   - Recovery verification procedures
+
+3. **Quality Monitoring** (`src/services/quality_monitor.py`)
+   - Data completeness scoring
+   - Source reliability tracking
+   - Performance metrics collection
+
+**Success Criteria**:
+- ✅ Database automatically enriches from API calls
+- ✅ Comprehensive backup system with <2hr recovery time
+- ✅ Quality scores improve over time with usage
+
+### Phase 3: Multi-Source Integration (Week 5-8)
+
+**Goal**: Add remaining high-value sources with mapping
+
+**Priority Order**:
+1. **MAL API v2** (official, reliable)
+2. **Jikan** (MAL mirror, good coverage)  
+3. **Kitsu** (good basic coverage)
+4. **Anime-Planet** (JSON-LD structured data)
+
+**Tasks per Source**:
+1. Implement client with full parameter support
+2. Create comprehensive mapper (to/from universal)
+3. Add to source manager with priority ranking
+4. Test fallback scenarios
+5. Update property coverage analysis
+
+**Success Criteria**:
+- ✅ 5 sources integrated (offline + 4 APIs)
+- ✅ Intelligent source selection based on query requirements
+- ✅ <500ms average response time with fallbacks
+
+### Phase 4: Advanced Features (Week 9-12)
+
+**Goal**: Complete the vision with advanced capabilities
+
+**Tasks**:
+1. **Scraping Integration** (remaining 4 sources)
+   - Anime-Planet, AniSearch, AnimeSchedule scrapers
+   - Rate limiting and reliability measures
+
+2. **Advanced Query Understanding**
+   - Complex narrative queries ("dark military anime like AoT")
+   - Temporal queries ("anime that aired in 2023 winter")
+   - Comparative queries ("anime better than X but similar to Y")
+
+3. **User Personalization**
+   - Preference learning from interactions
+   - Source preference per user
+   - Quality threshold customization
+
+**Success Criteria**:
+- ✅ All 9 sources integrated
+- ✅ Complex query types working
+- ✅ Personalized recommendations
+- ✅ Production-ready system
+
+## Starting Point Decision
+
+**RECOMMENDATION**: Start with **Phase 1 - Universal Schema Foundation**
+
+**Why this is optimal**:
+1. **Immediate Value**: Working system with enhanced AniList + offline DB
+2. **Foundation Building**: Framework ready for rapid source addition
+3. **Risk Mitigation**: Smaller scope, faster feedback, validates architecture
+4. **LLM Integration**: Can immediately test universal schema with real queries
+
+**Next Immediate Actions**:
+1. Create `src/models/universal_anime.py` with schema definitions
+2. Enhance existing `AniListClient` with missing parameters
+3. Implement `AniListMapper` for bidirectional conversion
+4. Update MCP tools to use universal schema
+
+This approach gives us a **working enhanced system in 1-2 weeks** while building the foundation for the complete 9-source vision.
 
 #### Multi-Layer Data Validation Architecture
 
@@ -1929,6 +2884,23 @@ Processing Flow:
        async def search_anime(self, query: str) -> List[dict]
        async def get_seasonal_anime(self, year: int, season: str) -> List[dict]
        async def get_anime_details_full(self, mal_id: int) -> dict  # Full endpoint
+       
+       # Phase 1: Additional MAL Endpoints for Direct User Access (Verified against Jikan API v4)
+       async def get_top_anime(self, type: str = None, filter: str = None, rating: str = None, page: int = None, limit: int = 25) -> List[dict]  # Jikan: /top/anime
+       async def get_anime_recommendations(self, mal_id: int) -> List[dict]  # Jikan: /anime/{id}/recommendations
+       async def get_random_anime(self) -> dict  # Jikan: /random/anime (no parameters)
+       async def get_anime_schedules(self, filter: str = None, kids: bool = None, sfw: bool = None, unapproved: bool = None, page: int = None, limit: int = 25) -> List[dict]  # Jikan: /schedules
+       async def get_anime_genres(self, filter: str = None) -> List[dict]  # Jikan: /genres/anime
+       async def get_anime_characters(self, mal_id: int) -> List[dict]  # Jikan: /anime/{id}/characters
+       async def get_anime_staff(self, mal_id: int) -> List[dict]  # Jikan: /anime/{id}/staff
+       async def get_seasonal_anime_enhanced(self, year: int, season: str, filter: str = None, sfw: bool = None, unapproved: bool = None, continuing: bool = None, page: int = None, limit: int = 25) -> List[dict]  # Jikan: /seasons/{year}/{season}
+       async def get_recent_anime_recommendations(self, page: int = None, limit: int = 25) -> List[dict]  # Jikan: /recommendations/anime
+
+   # AnimeSchedule.net Client Methods (Enhanced Scheduling Data)
+   class AnimeScheduleClient(BaseClient):
+       async def get_anime(self, title: str = None, airing_status: str = None, season: str = None, year: int = None, genres: str = None, genre_match: str = "any", studios: str = None, sources: str = None, media_type: str = None, sort: str = "popularity", limit: int = 25) -> List[dict]  # AnimeSchedule: /anime
+       async def get_anime_by_slug(self, slug: str, fields: str = None) -> dict  # AnimeSchedule: /anime/{slug}
+       async def get_timetables(self, week: str = "current", year: int = None, air_type: str = None, timezone: str = "UTC") -> List[dict]  # AnimeSchedule: /timetables
    ```
 
 3. **Kitsu JSON:API client** (2 days)
