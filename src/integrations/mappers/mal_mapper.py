@@ -69,114 +69,100 @@ class MALMapper:
         if universal_params.query:
             mal_params["q"] = universal_params.query
         
-        # Status mapping (prevents the "ongoing" chaos)
-        if universal_params.status:
-            status_value = cls.UNIVERSAL_TO_STATUS.get(universal_params.status)
-            if status_value:
-                mal_params["status"] = status_value
+        # MAL API v2 does not support filtering by status, format, score, episodes, dates, or adult content
+        # These are response fields only - handle via fields parameter instead
         
-        # Format mapping (only include if MAL supports this format)
-        if universal_params.type_format:
-            format_value = cls.UNIVERSAL_TO_FORMAT.get(universal_params.type_format)
-            if format_value:
-                mal_params["media_type"] = format_value
+        # Handle response field requests using MAL's fields parameter
+        requested_fields = []
         
-        # Score filters (MAL uses same 0-10 scale)
-        min_score = mal_specific.get("min_score") or universal_params.min_score
-        if min_score is not None:
-            mal_params["min_score"] = min_score
-        max_score = mal_specific.get("max_score") or universal_params.max_score
-        if max_score is not None:
-            mal_params["max_score"] = max_score
-        
-        # Episode filters
-        min_episodes = mal_specific.get("min_episodes") or universal_params.min_episodes
-        if min_episodes is not None:
-            mal_params["min_episodes"] = min_episodes
-        max_episodes = mal_specific.get("max_episodes") or universal_params.max_episodes
-        if max_episodes is not None:
-            mal_params["max_episodes"] = max_episodes
-        
-        # Date filtering
-        start_date = mal_specific.get("start_date") or universal_params.start_date
-        if start_date:
-            mal_params["start_date"] = start_date
-        
-        # Season filtering
-        start_season = mal_specific.get("start_season") or universal_params.mal_start_season
-        if start_season:
-            mal_params["start_season"] = start_season
-        
-        # Adult content filter
-        if not universal_params.include_adult:
-            mal_params["nsfw"] = "white"  # MAL: white = SFW content only
-        
-        # MAL-SPECIFIC PARAMETERS (from platform-specific params or universal schema)
-        # Broadcast day
-        broadcast_day = mal_specific.get("broadcast_day") or universal_params.mal_broadcast_day
-        if broadcast_day:
-            mal_params["broadcast_day"] = broadcast_day
-        
-        # Content rating  
-        rating = mal_specific.get("rating") or universal_params.mal_rating
-        if rating:
-            mal_params["rating"] = rating
-        
-        # NSFW filtering
-        nsfw = mal_specific.get("nsfw") or universal_params.mal_nsfw
-        if nsfw:
-            mal_params["nsfw"] = nsfw
-        
-        # Source material
-        source = mal_specific.get("source") or universal_params.mal_source or universal_params.source
-        if source:
-            mal_params["source"] = source
-        
-        # User engagement filters
-        num_list_users = mal_specific.get("num_list_users") or universal_params.mal_num_list_users
-        if num_list_users is not None:
-            mal_params["num_list_users"] = num_list_users
+        # Core response fields
+        if getattr(universal_params, 'id_field', None):
+            requested_fields.append('id')
             
-        num_scoring_users = mal_specific.get("num_scoring_users") or universal_params.mal_num_scoring_users
-        if num_scoring_users is not None:
-            mal_params["num_scoring_users"] = num_scoring_users
-        
-        # Date filters
-        created_at = mal_specific.get("created_at") or universal_params.mal_created_at
-        if created_at:
-            mal_params["created_at"] = created_at
+        if getattr(universal_params, 'title_field', None):
+            requested_fields.append('title')
             
-        updated_at = mal_specific.get("updated_at") or universal_params.mal_updated_at
-        if updated_at:
-            mal_params["updated_at"] = updated_at
+        if getattr(universal_params, 'status_field', None):
+            requested_fields.append('status')
+            
+        if getattr(universal_params, 'format_field', None):
+            requested_fields.append('media_type')
+            
+        if getattr(universal_params, 'episodes_field', None):
+            requested_fields.append('num_episodes')
+            
+        if getattr(universal_params, 'score_field', None):
+            requested_fields.append('mean')
+            
+        if getattr(universal_params, 'genres_field', None):
+            requested_fields.append('genres')
+        if getattr(universal_params, 'start_date_field', None):
+            requested_fields.append('start_date')
+            
+        if getattr(universal_params, 'end_date_field', None):
+            requested_fields.append('end_date')
+            
+        if getattr(universal_params, 'synopsis_field', None):
+            requested_fields.append('synopsis')
+            
+        if getattr(universal_params, 'popularity_field', None):
+            requested_fields.append('popularity')
+            
+        if getattr(universal_params, 'rank_field', None):
+            requested_fields.append('rank')
+            
+        if getattr(universal_params, 'source_field', None):
+            requested_fields.append('source')
+            
+        if getattr(universal_params, 'rating_field', None):
+            requested_fields.append('rating')
+            
+        if getattr(universal_params, 'studios_field', None):
+            requested_fields.append('studios')
+            
+        # MAL-specific response fields
+        if getattr(universal_params, 'mal_alternative_titles_field', None):
+            requested_fields.append('alternative_titles')
+            
+        if getattr(universal_params, 'mal_my_list_status_field', None):
+            requested_fields.append('my_list_status')
+            
+        if getattr(universal_params, 'mal_num_list_users_field', None):
+            requested_fields.append('num_list_users')
+            
+        if getattr(universal_params, 'mal_num_scoring_users_field', None):
+            requested_fields.append('num_scoring_users')
+            
+        if getattr(universal_params, 'mal_nsfw_field', None):
+            requested_fields.append('nsfw')
+            
+        if getattr(universal_params, 'mal_average_episode_duration_field', None):
+            requested_fields.append('average_episode_duration')
+            
+        if getattr(universal_params, 'mal_start_season_field', None):
+            requested_fields.append('start_season')
+            
+        if getattr(universal_params, 'mal_broadcast_field', None):
+            requested_fields.append('broadcast')
+            
+        if getattr(universal_params, 'mal_main_picture_field', None):
+            requested_fields.append('main_picture')
+            
+        if getattr(universal_params, 'mal_created_at_field', None):
+            requested_fields.append('created_at')
+            
+        if getattr(universal_params, 'mal_updated_at_field', None):
+            requested_fields.append('updated_at')
+            
+        # Add fields parameter if any fields were requested
+        if requested_fields:
+            mal_params['fields'] = ','.join(requested_fields)
         
-        # Duration filter (convert minutes to seconds for MAL)
-        if universal_params.min_duration is not None:
-            mal_params["average_episode_duration"] = universal_params.min_duration * 60
+        # Note: rating, nsfw, source, num_list_users, num_scoring_users, created_at, updated_at 
+        # are all response fields, not query parameters for MAL API v2
         
-        # Studios filter
-        if universal_params.studios:
-            mal_params["studios"] = ",".join(universal_params.studios)
-        
-        # Broadcast information
-        broadcast = mal_specific.get("broadcast") or universal_params.mal_broadcast
-        if broadcast:
-            mal_params["broadcast"] = broadcast
-        
-        # Main picture
-        main_picture = mal_specific.get("main_picture") or universal_params.mal_main_picture
-        if main_picture:
-            mal_params["main_picture"] = main_picture
-        
-        # End date filter
-        end_date = mal_specific.get("end_date") or universal_params.end_date
-        if end_date:
-            mal_params["end_date"] = end_date
-        
-        # Additional MAL filters
-        rank = mal_specific.get("rank") or universal_params.mal_rank
-        if rank is not None:
-            mal_params["rank"] = rank
+        # Note: duration, studios, broadcast, main_picture, end_date, rank 
+        # are all response fields, not query parameters for MAL API v2
         
         # Result control
         limit = mal_specific.get("limit") or universal_params.limit
@@ -185,18 +171,7 @@ class MALMapper:
         if offset:
             mal_params["offset"] = offset
         
-        # Universal parameter mappings (with dual-source pattern)
-        popularity = mal_specific.get("popularity") or universal_params.min_popularity
-        if popularity is not None:
-            mal_params["popularity"] = popularity
-            
-        mean = mal_specific.get("mean") or universal_params.score
-        if mean is not None:
-            mal_params["mean"] = mean
-            
-        title = mal_specific.get("title") or universal_params.title
-        if title:
-            mal_params["title"] = title
+        # Note: popularity, mean, title are response fields, not query parameters for MAL API v2
         
         return mal_params
     

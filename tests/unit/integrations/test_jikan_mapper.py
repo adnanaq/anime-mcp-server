@@ -13,6 +13,7 @@ from src.models.universal_anime import (
     AnimeStatus,
     AnimeFormat,
     AnimeSeason,
+    AnimeRating,
 )
 
 
@@ -32,8 +33,8 @@ class TestJikanMapper:
             season=AnimeSeason.SPRING,
             min_score=7.0,
             max_score=9.0,
-            min_episodes=10,
-            max_episodes=30,
+            rating=AnimeRating.PG13,
+            producers=["MAPPA", "WIT Studio"],
             include_adult=False,
             limit=20,
             sort_by="score",
@@ -71,14 +72,17 @@ class TestJikanMapper:
             assert jikan_params["status"] == expected_jikan
 
     def test_to_jikan_search_params_format_mapping(self):
-        """Test format mapping from universal to Jikan."""
+        """Test format mapping from universal to Jikan including Jikan-specific formats."""
         format_test_cases = [
             (AnimeFormat.TV, "tv"),
+            (AnimeFormat.TV_SPECIAL, "tv_special"),  # Jikan-specific
             (AnimeFormat.MOVIE, "movie"),
             (AnimeFormat.OVA, "ova"),
             (AnimeFormat.ONA, "ona"),
             (AnimeFormat.SPECIAL, "special"),
             (AnimeFormat.MUSIC, "music"),
+            (AnimeFormat.CM, "cm"),                  # Jikan-specific
+            (AnimeFormat.PV, "pv"),                  # Jikan-specific
         ]
         
         for universal_format, expected_jikan in format_test_cases:
@@ -87,24 +91,78 @@ class TestJikanMapper:
             assert jikan_params["type"] == expected_jikan
 
     def test_to_jikan_search_params_genre_handling(self):
-        """Test genre parameter conversion."""
+        """Test genre parameter conversion with name-to-ID mapping."""
         params = UniversalSearchParams(
             genres=["Action", "Adventure"],
             genres_exclude=["Horror", "Ecchi"]
         )
         jikan_params = JikanMapper.to_jikan_search_params(params)
         
-        assert jikan_params["genres"] == "Action,Adventure"
-        assert jikan_params["genres_exclude"] == "Horror,Ecchi"
+        # Genres should be converted to IDs: Action=1, Adventure=2
+        assert jikan_params["genres"] == "1,2"
+        # Genre exclusions should be converted to IDs: Horror=14, Ecchi=9
+        assert jikan_params["genres_exclude"] == "14,9"
+
+    def test_to_jikan_search_params_rating_mapping(self):
+        """Test rating mapping from universal to Jikan."""
+        rating_test_cases = [
+            (AnimeRating.G, "g"),      # All Ages
+            (AnimeRating.PG, "pg"),    # Children
+            (AnimeRating.PG13, "pg13"), # Teens 13 or older
+            (AnimeRating.R, "r"),      # 17+ (violence & profanity)
+            (AnimeRating.R_PLUS, "r+"), # Mild Nudity
+            (AnimeRating.RX, "rx"),    # Hentai
+        ]
+        
+        for universal_rating, expected_jikan in rating_test_cases:
+            params = UniversalSearchParams(rating=universal_rating)
+            jikan_params = JikanMapper.to_jikan_search_params(params)
+            assert jikan_params["rating"] == expected_jikan
+
+    def test_to_jikan_search_params_producer_handling(self):
+        """Test producer parameter conversion."""
+        params = UniversalSearchParams(
+            producers=["MAPPA", "WIT Studio", "Studio Pierrot"]
+        )
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        
+        assert jikan_params["producers"] == "MAPPA,WIT Studio,Studio Pierrot"
+
+    def test_to_jikan_search_params_genre_id_mapping(self):
+        """Test genre name to ID mapping functionality."""
+        # Test single genre
+        params = UniversalSearchParams(genres=["Action"])
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["genres"] == "1"
+        
+        # Test multiple genres
+        params = UniversalSearchParams(genres=["Action", "Comedy", "Drama"])
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["genres"] == "1,4,8"
+        
+        # Test unknown genre handling (graceful degradation)
+        params = UniversalSearchParams(genres=["Action", "UnknownGenre", "Comedy"])
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["genres"] == "1,4"  # Unknown genre skipped
+        
+        # Test case insensitivity
+        params = UniversalSearchParams(genres=["ACTION", "comedy"])
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["genres"] == "1,4"
 
     def test_to_jikan_search_params_sort_mapping(self):
-        """Test sort parameter mapping."""
+        """Test sort parameter mapping including new Jikan-specific options."""
         sort_test_cases = [
             ("score", "desc", "score", "desc"),
             ("popularity", "asc", "popularity", "asc"),
             ("title", "desc", "title", "desc"),
             ("year", "asc", "start_date", "asc"),
             ("episodes", "desc", "episodes", "desc"),
+            # New Jikan-specific sort options
+            ("mal_id", "asc", "mal_id", "asc"),
+            ("scored_by", "desc", "scored_by", "desc"),
+            ("members", "asc", "members", "asc"),
+            ("favorites", "desc", "favorites", "desc"),
         ]
         
         for sort_by, sort_order, expected_order_by, expected_sort in sort_test_cases:
@@ -166,21 +224,11 @@ class TestJikanMapper:
     def test_to_jikan_search_params_jikan_specific_parameters(self):
         """Test Jikan-specific parameter handling."""
         params = UniversalSearchParams(
-            jikan_anime_type="movie",
-            jikan_sfw=True,
-            jikan_genres_exclude=[1, 9, 12],  # Action, Ecchi, Hentai IDs
-            jikan_order_by="score",
-            jikan_sort="desc",
             jikan_letter="A",
             jikan_unapproved=False
         )
         jikan_params = JikanMapper.to_jikan_search_params(params)
         
-        assert jikan_params["type"] == "movie"
-        assert jikan_params["sfw"] == "true"
-        assert jikan_params["genres_exclude"] == "1,9,12"
-        assert jikan_params["order_by"] == "score"
-        assert jikan_params["sort"] == "desc"
         assert jikan_params["letter"] == "A"
         assert jikan_params["unapproved"] == False
 
@@ -197,7 +245,7 @@ class TestJikanMapper:
 
     def test_to_jikan_search_params_platform_specific_override(self):
         """Test that platform-specific parameters can be passed via jikan_specific dict."""
-        universal_params = UniversalSearchParams(query="test")
+        universal_params = UniversalSearchParams(query="test", jikan_letter="B")
         jikan_specific = {
             "anime_type": "ona",
             "sfw": False,
@@ -212,17 +260,54 @@ class TestJikanMapper:
         assert jikan_params["sfw"] == "true"  # Note: universal include_adult=False overrides jikan_specific sfw=False
         assert jikan_params["order_by"] == "popularity"
         assert jikan_params["page"] == 2
+        # Letter should be excluded due to query conflict
+        assert "letter" not in jikan_params
+
+    def test_to_jikan_search_params_jikan_specific_formats_direct(self):
+        """Test Jikan-specific formats can now be used directly via universal enum."""
+        # Test TV_SPECIAL format directly
+        params = UniversalSearchParams(type_format=AnimeFormat.TV_SPECIAL)
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["type"] == "tv_special"
+        
+        # Test CM format directly
+        params = UniversalSearchParams(type_format=AnimeFormat.CM)
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["type"] == "cm"
+        
+        # Test PV format directly
+        params = UniversalSearchParams(type_format=AnimeFormat.PV)
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["type"] == "pv"
+
+    def test_to_jikan_search_params_episode_filtering_not_supported(self):
+        """Test that episode range filtering is correctly not supported (as per API docs)."""
+        params = UniversalSearchParams(
+            query="test",
+            min_episodes=5,
+            max_episodes=25
+        )
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        
+        # Episode filtering should NOT be included in Jikan params
+        assert "episodes_greater" not in jikan_params
+        assert "episodes_lesser" not in jikan_params
+        assert "min_episodes" not in jikan_params
+        assert "max_episodes" not in jikan_params
+        
+        # But other parameters should still work
+        assert jikan_params["q"] == "test"
 
     def test_to_jikan_search_params_comprehensive_mapping(self):
         """Test comprehensive parameter mapping including new features."""
         params = UniversalSearchParams(
             query="comprehensive test",
             status=AnimeStatus.RELEASING,
-            type_format=AnimeFormat.OVA,
+            type_format=AnimeFormat.TV_SPECIAL,  # Test Jikan-specific format
             min_score=7.5,
             max_score=9.5,
-            min_episodes=5,
-            max_episodes=15,
+            rating=AnimeRating.R,
+            producers=["Studio Pierrot"],
             genres=["Action", "Adventure"],
             genres_exclude=["Horror"],
             end_date="2024-06-30",
@@ -237,13 +322,13 @@ class TestJikanMapper:
         # Verify all mappings
         assert jikan_params["q"] == "comprehensive test"
         assert jikan_params["status"] == "airing"
-        assert jikan_params["type"] == "ova"
+        assert jikan_params["type"] == "tv_special"  # Jikan-specific format
         assert jikan_params["min_score"] == 7.5
         assert jikan_params["max_score"] == 9.5
-        assert jikan_params["episodes_greater"] == 5
-        assert jikan_params["episodes_lesser"] == 15
-        assert jikan_params["genres"] == "Action,Adventure"
-        assert jikan_params["genres_exclude"] == "Horror"
+        assert jikan_params["rating"] == "r"  # R rating maps to "r" in Jikan
+        assert jikan_params["producers"] == "Studio Pierrot"
+        assert jikan_params["genres"] == "1,2"  # Action=1, Adventure=2
+        assert jikan_params["genres_exclude"] == "14"  # Horror=14
         assert jikan_params["end_date"] == "2024-06-30"
         assert jikan_params["sfw"] == "true"
         assert jikan_params["limit"] == 25

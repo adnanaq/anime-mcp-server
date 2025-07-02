@@ -10,6 +10,7 @@ from ...models.universal_anime import (
     AnimeStatus,
     AnimeFormat,
     AnimeSeason,
+    AnimeRating,
 )
 
 
@@ -24,14 +25,17 @@ class JikanMapper:
     }
     
     # Universal to Jikan format mappings (for query parameters)
-    # Only includes formats that Jikan actually supports
+    # Includes all Jikan-supported formats including unique ones
     UNIVERSAL_TO_FORMAT = {
         AnimeFormat.TV: "tv",
+        AnimeFormat.TV_SPECIAL: "tv_special",  # Jikan-specific
         AnimeFormat.MOVIE: "movie",
         AnimeFormat.SPECIAL: "special",
         AnimeFormat.OVA: "ova",
         AnimeFormat.ONA: "ona",
         AnimeFormat.MUSIC: "music",
+        AnimeFormat.CM: "cm",                  # Jikan-specific
+        AnimeFormat.PV: "pv",                  # Jikan-specific
     }
     
     # Universal to Jikan season mappings (for query parameters)
@@ -40,6 +44,94 @@ class JikanMapper:
         AnimeSeason.SPRING: "spring",
         AnimeSeason.SUMMER: "summer",
         AnimeSeason.FALL: "fall",
+    }
+    
+    # Universal to Jikan rating mappings (content ratings)
+    UNIVERSAL_TO_RATING = {
+        AnimeRating.G: "g",        # All Ages
+        AnimeRating.PG: "pg",      # Children
+        AnimeRating.PG13: "pg13",  # Teens 13 or older
+        AnimeRating.R: "r",        # 17+ (violence & profanity)
+        AnimeRating.R_PLUS: "r+",  # Mild Nudity
+        AnimeRating.RX: "rx",      # Hentai
+    }
+    
+    # Genre name to Jikan ID mapping (Jikan API requires genre IDs, not names)
+    # Based on Jikan API v4 genres endpoint
+    GENRE_NAME_TO_ID = {
+        "action": "1",
+        "adventure": "2", 
+        "avant garde": "5",
+        "award winning": "46",
+        "boys love": "28",
+        "comedy": "4",
+        "drama": "8",
+        "ecchi": "9",
+        "fantasy": "10",
+        "girls love": "26",
+        "gourmet": "47",
+        "horror": "14",
+        "mystery": "7",
+        "romance": "22",
+        "sci-fi": "24",
+        "slice of life": "36",
+        "sports": "30",
+        "supernatural": "37",
+        "suspense": "41",
+        "thriller": "41",  # Maps to Suspense
+        "shounen": "27",
+        "seinen": "42",
+        "shoujo": "25",
+        "josei": "43",
+        "kids": "15",
+        "historical": "13",
+        "military": "38",
+        "music": "19",
+        "parody": "20",
+        "psychological": "40",
+        "school": "23",
+        "space": "29",
+        "super power": "31",
+        "vampire": "32",
+        "mecha": "18",
+        "martial arts": "17",
+        "samurai": "21",
+        "game": "11",
+        "dementia": "5",  # Maps to Avant Garde
+        "demons": "6",
+        "harem": "35",
+        "magic": "16",
+        "cars": "3",
+        "workplace": "48",
+        "iyashikei": "63",
+        "cgdct": "52",  # Cute Girls Doing Cute Things
+        "organized crime": "68",
+        "otaku culture": "69",
+        "racing": "3",   # Maps to Cars
+        "reverse harem": "49",
+        "love polygon": "49",  # Maps to Reverse Harem
+        "idols (female)": "39",
+        "idols (male)": "56",
+        "strategy game": "11",  # Maps to Game
+        "team sports": "30",    # Maps to Sports
+        "combat sports": "30",  # Maps to Sports
+        "adult cast": "50",
+        "anthropomorphic": "51",
+        "crossdressing": "44",
+        "delinquents": "55",
+        "gag humor": "57",
+        "gore": "58",
+        "high stakes game": "59",
+        "isekai": "62",
+        "love triangle": "49",  # Maps to Reverse Harem
+        "mahou shoujo": "66",
+        "mythology": "6",    # Maps to Demons
+        "pets": "51",        # Maps to Anthropomorphic
+        "reincarnation": "72",
+        "time travel": "78",
+        "urban fantasy": "10",  # Maps to Fantasy
+        "villainess": "74",
+        "showbiz": "75",
     }
     
     @classmethod
@@ -82,17 +174,28 @@ class JikanMapper:
         if universal_params.max_score is not None:
             jikan_params["max_score"] = universal_params.max_score
         
-        # Episode filters
-        if universal_params.min_episodes is not None:
-            jikan_params["episodes_greater"] = universal_params.min_episodes
-        if universal_params.max_episodes is not None:
-            jikan_params["episodes_lesser"] = universal_params.max_episodes
+        # NOTE: Episode range filtering is NOT supported by Jikan API v4
+        # Removed episodes_greater/episodes_lesser as per documentation verification
         
-        # Genre filters (Jikan accepts genre names)
+        # Genre filters (Jikan requires genre IDs, not names)
         if universal_params.genres:
-            jikan_params["genres"] = ",".join(universal_params.genres)
+            genre_ids = []
+            for genre_name in universal_params.genres:
+                genre_id = cls.GENRE_NAME_TO_ID.get(genre_name.lower())
+                if genre_id:
+                    genre_ids.append(genre_id)
+                # If genre not found, skip it (graceful degradation)
+            if genre_ids:
+                jikan_params["genres"] = ",".join(genre_ids)
+        
         if universal_params.genres_exclude:
-            jikan_params["genres_exclude"] = ",".join(universal_params.genres_exclude)
+            exclude_ids = []
+            for genre_name in universal_params.genres_exclude:
+                genre_id = cls.GENRE_NAME_TO_ID.get(genre_name.lower())
+                if genre_id:
+                    exclude_ids.append(genre_id)
+            if exclude_ids:
+                jikan_params["genres_exclude"] = ",".join(exclude_ids)
         
         # Year filter
         if universal_params.year:
@@ -104,6 +207,18 @@ class JikanMapper:
         if universal_params.end_date:
             jikan_params["end_date"] = universal_params.end_date
         
+        # Content rating filter (NEW - from mapping document)
+        if universal_params.rating:
+            rating_value = cls.UNIVERSAL_TO_RATING.get(universal_params.rating)
+            if rating_value:
+                jikan_params["rating"] = rating_value
+        
+        # Producer filter (NEW - from mapping document)
+        if universal_params.producers:
+            # Jikan accepts comma-separated producer IDs, but since we have names,
+            # we'll pass them as strings and let the API handle the conversion
+            jikan_params["producers"] = ",".join(universal_params.producers)
+        
         # Adult content filter (Jikan expects string 'true'/'false')
         if not universal_params.include_adult:
             jikan_params["sfw"] = "true"
@@ -113,7 +228,7 @@ class JikanMapper:
         if universal_params.offset:
             jikan_params["page"] = (universal_params.offset // universal_params.limit) + 1
         
-        # Sort - Jikan has comprehensive sort options
+        # Sort - Jikan has comprehensive sort options (UPDATED with complete list)
         if universal_params.sort_by:
             sort_mapping = {
                 "score": "score",
@@ -123,6 +238,13 @@ class JikanMapper:
                 "episodes": "episodes",
                 "duration": "duration",
                 "rank": "rank",
+                # Additional Jikan-specific sort options from documentation
+                "mal_id": "mal_id",
+                "scored_by": "scored_by",
+                "members": "members",
+                "favorites": "favorites",
+                "start_date": "start_date",
+                "end_date": "end_date",
             }
             order_by = sort_mapping.get(universal_params.sort_by)
             if order_by:
@@ -131,27 +253,27 @@ class JikanMapper:
                     jikan_params["sort"] = universal_params.sort_order
         
         # JIKAN-SPECIFIC PARAMETERS (only unique features, no duplicates)
-        # Anime type (Jikan uses lowercase values)
-        anime_type = jikan_specific.get("anime_type") or universal_params.jikan_anime_type
-        if anime_type:
+        # Anime type from jikan_specific dict only (legacy support)
+        anime_type = jikan_specific.get("anime_type")
+        if anime_type and "type" not in jikan_params:
             jikan_params["type"] = anime_type.lower()  # Ensure lowercase
         
-        # Safe For Work filter (unique to Jikan, expects string)
-        sfw = jikan_specific.get("sfw") or universal_params.jikan_sfw
-        if sfw is not None:
+        # Safe For Work filter from jikan_specific dict only (but don't override universal include_adult)
+        sfw = jikan_specific.get("sfw")
+        if sfw is not None and "sfw" not in jikan_params:
             jikan_params["sfw"] = "true" if sfw else "false"
         
-        # Exclude genres by ID (Jikan-specific format)
-        genres_exclude = jikan_specific.get("genres_exclude") or universal_params.jikan_genres_exclude
+        # Exclude genres by ID from jikan_specific dict only
+        genres_exclude = jikan_specific.get("genres_exclude")
         if genres_exclude:
             jikan_params["genres_exclude"] = ",".join(map(str, genres_exclude))
         
-        # Sorting and ordering (Jikan-specific overrides)
-        order_by = jikan_specific.get("order_by") or universal_params.jikan_order_by
+        # Sorting and ordering from jikan_specific dict only
+        order_by = jikan_specific.get("order_by")
         if order_by:
             jikan_params["order_by"] = order_by
             
-        sort_direction = jikan_specific.get("sort") or universal_params.jikan_sort
+        sort_direction = jikan_specific.get("sort")
         if sort_direction:
             jikan_params["sort"] = sort_direction
         
@@ -160,8 +282,8 @@ class JikanMapper:
         if letter and not jikan_params.get("q"):
             jikan_params["letter"] = letter
         
-        # Pagination (Jikan-specific)
-        page = jikan_specific.get("page") or universal_params.jikan_page
+        # Pagination (from jikan_specific dict only)
+        page = jikan_specific.get("page")
         if page is not None:
             jikan_params["page"] = page
         

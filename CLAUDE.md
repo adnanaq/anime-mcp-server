@@ -7,25 +7,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is an **Anime MCP (Model Context Protocol) Server** built with FastAPI and Qdrant vector database. It provides semantic search capabilities over 38,000+ anime entries from the anime-offline-database, designed to be integrated as an MCP tool for AI assistants.
 
 ### Current Status
+
 **Phase 7 COMPLETED** - Production-ready system with modern ReactAgent architecture, AI-powered query understanding, multi-modal search, and comprehensive code cleanup. System optimized and ready for specialized agents development.
 
 ## Documentation File Responsibilities
 
 **IMPORTANT**: Keep clear separation between documentation files:
 
-### `current_sprint.md` - ACTIVE WORK ONLY
-- **Purpose**: Current sprint tasks, immediate next actions, work in progress
-- **Content**: What you're working on NOW or planning for NEXT sprint
-- **Updates**: Frequently updated as work progresses
-- **Scope**: Should only contain active/pending tasks and immediate context
+### `project_context.md` - STRATEGIC OVERVIEW
 
-### `project_context.md` - STRATEGIC OVERVIEW  
 - **Purpose**: Condensed historical context, strategic roadmap, system overview
 - **Content**: Completed phases (condensed), architecture, capabilities, vision
 - **Updates**: Updated when major phases complete, strategic changes occur
 - **Scope**: High-level context for understanding the project's current state and direction
 
-**Rule**: If work is COMPLETED → Move condensed summary to `project_context.md` and remove from `current_sprint.md`
+**Rule**: If work is COMPLETED → Move condensed summary to `project_context.md`.
 
 ## Architecture
 
@@ -114,21 +110,25 @@ python scripts/verify_mcp_server.py
 ### Core Components
 
 1. **Vector Database Client** (`src/vector/qdrant_client.py`)
+
    - Multi-vector collection (text + image embeddings)
    - Uses FastEmbed (BAAI/bge-small-en-v1.5) for text embeddings
    - Uses CLIP (ViT-B/32) for image embeddings
 
 2. **Data Service** (`src/services/data_service.py`)
+
    - Downloads anime-offline-database JSON (38,894 entries)
    - Processes raw anime data into searchable vectors
    - Creates embedding text from: title + synopsis + tags + studios
 
 3. **LLM Service** (`src/services/llm_service.py`)
+
    - OpenAI/Anthropic integration for AI-powered query understanding
    - Natural language parameter extraction
    - Structured output parsing with Pydantic schemas
 
 4. **LangGraph Workflows** (`src/langgraph/`)
+
    - Smart orchestration with complexity assessment
    - Multi-step discovery and result refinement
    - Conversation continuity and preference learning
@@ -148,17 +148,20 @@ python scripts/verify_mcp_server.py
 ## Development Notes
 
 ### Performance Targets
+
 - **Search Response**: <200ms for text search, ~1s for image search
 - **AI Processing**: ~500ms for LLM query understanding
 - **Smart Orchestration**: 50ms average (faster than standard workflows)
 
 ### Testing & Quality
+
 - **Always use TDD approach**
 - **Run tests**: `pytest tests/ -v`
 - **Code formatting**: `black src/ tests/ scripts/`
 - **Type checking**: `mypy src/`
 
 ### Important Reminders
+
 - **Always use TDD approach** - Write tests first, then implement
 - **ALWAYS run formatting before staging/committing**:
   ```bash
@@ -189,11 +192,13 @@ src/
 ## Current Development Phase
 
 **Phase 6C ✅ COMPLETED**: AI-Powered Query Understanding
+
 - Natural language parameter extraction with 95%+ accuracy
 - OpenAI/Anthropic LLM integration
 - Complete replacement of regex patterns with AI intelligence
 
 **LangGraph Optimization ✅ PHASE 2 COMPLETED**: Native ToolNode Integration
+
 - Replaced MCPAdapterRegistry with LangGraph ToolNode (~200 lines eliminated)
 - Implemented built-in tool binding with `@tool` decorators
 - Achieved 150ms target response time (improved from 200ms)
@@ -201,10 +206,12 @@ src/
 - All 36 tests passing (100% success rate)
 
 **Phase 3 📝 NEXT**: FastMCP Client Integration
+
 - Research FastMCP Client class for automatic tool discovery
 - Replace manual tool extraction with `langchain-mcp` toolkit
 
 **Phase 6D 📝 PLANNED**: Specialized Agents & Analytics
+
 - Genre-expert agents for specialized recommendations
 - Studio-focused discovery workflows
 - Advanced comparative analysis capabilities
@@ -216,3 +223,4 @@ src/
 - **Format**: JSON with 38,894 anime entries
 - **Updates**: Weekly automated updates with intelligent change detection
 - **Quality**: Tracked via quality scoring system (0-1 scale)
+

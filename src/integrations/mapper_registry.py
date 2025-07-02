@@ -36,17 +36,20 @@ class MapperRegistry:
     # Platform capabilities for auto-selection
     _platform_capabilities = {
         "mal": {
-            "strengths": ["broadcast_schedules", "detailed_ratings", "nsfw_filtering", "user_engagement_metrics", "duration_filtering"],
-            "unique_params": [
-                "mal_broadcast_day", "mal_rating", "mal_nsfw", "mal_source", 
-                "mal_num_list_users", "mal_num_scoring_users", "mal_created_at", 
-                "mal_updated_at", "mal_average_episode_duration", "mal_broadcast", 
-                "mal_main_picture", "mal_start_date", "mal_start_season", 
-                "mal_popularity", "mal_rank", "mal_mean"
+            "strengths": ["comprehensive_metadata", "user_engagement_data"],
+            "unique_params": [],  # MAL has no unique query parameters - only supports q, limit, offset
+            "unique_response_fields": [
+                "mal_alternative_titles_field", "mal_my_list_status_field", 
+                "mal_num_list_users_field", "mal_num_scoring_users_field", 
+                "mal_nsfw_field", "mal_average_episode_duration_field", 
+                "mal_start_season_field", "mal_broadcast_field", 
+                "mal_main_picture_field", "mal_created_at_field", 
+                "mal_updated_at_field"
             ],
             "api_type": "rest",
             "auth_required": True,
-            "total_parameters": 16,
+            "total_parameters": 3,  # Only q, limit, offset
+            "total_response_fields": 26,  # 15 core + 11 MAL-specific
         },
         "anilist": {
             "strengths": ["international_content", "adult_content", "modern_features", "comprehensive_filtering", "advanced_search"],
@@ -85,15 +88,31 @@ class MapperRegistry:
             "total_parameters": 2,
         },
         "jikan": {
-            "strengths": ["no_auth_required", "mal_compatibility", "advanced_filtering", "comprehensive_sorting"],
+            "strengths": ["no_auth_required", "mal_compatibility", "advanced_filtering", "comprehensive_sorting", "content_rating_support", "producer_filtering", "jikan_specific_formats"],
+            "supported_universal_params": [
+                "query", "status", "type_format", "rating", "min_score", "max_score", 
+                "genres", "genres_exclude", "producers", "year", "start_date", "end_date",
+                "include_adult", "limit", "offset", "sort_by", "sort_order"
+            ],
+            "supported_jikan_formats": [
+                "TV", "TV_SPECIAL", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC", "CM", "PV"
+            ],
+            "supported_ratings": [
+                "g", "pg", "pg13", "r", "r+", "rx"
+            ],
+            "supported_sort_fields": [
+                "score", "popularity", "title", "year", "episodes", "duration", "rank", 
+                "mal_id", "scored_by", "members", "favorites", "start_date", "end_date"
+            ],
             "unique_params": [
-                "jikan_anime_type", "jikan_sfw", "jikan_genres_exclude", 
-                "jikan_order_by", "jikan_sort", "jikan_letter", "jikan_page", 
-                "jikan_unapproved"
+                "jikan_letter", "jikan_unapproved"
+            ],
+            "unsupported_features": [
+                "episode_range_filtering", "duration_filtering"
             ],
             "api_type": "rest",
             "auth_required": False,
-            "total_parameters": 8,
+            "total_parameters": 17,  # Updated count including new parameters
         },
     }
     
@@ -177,19 +196,38 @@ class MapperRegistry:
         # Auto-select based on query characteristics
         query = universal_params.get("query", "").lower()
         
-        # Broadcast schedule queries → MAL
-        if any(day in query for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]):
-            return "mal"
+        # Check for parameters that require specific platforms
         
-        # Adult content queries → AniList  
-        if any(term in query for term in ["adult", "mature", "r+", "rx"]):
+        # Advanced AniList-only features → AniList
+        if any(param in universal_params for param in ["country_of_origin", "licensed_by", "is_licensed"]):
+            return "anilist"
+        
+        # Adult content queries → AniList (most comprehensive adult content handling)
+        if any(term in query for term in ["adult", "mature", "hentai"]):
             return "anilist"
         
         # International content → AniList
         if any(country in query for country in ["korean", "chinese", "korea", "china"]):
             return "anilist"
+        
+        # Content rating filtering → Jikan (newly added support)
+        if universal_params.get("rating"):
+            return "jikan"
+        
+        # Producer filtering → Jikan (newly added support)
+        if universal_params.get("producers"):
+            return "jikan"
+        
+        # Jikan-specific format requests → Jikan
+        jikan_formats = ["TV_SPECIAL", "CM", "PV"]
+        if universal_params.get("type_format") in jikan_formats:
+            return "jikan"
+        
+        # Broadcast schedule queries → MAL
+        if any(day in query for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]):
+            return "mal"
             
-        # Default to universal coverage (Jikan - no auth required)
+        # Default to universal coverage (Jikan - no auth required, enhanced capabilities)
         return "jikan"
     
     @classmethod

@@ -86,6 +86,3 @@ tmp/
 *.bak
 *.backup
 
-# Project specific
-manual_index.py
-continue_indexing.py

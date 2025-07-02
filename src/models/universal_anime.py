@@ -48,11 +48,14 @@ class AnimeFormat(str, Enum):
     
     TV = "TV"                      # TV series (standard length episodes)
     TV_SHORT = "TV_SHORT"          # TV series with short episodes (AniList specific)
+    TV_SPECIAL = "TV_SPECIAL"      # TV specials/extras (Jikan specific)
     MOVIE = "MOVIE"                # Theatrical films
     OVA = "OVA"                    # Original Video Animation
     ONA = "ONA"                    # Original Net Animation  
     SPECIAL = "SPECIAL"            # TV specials/extras
     MUSIC = "MUSIC"                # Music videos/promotional videos
+    CM = "CM"                      # Commercial/advertisement (Jikan specific)
+    PV = "PV"                      # Promotional video (Jikan specific)
     
 
 
@@ -296,7 +299,6 @@ class UniversalSearchParams(BaseModel):
     require_description: bool = Field(default=False, description="Only return results with descriptions")
     
     # MAL-SPECIFIC PROPERTIES (clearly documented as platform-specific, type-safe)
-    mal_broadcast_day: Optional[str] = Field(None, pattern="^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$", description="MAL-specific: Day anime airs")
     mal_rating: Optional[str] = Field(None, description="MAL-specific: Content rating (g, pg, pg_13, r, r+, rx)")
     mal_nsfw: Optional[str] = Field(None, pattern="^(white|gray|black)$", description="MAL-specific: Content filter (white=SFW, gray=questionable, black=NSFW)")
     mal_source: Optional[str] = Field(None, pattern="^(other|original|manga|4_koma_manga|web_manga|digital_manga|novel|light_novel|visual_novel|game|card_game|book|picture_book|radio|music)$", description="MAL-specific: Source material")
@@ -304,14 +306,41 @@ class UniversalSearchParams(BaseModel):
     mal_num_scoring_users: Optional[int] = Field(None, ge=0, description="MAL-specific: Minimum number of users who scored the anime")
     mal_created_at: Optional[str] = Field(None, pattern="^\\d{4}-\\d{2}-\\d{2}$", description="MAL-specific: Creation date filter (YYYY-MM-DD)")
     mal_updated_at: Optional[str] = Field(None, pattern="^\\d{4}-\\d{2}-\\d{2}$", description="MAL-specific: Last update filter (YYYY-MM-DD)")
-    mal_average_episode_duration: Optional[int] = Field(None, ge=0, description="MAL-specific: Episode duration in seconds")
     mal_broadcast: Optional[str] = Field(None, description="MAL-specific: Broadcast information filter")
     mal_main_picture: Optional[str] = Field(None, description="MAL-specific: Main picture URL filter")
     mal_start_date: Optional[str] = Field(None, pattern="^\\d{4}-\\d{2}-\\d{2}$", description="MAL-specific: Precise start date (YYYY-MM-DD)")
     mal_start_season: Optional[str] = Field(None, pattern="^\\d{4},(winter|spring|summer|fall)$", description="MAL-specific: Start season as 'year,season' (e.g., '2024,winter')")
-    mal_popularity: Optional[int] = Field(None, ge=1, description="MAL-specific: Popularity ranking filter (≥1)")
-    mal_rank: Optional[int] = Field(None, ge=1, description="MAL-specific: Ranking filter (≥1)")
-    mal_mean: Optional[float] = Field(None, ge=0.0, le=10.0, description="MAL-specific: Mean score filter (0.0-10.0)")
+    
+    # CORE RESPONSE FIELDS (Available response fields from all platforms)
+    # These indicate what fields each platform can return in responses (not filtering capabilities)
+    id_field: Optional[bool] = Field(None, description="Request ID field in response")
+    title_field: Optional[bool] = Field(None, description="Request title field in response")
+    status_field: Optional[bool] = Field(None, description="Request status field in response")
+    format_field: Optional[bool] = Field(None, description="Request format/media type field in response")
+    episodes_field: Optional[bool] = Field(None, description="Request episodes count field in response")
+    score_field: Optional[bool] = Field(None, description="Request score/rating field in response")
+    genres_field: Optional[bool] = Field(None, description="Request genres field in response")
+    start_date_field: Optional[bool] = Field(None, description="Request start date field in response")
+    end_date_field: Optional[bool] = Field(None, description="Request end date field in response")
+    synopsis_field: Optional[bool] = Field(None, description="Request synopsis/description field in response")
+    popularity_field: Optional[bool] = Field(None, description="Request popularity field in response")
+    rank_field: Optional[bool] = Field(None, description="Request rank field in response")
+    source_field: Optional[bool] = Field(None, description="Request source material field in response")
+    rating_field: Optional[bool] = Field(None, description="Request content rating field in response")
+    studios_field: Optional[bool] = Field(None, description="Request studios field in response")
+    
+    # MAL-SPECIFIC RESPONSE FIELDS (Available only from MAL API v2)
+    mal_alternative_titles_field: Optional[bool] = Field(None, description="MAL-specific: Request alternative titles object")
+    mal_my_list_status_field: Optional[bool] = Field(None, description="MAL-specific: Request user's list status (requires auth)")
+    mal_num_list_users_field: Optional[bool] = Field(None, description="MAL-specific: Request number of users with anime in list")
+    mal_num_scoring_users_field: Optional[bool] = Field(None, description="MAL-specific: Request number of users who scored anime")
+    mal_nsfw_field: Optional[bool] = Field(None, description="MAL-specific: Request content safety rating")
+    mal_average_episode_duration_field: Optional[bool] = Field(None, description="MAL-specific: Request episode duration in seconds")
+    mal_start_season_field: Optional[bool] = Field(None, description="MAL-specific: Request season information object")
+    mal_broadcast_field: Optional[bool] = Field(None, description="MAL-specific: Request broadcast information")
+    mal_main_picture_field: Optional[bool] = Field(None, description="MAL-specific: Request main picture URLs")
+    mal_created_at_field: Optional[bool] = Field(None, description="MAL-specific: Request creation timestamp")
+    mal_updated_at_field: Optional[bool] = Field(None, description="MAL-specific: Request last update timestamp")
     
     # ANILIST-SPECIFIC PROPERTIES (All 69+ GraphQL Media query parameters)
     # Basic filters
@@ -394,13 +423,7 @@ class UniversalSearchParams(BaseModel):
     anilist_sort: Optional[List[str]] = Field(None, description="AniList-specific: Sort options (ID, TITLE_ROMAJI, SCORE_DESC, etc.)")
     
     # JIKAN-SPECIFIC PROPERTIES (API v4 verified, only unique features, type-safe)
-    jikan_anime_type: Optional[str] = Field(None, pattern="^(tv|movie|ova|special|ona)$", description="Jikan-specific: Anime type (lowercase, different from universal)")
-    jikan_sfw: Optional[bool] = Field(None, description="Jikan-specific: Safe For Work filter (unique to Jikan)")
-    jikan_genres_exclude: Optional[List[int]] = Field(None, description="Jikan-specific: Genre IDs to exclude (uses IDs, not names)")
-    jikan_order_by: Optional[str] = Field(None, pattern="^(mal_id|title|type|rating|start_date|end_date|episodes|score|scored_by|rank|popularity|members|favorites)$", description="Jikan-specific: Extended order options")
-    jikan_sort: Optional[str] = Field(None, pattern="^(asc|desc)$", description="Jikan-specific: Sort direction")
     jikan_letter: Optional[str] = Field(None, pattern="^[A-Za-z]$", description="Jikan-specific: Alphabetical filter (unique to Jikan)")
-    jikan_page: Optional[int] = Field(None, ge=1, description="Jikan-specific: Page-based pagination (not offset)")
     jikan_unapproved: Optional[bool] = Field(None, description="Jikan-specific: Include unapproved entries (unique to Jikan)")
     
     # KITSU-SPECIFIC PROPERTIES
@@ -421,24 +444,6 @@ class UniversalSearchParams(BaseModel):
         """Validate score ranges."""
         if v is not None and (v < 0 or v > 10):
             raise ValueError("Score must be between 0 and 10")
-        return v
-    
-    @field_validator("jikan_genres_exclude")
-    @classmethod
-    def validate_jikan_genres_exclude(cls, v):
-        """Validate Jikan genre IDs."""
-        if v is not None:
-            for genre_id in v:
-                if not isinstance(genre_id, int) or genre_id < 1:
-                    raise ValueError("Jikan genre IDs must be positive integers")
-        return v
-    
-    @field_validator("mal_broadcast_day")
-    @classmethod
-    def validate_mal_broadcast_day(cls, v):
-        """Validate MAL broadcast day."""
-        if v is not None:
-            return v.lower()
         return v
     
     @field_validator("mal_rating")

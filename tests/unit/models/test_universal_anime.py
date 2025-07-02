@@ -400,7 +400,7 @@ class TestUniversalSearchParamsPlatformSpecific:
     def test_mal_specific_parameters(self):
         """Test MAL-specific parameter validation and functionality."""
         params = UniversalSearchParams(
-            mal_broadcast_day="monday",
+            mal_broadcast="monday",
             mal_rating="pg_13",
             mal_nsfw="gray",
             mal_source="manga",
@@ -408,13 +408,11 @@ class TestUniversalSearchParamsPlatformSpecific:
             mal_num_scoring_users=500,
             mal_created_at="2023-01-01",
             mal_updated_at="2023-12-31",
-            mal_average_episode_duration=1440,  # 24 minutes in seconds
-            mal_popularity=100,
-            mal_rank=50,
-            mal_mean=8.5
+            mal_start_date="2023-01-01",
+            mal_start_season="2023,winter"
         )
         
-        assert params.mal_broadcast_day == "monday"
+        assert params.mal_broadcast == "monday"
         assert params.mal_rating == "pg_13"
         assert params.mal_nsfw == "gray"
         assert params.mal_source == "manga"
@@ -422,10 +420,8 @@ class TestUniversalSearchParamsPlatformSpecific:
         assert params.mal_num_scoring_users == 500
         assert params.mal_created_at == "2023-01-01"
         assert params.mal_updated_at == "2023-12-31"
-        assert params.mal_average_episode_duration == 1440
-        assert params.mal_popularity == 100
-        assert params.mal_rank == 50
-        assert params.mal_mean == 8.5
+        assert params.mal_start_date == "2023-01-01"
+        assert params.mal_start_season == "2023,winter"
 
     def test_anilist_specific_parameters(self):
         """Test AniList-specific parameter validation and functionality."""
@@ -474,31 +470,15 @@ class TestUniversalSearchParamsPlatformSpecific:
     def test_jikan_specific_parameters(self):
         """Test Jikan-specific parameter validation and functionality."""
         params = UniversalSearchParams(
-            jikan_anime_type="movie",
-            jikan_sfw=True,
-            jikan_genres_exclude=[1, 9, 12],
-            jikan_order_by="score",
-            jikan_sort="desc",
             jikan_letter="A",
-            jikan_page=2,
             jikan_unapproved=False
         )
         
-        assert params.jikan_anime_type == "movie"
-        assert params.jikan_sfw == True
-        assert len(params.jikan_genres_exclude) == 3
-        assert params.jikan_order_by == "score"
-        assert params.jikan_sort == "desc"
         assert params.jikan_letter == "A"
-        assert params.jikan_page == 2
         assert params.jikan_unapproved == False
 
     def test_platform_specific_validation_errors(self):
         """Test validation errors for platform-specific parameters."""
-        # Test invalid MAL broadcast day
-        with pytest.raises(ValueError):
-            UniversalSearchParams(mal_broadcast_day="invalid_day")
-        
         # Test invalid MAL rating
         with pytest.raises(ValueError):
             UniversalSearchParams(mal_rating="invalid_rating")
@@ -506,6 +486,14 @@ class TestUniversalSearchParamsPlatformSpecific:
         # Test invalid MAL NSFW value
         with pytest.raises(ValueError):
             UniversalSearchParams(mal_nsfw="invalid_nsfw")
+        
+        # Test invalid MAL source
+        with pytest.raises(ValueError):
+            UniversalSearchParams(mal_source="invalid_source")
+        
+        # Test invalid MAL start season format
+        with pytest.raises(ValueError):
+            UniversalSearchParams(mal_start_season="invalid_format")
         
         # Test invalid AniList season
         with pytest.raises(ValueError):
@@ -518,14 +506,6 @@ class TestUniversalSearchParamsPlatformSpecific:
         # Test invalid AniList source
         with pytest.raises(ValueError):
             UniversalSearchParams(anilist_source="INVALID_SOURCE")
-        
-        # Test invalid Jikan anime type
-        with pytest.raises(ValueError):
-            UniversalSearchParams(jikan_anime_type="invalid_type")
-        
-        # Test invalid Jikan order_by
-        with pytest.raises(ValueError):
-            UniversalSearchParams(jikan_order_by="invalid_order")
         
         # Test invalid Jikan letter (must be single letter)
         with pytest.raises(ValueError):
@@ -544,10 +524,6 @@ class TestUniversalSearchParamsPlatformSpecific:
         # Test invalid AniList source array
         with pytest.raises(ValueError):
             UniversalSearchParams(anilist_source_in=["MANGA", "INVALID_SOURCE"])
-        
-        # Test invalid Jikan genre exclude (must be positive integers)
-        with pytest.raises(ValueError):
-            UniversalSearchParams(jikan_genres_exclude=[1, -5, 10])
 
     def test_min_duration_validation(self):
         """Test min_duration validation (must be ≥1)."""
@@ -633,10 +609,6 @@ class TestUniversalSearchParamsEdgeCases:
 
     def test_case_sensitivity_and_normalization(self):
         """Test case sensitivity handling."""
-        # Test MAL broadcast day (must already be lowercase due to pattern validation)
-        params = UniversalSearchParams(mal_broadcast_day="monday")
-        assert params.mal_broadcast_day == "monday"
-        
         # Test MAL rating normalization
         params = UniversalSearchParams(mal_rating="PG-13")
         assert params.mal_rating == "pg_13"  # Should be normalized
@@ -669,10 +641,10 @@ class TestUniversalSearchParamsEdgeCases:
             sort_order="desc",
             
             # MAL-specific
-            mal_broadcast_day="friday",
+            mal_broadcast="friday",
             mal_rating="pg_13",
             mal_nsfw="white",
-            mal_popularity=100,
+            mal_start_season="2023,fall",
             
             # AniList-specific
             anilist_id=123456,
@@ -684,25 +656,22 @@ class TestUniversalSearchParamsEdgeCases:
             anilist_popularity_greater=1000,
             
             # Jikan-specific
-            jikan_anime_type="tv",
-            jikan_sfw=True,
-            jikan_order_by="score",
-            jikan_sort="desc"
+            jikan_letter="A",
+            jikan_unapproved=False
         )
         
         # Verify all parameters are set correctly
         assert params.query == "comprehensive test"
         assert len(params.genres) == 2
         assert params.min_popularity == 5000
-        assert params.mal_broadcast_day == "friday"
+        assert params.mal_broadcast == "friday"
         assert params.anilist_id == 123456
-        assert params.jikan_anime_type == "tv"
+        assert params.jikan_letter == "A"
         
         # Verify no conflicts or overrides
         assert params.sort_by == "score"  # Universal sort
-        assert params.jikan_order_by == "score"  # Jikan-specific sort
         assert params.include_adult == False  # Universal adult filter
-        assert params.jikan_sfw == True  # Jikan-specific SFW filter
+        assert params.jikan_unapproved == False  # Jikan-specific filter
 
 
 class TestUniversalSearchParamsValidators:

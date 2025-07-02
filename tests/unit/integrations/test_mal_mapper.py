@@ -44,187 +44,152 @@ class TestMALMapper:
         """Test basic universal to MAL search parameter conversion."""
         mal_params = MALMapper.to_mal_search_params(sample_universal_search_params)
         
-        # Test basic parameters
+        # Test basic parameters (only q, limit, offset supported)
         assert mal_params["q"] == "test anime"
         assert mal_params["limit"] == 20
-        assert mal_params["status"] == "finished_airing"  # MAL-specific status
-        assert mal_params["media_type"] == "tv"
         
-        # Test season/year handling
-        assert mal_params.get("start_date") is not None  # Should derive from year/season
-        
-        # Test score conversion (MAL uses same 0-10 scale)
-        assert mal_params["min_score"] == 7.0
-        assert mal_params["max_score"] == 9.0
-        
-        # Test NSFW filter
-        assert mal_params["nsfw"] == "white"  # No adult content
+        # MAL API v2 does not support filtering by status, format, score, etc.
+        # These are response fields only
+        assert "status" not in mal_params
+        assert "media_type" not in mal_params
+        assert "start_date" not in mal_params
+        assert "min_score" not in mal_params
+        assert "max_score" not in mal_params
+        assert "nsfw" not in mal_params
 
-    def test_to_mal_search_params_status_mapping(self):
-        """Test status mapping from universal to MAL."""
-        status_test_cases = [
-            (AnimeStatus.FINISHED, "finished_airing"),
-            (AnimeStatus.RELEASING, "currently_airing"),
-            (AnimeStatus.NOT_YET_RELEASED, "not_yet_aired"),
-            (AnimeStatus.HIATUS, "on_hiatus"),
-        ]
-        
-        for universal_status, expected_mal in status_test_cases:
-            params = UniversalSearchParams(status=universal_status)
-            mal_params = MALMapper.to_mal_search_params(params)
-            assert mal_params["status"] == expected_mal
-
-    def test_to_mal_search_params_format_mapping(self):
-        """Test format mapping from universal to MAL."""
-        format_test_cases = [
-            (AnimeFormat.TV, "tv"),
-            (AnimeFormat.MOVIE, "movie"),
-            (AnimeFormat.OVA, "ova"),
-            (AnimeFormat.ONA, "ona"),
-            (AnimeFormat.SPECIAL, "special"),
-            (AnimeFormat.MUSIC, "music"),
-        ]
-        
-        for universal_format, expected_mal in format_test_cases:
-            params = UniversalSearchParams(type_format=universal_format)
-            mal_params = MALMapper.to_mal_search_params(params)
-            assert mal_params["media_type"] == expected_mal
-
-    def test_to_mal_search_params_season_conversion(self):
-        """Test season and year conversion to start_date."""
+    def test_to_mal_search_params_response_fields(self):
+        """Test response field requests generate proper fields parameter."""
         params = UniversalSearchParams(
-            year=2023,
-            season=AnimeSeason.SPRING
+            query="test",
+            title_field=True,
+            status_field=True,
+            score_field=True,
+            mal_nsfw_field=True
         )
         mal_params = MALMapper.to_mal_search_params(params)
         
-        # Should convert spring 2023 to start_date
-        assert "start_date" in mal_params
-        assert "2023" in mal_params["start_date"]
+        # Should generate fields parameter
+        assert "fields" in mal_params
+        assert "title" in mal_params["fields"]
+        assert "status" in mal_params["fields"]
+        assert "mean" in mal_params["fields"]  # score_field maps to mean
+        assert "nsfw" in mal_params["fields"]
+
+    def test_to_mal_search_params_mal_specific_fields(self):
+        """Test MAL-specific response fields generate proper fields parameter."""
+        params = UniversalSearchParams(
+            query="test",
+            mal_alternative_titles_field=True,
+            mal_num_list_users_field=True,
+            mal_average_episode_duration_field=True,
+            mal_start_season_field=True
+        )
+        mal_params = MALMapper.to_mal_search_params(params)
+        
+        # Should generate fields parameter with MAL-specific fields
+        assert "fields" in mal_params
+        assert "alternative_titles" in mal_params["fields"]
+        assert "num_list_users" in mal_params["fields"]
+        assert "average_episode_duration" in mal_params["fields"]
+        assert "start_season" in mal_params["fields"]
 
     def test_to_mal_search_params_minimal(self):
         """Test conversion with minimal parameters."""
         params = UniversalSearchParams()
         mal_params = MALMapper.to_mal_search_params(params)
         
-        # Should only contain default values
+        # Should only contain default limit
         assert mal_params["limit"] == 20
-        assert mal_params["nsfw"] == "white"  # Default: no adult content
-        assert len(mal_params) == 2  # Only these two fields
+        assert len(mal_params) == 1  # Only limit field
 
     def test_to_mal_search_params_unsupported_ignored(self):
-        """Test that unsupported parameters are gracefully ignored."""
+        """Test that unsupported filtering parameters are ignored."""
         params = UniversalSearchParams(
             query="test",
-            characters=["Character"],  # Not supported in MAL search
-            themes=["Theme"],          # Not directly supported
-            staff=["Director"],        # Not supported in basic search
+            status=AnimeStatus.FINISHED,     # Not supported as query param
+            type_format=AnimeFormat.TV,      # Not supported as query param
+            min_score=7.0,                   # Not supported as query param
+            characters=["Character"],        # Not supported in MAL search
+            themes=["Theme"],                # Not directly supported
+            staff=["Director"],              # Not supported in basic search
         )
         mal_params = MALMapper.to_mal_search_params(params)
         
         # Should include supported params
         assert mal_params["q"] == "test"
         
-        # Should not include unsupported params
+        # Should not include any filtering params (MAL doesn't support them)
+        assert "status" not in mal_params
+        assert "media_type" not in mal_params
+        assert "min_score" not in mal_params
         assert "characters" not in mal_params
         assert "themes" not in mal_params  
         assert "staff" not in mal_params
 
-    def test_to_mal_search_params_adult_content_handling(self):
-        """Test adult content filtering."""
-        # Test exclude adult content (default)
-        params_sfw = UniversalSearchParams(include_adult=False)
-        mal_params_sfw = MALMapper.to_mal_search_params(params_sfw)
-        assert mal_params_sfw["nsfw"] == "white"
-        
-        # Test include adult content
-        params_nsfw = UniversalSearchParams(include_adult=True)
-        mal_params_nsfw = MALMapper.to_mal_search_params(params_nsfw)
-        # MAL API doesn't have include_adult=true, so should omit nsfw filter
-        assert "nsfw" not in mal_params_nsfw
-
-    def test_bidirectional_consistency(self, sample_universal_search_params):
-        """Test that converting to MAL params preserves critical information."""
-        mal_params = MALMapper.to_mal_search_params(sample_universal_search_params)
-        
-        # Key parameters should be preserved in some form
-        assert "q" in mal_params  # query preserved
-        assert "status" in mal_params  # status preserved
-        assert "media_type" in mal_params  # format preserved
-        assert "min_score" in mal_params  # min_score preserved
-        
-        # Parameters should be in MAL format
-        assert mal_params["status"] == "finished_airing"  # MAL status format
-        assert mal_params["media_type"] == "tv"  # MAL format
-        assert isinstance(mal_params["min_score"], float)  # MAL score scale
-
-    def test_to_mal_search_params_end_date(self):
-        """Test end_date mapping to MAL API."""
-        params = UniversalSearchParams(end_date="2023-12-31")
-        mal_params = MALMapper.to_mal_search_params(params)
-        
-        assert mal_params["end_date"] == "2023-12-31"
-
-    def test_to_mal_search_params_min_duration_conversion(self):
-        """Test min_duration conversion from minutes to seconds for MAL."""
-        # Test 20 minutes -> 1200 seconds
-        params = UniversalSearchParams(min_duration=20)
-        mal_params = MALMapper.to_mal_search_params(params)
-        
-        assert mal_params["average_episode_duration"] == 1200
-        
-        # Test 1 minute -> 60 seconds (minimum valid duration)
-        params_one = UniversalSearchParams(min_duration=1)
-        mal_params_one = MALMapper.to_mal_search_params(params_one)
-        
-        assert mal_params_one["average_episode_duration"] == 60
-
-    def test_to_mal_search_params_studios(self):
-        """Test studios mapping to comma-separated string for MAL."""
-        params = UniversalSearchParams(studios=["Studio Ghibli", "Madhouse", "Bones"])
-        mal_params = MALMapper.to_mal_search_params(params)
-        
-        assert mal_params["studios"] == "Studio Ghibli,Madhouse,Bones"
-        
-        # Test single studio
-        params_single = UniversalSearchParams(studios=["Toei Animation"])
-        mal_params_single = MALMapper.to_mal_search_params(params_single)
-        
-        assert mal_params_single["studios"] == "Toei Animation"
-
-    def test_to_mal_search_params_mal_specific_parameters(self):
-        """Test MAL-specific parameter handling."""
+    def test_to_mal_search_params_no_fields_no_filters(self):
+        """Test that MAL doesn't generate filtering parameters."""
         params = UniversalSearchParams(
-            mal_broadcast_day="monday",
-            mal_rating="pg_13",
-            mal_nsfw="gray",
-            mal_popularity=100
+            query="test",
+            include_adult=False,
+            status=AnimeStatus.FINISHED,
+            min_score=8.0
         )
         mal_params = MALMapper.to_mal_search_params(params)
         
-        assert mal_params["broadcast_day"] == "monday"
-        assert mal_params["rating"] == "pg_13"
-        assert mal_params["nsfw"] == "gray"
-        assert mal_params["popularity"] == 100
+        # Should only have basic query params, no filtering
+        assert mal_params["q"] == "test"
+        assert "nsfw" not in mal_params       # No adult content filtering
+        assert "status" not in mal_params     # No status filtering 
+        assert "min_score" not in mal_params  # No score filtering
 
-    def test_to_mal_search_params_platform_specific_override(self):
-        """Test that platform-specific parameters can be passed via mal_specific dict."""
-        universal_params = UniversalSearchParams(query="test")
-        mal_specific = {
-            "broadcast_day": "friday",
-            "rating": "r",
-            "num_list_users": 1000
-        }
+    def test_basic_query_params_only(self, sample_universal_search_params):
+        """Test that only basic query parameters are generated."""
+        mal_params = MALMapper.to_mal_search_params(sample_universal_search_params)
         
-        mal_params = MALMapper.to_mal_search_params(universal_params, mal_specific)
+        # Only basic query parameters should be preserved
+        assert "q" in mal_params  # query preserved
+        assert "limit" in mal_params  # limit preserved
+        
+        # Filtering parameters should NOT be preserved (MAL doesn't support them)
+        assert "status" not in mal_params
+        assert "media_type" not in mal_params
+        assert "min_score" not in mal_params
+        assert "max_score" not in mal_params
+
+    def test_to_mal_search_params_fields_comma_separated(self):
+        """Test that multiple fields are properly comma-separated."""
+        params = UniversalSearchParams(
+            query="test",
+            title_field=True,
+            status_field=True,
+            score_field=True,
+            episodes_field=True,
+            genres_field=True
+        )
+        mal_params = MALMapper.to_mal_search_params(params)
+        
+        # Should generate comma-separated fields
+        assert "fields" in mal_params
+        fields = mal_params["fields"]
+        assert "title" in fields
+        assert "status" in fields
+        assert "mean" in fields
+        assert "num_episodes" in fields
+        assert "genres" in fields
+        # Should be comma-separated
+        assert "," in fields
+
+    def test_to_mal_search_params_offset_handling(self):
+        """Test offset parameter handling."""
+        params = UniversalSearchParams(query="test", offset=10)
+        mal_params = MALMapper.to_mal_search_params(params)
         
         assert mal_params["q"] == "test"
-        assert mal_params["broadcast_day"] == "friday"
-        assert mal_params["rating"] == "r"
-        assert mal_params["num_list_users"] == 1000
+        assert mal_params["offset"] == 10
+        assert mal_params["limit"] == 20  # default
 
-    def test_to_mal_search_params_comprehensive_mapping(self):
-        """Test comprehensive parameter mapping including new features."""
+    def test_to_mal_search_params_no_filtering_comprehensive(self):
+        """Test comprehensive filtering parameters are all ignored."""
         params = UniversalSearchParams(
             query="comprehensive test",
             status=AnimeStatus.RELEASING,
@@ -233,9 +198,7 @@ class TestMALMapper:
             max_score=10.0,
             min_episodes=1,
             max_episodes=3,
-            end_date="2024-06-30",
-            min_duration=90,  # 90 minutes
-            studios=["Studio Ghibli", "Pixar"],
+            min_duration=90,
             include_adult=False,
             limit=50,
             sort_by="popularity",
@@ -244,18 +207,18 @@ class TestMALMapper:
         
         mal_params = MALMapper.to_mal_search_params(params)
         
-        # Verify all mappings
+        # Only basic query parameters should be included
         assert mal_params["q"] == "comprehensive test"
-        assert mal_params["status"] == "currently_airing"
-        assert mal_params["media_type"] == "movie"
-        assert mal_params["min_score"] == 8.0
-        assert mal_params["max_score"] == 10.0
-        assert mal_params["min_episodes"] == 1
-        assert mal_params["max_episodes"] == 3
-        assert mal_params["end_date"] == "2024-06-30"
-        assert mal_params["average_episode_duration"] == 5400  # 90 * 60 seconds
-        assert mal_params["studios"] == "Studio Ghibli,Pixar"
-        assert mal_params["nsfw"] == "white"
         assert mal_params["limit"] == 50
-        assert mal_params["sort"] == "popularity"
-        assert mal_params["order"] == "asc"
+        
+        # All filtering parameters should be ignored
+        assert "status" not in mal_params
+        assert "media_type" not in mal_params
+        assert "min_score" not in mal_params
+        assert "max_score" not in mal_params
+        assert "min_episodes" not in mal_params
+        assert "max_episodes" not in mal_params
+        assert "average_episode_duration" not in mal_params
+        assert "nsfw" not in mal_params
+        assert "sort" not in mal_params
+        assert "order" not in mal_params
