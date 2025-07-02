@@ -33,8 +33,8 @@ Based on analysis of anime-offline-database and external API sources, here's the
 | **COMPLETED**    | `FINISHED` ✅ | `finished_airing` ✅  | `Finished Airing` ✅  | `FINISHED` ✅         | `finished` ✅   | `COMPLETED` (both dates) ✅   | `"YYYY - YYYY"` ✅ | `Finished` ✅    | `COMPLETED` ✅ |
 | **UPCOMING**     | `UPCOMING` ✅ | `not_yet_aired` ✅    | `Not yet aired` ✅    | `NOT_YET_RELEASED` ✅ | `upcoming` ✅   | `UNKNOWN` (no startDate) ✅   | `(future date)` ✅ | `Upcoming` ✅    | `UPCOMING` ✅  |
 | **CANCELLED**    | ❌            | ❌                    | ❌                    | `CANCELLED` ✅        | ❌              | (derived)                     | ❌                 | ❌               | ❌             |
-| **HIATUS**       | ❌            | ❌                    | ❌                    | `HIATUS` ✅           | ❌              | (derived)                     | ❌                 | ❌               | ❌             |
-| **UNKNOWN**      | `UNKNOWN` ✅  | `on_hiatus` ✅        | `Unknown` ✅          | ❌                    | `unreleased` ✅ | (derived)                     | ❌                 | ❌               | `UNKNOWN` ✅   |
+| **HIATUS**       | ❌            | `on_hiatus` ✅        | ❌ (maps to airing)   | `HIATUS` ✅           | ❌              | (derived)                     | ❌                 | ❌               | ❌             |
+| **UNKNOWN**      | `UNKNOWN` ✅  | ❌                    | `Unknown` ✅          | ❌                    | `unreleased` ✅ | (derived)                     | ❌                 | ❌               | `UNKNOWN` ✅   |
 
 ### Format/Type Values Mapping (VERIFIED from Schema Documentation)
 
@@ -46,9 +46,10 @@ Based on analysis of anime-offline-database and external API sources, here's the
 | **SPECIAL**      | `SPECIAL` ✅ | `special` ✅  | `Special` ✅ | `SPECIAL` ✅  | `special` ✅ | `TV Special` ✅ | ❌              | `Special` ✅     | ❌                 |
 | **OVA**          | `OVA` ✅     | `ova` ✅      | `OVA` ✅     | `OVA` ✅      | `OVA` ✅     | `OVA` ✅        | ❌              | `OVA` ✅         | ❌                 |
 | **ONA**          | `ONA` ✅     | `ona` ✅      | `ONA` ✅     | `ONA` ✅      | `ONA` ✅     | `Web` ✅        | ❌              | ❌               | ❌                 |
-| **MUSIC**        | ❌           | ❌            | ❌           | `MUSIC` ✅    | `music` ✅   | ❌              | ❌              | ❌               | ❌                 |
+| **MUSIC**        | ❌           | `music` ✅    | ❌           | `MUSIC` ✅    | `music` ✅   | ❌              | ❌              | ❌               | ❌                 |
+| **TV_SPECIAL**   | ❌           | `tv_special` ✅| ❌          | ❌            | ❌           | ❌              | ❌              | ❌               | ❌                 |
 | **MANGA**        | ❌           | ❌            | ❌           | `MANGA` ✅    | ❌           | ❌              | ❌              | ❌               | ❌                 |
-| **UNKNOWN**      | `UNKNOWN` ✅ | `unknown` ✅  | `Unknown` ✅ | ❌            | ❌           | `Other` ✅      | ❌              | ❌               | ❌                 |
+| **UNKNOWN**      | `UNKNOWN` ✅ | ❌            | `Unknown` ✅ | ❌            | ❌           | `Other` ✅      | ❌              | ❌               | ❌                 |
 
 ### Relationship/Connection Types Mapping (VERIFIED from API Responses)
 

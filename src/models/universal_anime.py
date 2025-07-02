@@ -37,123 +37,23 @@ class AnimeStatus(str, Enum):
     CANCELLED = "CANCELLED"         # cancelled/discontinued
     HIATUS = "HIATUS"              # on_hiatus/paused
     
-    @classmethod
-    def from_source_value(cls, value: str, source: str = "") -> "AnimeStatus":
-        """Convert source-specific status values to universal status.
-        
-        This handles the mapping chaos identified in our architectural analysis across ALL 9 sources:
-        - Offline DB: "FINISHED", "RELEASING", "UPCOMING"
-        - MAL API v2: "finished", "currently_airing", "not_yet_aired" 
-        - MAL/Jikan: "complete", "airing", "upcoming"
-        - AniList: "FINISHED", "RELEASING", "NOT_YET_RELEASED", "CANCELLED", "HIATUS"
-        - Kitsu: "finished", "current", "upcoming"
-        - AniDB: "complete", "ongoing", "upcoming"  
-        - Anime-Planet: "finished", "ongoing", "not yet aired"
-        - AnimeSchedule: "finished", "airing", "upcoming"
-        - AniSearch: "finished", "currently airing", "upcoming"
-        """
-        value_lower = value.lower().strip().replace("_", " ")
-        
-        # Finished/Completed variants (all sources)
-        if value_lower in [
-            "finished", "completed", "complete", "ended", 
-            "finished airing", "finished airing"
-        ]:
-            return cls.FINISHED
-            
-        # Currently airing/releasing variants (all sources)
-        elif value_lower in [
-            "airing", "releasing", "current", "ongoing", "publishing",
-            "currently airing", "currently releasing", "currently publishing"
-        ]:
-            return cls.RELEASING
-            
-        # Not yet released variants (all sources)
-        elif value_lower in [
-            "not yet released", "not yet aired", "upcoming", "tba", "announced",
-            "not yet airing", "not yet published", "to be aired", "to be announced"
-        ]:
-            return cls.NOT_YET_RELEASED
-            
-        # Cancelled variants
-        elif value_lower in ["cancelled", "canceled", "discontinued"]:
-            return cls.CANCELLED
-            
-        # Hiatus variants (mainly AniList)
-        elif value_lower in ["hiatus", "on hiatus", "paused"]:
-            return cls.HIATUS
-            
-        # Default fallback
-        else:
-            return cls.NOT_YET_RELEASED
 
 
 class AnimeFormat(str, Enum):
-    """Universal anime format/type enum mapped from all data sources."""
+    """Universal anime format/type enum mapped from all data sources.
     
-    TV = "TV"                      # TV series
+    Comprehensive coverage of all format types across 9 anime data sources.
+    LLM can use any format - mappers will handle source-specific conversions.
+    """
+    
+    TV = "TV"                      # TV series (standard length episodes)
+    TV_SHORT = "TV_SHORT"          # TV series with short episodes (AniList specific)
     MOVIE = "MOVIE"                # Theatrical films
     OVA = "OVA"                    # Original Video Animation
-    ONA = "ONA"                    # Original Net Animation
+    ONA = "ONA"                    # Original Net Animation  
     SPECIAL = "SPECIAL"            # TV specials/extras
-    MUSIC = "MUSIC"                # Music videos
+    MUSIC = "MUSIC"                # Music videos/promotional videos
     
-    @classmethod
-    def from_source_value(cls, value: str, source: str = "") -> "AnimeFormat":
-        """Convert source-specific format values to universal format across ALL 9 sources.
-        
-        Format mappings across sources:
-        - Offline DB: "TV", "Movie", "Special", "OVA", "ONA", "Music"
-        - MAL API v2: "tv", "movie", "ova", "special", "ona", "music"  
-        - MAL/Jikan: "TV", "Movie", "OVA", "Special", "ONA", "Music"
-        - AniList: "TV", "TV_SHORT", "MOVIE", "SPECIAL", "OVA", "ONA", "MUSIC"
-        - Kitsu: "TV", "movie", "OVA", "ONA", "special", "music"
-        - AniDB: "TV Series", "Movie", "OVA", "Web", "TV Special", "Music Video"
-        - Anime-Planet: "TV", "Movie", "OVA", "ONA", "Special", "Music Video"
-        - AnimeSchedule: "TV", "Movie", "OVA", "ONA", "Special"
-        - AniSearch: "TV", "Movie", "OVA", "ONA", "Special"
-        """
-        value_normalized = value.upper().strip().replace("_", " ").replace("-", " ")
-        
-        # TV variants (all sources)
-        if value_normalized in [
-            "TV", "TV SERIES", "TV SHORT", "TV ANIME", "TELEVISION", "SERIES"
-        ]:
-            return cls.TV
-            
-        # Movie variants (all sources)  
-        elif value_normalized in [
-            "MOVIE", "FILM", "THEATRICAL", "CINEMA", "FEATURE FILM"
-        ]:
-            return cls.MOVIE
-            
-        # OVA variants (all sources)
-        elif value_normalized in [
-            "OVA", "ORIGINAL VIDEO ANIMATION", "VIDEO"
-        ]:
-            return cls.OVA
-            
-        # ONA variants (all sources)
-        elif value_normalized in [
-            "ONA", "ORIGINAL NET ANIMATION", "WEB", "WEB ANIME", "ONLINE", "NET"
-        ]:
-            return cls.ONA
-            
-        # Special variants (all sources)
-        elif value_normalized in [
-            "SPECIAL", "TV SPECIAL", "EXTRA", "BONUS", "SP"
-        ]:
-            return cls.SPECIAL
-            
-        # Music variants (all sources)  
-        elif value_normalized in [
-            "MUSIC", "MUSIC VIDEO", "MV", "PV", "PROMOTIONAL VIDEO"
-        ]:
-            return cls.MUSIC
-            
-        # Default fallback
-        else:
-            return cls.TV
 
 
 class AnimeRating(str, Enum):
@@ -287,7 +187,7 @@ class UniversalAnime(BaseModel):
         
         # Count medium-confidence properties (low weight)
         medium_conf_props = [
-            self.english_title, self.japanese_title, self.source_material
+            self.title_english, self.title_native, self.source
         ]
         total_fields += len(medium_conf_props)
         populated_fields += sum(1 for prop in medium_conf_props if prop is not None)
@@ -304,11 +204,22 @@ class UniversalAnime(BaseModel):
 
 
 class UniversalSearchParams(BaseModel):
-    """Universal search parameters that can be mapped to any anime data source.
+    """Universal search parameters for comprehensive anime queries across all platforms.
     
-    These parameters represent the comprehensive search capabilities across all 9 
-    supported anime platforms, covering all properties from Universal Schema Foundation.
-    The LLM will use these parameters, and mappers will convert them to source-specific formats.
+    COMPREHENSIVE COVERAGE - LLM can use any parameter that makes sense:
+    - Text search: query, title variants
+    - Content filters: genres, themes, demographics, characters (with exclude options)
+    - Metadata filters: status, format, rating, year, season, dates
+    - Numeric filters: score, episodes, duration (with min/max ranges)
+    - Studio/Staff filters: studios, producers, staff (with exclude options)
+    - Result control: sorting, pagination, content preferences
+    
+    PLATFORM COMPATIBILITY - Mappers handle automatically:
+    - AniList: Supports most parameters including themes, demographics, advanced filtering
+    - MAL/Jikan: Core parameters supported, advanced features gracefully ignored
+    - Other sources: Essential parameters supported, extras ignored
+    
+    USAGE: Use any parameter - mappers convert to platform-specific formats automatically.
     """
     
     # TEXT SEARCH PARAMETERS
@@ -338,7 +249,6 @@ class UniversalSearchParams(BaseModel):
     max_score_count: Optional[int] = Field(None, ge=0, description="Maximum number of ratings")
     min_episodes: Optional[int] = Field(None, ge=0, description="Minimum episode count")
     max_episodes: Optional[int] = Field(None, ge=0, description="Maximum episode count")
-    min_duration: Optional[int] = Field(None, ge=0, description="Minimum episode duration (minutes)")
     max_duration: Optional[int] = Field(None, ge=0, description="Maximum episode duration (minutes)")
     min_rank: Optional[int] = Field(None, ge=1, description="Minimum ranking position")
     max_rank: Optional[int] = Field(None, ge=1, description="Maximum ranking position")
@@ -352,8 +262,22 @@ class UniversalSearchParams(BaseModel):
     
     # CONTENT FILTERS
     themes: Optional[List[str]] = Field(None, description="Thematic tag filters")
+    themes_exclude: Optional[List[str]] = Field(None, description="Exclude thematic tags")
     demographics: Optional[List[str]] = Field(None, description="Target demographic filters")
+    demographics_exclude: Optional[List[str]] = Field(None, description="Exclude demographics")
     characters: Optional[List[str]] = Field(None, description="Character name filters")
+    characters_exclude: Optional[List[str]] = Field(None, description="Exclude characters")
+    
+    # DURATION FILTERS
+    min_duration: Optional[int] = Field(None, ge=1, description="Minimum episode duration in minutes")
+    max_duration: Optional[int] = Field(None, ge=1, description="Maximum episode duration in minutes")
+    
+    # DATE FILTERS
+    
+    # STUDIO/PRODUCER EXCLUDES
+    studios_exclude: Optional[List[str]] = Field(None, description="Exclude studios")
+    producers_exclude: Optional[List[str]] = Field(None, description="Exclude producers")
+    staff_exclude: Optional[List[str]] = Field(None, description="Exclude staff members")
     
     # RESULT CONTROL
     limit: int = Field(default=20, ge=1, le=100, description="Maximum number of results")
@@ -371,6 +295,118 @@ class UniversalSearchParams(BaseModel):
     require_image: bool = Field(default=False, description="Only return results with images")
     require_description: bool = Field(default=False, description="Only return results with descriptions")
     
+    # MAL-SPECIFIC PROPERTIES (clearly documented as platform-specific, type-safe)
+    mal_broadcast_day: Optional[str] = Field(None, pattern="^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$", description="MAL-specific: Day anime airs")
+    mal_rating: Optional[str] = Field(None, description="MAL-specific: Content rating (g, pg, pg_13, r, r+, rx)")
+    mal_nsfw: Optional[str] = Field(None, pattern="^(white|gray|black)$", description="MAL-specific: Content filter (white=SFW, gray=questionable, black=NSFW)")
+    mal_source: Optional[str] = Field(None, pattern="^(other|original|manga|4_koma_manga|web_manga|digital_manga|novel|light_novel|visual_novel|game|card_game|book|picture_book|radio|music)$", description="MAL-specific: Source material")
+    mal_num_list_users: Optional[int] = Field(None, ge=0, description="MAL-specific: Minimum number of users who have anime in their list")
+    mal_num_scoring_users: Optional[int] = Field(None, ge=0, description="MAL-specific: Minimum number of users who scored the anime")
+    mal_created_at: Optional[str] = Field(None, pattern="^\\d{4}-\\d{2}-\\d{2}$", description="MAL-specific: Creation date filter (YYYY-MM-DD)")
+    mal_updated_at: Optional[str] = Field(None, pattern="^\\d{4}-\\d{2}-\\d{2}$", description="MAL-specific: Last update filter (YYYY-MM-DD)")
+    mal_average_episode_duration: Optional[int] = Field(None, ge=0, description="MAL-specific: Episode duration in seconds")
+    mal_broadcast: Optional[str] = Field(None, description="MAL-specific: Broadcast information filter")
+    mal_main_picture: Optional[str] = Field(None, description="MAL-specific: Main picture URL filter")
+    mal_start_date: Optional[str] = Field(None, pattern="^\\d{4}-\\d{2}-\\d{2}$", description="MAL-specific: Precise start date (YYYY-MM-DD)")
+    mal_start_season: Optional[str] = Field(None, pattern="^\\d{4},(winter|spring|summer|fall)$", description="MAL-specific: Start season as 'year,season' (e.g., '2024,winter')")
+    mal_popularity: Optional[int] = Field(None, ge=1, description="MAL-specific: Popularity ranking filter (≥1)")
+    mal_rank: Optional[int] = Field(None, ge=1, description="MAL-specific: Ranking filter (≥1)")
+    mal_mean: Optional[float] = Field(None, ge=0.0, le=10.0, description="MAL-specific: Mean score filter (0.0-10.0)")
+    
+    # ANILIST-SPECIFIC PROPERTIES (All 69+ GraphQL Media query parameters)
+    # Basic filters
+    anilist_id: Optional[int] = Field(None, ge=1, description="AniList-specific: Filter by AniList media ID")
+    anilist_id_mal: Optional[int] = Field(None, ge=1, description="AniList-specific: Filter by MyAnimeList ID")
+    anilist_start_date: Optional[int] = Field(None, description="AniList-specific: Start date as FuzzyDateInt (YYYYMMDD)")
+    anilist_end_date: Optional[int] = Field(None, description="AniList-specific: End date as FuzzyDateInt (YYYYMMDD)")
+    anilist_season: Optional[str] = Field(None, pattern="^(WINTER|SPRING|SUMMER|FALL)$", description="AniList-specific: Season filter")
+    anilist_season_year: Optional[int] = Field(None, ge=1900, le=2030, description="AniList-specific: Season year")
+    anilist_episodes: Optional[int] = Field(None, ge=0, description="AniList-specific: Exact episode count")
+    anilist_duration: Optional[int] = Field(None, ge=0, description="AniList-specific: Exact episode duration (minutes)")
+    anilist_chapters: Optional[int] = Field(None, ge=0, description="AniList-specific: Exact chapter count")
+    anilist_volumes: Optional[int] = Field(None, ge=0, description="AniList-specific: Exact volume count")
+    anilist_is_adult: Optional[bool] = Field(None, description="AniList-specific: Include adult content")
+    anilist_format: Optional[str] = Field(None, description="AniList-specific: Single format filter")
+    anilist_genre: Optional[str] = Field(None, description="AniList-specific: Single genre filter")
+    anilist_tag: Optional[str] = Field(None, description="AniList-specific: Single tag filter")
+    anilist_minimum_tag_rank: Optional[int] = Field(None, ge=1, le=100, description="AniList-specific: Minimum tag rank (1-100)")
+    anilist_tag_category: Optional[str] = Field(None, description="AniList-specific: Tag category filter")
+    anilist_on_list: Optional[bool] = Field(None, description="AniList-specific: Filter by user's list status")
+    anilist_licensed_by: Optional[str] = Field(None, description="AniList-specific: Licensing site name")
+    anilist_licensed_by_id: Optional[int] = Field(None, ge=1, description="AniList-specific: Licensing site ID")
+    anilist_average_score: Optional[int] = Field(None, ge=0, le=100, description="AniList-specific: Exact average score")
+    anilist_popularity: Optional[int] = Field(None, ge=0, description="AniList-specific: Exact popularity count")
+    anilist_source: Optional[str] = Field(None, pattern="^(ORIGINAL|MANGA|LIGHT_NOVEL|VISUAL_NOVEL|VIDEO_GAME|OTHER|NOVEL|DOUJINSHI|ANIME|WEB_NOVEL|LIVE_ACTION|GAME|BOOK|MULTIMEDIA_PROJECT|PICTURE_BOOK|COMIC)$", description="AniList-specific: Source material type")
+    anilist_country_of_origin: Optional[str] = Field(None, pattern="^[A-Z]{2}$", description="AniList-specific: Country code (JP, KR, CN, etc.)")
+    anilist_is_licensed: Optional[bool] = Field(None, description="AniList-specific: Official licensing status")
+    
+    # Negation filters
+    anilist_id_not: Optional[int] = Field(None, ge=1, description="AniList-specific: Exclude AniList ID")
+    anilist_id_mal_not: Optional[int] = Field(None, ge=1, description="AniList-specific: Exclude MAL ID")
+    anilist_format_not: Optional[str] = Field(None, pattern="^(TV|TV_SHORT|MOVIE|SPECIAL|OVA|ONA|MUSIC|MANGA|NOVEL|ONE_SHOT)$", description="AniList-specific: Exclude format")
+    anilist_status_not: Optional[str] = Field(None, pattern="^(FINISHED|RELEASING|NOT_YET_RELEASED|CANCELLED|HIATUS)$", description="AniList-specific: Exclude status")
+    anilist_average_score_not: Optional[int] = Field(None, ge=0, le=100, description="AniList-specific: Exclude average score")
+    anilist_popularity_not: Optional[int] = Field(None, ge=0, description="AniList-specific: Exclude popularity count")
+    
+    # Array inclusion filters
+    anilist_id_in: Optional[List[int]] = Field(None, description="AniList-specific: Include AniList IDs")
+    anilist_id_not_in: Optional[List[int]] = Field(None, description="AniList-specific: Exclude AniList IDs")
+    anilist_id_mal_in: Optional[List[int]] = Field(None, description="AniList-specific: Include MAL IDs")
+    anilist_id_mal_not_in: Optional[List[int]] = Field(None, description="AniList-specific: Exclude MAL IDs")
+    anilist_format_in: Optional[List[str]] = Field(None, description="AniList-specific: Include formats")
+    anilist_format_not_in: Optional[List[str]] = Field(None, description="AniList-specific: Exclude formats")
+    anilist_status_in: Optional[List[str]] = Field(None, description="AniList-specific: Include statuses")
+    anilist_status_not_in: Optional[List[str]] = Field(None, description="AniList-specific: Exclude statuses")
+    anilist_genre_in: Optional[List[str]] = Field(None, description="AniList-specific: Include genres")
+    anilist_genre_not_in: Optional[List[str]] = Field(None, description="AniList-specific: Exclude genres")
+    anilist_tag_in: Optional[List[str]] = Field(None, description="AniList-specific: Include tags")
+    anilist_tag_not_in: Optional[List[str]] = Field(None, description="AniList-specific: Exclude tags")
+    anilist_tag_category_in: Optional[List[str]] = Field(None, description="AniList-specific: Include tag categories")
+    anilist_tag_category_not_in: Optional[List[str]] = Field(None, description="AniList-specific: Exclude tag categories")
+    anilist_licensed_by_in: Optional[List[str]] = Field(None, description="AniList-specific: Include licensing sites")
+    anilist_licensed_by_not_in: Optional[List[str]] = Field(None, description="AniList-specific: Exclude licensing sites")
+    anilist_licensed_by_id_in: Optional[List[int]] = Field(None, description="AniList-specific: Include licensing site IDs")
+    anilist_source_in: Optional[List[str]] = Field(None, description="AniList-specific: Include source types")
+    anilist_source_not_in: Optional[List[str]] = Field(None, description="AniList-specific: Exclude source types")
+    anilist_format_range: Optional[List[str]] = Field(None, description="AniList-specific: Format range filter")
+    
+    # Range filters
+    anilist_start_date_greater: Optional[int] = Field(None, description="AniList-specific: Start date greater than (YYYYMMDD)")
+    anilist_start_date_lesser: Optional[int] = Field(None, description="AniList-specific: Start date lesser than (YYYYMMDD)")
+    anilist_start_date_like: Optional[str] = Field(None, description="AniList-specific: Start date pattern match")
+    anilist_end_date_greater: Optional[int] = Field(None, description="AniList-specific: End date greater than (YYYYMMDD)")
+    anilist_end_date_lesser: Optional[int] = Field(None, description="AniList-specific: End date lesser than (YYYYMMDD)")
+    anilist_end_date_like: Optional[str] = Field(None, description="AniList-specific: End date pattern match")
+    anilist_episodes_greater: Optional[int] = Field(None, ge=0, description="AniList-specific: Episodes greater than")
+    anilist_episodes_lesser: Optional[int] = Field(None, ge=0, description="AniList-specific: Episodes lesser than")
+    anilist_duration_greater: Optional[int] = Field(None, ge=0, description="AniList-specific: Duration greater than (minutes)")
+    anilist_duration_lesser: Optional[int] = Field(None, ge=0, description="AniList-specific: Duration lesser than (minutes)")
+    anilist_chapters_greater: Optional[int] = Field(None, ge=0, description="AniList-specific: Chapters greater than")
+    anilist_chapters_lesser: Optional[int] = Field(None, ge=0, description="AniList-specific: Chapters lesser than")
+    anilist_volumes_greater: Optional[int] = Field(None, ge=0, description="AniList-specific: Volumes greater than")
+    anilist_volumes_lesser: Optional[int] = Field(None, ge=0, description="AniList-specific: Volumes lesser than")
+    anilist_average_score_greater: Optional[int] = Field(None, ge=0, le=100, description="AniList-specific: Average score greater than")
+    anilist_average_score_lesser: Optional[int] = Field(None, ge=0, le=100, description="AniList-specific: Average score lesser than")
+    anilist_popularity_greater: Optional[int] = Field(None, ge=0, description="AniList-specific: Popularity greater than")
+    anilist_popularity_lesser: Optional[int] = Field(None, ge=0, description="AniList-specific: Popularity lesser than")
+    
+    # Special sorting
+    anilist_sort: Optional[List[str]] = Field(None, description="AniList-specific: Sort options (ID, TITLE_ROMAJI, SCORE_DESC, etc.)")
+    
+    # JIKAN-SPECIFIC PROPERTIES (API v4 verified, only unique features, type-safe)
+    jikan_anime_type: Optional[str] = Field(None, pattern="^(tv|movie|ova|special|ona)$", description="Jikan-specific: Anime type (lowercase, different from universal)")
+    jikan_sfw: Optional[bool] = Field(None, description="Jikan-specific: Safe For Work filter (unique to Jikan)")
+    jikan_genres_exclude: Optional[List[int]] = Field(None, description="Jikan-specific: Genre IDs to exclude (uses IDs, not names)")
+    jikan_order_by: Optional[str] = Field(None, pattern="^(mal_id|title|type|rating|start_date|end_date|episodes|score|scored_by|rank|popularity|members|favorites)$", description="Jikan-specific: Extended order options")
+    jikan_sort: Optional[str] = Field(None, pattern="^(asc|desc)$", description="Jikan-specific: Sort direction")
+    jikan_letter: Optional[str] = Field(None, pattern="^[A-Za-z]$", description="Jikan-specific: Alphabetical filter (unique to Jikan)")
+    jikan_page: Optional[int] = Field(None, ge=1, description="Jikan-specific: Page-based pagination (not offset)")
+    jikan_unapproved: Optional[bool] = Field(None, description="Jikan-specific: Include unapproved entries (unique to Jikan)")
+    
+    # KITSU-SPECIFIC PROPERTIES
+    kitsu_age_rating: Optional[str] = Field(None, description="Kitsu-specific: Age rating filter")
+    kitsu_subtype: Optional[str] = Field(None, description="Kitsu-specific: Media subtype filter")
+    
     @field_validator("sort_order")
     @classmethod
     def validate_sort_order(cls, v):
@@ -387,93 +423,98 @@ class UniversalSearchParams(BaseModel):
             raise ValueError("Score must be between 0 and 10")
         return v
     
-    def to_source_params(self, source: str) -> Dict[str, Any]:
-        """Convert universal parameters to source-specific parameters.
-        
-        This method provides a base conversion that mappers can override.
-        It handles the fundamental parameter mapping challenge identified
-        in our architectural analysis.
-        """
-        params = {}
-        
-        # Basic parameter mapping (source-specific mappers will extend this)
-        if self.query:
-            params["q"] = self.query
-        if self.limit:
-            params["limit"] = self.limit
-        if self.offset:
-            params["offset"] = self.offset
-            
-        # Status mapping for ALL 9 sources (this is where universal schema prevents chaos)
-        if self.status:
-            status_map = {
-                # 1. Offline Database
-                "offline_db": {
-                    AnimeStatus.FINISHED: "FINISHED",
-                    AnimeStatus.RELEASING: "RELEASING", 
-                    AnimeStatus.NOT_YET_RELEASED: "UPCOMING"
-                },
-                # 2. MAL API v2 (official)
-                "mal_api": {
-                    AnimeStatus.FINISHED: "finished",
-                    AnimeStatus.RELEASING: "currently_airing",
-                    AnimeStatus.NOT_YET_RELEASED: "not_yet_aired"
-                },
-                # 3. MAL/Jikan (unofficial)
-                "mal": {
-                    AnimeStatus.FINISHED: "complete",
-                    AnimeStatus.RELEASING: "airing", 
-                    AnimeStatus.NOT_YET_RELEASED: "upcoming"
-                },
-                "jikan": {
-                    AnimeStatus.FINISHED: "complete",
-                    AnimeStatus.RELEASING: "airing", 
-                    AnimeStatus.NOT_YET_RELEASED: "upcoming"
-                },
-                # 4. AniList GraphQL
-                "anilist": {
-                    AnimeStatus.FINISHED: "FINISHED",
-                    AnimeStatus.RELEASING: "RELEASING",
-                    AnimeStatus.NOT_YET_RELEASED: "NOT_YET_RELEASED",
-                    AnimeStatus.CANCELLED: "CANCELLED",
-                    AnimeStatus.HIATUS: "HIATUS"
-                },
-                # 5. Kitsu JSON:API
-                "kitsu": {
-                    AnimeStatus.FINISHED: "finished", 
-                    AnimeStatus.RELEASING: "current",
-                    AnimeStatus.NOT_YET_RELEASED: "upcoming"
-                },
-                # 6. AniDB
-                "anidb": {
-                    AnimeStatus.FINISHED: "complete",
-                    AnimeStatus.RELEASING: "ongoing",
-                    AnimeStatus.NOT_YET_RELEASED: "upcoming"
-                },
-                # 7. Anime-Planet (scraped)
-                "anime_planet": {
-                    AnimeStatus.FINISHED: "finished",
-                    AnimeStatus.RELEASING: "ongoing",
-                    AnimeStatus.NOT_YET_RELEASED: "not yet aired"
-                },
-                # 8. AnimeSchedule API
-                "animeschedule": {
-                    AnimeStatus.FINISHED: "finished",
-                    AnimeStatus.RELEASING: "airing",
-                    AnimeStatus.NOT_YET_RELEASED: "upcoming"
-                },
-                # 9. AniSearch (scraped)
-                "anisearch": {
-                    AnimeStatus.FINISHED: "finished",
-                    AnimeStatus.RELEASING: "currently airing",
-                    AnimeStatus.NOT_YET_RELEASED: "upcoming"
-                }
+    @field_validator("jikan_genres_exclude")
+    @classmethod
+    def validate_jikan_genres_exclude(cls, v):
+        """Validate Jikan genre IDs."""
+        if v is not None:
+            for genre_id in v:
+                if not isinstance(genre_id, int) or genre_id < 1:
+                    raise ValueError("Jikan genre IDs must be positive integers")
+        return v
+    
+    @field_validator("mal_broadcast_day")
+    @classmethod
+    def validate_mal_broadcast_day(cls, v):
+        """Validate MAL broadcast day."""
+        if v is not None:
+            return v.lower()
+        return v
+    
+    @field_validator("mal_rating")
+    @classmethod
+    def validate_mal_rating(cls, v):
+        """Validate and convert MAL rating."""
+        if v is not None:
+            # Convert common formats to MAL format
+            rating_mapping = {
+                "pg-13": "pg_13",
+                "pg13": "pg_13", 
+                "r+": "r+",
+                "r_plus": "r+"
             }
-            source_map = status_map.get(source.lower(), {})
-            if self.status in source_map:
-                params["status"] = source_map[self.status]
-                
-        return params
+            converted = rating_mapping.get(v.lower(), v.lower())
+            
+            # Validate the final value
+            valid_ratings = ["g", "pg", "pg_13", "r", "r+", "rx"]
+            if converted not in valid_ratings:
+                raise ValueError(f"Invalid MAL rating. Must be one of: {valid_ratings}")
+            
+            return converted
+        return v
+    
+    @field_validator("anilist_format_in", "anilist_format_not_in")
+    @classmethod
+    def validate_anilist_formats(cls, v):
+        """Validate AniList format arrays."""
+        if v is not None:
+            valid_formats = ["TV", "TV_SHORT", "MOVIE", "SPECIAL", "OVA", "ONA", "MUSIC", "MANGA", "NOVEL", "ONE_SHOT"]
+            for format_val in v:
+                if format_val not in valid_formats:
+                    raise ValueError(f"Invalid AniList format: {format_val}. Must be one of: {valid_formats}")
+        return v
+    
+    @field_validator("anilist_status_in", "anilist_status_not_in")
+    @classmethod
+    def validate_anilist_statuses(cls, v):
+        """Validate AniList status arrays."""
+        if v is not None:
+            valid_statuses = ["FINISHED", "RELEASING", "NOT_YET_RELEASED", "CANCELLED", "HIATUS"]
+            for status_val in v:
+                if status_val not in valid_statuses:
+                    raise ValueError(f"Invalid AniList status: {status_val}. Must be one of: {valid_statuses}")
+        return v
+    
+    @field_validator("anilist_source_in")
+    @classmethod
+    def validate_anilist_sources(cls, v):
+        """Validate AniList source arrays."""
+        if v is not None:
+            valid_sources = ["ORIGINAL", "MANGA", "LIGHT_NOVEL", "VISUAL_NOVEL", "VIDEO_GAME", "OTHER", 
+                           "NOVEL", "DOUJINSHI", "ANIME", "WEB_NOVEL", "LIVE_ACTION", "GAME", "BOOK", 
+                           "MULTIMEDIA_PROJECT", "PICTURE_BOOK", "COMIC"]
+            for source_val in v:
+                if source_val not in valid_sources:
+                    raise ValueError(f"Invalid AniList source: {source_val}. Must be one of: {valid_sources}")
+        return v
+    
+    @field_validator("anilist_sort")
+    @classmethod
+    def validate_anilist_sort(cls, v):
+        """Validate AniList sort arrays."""
+        if v is not None:
+            valid_sorts = ["ID", "ID_DESC", "TITLE_ROMAJI", "TITLE_ROMAJI_DESC", "TITLE_ENGLISH", "TITLE_ENGLISH_DESC",
+                          "TITLE_NATIVE", "TITLE_NATIVE_DESC", "TYPE", "TYPE_DESC", "FORMAT", "FORMAT_DESC",
+                          "START_DATE", "START_DATE_DESC", "END_DATE", "END_DATE_DESC", "SCORE", "SCORE_DESC",
+                          "POPULARITY", "POPULARITY_DESC", "TRENDING", "TRENDING_DESC", "EPISODES", "EPISODES_DESC",
+                          "DURATION", "DURATION_DESC", "STATUS", "STATUS_DESC", "CHAPTERS", "CHAPTERS_DESC",
+                          "VOLUMES", "VOLUMES_DESC", "UPDATED_AT", "UPDATED_AT_DESC", "SEARCH_MATCH", 
+                          "FAVOURITES", "FAVOURITES_DESC"]
+            for sort_val in v:
+                if sort_val not in valid_sorts:
+                    raise ValueError(f"Invalid AniList sort: {sort_val}. Must be one of: {valid_sorts}")
+        return v
+    
 
 
 class UniversalSearchResult(BaseModel):

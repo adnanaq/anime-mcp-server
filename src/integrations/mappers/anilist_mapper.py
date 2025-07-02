@@ -1,208 +1,52 @@
-"""AniList universal schema mapper for bidirectional data conversion.
+"""AniList GraphQL query parameter mapper.
 
-This mapper handles the conversion between AniList-specific data formats 
-and the universal anime schema, addressing the mapping chaos identified
-in our architectural analysis.
+This mapper handles the conversion from universal search parameters
+to AniList GraphQL variables, addressing the parameter mapping chaos.
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
-
+from typing import Any, Dict
 from ...models.universal_anime import (
-    UniversalAnime,
     UniversalSearchParams,
     AnimeStatus,
     AnimeFormat,
-    AnimeRating,
     AnimeSeason,
 )
 
 
 class AniListMapper:
-    """Bidirectional mapper between AniList data and universal schema."""
+    """Query parameter mapper from universal schema to AniList GraphQL."""
     
-    # AniList-specific status mappings
-    STATUS_TO_UNIVERSAL = {
-        "FINISHED": AnimeStatus.FINISHED,
-        "RELEASING": AnimeStatus.RELEASING, 
-        "NOT_YET_RELEASED": AnimeStatus.NOT_YET_RELEASED,
-        "CANCELLED": AnimeStatus.CANCELLED,
-        "HIATUS": AnimeStatus.HIATUS,
+    # Universal to AniList status mappings (for query parameters)
+    UNIVERSAL_TO_STATUS = {
+        AnimeStatus.FINISHED: "FINISHED",
+        AnimeStatus.RELEASING: "RELEASING",
+        AnimeStatus.NOT_YET_RELEASED: "NOT_YET_RELEASED",
+        AnimeStatus.CANCELLED: "CANCELLED",
+        AnimeStatus.HIATUS: "HIATUS",
     }
     
-    UNIVERSAL_TO_STATUS = {v: k for k, v in STATUS_TO_UNIVERSAL.items()}
-    
-    # AniList-specific format mappings
-    FORMAT_TO_UNIVERSAL = {
-        "TV": AnimeFormat.TV,
-        "TV_SHORT": AnimeFormat.TV,
-        "MOVIE": AnimeFormat.MOVIE,
-        "SPECIAL": AnimeFormat.SPECIAL,
-        "OVA": AnimeFormat.OVA,
-        "ONA": AnimeFormat.ONA,
-        "MUSIC": AnimeFormat.MUSIC,
-    }
-    
+    # Universal to AniList format mappings (for query parameters)
     UNIVERSAL_TO_FORMAT = {
         AnimeFormat.TV: "TV",
-        AnimeFormat.MOVIE: "MOVIE", 
+        AnimeFormat.TV_SHORT: "TV_SHORT",
+        AnimeFormat.MOVIE: "MOVIE",
         AnimeFormat.SPECIAL: "SPECIAL",
         AnimeFormat.OVA: "OVA",
         AnimeFormat.ONA: "ONA",
         AnimeFormat.MUSIC: "MUSIC",
     }
     
-    # AniList season mappings
-    SEASON_TO_UNIVERSAL = {
-        "WINTER": AnimeSeason.WINTER,
-        "SPRING": AnimeSeason.SPRING,
-        "SUMMER": AnimeSeason.SUMMER,
-        "FALL": AnimeSeason.FALL,
+    # Universal to AniList season mappings (for query parameters)
+    UNIVERSAL_TO_SEASON = {
+        AnimeSeason.WINTER: "WINTER",
+        AnimeSeason.SPRING: "SPRING",
+        AnimeSeason.SUMMER: "SUMMER",
+        AnimeSeason.FALL: "FALL",
     }
     
-    UNIVERSAL_TO_SEASON = {v: k for k, v in SEASON_TO_UNIVERSAL.items()}
-    
     @classmethod
-    def to_universal_anime(cls, anilist_data: Dict[str, Any]) -> UniversalAnime:
-        """Convert AniList anime data to universal schema.
-        
-        Args:
-            anilist_data: Raw AniList GraphQL response data
-            
-        Returns:
-            UniversalAnime instance with mapped data
-        """
-        # Extract basic information
-        anime_id = str(anilist_data.get("id", ""))
-        title = cls._extract_title(anilist_data.get("title", {}))
-        
-        # Map status and format using our enum mappings
-        status_str = anilist_data.get("status", "NOT_YET_RELEASED")
-        status = cls.STATUS_TO_UNIVERSAL.get(status_str, AnimeStatus.NOT_YET_RELEASED)
-        
-        format_str = anilist_data.get("format", "TV")
-        type_format = cls.FORMAT_TO_UNIVERSAL.get(format_str, AnimeFormat.TV)
-        
-        # Extract season information
-        season = None
-        season_str = anilist_data.get("season")
-        if season_str:
-            season = cls.SEASON_TO_UNIVERSAL.get(season_str)
-        
-        # Extract dates
-        start_date = cls._format_anilist_date(anilist_data.get("startDate"))
-        end_date = cls._format_anilist_date(anilist_data.get("endDate"))
-        
-        # Extract images
-        cover_image = anilist_data.get("coverImage", {})
-        image_url = cover_image.get("medium")
-        image_large = cover_image.get("large") 
-        
-        # Extract studios
-        studios_data = anilist_data.get("studios", {}).get("nodes", [])
-        studios = [
-            studio["name"] for studio in studios_data 
-            if studio.get("isAnimationStudio", True)
-        ]
-        
-        # Extract genres and tags
-        genres = anilist_data.get("genres", [])
-        tags_data = anilist_data.get("tags", [])
-        themes = [tag["name"] for tag in tags_data if tag.get("category") in ["Theme", "Setting"]]
-        
-        # Extract title variants
-        title_data = anilist_data.get("title", {})
-        title_english = title_data.get("english")
-        title_native = title_data.get("native")
-        
-        # Build synonyms from alternative titles
-        synonyms = []
-        if title_data.get("romaji") and title_data.get("romaji") != title:
-            synonyms.append(title_data.get("romaji"))
-        if title_english and title_english != title:
-            synonyms.append(title_english)
-        if title_native and title_native != title:
-            synonyms.append(title_native)
-        
-        # Extract numeric values safely
-        episodes = anilist_data.get("episodes")
-        duration = anilist_data.get("duration")
-        year = anilist_data.get("seasonYear")
-        score = anilist_data.get("averageScore")
-        if score:
-            score = score / 10.0  # Convert from 0-100 to 0-10 scale
-        
-        popularity = anilist_data.get("popularity")
-        favourites = anilist_data.get("favourites")
-        
-        # URL
-        url = anilist_data.get("siteUrl")
-        
-        # Description (clean HTML if present)
-        description = anilist_data.get("description")
-        if description:
-            description = cls._clean_html_description(description)
-        
-        # Source material
-        source = anilist_data.get("source")
-        if source:
-            source = source.lower().replace("_", " ")
-        
-        # Create UniversalAnime instance
-        universal_anime = UniversalAnime(
-            # GUARANTEED UNIVERSAL PROPERTIES
-            id=anime_id,
-            title=title,
-            type_format=type_format,
-            episodes=episodes,
-            status=status,
-            genres=genres,
-            score=score,
-            image_url=image_url,
-            image_large=image_large,
-            year=year,
-            synonyms=synonyms,
-            studios=studios,
-            
-            # HIGH-CONFIDENCE PROPERTIES
-            description=description,
-            url=url,
-            score_count=None,  # AniList doesn't provide this directly
-            title_english=title_english,
-            title_native=title_native,
-            start_date=start_date,
-            season=season,
-            end_date=end_date,
-            duration=duration,
-            
-            # MEDIUM-CONFIDENCE PROPERTIES
-            source=source,
-            rank=None,  # Would need separate query for ranking
-            staff=[],   # Would need separate query for staff
-            
-            # ADDITIONAL PROPERTIES
-            characters=[],  # Would need separate query for characters
-            image_small=cover_image.get("medium"),  # Use medium as small
-            rating=None,  # AniList doesn't provide MPAA-style ratings
-            themes=themes,
-            demographics=[],  # Would need tag analysis
-            producers=[],   # Would need separate query 
-            popularity=popularity,
-        )
-        
-        # Set platform ID
-        universal_anime.set_platform_id("anilist", int(anime_id))
-        
-        # Calculate quality score
-        universal_anime.data_quality_score = universal_anime.calculate_quality_score()
-        universal_anime.last_updated = datetime.utcnow()
-        universal_anime.source_priority = ["anilist"]
-        
-        return universal_anime
-    
-    @classmethod
-    def to_anilist_search_params(cls, universal_params: UniversalSearchParams) -> Dict[str, Any]:
-        """Convert universal search parameters to AniList-specific parameters.
+    def to_anilist_search_params(cls, universal_params: UniversalSearchParams, anilist_specific: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Convert universal search parameters to AniList GraphQL variables.
         
         This addresses the parameter mapping chaos by providing a central
         conversion point from universal parameters to AniList GraphQL variables.
@@ -213,62 +57,96 @@ class AniListMapper:
         Returns:
             Dictionary of AniList GraphQL variables
         """
+        if anilist_specific is None:
+            anilist_specific = {}
         anilist_params = {}
         
         # Text search
         if universal_params.query:
             anilist_params["search"] = universal_params.query
         
-        # Genre filters
+        # Status mapping
+        if universal_params.status:
+            status_value = cls.UNIVERSAL_TO_STATUS.get(universal_params.status)
+            if status_value:
+                anilist_params["status"] = status_value
+        
+        # AniList-specific status override
+        status = anilist_specific.get("status")
+        if status:
+            anilist_params["status"] = status
+        
+        # Format mapping (AniList supports all formats including TV_SHORT)
+        if universal_params.type_format:
+            format_value = cls.UNIVERSAL_TO_FORMAT.get(universal_params.type_format)
+            if format_value:
+                anilist_params["format"] = format_value
+        
+        # Score filters (AniList uses 0-100 scale, convert from 0-10)
+        if universal_params.min_score is not None:
+            anilist_params["averageScore_greater"] = int(universal_params.min_score * 10)
+        if universal_params.max_score is not None:
+            anilist_params["averageScore_lesser"] = int(universal_params.max_score * 10)
+        
+        # Episode filters
+        if universal_params.min_episodes is not None:
+            anilist_params["episodes_greater"] = universal_params.min_episodes
+        if universal_params.max_episodes is not None:
+            anilist_params["episodes_lesser"] = universal_params.max_episodes
+        
+        # Duration filters (AniList duration is in minutes)
+        if universal_params.min_duration is not None:
+            anilist_params["duration_greater"] = universal_params.min_duration
+        if universal_params.max_duration is not None:
+            anilist_params["duration_lesser"] = universal_params.max_duration
+        
+        # Genre filters (AniList accepts genre arrays)
         if universal_params.genres:
             anilist_params["genre_in"] = universal_params.genres
         if universal_params.genres_exclude:
             anilist_params["genre_not_in"] = universal_params.genres_exclude
         
-        # Status mapping (prevents the "ongoing" chaos)
-        if universal_params.status:
-            anilist_params["status"] = cls.UNIVERSAL_TO_STATUS.get(universal_params.status)
+        # Theme/Tag filters (AniList-specific feature)
+        if universal_params.themes:
+            anilist_params["tag_in"] = universal_params.themes
+        if universal_params.themes_exclude:
+            anilist_params["tag_not_in"] = universal_params.themes_exclude
         
-        # Format mapping
-        if universal_params.type_format:
-            anilist_params["format"] = cls.UNIVERSAL_TO_FORMAT.get(universal_params.type_format)
-        
-        # Temporal filters
+        # Year and season filters
         if universal_params.year:
             anilist_params["seasonYear"] = universal_params.year
         if universal_params.season:
             anilist_params["season"] = cls.UNIVERSAL_TO_SEASON.get(universal_params.season)
         
-        # Date range filters (convert to FuzzyDateInt)
+        # Start date filter
         if universal_params.start_date:
-            anilist_params["startDate_greater"] = cls._parse_fuzzy_date(universal_params.start_date)
+            # Convert YYYY-MM-DD to AniList fuzzy date format
+            try:
+                date_parts = universal_params.start_date.split("-")
+                if len(date_parts) >= 3:
+                    year = int(date_parts[0])
+                    month = int(date_parts[1])
+                    day = int(date_parts[2])
+                    anilist_params["startDate_greater"] = year * 10000 + month * 100 + day
+            except (ValueError, IndexError):
+                pass
+        
+        # End date filter
         if universal_params.end_date:
-            anilist_params["endDate_lesser"] = cls._parse_fuzzy_date(universal_params.end_date)
+            # Convert YYYY-MM-DD to AniList fuzzy date format
+            try:
+                date_parts = universal_params.end_date.split("-")
+                if len(date_parts) >= 3:
+                    year = int(date_parts[0])
+                    month = int(date_parts[1])
+                    day = int(date_parts[2])
+                    anilist_params["endDate"] = year * 10000 + month * 100 + day
+            except (ValueError, IndexError):
+                pass
         
-        # Numeric filters (convert score from 0-10 to 0-100)
-        if universal_params.min_score:
-            anilist_params["averageScore_greater"] = int(universal_params.min_score * 10)
-        if universal_params.max_score:
-            anilist_params["averageScore_lesser"] = int(universal_params.max_score * 10)
-        
-        if universal_params.min_episodes:
-            anilist_params["episodes_greater"] = universal_params.min_episodes
-        if universal_params.max_episodes:
-            anilist_params["episodes_lesser"] = universal_params.max_episodes
-        
-        if universal_params.min_duration:
-            anilist_params["duration_greater"] = universal_params.min_duration
-        if universal_params.max_duration:
-            anilist_params["duration_lesser"] = universal_params.max_duration
-        
-        if universal_params.min_popularity:
+        # Popularity filter
+        if universal_params.min_popularity is not None:
             anilist_params["popularity_greater"] = universal_params.min_popularity
-        if universal_params.max_popularity:
-            anilist_params["popularity_lesser"] = universal_params.max_popularity
-        
-        # Tag filters (themes map to tags)
-        if universal_params.themes:
-            anilist_params["tag_in"] = universal_params.themes
         
         # Adult content filter
         if not universal_params.include_adult:
@@ -276,116 +154,312 @@ class AniListMapper:
         
         # Result control
         anilist_params["perPage"] = universal_params.limit
+        if universal_params.offset:
+            anilist_params["page"] = (universal_params.offset // universal_params.limit) + 1
         
-        # Sort mapping
+        # Sort - AniList has comprehensive sort options
         if universal_params.sort_by:
-            sort_mapping = {
-                "score": "SCORE_DESC",
-                "popularity": "POPULARITY_DESC", 
+            sort_base = {
+                "score": "SCORE",
+                "popularity": "POPULARITY", 
                 "title": "TITLE_ROMAJI",
-                "year": "START_DATE_DESC",
-                "episodes": "EPISODES_DESC",
-                "duration": "DURATION_DESC",
-                "start_date": "START_DATE_DESC",
+                "year": "START_DATE",
+                "episodes": "EPISODES",
+                "duration": "DURATION",
             }
-            sort_field = sort_mapping.get(universal_params.sort_by)
-            if sort_field:
-                if universal_params.sort_order == "asc":
-                    sort_field = sort_field.replace("_DESC", "_ASC")
-                anilist_params["sort"] = [sort_field]
+            base_sort = sort_base.get(universal_params.sort_by)
+            if base_sort:
+                # Add direction suffix
+                if universal_params.sort_order == "desc":
+                    sort_value = f"{base_sort}_DESC"
+                elif universal_params.sort_order == "asc":
+                    sort_value = f"{base_sort}_ASC"
+                else:
+                    sort_value = base_sort  # Default no suffix
+                anilist_params["sort"] = [sort_value]
+        
+        # ANILIST-SPECIFIC PARAMETERS (All 69+ GraphQL parameters)
+        # Basic filters
+        # New basic filter parameters  
+        id = anilist_specific.get("id") or universal_params.anilist_id
+        if id is not None:
+            anilist_params["id"] = id
+            
+        endDate = anilist_specific.get("endDate") or universal_params.anilist_end_date
+        if endDate is not None:
+            anilist_params["endDate"] = endDate
+            
+        format = anilist_specific.get("format") or universal_params.anilist_format
+        if format:
+            anilist_params["format"] = format
+            
+            
+        id_mal = anilist_specific.get("idMal") or universal_params.anilist_id_mal
+        if id_mal is not None:
+            anilist_params["idMal"] = id_mal
+            
+        start_date = anilist_specific.get("startDate") or universal_params.anilist_start_date
+        if start_date is not None:
+            anilist_params["startDate"] = start_date
+            
+        season_specific = anilist_specific.get("season") or universal_params.anilist_season
+        if season_specific:
+            anilist_params["season"] = season_specific
+            
+        season_year = anilist_specific.get("seasonYear") or universal_params.anilist_season_year
+        if season_year is not None:
+            anilist_params["seasonYear"] = season_year
+            
+        episodes_exact = anilist_specific.get("episodes") or universal_params.anilist_episodes
+        if episodes_exact is not None:
+            anilist_params["episodes"] = episodes_exact
+            
+        duration_exact = anilist_specific.get("duration") or universal_params.anilist_duration
+        if duration_exact is not None:
+            anilist_params["duration"] = duration_exact
+            
+        chapters = anilist_specific.get("chapters") or universal_params.anilist_chapters
+        if chapters is not None:
+            anilist_params["chapters"] = chapters
+            
+        volumes = anilist_specific.get("volumes") or universal_params.anilist_volumes
+        if volumes is not None:
+            anilist_params["volumes"] = volumes
+            
+        is_adult_specific = anilist_specific.get("isAdult") or universal_params.anilist_is_adult
+        if is_adult_specific is not None:
+            anilist_params["isAdult"] = is_adult_specific
+            
+        genre_single = anilist_specific.get("genre") or universal_params.anilist_genre
+        if genre_single:
+            anilist_params["genre"] = genre_single
+            
+        tag_single = anilist_specific.get("tag") or universal_params.anilist_tag
+        if tag_single:
+            anilist_params["tag"] = tag_single
+            
+        min_tag_rank = anilist_specific.get("minimumTagRank") or universal_params.anilist_minimum_tag_rank
+        if min_tag_rank is not None:
+            anilist_params["minimumTagRank"] = min_tag_rank
+            
+        tag_category = anilist_specific.get("tagCategory") or universal_params.anilist_tag_category
+        if tag_category:
+            anilist_params["tagCategory"] = tag_category
+            
+        on_list = anilist_specific.get("onList") or universal_params.anilist_on_list
+        if on_list is not None:
+            anilist_params["onList"] = on_list
+            
+        licensed_by = anilist_specific.get("licensedBy") or universal_params.anilist_licensed_by
+        if licensed_by:
+            anilist_params["licensedBy"] = licensed_by
+            
+        licensed_by_id = anilist_specific.get("licensedById") or universal_params.anilist_licensed_by_id
+        if licensed_by_id is not None:
+            anilist_params["licensedById"] = licensed_by_id
+            
+        avg_score_exact = anilist_specific.get("averageScore") or universal_params.anilist_average_score
+        if avg_score_exact is not None:
+            anilist_params["averageScore"] = avg_score_exact
+            
+        popularity_exact = anilist_specific.get("popularity") or universal_params.anilist_popularity
+        if popularity_exact is not None:
+            anilist_params["popularity"] = popularity_exact
+            
+        source_specific = anilist_specific.get("source") or universal_params.anilist_source
+        if source_specific:
+            anilist_params["source"] = source_specific
+            
+        country = anilist_specific.get("countryOfOrigin") or universal_params.anilist_country_of_origin
+        if country:
+            anilist_params["countryOfOrigin"] = country
+            
+        is_licensed = anilist_specific.get("isLicensed") or universal_params.anilist_is_licensed
+        if is_licensed is not None:
+            anilist_params["isLicensed"] = is_licensed
+        
+        # Negation filters
+        id_not = anilist_specific.get("id_not") or universal_params.anilist_id_not
+        if id_not is not None:
+            anilist_params["id_not"] = id_not
+            
+        id_mal_not = anilist_specific.get("idMal_not") or universal_params.anilist_id_mal_not
+        if id_mal_not is not None:
+            anilist_params["idMal_not"] = id_mal_not
+            
+        format_not = anilist_specific.get("format_not") or universal_params.anilist_format_not
+        if format_not:
+            anilist_params["format_not"] = format_not
+            
+        if universal_params.status:
+            anilist_params["status_not"] = universal_params.status
+            
+        avg_score_not = anilist_specific.get("averageScore_not") or universal_params.anilist_average_score_not
+        if avg_score_not is not None:
+            anilist_params["averageScore_not"] = avg_score_not
+            
+        popularity_not = anilist_specific.get("popularity_not") or universal_params.anilist_popularity_not
+        if popularity_not is not None:
+            anilist_params["popularity_not"] = popularity_not
+        
+        # Array inclusion filters
+        id_in = anilist_specific.get("id_in") or universal_params.anilist_id_in
+        if id_in:
+            anilist_params["id_in"] = id_in
+            
+        id_not_in = anilist_specific.get("id_not_in") or universal_params.anilist_id_not_in
+        if id_not_in:
+            anilist_params["id_not_in"] = id_not_in
+            
+        id_mal_in = anilist_specific.get("idMal_in") or universal_params.anilist_id_mal_in
+        if id_mal_in:
+            anilist_params["idMal_in"] = id_mal_in
+            
+        id_mal_not_in = anilist_specific.get("idMal_not_in") or universal_params.anilist_id_mal_not_in
+        if id_mal_not_in:
+            anilist_params["idMal_not_in"] = id_mal_not_in
+            
+        format_in = anilist_specific.get("format_in") or universal_params.anilist_format_in
+        if format_in:
+            anilist_params["format_in"] = format_in
+            
+        format_not_in = anilist_specific.get("format_not_in") or universal_params.anilist_format_not_in
+        if format_not_in:
+            anilist_params["format_not_in"] = format_not_in
+            
+        status_in = anilist_specific.get("status_in") or universal_params.anilist_status_in
+        if status_in:
+            anilist_params["status_in"] = status_in
+            
+        status_not_in = anilist_specific.get("status_not_in") or universal_params.anilist_status_not_in
+        if status_not_in:
+            anilist_params["status_not_in"] = status_not_in
+            
+        genre_in_specific = anilist_specific.get("genre_in") or universal_params.anilist_genre_in
+        if genre_in_specific:
+            anilist_params["genre_in"] = genre_in_specific
+            
+        genre_not_in = anilist_specific.get("genre_not_in") or universal_params.anilist_genre_not_in
+        if genre_not_in:
+            anilist_params["genre_not_in"] = genre_not_in
+            
+        tag_in_specific = anilist_specific.get("tag_in") or universal_params.anilist_tag_in
+        if tag_in_specific:
+            anilist_params["tag_in"] = tag_in_specific
+            
+        tag_not_in = anilist_specific.get("tag_not_in") or universal_params.anilist_tag_not_in
+        if tag_not_in:
+            anilist_params["tag_not_in"] = tag_not_in
+            
+        tag_category_in = anilist_specific.get("tagCategory_in") or universal_params.anilist_tag_category_in
+        if tag_category_in:
+            anilist_params["tagCategory_in"] = tag_category_in
+            
+        tag_category_not_in = anilist_specific.get("tagCategory_not_in") or universal_params.anilist_tag_category_not_in
+        if tag_category_not_in:
+            anilist_params["tagCategory_not_in"] = tag_category_not_in
+            
+        licensed_by_in = anilist_specific.get("licensedBy_in") or universal_params.anilist_licensed_by_in
+        if licensed_by_in:
+            anilist_params["licensedBy_in"] = licensed_by_in
+            
+        licensed_by_id_in = anilist_specific.get("licensedById_in") or universal_params.anilist_licensed_by_id_in
+        if licensed_by_id_in:
+            anilist_params["licensedById_in"] = licensed_by_id_in
+            
+        source_in = anilist_specific.get("source_in") or universal_params.anilist_source_in
+        if source_in:
+            anilist_params["source_in"] = source_in
+            
+        # New array filters
+        licensed_by_not_in = anilist_specific.get("licensedBy_not_in") or universal_params.anilist_licensed_by_not_in
+        if licensed_by_not_in:
+            anilist_params["licensedBy_not_in"] = licensed_by_not_in
+            
+        source_not_in = anilist_specific.get("source_not_in") or universal_params.anilist_source_not_in
+        if source_not_in:
+            anilist_params["source_not_in"] = source_not_in
+            
+        format_range = anilist_specific.get("format_range") or universal_params.anilist_format_range
+        if format_range:
+            anilist_params["format_range"] = format_range
+        
+        # Range filters
+        start_date_greater = anilist_specific.get("startDate_greater") or universal_params.anilist_start_date_greater
+        if start_date_greater is not None:
+            anilist_params["startDate_greater"] = start_date_greater
+            
+        start_date_lesser = anilist_specific.get("startDate_lesser") or universal_params.anilist_start_date_lesser
+        if start_date_lesser is not None:
+            anilist_params["startDate_lesser"] = start_date_lesser
+            
+        start_date_like = anilist_specific.get("startDate_like") or universal_params.anilist_start_date_like
+        if start_date_like:
+            anilist_params["startDate_like"] = start_date_like
+            
+        end_date_greater = anilist_specific.get("endDate_greater") or universal_params.anilist_end_date_greater
+        if end_date_greater is not None:
+            anilist_params["endDate_greater"] = end_date_greater
+            
+        end_date_lesser = anilist_specific.get("endDate_lesser") or universal_params.anilist_end_date_lesser
+        if end_date_lesser is not None:
+            anilist_params["endDate_lesser"] = end_date_lesser
+            
+        end_date_like = anilist_specific.get("endDate_like") or universal_params.anilist_end_date_like
+        if end_date_like:
+            anilist_params["endDate_like"] = end_date_like
+            
+        episodes_greater = anilist_specific.get("episodes_greater") or universal_params.anilist_episodes_greater
+        if episodes_greater is not None:
+            anilist_params["episodes_greater"] = episodes_greater
+            
+        episodes_lesser = anilist_specific.get("episodes_lesser") or universal_params.anilist_episodes_lesser
+        if episodes_lesser is not None:
+            anilist_params["episodes_lesser"] = episodes_lesser
+            
+        duration_greater = anilist_specific.get("duration_greater") or universal_params.anilist_duration_greater
+        if duration_greater is not None:
+            anilist_params["duration_greater"] = duration_greater
+            
+        duration_lesser = anilist_specific.get("duration_lesser") or universal_params.anilist_duration_lesser
+        if duration_lesser is not None:
+            anilist_params["duration_lesser"] = duration_lesser
+            
+        chapters_greater = anilist_specific.get("chapters_greater") or universal_params.anilist_chapters_greater
+        if chapters_greater is not None:
+            anilist_params["chapters_greater"] = chapters_greater
+            
+        chapters_lesser = anilist_specific.get("chapters_lesser") or universal_params.anilist_chapters_lesser
+        if chapters_lesser is not None:
+            anilist_params["chapters_lesser"] = chapters_lesser
+            
+        volumes_greater = anilist_specific.get("volumes_greater") or universal_params.anilist_volumes_greater
+        if volumes_greater is not None:
+            anilist_params["volumes_greater"] = volumes_greater
+            
+        volumes_lesser = anilist_specific.get("volumes_lesser") or universal_params.anilist_volumes_lesser
+        if volumes_lesser is not None:
+            anilist_params["volumes_lesser"] = volumes_lesser
+            
+        avg_score_greater = anilist_specific.get("averageScore_greater") or universal_params.anilist_average_score_greater
+        if avg_score_greater is not None:
+            anilist_params["averageScore_greater"] = avg_score_greater
+            
+        avg_score_lesser = anilist_specific.get("averageScore_lesser") or universal_params.anilist_average_score_lesser
+        if avg_score_lesser is not None:
+            anilist_params["averageScore_lesser"] = avg_score_lesser
+            
+        popularity_greater = anilist_specific.get("popularity_greater") or universal_params.anilist_popularity_greater
+        if popularity_greater is not None:
+            anilist_params["popularity_greater"] = popularity_greater
+            
+        popularity_lesser = anilist_specific.get("popularity_lesser") or universal_params.anilist_popularity_lesser
+        if popularity_lesser is not None:
+            anilist_params["popularity_lesser"] = popularity_lesser
+        
+        # Special sorting (AniList-specific override)
+        sort_specific = anilist_specific.get("sort") or universal_params.anilist_sort
+        if sort_specific:
+            anilist_params["sort"] = sort_specific
         
         return anilist_params
-    
-    @classmethod
-    def _extract_title(cls, title_data: Dict[str, Any]) -> str:
-        """Extract the best available title from AniList title object.
-        
-        Priority: English > Romaji > Native
-        """
-        if title_data.get("english"):
-            return title_data["english"]
-        elif title_data.get("romaji"):
-            return title_data["romaji"]
-        elif title_data.get("native"):
-            return title_data["native"]
-        else:
-            return "Unknown Title"
-    
-    @classmethod
-    def _format_anilist_date(cls, date_data: Optional[Dict[str, Any]]) -> Optional[str]:
-        """Convert AniList date object to ISO 8601 string.
-        
-        Args:
-            date_data: AniList date object with year, month, day
-            
-        Returns:
-            ISO 8601 date string (YYYY-MM-DD) or None
-        """
-        if not date_data:
-            return None
-        
-        year = date_data.get("year")
-        month = date_data.get("month")
-        day = date_data.get("day")
-        
-        if not year:
-            return None
-        
-        # Build date string with available components
-        if month and day:
-            return f"{year:04d}-{month:02d}-{day:02d}"
-        elif month:
-            return f"{year:04d}-{month:02d}-01"
-        else:
-            return f"{year:04d}-01-01"
-    
-    @classmethod
-    def _parse_fuzzy_date(cls, date_string: str) -> Optional[int]:
-        """Parse ISO date string to AniList FuzzyDateInt format (YYYYMMDD)."""
-        if not date_string:
-            return None
-            
-        try:
-            if '-' in date_string:
-                parts = date_string.split('-')
-                if len(parts) >= 3:
-                    year, month, day = parts[:3]
-                    return int(f"{year:0>4}{month:0>2}{day:0>2}")
-                elif len(parts) == 2:
-                    year, month = parts
-                    return int(f"{year:0>4}{month:0>2}01")
-                elif len(parts) == 1:
-                    year = parts[0]
-                    return int(f"{year:0>4}0101")
-            elif len(date_string) == 4 and date_string.isdigit():
-                return int(f"{date_string}0101")
-        except (ValueError, IndexError):
-            pass
-            
-        return None
-    
-    @classmethod
-    def _clean_html_description(cls, description: str) -> str:
-        """Clean HTML tags and formatting from AniList descriptions."""
-        if not description:
-            return ""
-        
-        # Simple HTML tag removal (could be enhanced with proper HTML parser)
-        import re
-        
-        # Remove HTML tags
-        description = re.sub(r'<[^>]+>', '', description)
-        
-        # Replace HTML entities
-        description = description.replace('&lt;', '<')
-        description = description.replace('&gt;', '>')
-        description = description.replace('&amp;', '&')
-        description = description.replace('&quot;', '"')
-        description = description.replace('&#039;', "'")
-        description = description.replace('<br>', '\n')
-        
-        # Clean up whitespace
-        description = re.sub(r'\n\s*\n', '\n\n', description)
-        description = description.strip()
-        
-        return description
