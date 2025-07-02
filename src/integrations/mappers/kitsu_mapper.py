@@ -35,18 +35,23 @@ class KitsuMapper:
     }
     
     @classmethod
-    def to_kitsu_search_params(cls, universal_params: UniversalSearchParams) -> Dict[str, Any]:
+    def to_kitsu_search_params(cls, universal_params: UniversalSearchParams, kitsu_specific: Dict[str, Any] = None) -> Dict[str, Any]:
         """Convert universal search parameters to Kitsu JSON:API parameters.
         
         Kitsu uses JSON:API standard with filter[attribute] syntax for
         query parameters and comprehensive category/production filtering.
         
+        Based on comprehensive API verification - 14 working parameters confirmed.
+        
         Args:
             universal_params: Universal search parameters
+            kitsu_specific: Kitsu-specific parameters override
             
         Returns:
             Dictionary of Kitsu API filter parameters
         """
+        if kitsu_specific is None:
+            kitsu_specific = {}
         kitsu_params = {}
         
         # Text search - Kitsu supports text filtering
@@ -65,21 +70,26 @@ class KitsuMapper:
             if subtype_value:
                 kitsu_params["filter[subtype]"] = subtype_value
         
-        # Score filters (Kitsu uses 1-5 star rating, convert from 0-10)
+        # Score filters (Kitsu uses 0-100 scale, same as universal 0-10 scale * 10)
+        # Kitsu Range Syntax: Uses ".." separator for ranges
+        # - "80.." = >= 80 (minimum score)
+        # - "..90" = <= 90 (maximum score) 
+        # - "80..90" = between 80 and 90 (both min and max)
         if universal_params.min_score is not None:
-            # Convert 0-10 to 1-5 stars (multiply by 0.5, add 0.5 for rounding)
-            kitsu_rating = max(1, min(5, (universal_params.min_score / 2) + 0.5))
-            kitsu_params["filter[averageRating]"] = f"{kitsu_rating:.1f}.."
+            # Convert 0-10 to 0-100 scale  
+            kitsu_rating = universal_params.min_score * 10
+            kitsu_params["filter[averageRating]"] = f"{kitsu_rating}.."
         if universal_params.max_score is not None:
-            kitsu_rating = max(1, min(5, (universal_params.max_score / 2) + 0.5))
+            kitsu_rating = universal_params.max_score * 10
             existing_filter = kitsu_params.get("filter[averageRating]", "..")
             if ".." in existing_filter:
                 min_part = existing_filter.split("..")[0]
-                kitsu_params["filter[averageRating]"] = f"{min_part}..{kitsu_rating:.1f}"
+                kitsu_params["filter[averageRating]"] = f"{min_part}..{kitsu_rating}"
             else:
-                kitsu_params["filter[averageRating]"] = f"..{kitsu_rating:.1f}"
+                kitsu_params["filter[averageRating]"] = f"..{kitsu_rating}"
         
-        # Episode filters
+        # Episode filters - Uses same Kitsu range syntax as score filters
+        # Examples: "12.." (>=12 episodes), "..24" (<=24 episodes), "12..24" (12-24 episodes)
         if universal_params.min_episodes is not None:
             kitsu_params["filter[episodeCount]"] = f"{universal_params.min_episodes}.."
         if universal_params.max_episodes is not None:
@@ -90,7 +100,8 @@ class KitsuMapper:
             else:
                 kitsu_params["filter[episodeCount]"] = f"..{universal_params.max_episodes}"
         
-        # Duration filters (Kitsu stores episode length in minutes)
+        # Duration filters - Kitsu stores episode length in minutes, uses range syntax  
+        # Examples: "20.." (>=20 min), "..30" (<=30 min), "20..30" (20-30 min episodes)
         if universal_params.min_duration is not None:
             kitsu_params["filter[episodeLength]"] = f"{universal_params.min_duration}.."
         if universal_params.max_duration is not None:
@@ -101,30 +112,62 @@ class KitsuMapper:
             else:
                 kitsu_params["filter[episodeLength]"] = f"..{universal_params.max_duration}"
         
-        # Year filter (Kitsu filters by startDate year)
-        if universal_params.year:
-            # Format as YYYY-01-01..YYYY-12-31 range
-            kitsu_params["filter[startDate]"] = f"{universal_params.year}-01-01..{universal_params.year}-12-31"
-        elif universal_params.start_date:
-            kitsu_params["filter[startDate]"] = f"{universal_params.start_date}.."
-        
-        # End date filter
-        if universal_params.end_date:
-            existing_filter = kitsu_params.get("filter[startDate]", "..")
-            if ".." in existing_filter:
-                min_part = existing_filter.split("..")[0]
-                kitsu_params["filter[startDate]"] = f"{min_part}..{universal_params.end_date}"
-            else:
-                kitsu_params["filter[startDate]"] = f"..{universal_params.end_date}"
+        # NOTE: filter[startDate] is NOT SUPPORTED by Kitsu API (returns "Filter not allowed")
+        # Use filter[seasonYear] and filter[season] instead for temporal filtering
         
         # Categories (genres) - Kitsu has rich category system
         if universal_params.genres:
             # Kitsu supports category filtering via relationships
             kitsu_params["filter[categories]"] = ",".join(universal_params.genres)
         
-        # Adult content filter
-        if not universal_params.include_adult:
-            kitsu_params["filter[nsfw]"] = "false"
+        # Season filters (Kitsu native support)
+        if universal_params.season:
+            # Map universal season to Kitsu season values
+            season_mapping = {
+                "WINTER": "winter",
+                "SPRING": "spring", 
+                "SUMMER": "summer",
+                "FALL": "fall"
+            }
+            season_value = season_mapping.get(universal_params.season.value)
+            if season_value:
+                kitsu_params["filter[season]"] = season_value
+        
+        # Season year filter (Kitsu native support)
+        if universal_params.year:
+            kitsu_params["filter[seasonYear]"] = universal_params.year
+        
+        # Age rating filter (Kitsu native support)
+        if universal_params.rating:
+            # Map universal rating to Kitsu age rating values
+            rating_mapping = {
+                "G": "G",
+                "PG": "PG", 
+                "PG13": "PG", # Map PG13 to PG for Kitsu
+                "R": "R",
+                "R_PLUS": "R18", # Map R+ to R18 for Kitsu  
+                "RX": "R18"  # Map RX to R18 for Kitsu
+            }
+            rating_value = rating_mapping.get(universal_params.rating.value)
+            if rating_value:
+                kitsu_params["filter[ageRating]"] = rating_value
+        
+        # KITSU-SPECIFIC PARAMETERS
+        
+        # Streaming platforms (Kitsu unique feature)
+        streamers = kitsu_specific.get("streamers") or universal_params.kitsu_streamers
+        if streamers:
+            kitsu_params["filter[streamers]"] = ",".join(streamers) if isinstance(streamers, list) else streamers
+        
+        # Age rating override (use kitsu_specific only since universal rating is handled above)
+        age_rating_override = kitsu_specific.get("ageRating")
+        if age_rating_override:
+            kitsu_params["filter[ageRating]"] = age_rating_override
+            
+        # Subtype override (use kitsu_specific only since universal type_format is handled above)
+        subtype_override = kitsu_specific.get("subtype") 
+        if subtype_override:
+            kitsu_params["filter[subtype]"] = subtype_override
         
         # Result control
         kitsu_params["page[limit]"] = universal_params.limit
@@ -133,16 +176,20 @@ class KitsuMapper:
             page_number = (universal_params.offset // universal_params.limit) + 1
             kitsu_params["page[number]"] = page_number
         
-        # Sort - Kitsu has comprehensive sort options
+        # Sort - Kitsu has comprehensive sort options (verified working)
         if universal_params.sort_by:
             sort_mapping = {
                 "score": "averageRating",
-                "popularity": "popularityRank",
+                "popularity": "popularityRank", 
                 "title": "canonicalTitle",
                 "year": "startDate",
                 "episodes": "episodeCount",
-                "duration": "episodeLength",
+                "duration": "episodeLength", 
                 "rank": "ratingRank",
+                # Additional verified Kitsu sort fields
+                "id": "id",
+                "created_at": "createdAt",
+                "updated_at": "updatedAt"
             }
             sort_field = sort_mapping.get(universal_params.sort_by)
             if sort_field:

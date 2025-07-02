@@ -427,8 +427,7 @@ class UniversalSearchParams(BaseModel):
     jikan_unapproved: Optional[bool] = Field(None, description="Jikan-specific: Include unapproved entries (unique to Jikan)")
     
     # KITSU-SPECIFIC PROPERTIES
-    kitsu_age_rating: Optional[str] = Field(None, description="Kitsu-specific: Age rating filter")
-    kitsu_subtype: Optional[str] = Field(None, description="Kitsu-specific: Media subtype filter")
+    kitsu_streamers: Optional[List[str]] = Field(None, description="Kitsu-specific: Streaming platform filters (e.g., ['Crunchyroll', 'Funimation'])")
     
     @field_validator("sort_order")
     @classmethod

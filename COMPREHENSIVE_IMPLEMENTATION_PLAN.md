@@ -20,6 +20,11 @@ This plan outlines a complete architectural transformation from a static tool-ba
    - **Standard**: Follows JSON:API specification (https://jsonapi.org/)
    - **Discovery Method**: Reverse engineering via API exploration and network inspection
 4. **AniDB API**: https://wiki.anidb.net/HTTP_API_Definition
+   - **Base URL**: `http://api.anidb.net:9001/httpapi`
+   - **Authentication**: Client registration required
+   - **Rate Limit**: 1 request per 2 seconds (strictly enforced)
+   - **Response Format**: UTF-8 encoded, gzip compressed XML
+   - **Architecture**: ID-based lookup system, no search/filter parameters
 5. **AnimeNewsNetwork API**: https://www.animenewsnetwork.com/encyclopedia/api.php
 
 #### **Non-API Sources - Scraping Required (4 platforms)**
@@ -88,6 +93,16 @@ GET /anime/1555?include=genres,categories,mappings
 - **JSON:API learning**: https://jsonapi.org/examples/
 - **Browser DevTools**: Network tab on kitsu.app for reverse engineering
 - **Community GitHub**: https://github.com/hummingbird-me/kitsu-tools
+
+**AniDB HTTP API Endpoints:**
+
+| Endpoint | Purpose | Additional Parameters | Auth Required |
+|----------|---------|----------------------|---------------|
+| `request=anime` | Get anime details | `aid={anime_id}` | Yes |
+| `request=randomrecommendation` | Random recommendations | None | No |
+| `request=randomsimilar` | Random similar anime | None | No |
+| `request=hotanime` | Currently popular anime | None | No |
+| `request=main` | Combined results | None | No |
 
 ## Current State Analysis
 

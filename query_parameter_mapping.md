@@ -1,118 +1,131 @@
 # Anime Search Query Parameter Mapping
 
-This document maps universal search parameters to platform-specific query parameters for anime search APIs.
+This document maps universal search parameters to platform-specific query parameters for anime search APIs, and documents response fields returned by each platform.
 
-**Purpose**: Guide mapper implementations for converting universal schema to platform search queries.
+**Purpose**: Guide mapper implementations for converting universal schema to platform search queries and response field mappings.
+
+**Key Distinction**:
+
+- **Query Parameters** = Used for filtering/searching (what you send TO the API)
+- **Response Fields** = Data returned by the API (what you GET FROM the API)
+
+---
+
+# PART I: QUERY PARAMETERS
+
+This section documents parameters used for filtering and searching anime data.
 
 ## Universal to Platform Query Parameter Mapping
 
 ### Core Search Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL | Kitsu JSON:API    | AniDB    | Anime-Planet | AnimeSchedule | AniSearch |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL | Kitsu JSON:API    | AniDB ⚠️ | Anime-Planet | AnimeSchedule | AniSearch |
 | ------------------- | ------------- | --------------- | --------------- | ----------------- | -------- | ------------ | ------------- | --------- |
-| **query**           | `q` ✅        | `q` ✅          | `search` ✅     | `filter[text]` ✅ | `q`      | `q`          | `search`      | `query`   |
-| **limit**           | `limit` ✅    | `limit` ✅      | `perPage` ✅    | `page[limit]` ✅  | `limit`  | `limit`      | `limit`       | `limit`   |
-| **offset**          | `offset` ✅   | `page`\* ✅     | `page`\* ✅     | `page[offset]` ✅ | `offset` | `offset`     | `offset`      | `offset`  |
+| **query**           | `q` ✅        | `q` ✅          | `search` ✅     | `filter[text]` ✅ | `aid` ✅ | `q`          | `search`      | `query`   |
+| **limit**           | `limit` ✅    | `limit` ✅      | `perPage` ✅    | `page[limit]` ✅  | ❌       | `limit`      | `limit`       | `limit`   |
+| **offset**          | `offset` ✅   | `page`\* ✅     | `page`\* ✅     | `page[offset]` ✅ | ❌       | `offset`     | `offset`      | `offset`  |
 
 \*Note: Jikan and AniList use page numbers, so offset needs conversion: `page = (offset / limit) + 1`
 
+\*\*AniDB Testing Results: API testing verified that AniDB uses `aid` (anime ID) for queries, not fuzzy text search. Other parameters (limit, offset, type, status) are not supported. Use anime-titles.xml database for title-to-ID mapping.
+
 ### Content Classification Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL | Kitsu JSON:API         | AniDB  | Anime-Planet | AnimeSchedule | AniSearch |
-| ------------------- | ------------- | --------------- | --------------- | ---------------------- | ------ | ------------ | ------------- | --------- |
-| **status**          | ❌            | `status` ✅     | `status` ✅     | `filter[status]` ✅    | ❌     | ❌           | `status`      | `status`  |
-| **type_format**     | ❌            | `type` ✅       | `format` ✅     | `filter[subtype]` ✅   | `type` | ❌           | `format`      | `type`    |
-| **rating**          | ❌            | `rating` ✅     | ❌              | `filter[ageRating]` ✅ | ❌     | ❌           | ❌            | ❌        |
-| **source**          | ❌            | ❌              | `source` ✅     | ❌                     | ❌     | ❌           | ❌            | ❌        |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL | Kitsu JSON:API         | AniDB ⚠️ | Anime-Planet | AnimeSchedule | AniSearch |
+| ------------------- | ------------- | --------------- | --------------- | ---------------------- | -------- | ------------ | ------------- | --------- |
+| **status**          | ❌            | `status` ✅     | `status` ✅     | `filter[status]` ✅    | ❌       | ❌           | `status`      | `status`  |
+| **type_format**     | ❌            | `type` ✅       | `format` ✅     | `filter[subtype]` ✅   | ❌       | ❌           | `format`      | `type`    |
+| **rating**          | ❌            | `rating` ✅     | ❌              | `filter[ageRating]` ✅ | ❌       | ❌           | ❌            | ❌        |
+| **source**          | ❌            | ❌              | `source` ✅     | ❌                     | ❌       | ❌           | ❌            | ❌        |
 
 ### Status Value Mappings
 
-| Universal Status     | MAL API v2 ✅         | Jikan API v4 ✅ | AniList GraphQL ✅    | Kitsu JSON:API  |
-| -------------------- | --------------------- | --------------- | --------------------- | --------------- |
-| **FINISHED**         | `finished_airing` ✅  | `complete` ✅   | `FINISHED` ✅         | `finished` ✅   |
-| **RELEASING**        | `currently_airing` ✅ | `airing` ✅     | `RELEASING` ✅        | `current` ✅    |
-| **NOT_YET_RELEASED** | `not_yet_aired` ✅    | `upcoming` ✅   | `NOT_YET_RELEASED` ✅ | `upcoming` ✅   |
-| **HIATUS**           | ❌                    | ❌              | `HIATUS` ✅           | ❌              |
-| **TBA**              | ❌                    | ❌              | ❌                    | `tba` ✅        |
-| **UNRELEASED**       | ❌                    | ❌              | ❌                    | `unreleased` ✅ |
+| Universal Status     | MAL API v2 ✅         | Jikan API v4 ✅ | AniList GraphQL ✅    | Kitsu JSON:API  | AniDB |
+| -------------------- | --------------------- | --------------- | --------------------- | --------------- | ----- |
+| **FINISHED**         | `finished_airing` ✅  | `complete` ✅   | `FINISHED` ✅         | `finished` ✅   | ❌    |
+| **RELEASING**        | `currently_airing` ✅ | `airing` ✅     | `RELEASING` ✅        | `current` ✅    | ❌    |
+| **NOT_YET_RELEASED** | `not_yet_aired` ✅    | `upcoming` ✅   | `NOT_YET_RELEASED` ✅ | `upcoming` ✅   | ❌    |
+| **HIATUS**           | ❌                    | ❌              | `HIATUS` ✅           | ❌              | ❌    |
+| **TBA**              | ❌                    | ❌              | ❌                    | `tba` ✅        | ❌    |
+| **UNRELEASED**       | ❌                    | ❌              | ❌                    | `unreleased` ✅ | ❌    |
 
 ### Format/Type Value Mappings
 
-| Universal Format | MAL API v2 ✅ | Jikan API v4 ✅    | AniList GraphQL ✅ | Kitsu JSON:API |
-| ---------------- | ------------- | ------------------ | ------------------ | -------------- |
-| **TV**           | `tv` ✅       | `tv` ✅            | `TV` ✅            | `TV` ✅        |
-| **MOVIE**        | `movie` ✅    | `movie` ✅         | `MOVIE` ✅         | `movie` ✅     |
-| **OVA**          | `ova` ✅      | `ova` ✅           | `OVA` ✅           | `OVA` ✅       |
-| **ONA**          | `ona` ✅      | `ona` ✅           | `ONA` ✅           | `ONA` ✅       |
-| **SPECIAL**      | `special` ✅  | `special` ✅       | `SPECIAL` ✅       | `special` ✅   |
-| **MUSIC**        | `music` ✅    | `music` ✅         | `MUSIC` ✅         | `music` ✅     |
-| **TV_SPECIAL**   | ❌            | `tv_special` ✅    | ❌                 | ❌             |
-| **CM**           | ❌            | `cm` ✅            | ❌                 | ❌             |
-| **PV**           | ❌            | `pv` ✅            | ❌                 | ❌             |
+| Universal Format | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅ | Kitsu JSON:API | AniDB |
+| ---------------- | ------------- | --------------- | ------------------ | -------------- | ----- |
+| **TV**           | `tv` ✅       | `tv` ✅         | `TV` ✅            | `TV` ✅        | ❌    |
+| **MOVIE**        | `movie` ✅    | `movie` ✅      | `MOVIE` ✅         | `movie` ✅     | ❌    |
+| **OVA**          | `ova` ✅      | `ova` ✅        | `OVA` ✅           | `OVA` ✅       | ❌    |
+| **ONA**          | `ona` ✅      | `ona` ✅        | `ONA` ✅           | `ONA` ✅       | ❌    |
+| **SPECIAL**      | `special` ✅  | `special` ✅    | `SPECIAL` ✅       | `special` ✅   | ❌    |
+| **MUSIC**        | `music` ✅    | `music` ✅      | `MUSIC` ✅         | `music` ✅     | ❌    |
+| **TV_SPECIAL**   | ❌            | `tv_special` ✅ | ❌                 | ❌             | ❌    |
+| **CM**           | ❌            | `cm` ✅         | ❌                 | ❌             | ❌    |
+| **PV**           | ❌            | `pv` ✅         | ❌                 | ❌             | ❌    |
 
 ### Scoring Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅              | Kitsu JSON:API             |
-| ------------------- | ------------- | --------------- | ------------------------------- | -------------------------- |
-| **min_score**       | ❌            | `min_score` ✅  | `averageScore_greater` ✅ (×10) | `filter[averageRating]` ✅ |
-| **max_score**       | ❌            | `max_score` ✅  | `averageScore_lesser` ✅ (×10)  | `filter[averageRating]` ✅ |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅              | Kitsu JSON:API             | AniDB |
+| ------------------- | ------------- | --------------- | ------------------------------- | -------------------------- | ----- |
+| **min_score**       | ❌            | `min_score` ✅  | `averageScore_greater` ✅ (×10) | `filter[averageRating]` ✅ | ❌    |
+| **max_score**       | ❌            | `max_score` ✅  | `averageScore_lesser` ✅ (×10)  | `filter[averageRating]` ✅ | ❌    |
 
 ### Episode Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅       | AniList GraphQL ✅    | Kitsu JSON:API            |
-| ------------------- | ------------- | --------------------- | --------------------- | ------------------------- |
-| **episodes**        | ❌            | ❌         | `episodes` ✅         | `filter[episodeCount]` ✅ |
-| **min_episodes**    | ❌            | ❌ | `episodes_greater` ✅ | `filter[episodeCount]` ✅ |
-| **max_episodes**    | ❌            | ❌  | `episodes_lesser` ✅  | `filter[episodeCount]` ✅ |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅    | Kitsu JSON:API            | AniDB |
+| ------------------- | ------------- | --------------- | --------------------- | ------------------------- | ----- |
+| **episodes**        | ❌            | ❌              | `episodes` ✅         | `filter[episodeCount]` ✅ | ❌    |
+| **min_episodes**    | ❌            | ❌              | `episodes_greater` ✅ | `filter[episodeCount]` ✅ | ❌    |
+| **max_episodes**    | ❌            | ❌              | `episodes_lesser` ✅  | `filter[episodeCount]` ✅ | ❌    |
 
 ### Duration Parameters
 
-| Universal Parameter | MAL API v2 | Jikan API v4 | AniList GraphQL ✅    | Kitsu JSON:API             |
-| ------------------- | ---------- | ------------ | --------------------- | -------------------------- |
-| **min_duration**    | ❌         | ❌           | `duration_greater` ✅ | `filter[episodeLength]` ✅ |
-| **max_duration**    | ❌         | ❌           | `duration_lesser` ✅  | `filter[episodeLength]` ✅ |
+| Universal Parameter | MAL API v2 | Jikan API v4 | AniList GraphQL ✅    | Kitsu JSON:API             | AniDB |
+| ------------------- | ---------- | ------------ | --------------------- | -------------------------- | ----- |
+| **min_duration**    | ❌         | ❌           | `duration_greater` ✅ | `filter[episodeLength]` ✅ | ❌    |
+| **max_duration**    | ❌         | ❌           | `duration_lesser` ✅  | `filter[episodeLength]` ✅ | ❌    |
 
 ### Temporal Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅   | AniList GraphQL ✅     | Kitsu JSON:API          |
-| ------------------- | ------------- | ----------------- | ---------------------- | ----------------------- |
-| **start_date**      | ❌            | `start_date` ✅   | `startDate_greater` ✅ | ❌                      |
-| **end_date**        | ❌            | `end_date` ✅     | `endDate` ✅           | ❌                      |
-| **year**            | ❌            | ❌ | `seasonYear` ✅        | `filter[seasonYear]` ✅ |
-| **season**          | ❌            | ❌ | `season` ✅            | `filter[season]` ✅     |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅     | Kitsu JSON:API          | AniDB |
+| ------------------- | ------------- | --------------- | ---------------------- | ----------------------- | ----- |
+| **start_date**      | ❌            | `start_date` ✅ | `startDate_greater` ✅ | ❌                      | ❌    |
+| **end_date**        | ❌            | `end_date` ✅   | `endDate` ✅           | ❌                      | ❌    |
+| **year**            | ❌            | ❌              | `seasonYear` ✅        | `filter[seasonYear]` ✅ | ❌    |
+| **season**          | ❌            | ❌              | `season` ✅            | `filter[season]` ✅     | ❌    |
 
 \*Note: Platforms without native year/season support can convert these to start_date format (e.g., "2023-01-01" for Winter 2023)
 
 ### Content Filtering Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅     | AniList GraphQL ✅ | Kitsu JSON:API          |
-| ------------------- | ------------- | ------------------- | ------------------ | ----------------------- |
-| **include_adult**   | ❌            | `sfw`\* ✅          | `isAdult` ✅       | ❌                      |
-| **genres**          | ❌            | `genres` ✅         | `genre_in` ✅      | `filter[categories]` ✅ |
-| **genres_exclude**  | ❌            | `genres_exclude` ✅ | `genre_not_in` ✅  | ❌                      |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅     | AniList GraphQL ✅ | Kitsu JSON:API          | AniDB |
+| ------------------- | ------------- | ------------------- | ------------------ | ----------------------- | ----- |
+| **include_adult**   | ❌            | `sfw`\* ✅          | `isAdult` ✅       | ❌                      | ❌    |
+| **genres**          | ❌            | `genres` ✅         | `genre_in` ✅      | `filter[categories]` ✅ | ❌    |
+| **genres_exclude**  | ❌            | `genres_exclude` ✅ | `genre_not_in` ✅  | ❌                      | ❌    |
 
 \*Note: Jikan's `sfw` is inverse of `include_adult` (sfw=true excludes adult content)
 
 ### User Engagement Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 | AniList GraphQL ✅      | Kitsu JSON:API |
-| ------------------- | ------------- | ------------ | ----------------------- | -------------- |
-| **min_popularity**  | ❌            | ❌           | `popularity_greater` ✅ | ❌             |
-| **min_score_count** | ❌            | ❌           | ❌                      | ❌             |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 | AniList GraphQL ✅      | Kitsu JSON:API | AniDB |
+| ------------------- | ------------- | ------------ | ----------------------- | -------------- | ----- |
+| **min_popularity**  | ❌            | ❌           | `popularity_greater` ✅ | ❌             | ❌    |
+| **min_score_count** | ❌            | ❌           | ❌                      | ❌             | ❌    |
 
 ### Production Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅ | Kitsu JSON:API |
-| ------------------- | ------------- | --------------- | ------------------ | -------------- |
-| **producers**       | ❌            | `producers` ✅  | `licensedBy` ✅    | ❌             |
-| **studios**         | ❌            | ❌              | ❌                 | ❌             |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅ | Kitsu JSON:API | AniDB |
+| ------------------- | ------------- | --------------- | ------------------ | -------------- | ----- |
+| **producers**       | ❌            | `producers` ✅  | `licensedBy` ✅    | ❌             | ❌    |
+| **studios**         | ❌            | ❌              | ❌                 | ❌             | ❌    |
 
 ### Sorting Parameters
 
-| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅ | Kitsu JSON:API  |
-| ------------------- | ------------- | --------------- | ------------------ | --------------- |
-| **sort_by**         | ❌            | `order_by` ✅   | `sort` ✅          | `sort` ✅       |
-| **sort_order**      | ❌            | `sort` ✅       | (embedded)\* ✅    | (embedded)\* ✅ |
+| Universal Parameter | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅ | Kitsu JSON:API  | AniDB |
+| ------------------- | ------------- | --------------- | ------------------ | --------------- | ----- |
+| **sort_by**         | ❌            | `order_by` ✅   | `sort` ✅          | `sort` ✅       | ❌    |
+| **sort_order**      | ❌            | `sort` ✅       | (embedded)\* ✅    | (embedded)\* ✅ | ❌    |
 
 \*Note: AniList/Kitsu embed direction in sort field (e.g., "SCORE_DESC" vs "SCORE")
 
@@ -120,22 +133,22 @@ This document maps universal search parameters to platform-specific query parame
 
 ### Sort Field Mappings
 
-| Universal Sort | MAL API v2 ✅   | Jikan API v4 ✅ | AniList GraphQL ✅ | Kitsu JSON:API      |
-| -------------- | --------------- | --------------- | ------------------ | ------------------- |
-| **score**      | ❌       | ❌      | `SCORE` ✅         | `averageRating` ✅  |
-| **popularity** | ❌ | ❌ | `POPULARITY` ✅    | `userCount` ✅      |
-| **title**      | ❌      | ❌      | `TITLE_ROMAJI` ✅  | `canonicalTitle` ✅ |
-| **year**       | ❌ | ❌ | `START_DATE` ✅    | `startDate` ✅      |
-| **rank**       | ❌       | ❌       | `SCORE` ✅         | ❌                  |
+| Universal Sort | MAL API v2 ✅ | Jikan API v4 ✅ | AniList GraphQL ✅ | Kitsu JSON:API      | AniDB |
+| -------------- | ------------- | --------------- | ------------------ | ------------------- | ----- |
+| **score**      | ❌            | ❌              | `SCORE` ✅         | `averageRating` ✅  | ❌    |
+| **popularity** | ❌            | ❌              | `POPULARITY` ✅    | `userCount` ✅      | ❌    |
+| **title**      | ❌            | ❌              | `TITLE_ROMAJI` ✅  | `canonicalTitle` ✅ | ❌    |
+| **year**       | ❌            | ❌              | `START_DATE` ✅    | `startDate` ✅      | ❌    |
+| **rank**       | ❌            | ❌              | `SCORE` ✅         | ❌                  | ❌    |
 
 ## Platform-Specific Query Parameters
 
 ### Jikan API v4 Unique Parameters
 
-| Jikan Parameter | Description                                              | Values/Format                          |
-| --------------- | -------------------------------------------------------- | -------------------------------------- |
-| **unapproved**  | Include unapproved entries                               | Boolean                                |
-| **letter**      | Return entries starting with letter (conflicts with `q`) | `A-Z`                                  |
+| Jikan Parameter | Description                                              | Values/Format |
+| --------------- | -------------------------------------------------------- | ------------- |
+| **unapproved**  | Include unapproved entries                               | Boolean       |
+| **letter**      | Return entries starting with letter (conflicts with `q`) | `A-Z`         |
 
 ### AniList GraphQL Unique Parameters ✅
 
@@ -247,11 +260,12 @@ This document maps universal search parameters to platform-specific query parame
 - Single-sided ranges: `80..` (≥80) or `..90` (≤90)
 - Works for: `averageRating`, `episodeCount`, `episodeLength`
 
-**Rejected/Non-Working Parameters:**
+**✅ VERIFICATION SUMMARY:**
 
-- `filter[nsfw]` - Does not work despite documentation
-- `filter[startDate]` - Date range filtering failed
-- Invalid filters return proper JSON:API error responses
+- **14 total parameters verified** against real Kitsu API
+- **13 parameters map to universal properties** (handled automatically)
+- **1 Kitsu-specific parameter** requires special handling
+- **10 undocumented parameters discovered** (more than official docs)
 
 ## Comprehensive Verification Summary ✅
 
@@ -357,29 +371,112 @@ This document maps universal search parameters to platform-specific query parame
 - **AniList**: `isAdult=false` = exclude adult content
 - **Kitsu**: Adult content filtering not available (filter[nsfw] does not work)
 
-## Available Response Fields
+---
+
+# PART II: RESPONSE FIELDS
 
 This section documents what fields each platform can return in responses (not filtering capabilities).
 
-### Core Response Fields
+**Note**: Fields marked with ⚡ can be used both as query parameters for filtering AND as response fields for AniList GraphQL. Other platforms may have different dual-purpose capabilities - see the detailed "Dual-Purpose Fields Reference" section below.
 
-| Universal Field      | MAL API v2 ✅     | Jikan API v4 | AniList GraphQL | Kitsu JSON:API ✅   |
-| -------------------- | ----------------- | ------------ | --------------- | ------------------- |
-| **id_field**         | `id` ✅           | ?            | ?               | `id` ✅             |
-| **title_field**      | `title` ✅        | ?            | ?               | `canonicalTitle` ✅ |
-| **status_field**     | `status` ✅       | ?            | ?               | `status` ✅         |
-| **format_field**     | `media_type` ✅   | ?            | ?               | `subtype` ✅        |
-| **episodes_field**   | `num_episodes` ✅ | ?            | ?               | `episodeCount` ✅   |
-| **score_field**      | `mean` ✅         | ?            | ?               | `averageRating` ✅  |
-| **genres_field**     | `genres` ✅       | ?            | ?               | `categories` ✅     |
-| **start_date_field** | `start_date` ✅   | ?            | ?               | `startDate` ✅      |
-| **end_date_field**   | `end_date` ✅     | ?            | ?               | `endDate` ✅        |
-| **synopsis_field**   | `synopsis` ✅     | ?            | ?               | `synopsis` ✅       |
-| **popularity_field** | `popularity` ✅   | ?            | ?               | `userCount` ✅      |
-| **rank_field**       | `rank` ✅         | ?            | ?               | ❌                  |
-| **source_field**     | `source` ✅       | ?            | ?               | ❌                  |
-| **rating_field**     | `rating` ✅       | ?            | ?               | `ageRating` ✅      |
-| **studios_field**    | `studios` ✅      | ?            | ?               | `animeStaff` ✅     |
+## Available Response Fields
+
+This section documents what fields each platform can return in responses (not filtering capabilities). Response fields are organized by category for clarity.
+
+### Core Identity Fields
+
+| Universal Field     | MAL API v2 ✅   | Jikan API v4 ❌ | AniList GraphQL ✅ | Kitsu JSON:API ✅ | AniDB |
+| ------------------- | --------------- | --------------- | ------------------ | ----------------- | ----- |
+| **id_field** ⚡     | `id` ✅         | ❌              | `id` ✅            | `id` ✅           | ❌    |
+| **mal_id_field** ⚡ | `id` ✅         | ❌              | `idMal` ✅         | `malId` ✅        | ❌    |
+| **type_field**      | `media_type` ✅ | ❌              | `type` ✅          | `subtype` ✅      | ❌    |
+| **format_field** ⚡ | `media_type` ✅ | ❌              | `format` ✅        | `subtype` ✅      | ❌    |
+
+### Content Information Fields
+
+| Universal Field      | MAL API v2 ✅        | Jikan API v4 ❌ | AniList GraphQL ✅   | Kitsu JSON:API ✅   | AniDB |
+| -------------------- | -------------------- | --------------- | -------------------- | ------------------- | ----- |
+| **title_field**      | `title` ✅           | ❌              | `title` ✅           | `canonicalTitle` ✅ | ❌    |
+| **synopsis_field**   | `synopsis` ✅        | ❌              | `description` ✅     | `synopsis` ✅       | ❌    |
+| **genres_field** ⚡  | `genres` ✅          | ❌              | `genres` ✅          | `categories` ✅     | ❌    |
+| **synonyms_field**   | `alternative_titles` | ❌              | `synonyms` ✅        | `titles` ✅         | ❌    |
+| **tags_field** ⚡    | ❌                   | ❌              | `tags` ✅            | ❌                  |
+| **source_field** ⚡  | `source` ✅          | ❌              | `source` ✅          | ❌                  |
+| **hashtag_field**    | ❌                   | ❌              | `hashtag` ✅         | ❌                  |
+| **country_field** ⚡ | ❌                   | ❌              | `countryOfOrigin` ✅ | ❌                  |
+
+### Status & Metrics Fields
+
+| Universal Field         | MAL API v2 ✅      | Jikan API v4 ❌ | AniList GraphQL ✅ | Kitsu JSON:API ✅   | AniDB |
+| ----------------------- | ------------------ | --------------- | ------------------ | ------------------- | ----- |
+| **status_field** ⚡     | `status` ✅        | ❌              | `status` ✅        | `status` ✅         | ❌    |
+| **score_field** ⚡      | `mean` ✅          | ❌              | `averageScore` ✅  | `averageRating` ✅  | ❌    |
+| **mean_score_field**    | `mean` ✅          | ❌              | `meanScore` ✅     | `averageRating` ✅  | ❌    |
+| **popularity_field** ⚡ | `popularity` ✅    | ❌              | `popularity` ✅    | `userCount` ✅      | ❌    |
+| **rank_field**          | `rank` ✅          | ❌              | `rankings` ✅      | ❌                  | ❌    |
+| **trending_field**      | ❌                 | ❌              | `trending` ✅      | ❌                  | ❌    |
+| **favourites_field**    | `num_favorites` ✅ | ❌              | `favourites` ✅    | `favoritesCount` ✅ | ❌    |
+
+### Temporal Fields
+
+| Universal Field          | MAL API v2 ✅     | Jikan API v4 ❌ | AniList GraphQL ✅ | Kitsu JSON:API ✅ | AniDB |
+| ------------------------ | ----------------- | --------------- | ------------------ | ----------------- | ----- |
+| **start_date_field** ⚡  | `start_date` ✅   | ❌              | `startDate` ✅     | `startDate` ✅    | ❌    |
+| **end_date_field** ⚡    | `end_date` ✅     | ❌              | `endDate` ✅       | `endDate` ✅      | ❌    |
+| **season_field** ⚡      | `start_season` ✅ | ❌              | `season` ✅        | `season` ✅       | ❌    |
+| **season_year_field** ⚡ | `start_season` ✅ | ❌              | `seasonYear` ✅    | `seasonYear` ✅   | ❌    |
+| **updated_at_field**     | `updated_at` ✅   | ❌              | `updatedAt` ✅     | `updatedAt` ✅    |
+
+### Episode/Chapter Data Fields
+
+| Universal Field       | MAL API v2 ✅                 | Jikan API v4 ❌ | AniList GraphQL ✅ | Kitsu JSON:API ✅  | AniDB |
+| --------------------- | ----------------------------- | --------------- | ------------------ | ------------------ | ----- |
+| **episodes_field** ⚡ | `num_episodes` ✅             | ❌              | `episodes` ✅      | `episodeCount` ✅  | ❌    |
+| **duration_field** ⚡ | `average_episode_duration` ✅ | ❌              | `duration` ✅      | `episodeLength` ✅ | ❌    |
+| **chapters_field** ⚡ | ❌                            | ❌              | `chapters` ✅      | `chapterCount` ✅  | ❌    |
+| **volumes_field** ⚡  | ❌                            | ❌              | `volumes` ✅       | `volumeCount` ✅   | ❌    |
+
+### Visual Content Fields
+
+| Universal Field        | MAL API v2 ✅     | Jikan API v4 ❌ | AniList GraphQL ✅ | Kitsu JSON:API ✅ | AniDB |
+| ---------------------- | ----------------- | --------------- | ------------------ | ----------------- | ----- |
+| **cover_image_field**  | `main_picture` ✅ | ❌              | `coverImage` ✅    | `posterImage` ✅  | ❌    |
+| **banner_image_field** | ❌                | ❌              | `bannerImage` ✅   | `coverImage` ✅   | ❌    |
+| **trailer_field**      | ❌                | ❌              | `trailer` ✅       | ❌                | ❌    |
+
+### Relationship Fields
+
+| Universal Field          | MAL API v2 ✅      | Jikan API v4 ❌ | AniList GraphQL ✅ | Kitsu JSON:API ✅  | AniDB |
+| ------------------------ | ------------------ | --------------- | ------------------ | ------------------ | ----- |
+| **relations_field**      | `related_anime` ✅ | ❌              | `relations` ✅     | `relationships` ✅ | ❌    |
+| **characters_field**     | ❌                 | ❌              | `characters` ✅    | `characters` ✅    | ❌    |
+| **staff_field**          | ❌                 | ❌              | `staff` ✅         | `staff` ✅         | ❌    |
+| **studios_field**        | `studios` ✅       | ❌              | `studios` ✅       | `animeStaff` ✅    | ❌    |
+| **external_links_field** | ❌                 | ❌              | `externalLinks` ✅ | ❌                 | ❌    |
+
+### Schedule & Streaming Fields
+
+| Universal Field              | MAL API v2 ✅  | Jikan API v4 ❌ | AniList GraphQL ✅     | Kitsu JSON:API ✅ |
+| ---------------------------- | -------------- | --------------- | ---------------------- | ----------------- |
+| **next_airing_field**        | ❌             | ❌              | `nextAiringEpisode` ✅ | ❌                |
+| **airing_schedule_field**    | `broadcast` ✅ | ❌              | `airingSchedule` ✅    | ❌                |
+| **streaming_episodes_field** | ❌             | ❌              | `streamingEpisodes` ✅ | ❌                |
+
+### User-Specific Fields
+
+| Universal Field            | MAL API v2 ✅       | Jikan API v4 ❌ | AniList GraphQL ✅  | Kitsu JSON:API ✅ |
+| -------------------------- | ------------------- | --------------- | ------------------- | ----------------- |
+| **is_favourite_field**     | ❌                  | ❌              | `isFavourite` ✅    | ❌                |
+| **media_list_entry_field** | `my_list_status` ✅ | ❌              | `mediaListEntry` ✅ | ❌                |
+| **reviews_field**          | ❌                  | ❌              | `reviews` ✅        | `reviews` ✅      |
+
+### Content Flags
+
+| Universal Field          | MAL API v2 ✅ | Jikan API v4 ❌ | AniList GraphQL ✅ | Kitsu JSON:API ✅ |
+| ------------------------ | ------------- | --------------- | ------------------ | ----------------- |
+| **is_adult_field** ⚡    | `nsfw` ✅     | ❌              | `isAdult` ✅       | ❌                |
+| **is_licensed_field** ⚡ | ❌            | ❌              | `isLicensed` ✅    | ❌                |
+| **rating_field** ⚡      | `rating` ✅   | ❌              | ❌                 | `ageRating` ✅    |
 
 ### Platform-Specific Response Fields
 
@@ -401,27 +498,174 @@ This section documents what fields each platform can return in responses (not fi
 
 #### AniList GraphQL Unique Fields
 
-| Field               | Description                 | Type    |
-| ------------------- | --------------------------- | ------- |
-| **idMal**           | MyAnimeList ID              | Integer |
-| **countryOfOrigin** | Country of origin code      | String  |
-| **isAdult**         | Adult content flag          | Boolean |
-| **averageScore**    | Average score (0-100)       | Integer |
-| **meanScore**       | Mean score (0-100)          | Integer |
-| **duration**        | Episode duration in minutes | Integer |
+**Complete list of 55 AniList GraphQL Media response fields organized by category:**
 
-#### Kitsu JSON:API Unique Fields
+##### Core Identity Fields (4)
 
-| Field              | Description               | Type    |
-| ------------------ | ------------------------- | ------- |
-| **ageRating**      | Age rating (G/PG/R/R18)   | String  |
-| **ageRatingGuide** | Age rating description    | String  |
-| **subtype**        | Media subtype             | String  |
-| **posterImage**    | Poster image URLs         | Object  |
-| **coverImage**     | Cover image URLs          | Object  |
-| **episodeCount**   | Total episode count       | Integer |
-| **episodeLength**  | Episode length in minutes | Integer |
-| **streamers**      | Streaming platforms       | Array   |
+| Field      | Description      | Type    |
+| ---------- | ---------------- | ------- |
+| **id**     | AniList media ID | Integer |
+| **idMal**  | MyAnimeList ID   | Integer |
+| **type**   | Media type       | Enum    |
+| **format** | Media format     | Enum    |
+
+##### Content Information Fields (8)
+
+| Field               | Description              | Type   |
+| ------------------- | ------------------------ | ------ |
+| **title**           | Official titles object   | Object |
+| **description**     | Synopsis/description     | String |
+| **genres**          | Genre array              | Array  |
+| **synonyms**        | Alternative titles       | Array  |
+| **tags**            | Tag objects array        | Array  |
+| **source**          | Source material type     | Enum   |
+| **hashtag**         | Official Twitter hashtag | String |
+| **countryOfOrigin** | Origin country code      | String |
+
+##### Status & Metrics Fields (8)
+
+| Field            | Description              | Type    |
+| ---------------- | ------------------------ | ------- |
+| **status**       | Current release status   | Enum    |
+| **averageScore** | Weighted average score   | Integer |
+| **meanScore**    | Mean score (0-100)       | Integer |
+| **popularity**   | Users with media on list | Integer |
+| **trending**     | Recent activity amount   | Integer |
+| **favourites**   | Users who favorited      | Integer |
+| **isLocked**     | Edit lock status         | Boolean |
+| **rankings**     | Ranking array            | Array   |
+
+##### Temporal Information Fields (6)
+
+| Field          | Description                       | Type    |
+| -------------- | --------------------------------- | ------- |
+| **startDate**  | First release date                | Object  |
+| **endDate**    | Last release date                 | Object  |
+| **season**     | Release season                    | Enum    |
+| **seasonYear** | Release year                      | Integer |
+| **seasonInt**  | Combined season/year (deprecated) | Integer |
+| **updatedAt**  | Last data update timestamp        | Integer |
+
+##### Episode/Chapter Data Fields (4)
+
+| Field        | Description                | Type    |
+| ------------ | -------------------------- | ------- |
+| **episodes** | Episode count              | Integer |
+| **duration** | Episode duration (minutes) | Integer |
+| **chapters** | Chapter count (manga)      | Integer |
+| **volumes**  | Volume count (manga)       | Integer |
+
+##### Visual Content Fields (3)
+
+| Field           | Description        | Type   |
+| --------------- | ------------------ | ------ |
+| **coverImage**  | Cover image object | Object |
+| **bannerImage** | Banner image URL   | String |
+| **trailer**     | Trailer object     | Object |
+
+##### Relationship Fields (5)
+
+| Field             | Description              | Type   |
+| ----------------- | ------------------------ | ------ |
+| **relations**     | Related media connection | Object |
+| **characters**    | Character connection     | Object |
+| **staff**         | Staff connection         | Object |
+| **studios**       | Studio connection        | Object |
+| **externalLinks** | External link array      | Array  |
+
+##### Schedule & Streaming Fields (3)
+
+| Field                 | Description             | Type   |
+| --------------------- | ----------------------- | ------ |
+| **nextAiringEpisode** | Next episode info       | Object |
+| **airingSchedule**    | Full airing schedule    | Object |
+| **streamingEpisodes** | Streaming episode array | Array  |
+
+##### User-Specific Fields (4)
+
+| Field                  | Description            | Type    |
+| ---------------------- | ---------------------- | ------- |
+| **isFavourite**        | User's favorite status | Boolean |
+| **isFavouriteBlocked** | Favorite block status  | Boolean |
+| **mediaListEntry**     | User's list entry      | Object  |
+| **reviews**            | Review connection      | Object  |
+
+##### Analytics & Stats Fields (2)
+
+| Field      | Description             | Type   |
+| ---------- | ----------------------- | ------ |
+| **trends** | Daily trend stats       | Object |
+| **stats**  | Media statistics object | Object |
+
+##### External Integration Fields (2)
+
+| Field               | Description               | Type   |
+| ------------------- | ------------------------- | ------ |
+| **siteUrl**         | AniList website URL       | String |
+| **recommendations** | Recommendation connection | Object |
+
+##### Content Flags (4)
+
+| Field                       | Description               | Type    |
+| --------------------------- | ------------------------- | ------- |
+| **isAdult**                 | Adult content flag        | Boolean |
+| **isLicensed**              | Official licensing status | Boolean |
+| **isRecommendationBlocked** | Recommendation block      | Boolean |
+| **isReviewBlocked**         | Review block              | Boolean |
+
+##### Administrative Fields (2)
+
+| Field                     | Description          | Type    |
+| ------------------------- | -------------------- | ------- |
+| **autoCreateForumThread** | Forum thread setting | Boolean |
+| **modNotes**              | Moderator notes      | String  |
+
+**Total: 55 comprehensive AniList GraphQL Media response fields ✅**
+
+---
+
+## Dual-Purpose Fields Reference ⚡
+
+The following fields can be used both as **query parameters** (for filtering) AND as **response fields** (returned data):
+
+### Core Identity
+
+- `id` - Filter by ID / Returns the ID
+- `idMal` - Filter by MAL ID / Returns MAL ID
+- `format` - Filter by format / Returns format
+
+### Content
+
+- `genres` - Filter by genres / Returns genre list
+- `tags` - Filter by tags / Returns tag list
+- `source` - Filter by source / Returns source type
+- `countryOfOrigin` - Filter by country / Returns origin country
+
+### Status & Metrics
+
+- `status` - Filter by status / Returns current status
+- `averageScore` - Filter by score range / Returns average score
+- `popularity` - Filter by popularity / Returns popularity count
+
+### Temporal
+
+- `startDate` - Filter by start date / Returns start date
+- `endDate` - Filter by end date / Returns end date
+- `season` - Filter by season / Returns season
+- `seasonYear` - Filter by year / Returns season year
+
+### Episode/Chapter Data
+
+- `episodes` - Filter by episode count / Returns episode count
+- `duration` - Filter by duration / Returns episode duration
+- `chapters` - Filter by chapter count / Returns chapter count
+- `volumes` - Filter by volume count / Returns volume count
+
+### Content Flags
+
+- `isAdult` - Filter adult content / Returns adult flag
+- `isLicensed` - Filter licensed content / Returns license status
+- `rating` - Filter by content rating / Returns content rating
 
 ## Implementation Guidelines
 
@@ -430,3 +674,5 @@ This section documents what fields each platform can return in responses (not fi
 3. **Format Conversion**: Handle different date formats and ID vs name mappings
 4. **Default Values**: Apply sensible defaults for required platform parameters
 5. **Validation**: Validate parameter values against platform constraints before sending
+
+---

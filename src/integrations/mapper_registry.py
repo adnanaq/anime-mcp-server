@@ -52,7 +52,7 @@ class MapperRegistry:
             "total_response_fields": 26,  # 15 core + 11 MAL-specific
         },
         "anilist": {
-            "strengths": ["international_content", "adult_content", "modern_features", "comprehensive_filtering", "advanced_search"],
+            "strengths": ["international_content", "adult_content", "modern_features", "hyper_comprehensive_filtering", "hyper_advanced_search"],
             "unique_params": [
                 "anilist_average_score", "anilist_average_score_greater", "anilist_average_score_lesser", 
                 "anilist_average_score_not", "anilist_chapters", "anilist_chapters_greater", 
@@ -81,14 +81,32 @@ class MapperRegistry:
             "total_parameters": 70,
         },
         "kitsu": {
-            "strengths": ["comprehensive_metadata", "json_api_standard"],
-            "unique_params": ["kitsu_age_rating", "kitsu_subtype"],
+            "strengths": ["comprehensive_metadata", "json_api_standard", "range_syntax_filtering", "streaming_platform_support", "rich_category_system"],
+            "supported_universal_params": [
+                "query", "status", "type_format", "rating", "min_score", "max_score",
+                "min_episodes", "max_episodes", "min_duration", "max_duration", 
+                "year", "season", "genres", "sort_by", "sort_order", "limit", "offset"
+            ],
+            "unique_params": [
+                "kitsu_streamers"  # Only truly unique parameter - streaming platform filtering
+            ],
+            "verified_filters": [
+                "filter[text]", "filter[status]", "filter[subtype]", "filter[ageRating]",
+                "filter[averageRating]", "filter[episodeCount]", "filter[episodeLength]",
+                "filter[seasonYear]", "filter[season]", "filter[categories]", "filter[streamers]"
+            ],
+            "range_syntax_support": {
+                "averageRating": "0-100 scale with .. separator (80.., ..90, 80..90)",
+                "episodeCount": "Episode count ranges (12.., ..24, 12..24)",
+                "episodeLength": "Duration ranges in minutes (20.., ..30, 20..30)"
+            },
             "api_type": "json_api",
             "auth_required": False,
-            "total_parameters": 2,
+            "total_parameters": 14,  # Verified working parameters
+            "verification_status": "comprehensive_api_testing_completed",
         },
         "jikan": {
-            "strengths": ["no_auth_required", "mal_compatibility", "advanced_filtering", "comprehensive_sorting", "content_rating_support", "producer_filtering", "jikan_specific_formats"],
+            "strengths": ["no_auth_required", "mal_compatibility", "advanced_filtering", "comprehensive_sorting", "content_rating_support", "producer_filtering"],
             "supported_universal_params": [
                 "query", "status", "type_format", "rating", "min_score", "max_score", 
                 "genres", "genres_exclude", "producers", "year", "start_date", "end_date",
@@ -113,6 +131,19 @@ class MapperRegistry:
             "api_type": "rest",
             "auth_required": False,
             "total_parameters": 17,  # Updated count including new parameters
+        },
+        "anidb": {
+            "strengths": ["detailed_episode_data", "comprehensive_staff_credits", "extensive_tag_system"],
+            "supported_universal_params": [
+                "query"  # Only query supported, mapped to aid parameter
+            ],
+            "unique_params": [],  # No unique parameters
+            "api_type": "rest",
+            "auth_required": True,
+            "total_parameters": 1,  # Only aid parameter supported
+            "limitations": [
+                "id_based_lookup_only", "no_search_filtering", "requires_anime_titles_xml", "two_step_process"
+            ],
         },
     }
     
@@ -198,6 +229,19 @@ class MapperRegistry:
         
         # Check for parameters that require specific platforms
         
+        # Streaming platform filtering → Kitsu (unique feature)
+        if any(streamer in query.lower() for streamer in ["crunchyroll", "funimation", "netflix", "hulu"]):
+            return "kitsu"
+        
+        # Range-based filtering (score/episode/duration ranges) → Kitsu (best range syntax support)
+        has_range_filters = any([
+            universal_params.get("min_score") and universal_params.get("max_score"),
+            universal_params.get("min_episodes") and universal_params.get("max_episodes"), 
+            universal_params.get("min_duration") and universal_params.get("max_duration")
+        ])
+        if has_range_filters:
+            return "kitsu"
+        
         # Advanced AniList-only features → AniList
         if any(param in universal_params for param in ["country_of_origin", "licensed_by", "is_licensed"]):
             return "anilist"
@@ -210,9 +254,9 @@ class MapperRegistry:
         if any(country in query for country in ["korean", "chinese", "korea", "china"]):
             return "anilist"
         
-        # Content rating filtering → Jikan (newly added support)
+        # Content rating filtering → Jikan or Kitsu (both support rating)
         if universal_params.get("rating"):
-            return "jikan"
+            return "jikan"  # Prefer Jikan for broader rating support
         
         # Producer filtering → Jikan (newly added support)
         if universal_params.get("producers"):
