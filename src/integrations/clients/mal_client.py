@@ -8,7 +8,7 @@ from src.exceptions import APIError
 
 from .base_client import BaseClient
 from ..rate_limiting import MALRateLimitAdapter, JikanRateLimitAdapter
-from ..rate_limiter import rate_limit_manager
+from ..rate_limiting.core import rate_limit_manager
 
 logger = logging.getLogger(__name__)
 

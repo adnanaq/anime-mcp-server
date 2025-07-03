@@ -89,6 +89,15 @@ class TestAniSearchMapper:
         assert anisearch_params["limit"] == 20
         assert len(anisearch_params) >= 1
 
+    def test_to_anisearch_search_params_with_offset(self):
+        """Test conversion with offset parameter to cover missing line."""
+        params = UniversalSearchParams(query="test", offset=50)
+        anisearch_params = AniSearchMapper.to_anisearch_search_params(params)
+        
+        # Should include offset parameter (line 82)
+        assert "offset" in anisearch_params
+        assert anisearch_params["offset"] == 50
+
     def test_bidirectional_consistency(self, sample_universal_search_params):
         """Test that converting to AniSearch params preserves critical information."""
         anisearch_params = AniSearchMapper.to_anisearch_search_params(sample_universal_search_params)

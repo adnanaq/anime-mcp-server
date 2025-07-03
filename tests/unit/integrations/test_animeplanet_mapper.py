@@ -212,3 +212,26 @@ class TestAnimePlanetMapper:
         assert ap_params["name"] == "test anime"
         if "tags" in ap_params:
             assert isinstance(ap_params["tags"], list)
+
+    def test_missing_lines_coverage(self):
+        """Test specific scenarios to cover missing lines in coverage report."""
+        
+        # Test NOT_YET_RELEASED status handling in _add_status_filters (lines 153, 155)
+        params = UniversalSearchParams(status=AnimeStatus.NOT_YET_RELEASED)
+        ap_params = AnimePlanetMapper.to_animeplanet_search_params(params)
+        
+        # Should have status_filter set to "upcoming"
+        assert "status_filter" in ap_params
+        assert ap_params["status_filter"] == "upcoming"
+        
+        # Test NOT_YET_RELEASED status in _get_date_pattern_for_status (lines 174, 175)
+        date_pattern = AnimePlanetMapper._get_date_pattern_for_status(AnimeStatus.NOT_YET_RELEASED)
+        assert date_pattern == "future_start"
+        
+        # Test else case in _get_date_pattern_for_status (line 177)
+        # Using a non-standard status value to trigger the else case
+        from unittest.mock import Mock
+        mock_status = Mock()
+        mock_status.name = "UNKNOWN_STATUS"
+        date_pattern = AnimePlanetMapper._get_date_pattern_for_status(mock_status)
+        assert date_pattern == "any"

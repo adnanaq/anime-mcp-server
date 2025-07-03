@@ -213,7 +213,6 @@ class TestAppEndpoints:
             endpoints = data["endpoints"]
             expected_endpoints = [
                 "search",
-                "recommendations",
                 "admin",
                 "workflow",
                 "health",
@@ -243,6 +242,7 @@ class TestAppEndpoints:
         with (
             patch("src.main.lifespan"),
             patch("src.main.qdrant_client", mock_client),
+            patch("src.main.settings", mock_settings),
         ):
             response = client.get("/health")
             assert response.status_code == 200
@@ -453,6 +453,7 @@ except ImportError as e:
 
         # Should have been called twice now
         assert mock_logger.warning.call_count >= 1
+
 
     def test_main_execution_coverage_exec(self):
         """Test main execution block by executing the exact code from main.py."""

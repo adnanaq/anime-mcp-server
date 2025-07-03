@@ -230,7 +230,7 @@ class SmartScheduler:
 
         return "Safe to update - no recent activity detected"
 
-    async def get_optimal_update_schedule(self) -> Dict[str, Any]:
+    async def get_optimal_cron_schedule(self) -> Dict[str, Any]:
         """Analyze release patterns and suggest optimal cron schedule"""
         try:
             # Get last 10 releases to analyze patterns

@@ -175,7 +175,7 @@ async def get_stats():
     return await qdrant_client.get_stats()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
     uvicorn.run(

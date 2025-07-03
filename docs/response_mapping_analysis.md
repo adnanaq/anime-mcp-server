@@ -108,8 +108,10 @@ Based on analysis of anime-offline-database and external API sources, here's the
 | **trending**         | ❌                        | ❌                     | ❌              | `trending` ✅                  | ❌                                | ❌                             | ❌                                       | ❌                      | ❌                               |
 | **temporary_score**  | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | `ratings.temporary` ✅         | ❌                                       | ❌                      | ❌                               |
 | **review_score**     | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | `ratings.review` ✅            | ❌                                       | ❌                      | ❌                               |
-| **rating_scale_min** | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | ❌                                       | ❌                      | `aggregateRating.worstRating` ✅ |
-| **rating_scale_max** | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | ❌                                       | ❌                      | `aggregateRating.bestRating` ✅  |
+| **rating_scale_min** | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.worstRating` ✅ | ❌                      | `aggregateRating.worstRating` ✅ |
+| **rating_scale_max** | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.bestRating` ✅ | ❌                      | `aggregateRating.bestRating` ✅  |
+| **review_count**     | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.reviewCount` ✅ | ❌                      | ❌                               |
+| **review_type**      | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.@type` ✅       | ❌                      | ❌                               |
 
 ### Media Assets
 
@@ -146,7 +148,7 @@ Based on analysis of anime-offline-database and external API sources, here's the
 | **canonical_id**     | ❌                          | ❌            | ❌           | ❌                   | ❌                         | ❌                      | ❌               | ❌               | `@id` ✅                |
 | **external_links**   | `sources[]` ✅              | ❌            | ❌           | `externalLinks[]` ✅ | `streamingLinks[]` ✅      | `resources[]` ✅        | ❌               | `websites` ✅    | `.websites` ✅          |
 | **streaming_links**  | ❌                          | ❌            | ❌           | ❌                   | `streamingLinks[]` ✅      | ❌                      | ❌               | ❌               | `.streamcover a` ✅     |
-| **related_anime**    | `relatedAnime[]` ✅         | ❌            | ❌           | `relations` ✅       | `mediaRelationships[]` ✅  | `relatedanime[]` ✅     | ❌               | `relations` ✅   | (relationship links) ✅ |
+| **related_anime**    | `relatedAnime[]` ✅         | ❌            | ❌           | `relations` ✅       | `mediaRelationships[]` ✅  | `relatedanime[]` ✅     | `#tabs--relations--anime--same_franchise` ✅ | `relations` ✅   | (relationship links) ✅ |
 | **url**              | ❌                          | ❌            | `url` ✅     | `siteUrl` ✅         | `attributes.slug` ✅       | `url` ✅                | `json_ld.url` ✅ | `route` ✅       | `url` ✅                |
 | **updated_at**       | ❌                          | ❌            | ❌           | `updatedAt` ✅       | `attributes.updatedAt` ✅  | ❌                      | ❌               | ❌               | ❌                      |
 | **created_at**       | ❌                          | ❌            | ❌           | ❌                   | `attributes.createdAt` ✅  | ❌                      | ❌               | ❌               | ❌                      |
@@ -515,5 +517,13 @@ Based on this analysis, the universal schema should:
 - **source** - Source material (missing: Offline DB, Kitsu, Anime-Planet)
 - **rank** - Anime ranking (missing: Offline DB, AniDB, AnimeSchedule, AniSearch)
 - **staff** - Staff information (missing: Offline DB, MAL API v2, MAL/Jikan, AnimeSchedule)
+
+**SPECIALIZED PROPERTIES (Platform-specific unique features):**
+
+**Anime-Planet Exclusive:**
+- **review_count** - Number of written reviews (1/9 sources: Anime-Planet only)
+- **review_type** - Type of aggregate rating system (1/9 sources: Anime-Planet only)
+- **rating_scale_min** - Minimum rating value (2/9 sources: Anime-Planet, AniSearch)
+- **rating_scale_max** - Maximum rating value (2/9 sources: Anime-Planet, AniSearch)
 
 This analysis provides a solid foundation for building a universal anime schema that can reliably map data from all 9 major anime data sources while maintaining high data coverage and consistency.

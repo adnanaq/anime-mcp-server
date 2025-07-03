@@ -108,9 +108,13 @@ class TestBaseClient:
                 mock_rate_manager.acquire.assert_called_once_with(
                     service_name="test_service", priority=2, endpoint=""
                 )
-                mock_rate_manager.record_response.assert_called_once_with(
-                    "test_service", 200, 0
-                )
+                # Check that record_response was called with the service name, status, and 0, plus the response object
+                mock_rate_manager.record_response.assert_called_once()
+                call_args = mock_rate_manager.record_response.call_args[0]
+                assert call_args[0] == "test_service"  # service_name
+                assert call_args[1] == 200  # status_code
+                assert call_args[2] == 0    # response_time
+                # Fourth argument should be the response object
 
     @pytest.mark.asyncio
     async def test_make_request_success_text(self, base_client):
@@ -844,9 +848,18 @@ class TestBaseClientEnhancedErrorHandling:
         # Mock the rate limiter to allow request but have the HTTP request fail
         with patch(
             "src.integrations.clients.base_client.rate_limit_manager"
-        ) as mock_rate_manager:
+        ) as mock_rate_manager, patch(
+            "src.integrations.clients.base_client.aiohttp.ClientSession"
+        ) as mock_session_class:
             mock_rate_manager.acquire = AsyncMock(return_value=True)
             mock_rate_manager.record_response = Mock()
+
+            # Mock session to raise a connection error
+            mock_session = Mock()
+            mock_session_class.return_value = mock_session
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=None)
+            mock_session.request = Mock(side_effect=aiohttp.ClientError("Connection failed"))
 
             with pytest.raises(APIError) as exc_info:
                 await enhanced_client.make_request_with_enhanced_error_handling(
@@ -1178,3 +1191,222 @@ class TestBaseClientEnhancedErrorHandling:
             assert headers["X-Parent-Correlation-ID"] == parent_id
             assert "X-Request-Chain-Depth" in headers
             assert headers["X-Request-Chain-Depth"] == "1"  # First level
+
+
+class TestBaseClientMissingCoverage:
+    """Test class to achieve 100% coverage for missing lines."""
+
+    @pytest.fixture
+    def base_client(self):
+        """Create a basic BaseClient for testing."""
+        return BaseClient("test_service")
+
+    @pytest.mark.asyncio
+    async def test_handle_rate_limit_response_429_coverage(self, base_client):
+        """Test 429 rate limit response handling (lines 179-181)."""
+        with patch(
+            "src.integrations.clients.base_client.rate_limit_manager"
+        ) as mock_rate_manager, patch(
+            "src.integrations.clients.base_client.aiohttp.ClientSession"
+        ) as mock_session_class:
+            mock_rate_manager.acquire = AsyncMock(return_value=True)
+            mock_rate_manager.record_response = Mock()
+
+            # Mock session and response
+            mock_session = Mock()
+            mock_response = AsyncMock()
+            mock_response.status = 429
+            mock_response.headers = {"content-type": "application/json", "Retry-After": "60"}
+            mock_response.json = AsyncMock(return_value={"error": "Rate limit exceeded"})
+            
+            mock_session.request = Mock(return_value=mock_response)
+            mock_response.__aenter__ = AsyncMock(return_value=mock_response)
+            mock_response.__aexit__ = AsyncMock(return_value=None)
+            mock_session_class.return_value = mock_session
+            mock_session_class.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session_class.return_value.__aexit__ = AsyncMock(return_value=None)
+            
+            # Mock the handle_rate_limit_response and _request_with_retry methods
+            base_client.handle_rate_limit_response = AsyncMock()
+            base_client._request_with_retry = AsyncMock(return_value={"success": True})
+
+            result = await base_client.make_request("https://api.example.com/test")
+            
+            # Verify 429 handling was called
+            base_client.handle_rate_limit_response.assert_called_once_with(mock_response)
+            base_client._request_with_retry.assert_called_once()
+            assert result == {"success": True}
+
+    @pytest.mark.asyncio  
+    async def test_handle_rate_limit_response_default_implementation(self, base_client):
+        """Test default handle_rate_limit_response implementation (line 654)."""
+        mock_response = Mock()
+        mock_response.headers = {"Retry-After": "30"}
+        
+        with patch.object(base_client, '_generic_rate_limit_backoff', new_callable=AsyncMock) as mock_backoff:
+            await base_client.handle_rate_limit_response(mock_response)
+            mock_backoff.assert_called_once_with(mock_response)
+
+    @pytest.mark.asyncio
+    async def test_calculate_backoff_delay_implementation(self, base_client):
+        """Test calculate_backoff_delay implementation (lines 681-684)."""
+        mock_response = Mock()
+        
+        with patch('random.uniform', return_value=0.2):
+            # Test different attempt numbers
+            delay_0 = await base_client.calculate_backoff_delay(mock_response, attempt=0)
+            delay_1 = await base_client.calculate_backoff_delay(mock_response, attempt=1)
+            delay_2 = await base_client.calculate_backoff_delay(mock_response, attempt=2)
+            
+            # Verify exponential backoff: 1s, 2s, 4s base + jitter
+            assert delay_0 == 1.2  # 1 + (0.2 * 1)
+            assert delay_1 == 2.4  # 2 + (0.2 * 2) 
+            assert delay_2 == 4.8  # 4 + (0.2 * 4)
+
+    @pytest.mark.asyncio
+    async def test_generic_rate_limit_backoff_with_retry_after(self, base_client):
+        """Test _generic_rate_limit_backoff with Retry-After header (lines 688-705)."""
+        mock_response = Mock()
+        mock_response.headers = {"Retry-After": "45"}
+        
+        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+            await base_client._generic_rate_limit_backoff(mock_response)
+            mock_sleep.assert_called_once_with(45)
+
+    @pytest.mark.asyncio
+    async def test_generic_rate_limit_backoff_invalid_retry_after(self, base_client):
+        """Test _generic_rate_limit_backoff with invalid Retry-After (lines 695-697)."""
+        mock_response = Mock()
+        mock_response.headers = {"Retry-After": "invalid"}
+        
+        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+            await base_client._generic_rate_limit_backoff(mock_response)
+            mock_sleep.assert_called_once_with(60)  # Default fallback
+
+    @pytest.mark.asyncio
+    async def test_generic_rate_limit_backoff_no_header(self, base_client):
+        """Test _generic_rate_limit_backoff without Retry-After header (lines 698-705)."""
+        mock_response = Mock()
+        mock_response.headers = {}
+        
+        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+            await base_client._generic_rate_limit_backoff(mock_response)
+            mock_sleep.assert_called_once_with(60)  # Default backoff
+
+    @pytest.mark.asyncio
+    async def test_request_with_retry_success_after_retries(self, base_client):
+        """Test _request_with_retry success after initial failures (lines 720-743)."""
+        call_count = 0
+        
+        async def mock_request_func():
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                raise APIError("429 Rate limit")
+            return {"success": True}
+        
+        with patch('asyncio.sleep', new_callable=AsyncMock), \
+             patch.object(base_client, 'calculate_backoff_delay', return_value=1.0):
+            
+            result = await base_client._request_with_retry(mock_request_func, max_retries=3)
+            assert result == {"success": True}
+            assert call_count == 3  # Failed twice, succeeded on third
+
+    @pytest.mark.asyncio
+    async def test_request_with_retry_exhausted_retries(self, base_client):
+        """Test _request_with_retry when all retries exhausted (lines 727-729)."""
+        async def mock_request_func():
+            raise APIError("429 Rate limit")
+        
+        with patch('asyncio.sleep', new_callable=AsyncMock), \
+             patch.object(base_client, 'calculate_backoff_delay', return_value=1.0):
+            
+            with pytest.raises(APIError) as exc_info:
+                await base_client._request_with_retry(mock_request_func, max_retries=2)
+            
+            assert "429 Rate limit" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_request_with_retry_non_rate_limit_error(self, base_client):
+        """Test _request_with_retry with non-rate-limit error (lines 742-743)."""
+        async def mock_request_func():
+            raise APIError("Server error")
+        
+        with pytest.raises(APIError) as exc_info:
+            await base_client._request_with_retry(mock_request_func, max_retries=2)
+        
+        assert "Server error" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_make_graphql_request_with_variables(self, base_client):
+        """Test make_graphql_request with variables (lines 773-815)."""
+        query = "query GetAnime($id: Int!) { anime(id: $id) { title } }"
+        variables = {"id": 123}
+        
+        with patch.object(base_client, 'make_request_with_enhanced_error_handling', 
+                         new_callable=AsyncMock) as mock_request:
+            mock_request.return_value = {"data": {"anime": {"title": "Test Anime"}}}
+            
+            result = await base_client.make_graphql_request(
+                url="https://api.example.com/graphql",
+                query=query,
+                variables=variables,
+                correlation_id="test-123"
+            )
+            
+            assert result == {"data": {"anime": {"title": "Test Anime"}}}
+            
+            # Verify request was made with correct payload
+            mock_request.assert_called_once()
+            call_kwargs = mock_request.call_args.kwargs
+            assert call_kwargs["json"]["query"] == query
+            assert call_kwargs["json"]["variables"] == variables
+            assert call_kwargs["headers"]["Content-Type"] == "application/json"
+
+    @pytest.mark.asyncio
+    async def test_make_graphql_request_without_correlation_id(self, base_client):
+        """Test make_graphql_request auto-generates correlation ID (lines 798-807)."""
+        query = "{ anime { title } }"
+        
+        with patch.object(base_client, 'make_request_with_enhanced_error_handling', 
+                         new_callable=AsyncMock) as mock_request:
+            mock_request.return_value = {"data": {"anime": {"title": "Test"}}}
+            
+            result = await base_client.make_graphql_request(
+                url="https://api.example.com/graphql",
+                query=query
+            )
+            
+            assert result == {"data": {"anime": {"title": "Test"}}}
+            
+            # Verify correlation ID was auto-generated
+            mock_request.assert_called_once()
+            call_kwargs = mock_request.call_args.kwargs
+            assert call_kwargs["correlation_id"].startswith("graphql-")
+
+    @pytest.mark.asyncio
+    async def test_make_graphql_request_with_errors(self, base_client):
+        """Test make_graphql_request with GraphQL errors (lines 810-813)."""
+        query = "{ invalid_field }"
+        
+        with patch.object(base_client, 'make_request_with_enhanced_error_handling', 
+                         new_callable=AsyncMock) as mock_request:
+            mock_request.return_value = {
+                "errors": [{"message": "Field 'invalid_field' doesn't exist"}]
+            }
+            
+            with pytest.raises(APIError) as exc_info:
+                await base_client.make_graphql_request(
+                    url="https://api.example.com/graphql",
+                    query=query,
+                    correlation_id="error-test"
+                )
+            
+            assert "GraphQL error: Field 'invalid_field' doesn't exist" in str(exc_info.value)
+
+    @pytest.mark.asyncio
+    async def test_monitor_rate_limits_default_implementation(self, base_client):
+        """Test default monitor_rate_limits implementation (no-op)."""
+        mock_response = Mock()
+        # Should not raise any exceptions - it's a no-op
+        await base_client.monitor_rate_limits(mock_response)

@@ -334,3 +334,35 @@ class TestJikanMapper:
         assert jikan_params["limit"] == 25
         assert jikan_params["order_by"] == "popularity"
         assert jikan_params["sort"] == "desc"
+
+    def test_to_jikan_search_params_missing_lines_coverage(self):
+        """Test specific scenarios to cover missing lines in coverage report."""
+        
+        # Test start_date parameter (line 204)
+        params = UniversalSearchParams(start_date="2023-01-01")
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["start_date"] == "2023-01-01"
+        
+        # Test page parameter calculation with offset (line 229)
+        params = UniversalSearchParams(offset=40, limit=20)
+        jikan_params = JikanMapper.to_jikan_search_params(params)
+        assert jikan_params["page"] == 3  # (40 // 20) + 1 = 3
+        
+        # Test sfw parameter via jikan_specific (line 264)
+        # include_adult=True means no sfw is set by universal logic, allowing jikan_specific to set it
+        params = UniversalSearchParams(query="test", include_adult=True)
+        jikan_specific = {"sfw": False}
+        jikan_params = JikanMapper.to_jikan_search_params(params, jikan_specific)
+        assert jikan_params["sfw"] == "false"
+        
+        # Test genres_exclude parameter via jikan_specific (line 269)
+        params = UniversalSearchParams(query="test")
+        jikan_specific = {"genres_exclude": [14, 9]}  # Horror=14, Ecchi=9
+        jikan_params = JikanMapper.to_jikan_search_params(params, jikan_specific)
+        assert jikan_params["genres_exclude"] == "14,9"
+        
+        # Test sort parameter via jikan_specific (line 278)
+        params = UniversalSearchParams(query="test")
+        jikan_specific = {"sort": "asc"}
+        jikan_params = JikanMapper.to_jikan_search_params(params, jikan_specific)
+        assert jikan_params["sort"] == "asc"

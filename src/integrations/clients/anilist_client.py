@@ -6,7 +6,7 @@ import aiohttp
 
 from .base_client import BaseClient
 from ..rate_limiting import AniListRateLimitAdapter
-from ..rate_limiter import rate_limit_manager
+from ..rate_limiting.core import rate_limit_manager
 
 
 class AniListClient(BaseClient):

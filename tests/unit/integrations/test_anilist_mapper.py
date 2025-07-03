@@ -368,3 +368,176 @@ class TestAniListMapper:
         
         assert anilist_params["perPage"] == 25
         assert anilist_params["page"] == 5  # (100 / 25) + 1 = 5
+
+    def test_to_anilist_search_params_anilist_status_override(self):
+        """Test that anilist_specific status overrides universal status."""
+        params = UniversalSearchParams(status=AnimeStatus.FINISHED)
+        anilist_specific = {"status": "CANCELLED"}
+        anilist_params = AniListMapper.to_anilist_search_params(params, anilist_specific)
+        
+        # anilist_specific should override universal
+        assert anilist_params["status"] == "CANCELLED"
+
+    def test_to_anilist_search_params_themes_exclude(self):
+        """Test themes_exclude mapping to tag_not_in."""
+        params = UniversalSearchParams(themes_exclude=["Ecchi", "Gore"])
+        anilist_params = AniListMapper.to_anilist_search_params(params)
+        
+        assert anilist_params["tag_not_in"] == ["Ecchi", "Gore"]
+
+    def test_to_anilist_search_params_invalid_dates(self):
+        """Test handling of invalid date formats."""
+        params = UniversalSearchParams(
+            start_date="invalid-date",
+            end_date="2023"  # incomplete date
+        )
+        anilist_params = AniListMapper.to_anilist_search_params(params)
+        
+        # Invalid dates should be ignored
+        assert "startDate_greater" not in anilist_params
+        assert "endDate" not in anilist_params
+
+    def test_to_anilist_search_params_date_exception_handling(self):
+        """Test date parsing exception handling."""
+        # Test ValueError in date parsing
+        params = UniversalSearchParams(
+            start_date="not-a-number-date",  # Will cause ValueError in int()
+            end_date="also-not-a-number"
+        )
+        anilist_params = AniListMapper.to_anilist_search_params(params)
+        
+        # Should gracefully handle ValueError/IndexError exceptions
+        assert "startDate_greater" not in anilist_params
+        assert "endDate" not in anilist_params
+
+    def test_to_anilist_search_params_date_index_error_handling(self):
+        """Test date parsing IndexError handling."""
+        # Test IndexError in date parsing (insufficient parts)
+        params = UniversalSearchParams(
+            start_date="2023-",  # Will cause IndexError when accessing parts[2]
+            end_date="2023-12"   # Will cause IndexError when accessing parts[2]
+        )
+        anilist_params = AniListMapper.to_anilist_search_params(params)
+        
+        # Should gracefully handle IndexError exceptions
+        assert "startDate_greater" not in anilist_params
+        assert "endDate" not in anilist_params
+
+    def test_to_anilist_search_params_sort_no_suffix(self):
+        """Test sort mapping with only sort_by (no sort_order)."""
+        params = UniversalSearchParams(sort_by="score")  # No sort_order provided
+        anilist_params = AniListMapper.to_anilist_search_params(params)
+        
+        # When sort_order is None, it should use the base sort without suffix
+        assert anilist_params["sort"] == ["SCORE"]
+
+    def test_to_anilist_search_params_comprehensive_anilist_specific(self):
+        """Test comprehensive AniList-specific parameter coverage."""
+        params = UniversalSearchParams(
+            # Basic AniList-specific parameters
+            anilist_end_date=20231231,
+            anilist_format="SPECIAL",
+            anilist_start_date=20230101,
+            anilist_chapters=50,
+            anilist_volumes=10,
+            anilist_genre="Mecha",
+            anilist_tag="Robot",
+            anilist_on_list=True,
+            anilist_licensed_by_id=123,
+            anilist_is_licensed=True,
+            # Negation filters
+            anilist_id_not=999,
+            anilist_id_mal_not=888,
+            anilist_format_not="MUSIC",
+            anilist_average_score_not=50,
+            anilist_popularity_not=1000,
+            # Array inclusion filters
+            anilist_id_mal_in=[100, 200],
+            anilist_id_mal_not_in=[300, 400],
+            anilist_format_not_in=["OVA", "ONA"],
+            anilist_status_not_in=["CANCELLED"],
+            anilist_genre_not_in=["Horror"],
+            anilist_tag_not_in=["Gore"],
+            anilist_tag_category_in=["Setting"],
+            anilist_tag_category_not_in=["Theme"],
+            anilist_licensed_by_in=["Netflix"],
+            anilist_licensed_by_id_in=[1, 2, 3],
+            anilist_source_in=["MANGA"],
+            anilist_licensed_by_not_in=["Hulu"],
+            anilist_source_not_in=["NOVEL"],
+            anilist_format_range=["TV", "MOVIE"],
+            # Range filters
+            anilist_start_date_lesser=20231231,
+            anilist_start_date_like="2023%",
+            anilist_end_date_greater=20230101,
+            anilist_end_date_like="2023%",
+            anilist_chapters_greater=10,
+            anilist_chapters_lesser=100,
+            anilist_volumes_greater=5,
+            anilist_volumes_lesser=20,
+            anilist_average_score_lesser=90,
+            anilist_popularity_lesser=50000,
+            # Special sorting
+            anilist_sort=["UPDATED_AT_DESC"]
+        )
+        
+        anilist_params = AniListMapper.to_anilist_search_params(params)
+        
+        # Basic AniList-specific parameters
+        assert anilist_params["endDate"] == 20231231
+        assert anilist_params["format"] == "SPECIAL"
+        assert anilist_params["startDate"] == 20230101
+        assert anilist_params["chapters"] == 50
+        assert anilist_params["volumes"] == 10
+        assert anilist_params["genre"] == "Mecha"
+        assert anilist_params["tag"] == "Robot"
+        assert anilist_params["onList"] == True
+        assert anilist_params["licensedById"] == 123
+        assert anilist_params["isLicensed"] == True
+        
+        # Negation filters
+        assert anilist_params["id_not"] == 999
+        assert anilist_params["idMal_not"] == 888
+        assert anilist_params["format_not"] == "MUSIC"
+        assert anilist_params["averageScore_not"] == 50
+        assert anilist_params["popularity_not"] == 1000
+        
+        # Array inclusion filters
+        assert anilist_params["idMal_in"] == [100, 200]
+        assert anilist_params["idMal_not_in"] == [300, 400]
+        assert anilist_params["format_not_in"] == ["OVA", "ONA"]
+        assert anilist_params["status_not_in"] == ["CANCELLED"]
+        assert anilist_params["genre_not_in"] == ["Horror"]
+        assert anilist_params["tag_not_in"] == ["Gore"]
+        assert anilist_params["tagCategory_in"] == ["Setting"]
+        assert anilist_params["tagCategory_not_in"] == ["Theme"]
+        assert anilist_params["licensedBy_in"] == ["Netflix"]
+        assert anilist_params["licensedById_in"] == [1, 2, 3]
+        assert anilist_params["source_in"] == ["MANGA"]
+        assert anilist_params["licensedBy_not_in"] == ["Hulu"]
+        assert anilist_params["source_not_in"] == ["NOVEL"]
+        assert anilist_params["format_range"] == ["TV", "MOVIE"]
+        
+        # Range filters
+        assert anilist_params["startDate_lesser"] == 20231231
+        assert anilist_params["startDate_like"] == "2023%"
+        assert anilist_params["endDate_greater"] == 20230101
+        assert anilist_params["endDate_like"] == "2023%"
+        assert anilist_params["chapters_greater"] == 10
+        assert anilist_params["chapters_lesser"] == 100
+        assert anilist_params["volumes_greater"] == 5
+        assert anilist_params["volumes_lesser"] == 20
+        assert anilist_params["averageScore_lesser"] == 90
+        assert anilist_params["popularity_lesser"] == 50000
+        
+        # Special sorting
+        assert anilist_params["sort"] == ["UPDATED_AT_DESC"]
+
+    def test_to_anilist_search_params_status_not_mapping(self):
+        """Test that universal status gets mapped to status_not."""
+        params = UniversalSearchParams(status=AnimeStatus.CANCELLED)
+        anilist_params = AniListMapper.to_anilist_search_params(params)
+        
+        # Should map status to both status and status_not
+        assert anilist_params["status"] == "CANCELLED"
+        assert anilist_params["status_not"] == AnimeStatus.CANCELLED

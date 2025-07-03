@@ -81,7 +81,7 @@ class KitsuMapper:
             kitsu_params["filter[averageRating]"] = f"{kitsu_rating}.."
         if universal_params.max_score is not None:
             kitsu_rating = universal_params.max_score * 10
-            existing_filter = kitsu_params.get("filter[averageRating]", "..")
+            existing_filter = kitsu_params.get("filter[averageRating]", "")
             if ".." in existing_filter:
                 min_part = existing_filter.split("..")[0]
                 kitsu_params["filter[averageRating]"] = f"{min_part}..{kitsu_rating}"
@@ -93,7 +93,7 @@ class KitsuMapper:
         if universal_params.min_episodes is not None:
             kitsu_params["filter[episodeCount]"] = f"{universal_params.min_episodes}.."
         if universal_params.max_episodes is not None:
-            existing_filter = kitsu_params.get("filter[episodeCount]", "..")
+            existing_filter = kitsu_params.get("filter[episodeCount]", "")
             if ".." in existing_filter:
                 min_part = existing_filter.split("..")[0]
                 kitsu_params["filter[episodeCount]"] = f"{min_part}..{universal_params.max_episodes}"
@@ -105,7 +105,7 @@ class KitsuMapper:
         if universal_params.min_duration is not None:
             kitsu_params["filter[episodeLength]"] = f"{universal_params.min_duration}.."
         if universal_params.max_duration is not None:
-            existing_filter = kitsu_params.get("filter[episodeLength]", "..")
+            existing_filter = kitsu_params.get("filter[episodeLength]", "")
             if ".." in existing_filter:
                 min_part = existing_filter.split("..")[0]
                 kitsu_params["filter[episodeLength]"] = f"{min_part}..{universal_params.max_duration}"

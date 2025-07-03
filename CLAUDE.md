@@ -72,37 +72,52 @@ ENABLE_MULTI_VECTOR=true
 ### Development
 
 ```bash
-# Start FastAPI server
+# Start FastAPI server (development)
 python -m src.main
-# OR
+# OR with auto-reload
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
-# Full stack (recommended)
+# Full stack with Docker (recommended)
 docker-compose up
+
+# Start only required services
+docker-compose up -d qdrant
+docker-compose up -d fastapi qdrant
 ```
 
 ### Data Management
 
 ```bash
-# Download and index anime data (through API)
+# Full data update (downloads + processes + indexes)
+curl -X POST http://localhost:8000/api/admin/update-full
+
+# Individual steps
 curl -X POST http://localhost:8000/api/admin/download-data
 curl -X POST http://localhost:8000/api/admin/process-data
+
+# Check update status
+curl http://localhost:8000/api/admin/update-status
 ```
 
-### Testing
+### Testing & Verification
 
 ```bash
-# Health check
+# System health
 curl http://localhost:8000/health
 
-# Test search
-curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
-
-# Stats
+# Database stats  
 curl http://localhost:8000/stats
 
-# Test MCP server
+# Basic search test
+curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
+
+# MCP server verification (comprehensive)
 python scripts/verify_mcp_server.py
+
+# Run test suite
+pytest tests/ -v
+pytest -m unit -v        # Unit tests only
+pytest -m integration -v # Integration tests only
 ```
 
 ## Code Architecture
@@ -156,9 +171,12 @@ python scripts/verify_mcp_server.py
 ### Testing & Quality
 
 - **Always use TDD approach**
-- **Run tests**: `pytest tests/ -v`
+- **Run all tests**: `pytest tests/ -v`
+- **Run single test**: `pytest tests/unit/services/test_data_service.py::test_specific_function -v`
+- **Run test by marker**: `pytest -m unit -v` or `pytest -m integration -v`
 - **Code formatting**: `black src/ tests/ scripts/`
 - **Type checking**: `mypy src/`
+- **Coverage report**: `pytest tests/ --cov=src --cov-report=html`
 
 ### Important Reminders
 
@@ -174,20 +192,44 @@ python scripts/verify_mcp_server.py
 - ALWAYS prefer editing existing files
 - NEVER proactively create documentation files
 
-## File Structure Context
+## File Structure Context & Key Files
 
 ```
 src/
 ├── main.py              # FastAPI app with lifespan management
+├── config.py            # Centralized configuration with environment settings
 ├── api/                 # REST API endpoints
+│   ├── search.py        # Search endpoints (/api/search/*)
+│   ├── admin.py         # Admin endpoints (/api/admin/*)
+│   └── workflow.py      # LangGraph workflow endpoints (/api/workflow/*)
 ├── langgraph/           # LangGraph workflow orchestration
 │   ├── langchain_tools.py    # LangChain tool creation & ToolNode workflow
-│   └── workflow_engine.py    # Main anime workflow engine (AnimeWorkflowEngine)
+│   └── react_agent_workflow.py    # Main ReactAgent workflow engine
 ├── vector/              # Qdrant + CLIP integration
-├── services/            # Data + LLM services
+│   ├── qdrant_client.py      # Multi-vector database operations
+│   └── vision_processor.py  # CLIP image processing
+├── services/            # Core business logic
+│   ├── data_service.py       # Data processing & indexing pipeline
+│   ├── smart_scheduler.py    # Rate limiting & service coordination
+│   └── update_service.py     # Database update management
 ├── mcp/                 # FastMCP protocol implementation
-└── models/              # Pydantic data models
+│   ├── server.py             # FastMCP server with 7 tools
+│   └── fastmcp_client_adapter.py  # MCP client integration
+├── models/              # Pydantic data models
+│   ├── anime.py              # Core anime data models
+│   └── universal_anime.py    # Universal schema for platform mapping
+└── integrations/        # External platform integrations (9 platforms)
+    ├── clients/              # HTTP clients for each platform
+    ├── mappers/              # Data transformation layers
+    ├── scrapers/             # Web scraping components
+    └── rate_limiting/        # Multi-tier rate limiting system
 ```
+
+**Critical Files for Understanding:**
+- `src/config.py` - All environment variables and settings
+- `src/services/data_service.py` - Core data processing pipeline
+- `src/vector/qdrant_client.py` - Vector database operations
+- `src/langgraph/react_agent_workflow.py` - AI workflow orchestration
 
 ## Current Development Phase
 
@@ -197,25 +239,15 @@ src/
 - OpenAI/Anthropic LLM integration
 - Complete replacement of regex patterns with AI intelligence
 
-**LangGraph Optimization ✅ PHASE 2 COMPLETED**: Native ToolNode Integration
+**Phase 7 ✅ COMPLETED**: Production-Ready ReactAgent Architecture
 
-- Replaced MCPAdapterRegistry with LangGraph ToolNode (~200 lines eliminated)
-- Implemented built-in tool binding with `@tool` decorators
-- Achieved 150ms target response time (improved from 200ms)
-- Clean file structure: `langchain_tools.py` and `workflow_engine.py`
-- All 36 tests passing (100% success rate)
+- Comprehensive ReactAgent workflow with conversational memory
+- Multi-platform data integration (9 anime platforms)
+- Advanced rate limiting system with multi-tier architecture
+- Complete test coverage with 60+ passing tests
+- Production-ready system optimization
 
-**Phase 3 📝 NEXT**: FastMCP Client Integration
-
-- Research FastMCP Client class for automatic tool discovery
-- Replace manual tool extraction with `langchain-mcp` toolkit
-
-**Phase 6D 📝 PLANNED**: Specialized Agents & Analytics
-
-- Genre-expert agents for specialized recommendations
-- Studio-focused discovery workflows
-- Advanced comparative analysis capabilities
-- Multi-agent coordination patterns
+**Current System Status**: Fully operational production system ready for specialized agent development.
 
 ## Data Source
 

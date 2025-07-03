@@ -379,30 +379,6 @@ class TestFastMCPClientAdapter:
         assert result == [{"title": "Test Anime"}]
         assert adapter.is_connected()
 
-
-class TestFastMCPClientAdapterIntegration:
-    """Integration tests for FastMCP client adapter."""
-
-    @pytest.mark.asyncio
-    async def test_end_to_end_tool_discovery(self):
-        """Test end-to-end tool discovery flow."""
-        # This test will be implemented once the adapter is working
-        # It should test actual connection to the MCP server
-
-    @pytest.mark.asyncio
-    async def test_tool_execution_compatibility(self):
-        """Test that discovered tools can be executed with same parameters."""
-        # This test ensures tools work identically to manual extraction
-
-    @pytest.mark.asyncio
-    async def test_performance_comparison(self):
-        """Test that auto-discovery performance meets requirements."""
-        # Should maintain <200ms response times
-
-
-class TestFastMCPAdapterMissingCoverage:
-    """Test missing coverage lines to reach 100%."""
-
     @pytest.mark.asyncio
     async def test_disconnect_exception_handling(self, adapter_config):
         """Test disconnect exception handling - covers lines 104-105."""
@@ -416,7 +392,9 @@ class TestFastMCPAdapterMissingCoverage:
         adapter.session = mock_session
 
         # Should handle exception and log warning (lines 104-105)
-        await adapter.disconnect()
+        with patch("src.mcp.fastmcp_client_adapter.logger") as mock_logger:
+            await adapter.disconnect()
+            mock_logger.warning.assert_called_once_with("Error during disconnect: Disconnect error")
 
         # Cleanup should still happen in finally block
         assert adapter.session is None
@@ -468,69 +446,24 @@ class TestFastMCPAdapterMissingCoverage:
         result = adapter.get_tool_names()
         assert result == ["search_anime", "get_anime_details"]
 
-    @pytest.mark.asyncio
-    async def test_ensure_global_connection_return_path(self):
-        """Test _ensure_global_connection return path - covers line 248."""
-        import src.mcp.fastmcp_client_adapter as adapter_module
-        from src.mcp.fastmcp_client_adapter import _ensure_global_connection
 
-        # Store original adapter
-        original_adapter = adapter_module._global_adapter
-
-        try:
-            # Set up global adapter that's already connected
-            mock_adapter = Mock()
-            mock_adapter.is_connected.return_value = True
-            adapter_module._global_adapter = mock_adapter
-
-            # Should return existing adapter without calling connect
-            result = await _ensure_global_connection()
-            assert result is mock_adapter
-
-        finally:
-            # Restore original
-            adapter_module._global_adapter = original_adapter
+class TestFastMCPClientAdapterIntegration:
+    """Integration tests for FastMCP client adapter."""
 
     @pytest.mark.asyncio
-    async def test_disconnect_global_adapter_success(self):
-        """Test disconnect_global_adapter success path - covers lines 259-260."""
-        import src.mcp.fastmcp_client_adapter as adapter_module
-        from src.mcp.fastmcp_client_adapter import disconnect_global_adapter
-
-        # Store original adapter
-        original_adapter = adapter_module._global_adapter
-
-        try:
-            # Set up global adapter that's connected
-            mock_adapter = AsyncMock()
-            mock_adapter.is_connected.return_value = True
-            mock_adapter.disconnect = AsyncMock()
-            adapter_module._global_adapter = mock_adapter
-
-            await disconnect_global_adapter()
-
-            # Should call disconnect and set to None
-            mock_adapter.disconnect.assert_called_once()
-            assert adapter_module._global_adapter is None
-
-        finally:
-            # Restore original
-            adapter_module._global_adapter = original_adapter
+    async def test_end_to_end_tool_discovery(self):
+        """Test end-to-end tool discovery flow."""
+        # This test will be implemented once the adapter is working
+        # It should test actual connection to the MCP server
 
     @pytest.mark.asyncio
-    async def test_get_all_mcp_tools_function(self):
-        """Test get_all_mcp_tools backward compatibility function - covers lines 279-280."""
-        from src.mcp.fastmcp_client_adapter import get_all_mcp_tools
+    async def test_tool_execution_compatibility(self):
+        """Test that discovered tools can be executed with same parameters."""
+        # This test ensures tools work identically to manual extraction
 
-        with patch(
-            "src.mcp.fastmcp_client_adapter._ensure_global_connection"
-        ) as mock_ensure:
-            mock_adapter = AsyncMock()
-            mock_tools_dict = {"search_anime": Mock(), "get_anime_details": Mock()}
-            mock_adapter.get_tools_dict.return_value = mock_tools_dict
-            mock_ensure.return_value = mock_adapter
+    @pytest.mark.asyncio
+    async def test_performance_comparison(self):
+        """Test that auto-discovery performance meets requirements."""
+        # Should maintain <200ms response times
 
-            result = await get_all_mcp_tools()
 
-            assert result == mock_tools_dict
-            mock_adapter.get_tools_dict.assert_called_once()

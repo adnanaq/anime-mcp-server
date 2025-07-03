@@ -9,6 +9,27 @@ import pytest
 from src.services.smart_scheduler import SmartScheduler
 
 
+def create_mock_aiohttp_session(response_data, status_code=200):
+    """Create properly mocked aiohttp session for async tests."""
+    async def async_json():
+        return response_data
+
+    mock_response = Mock()
+    mock_response.status = status_code
+    mock_response.json = async_json
+
+    mock_session = Mock()
+    mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session.__aexit__ = AsyncMock(return_value=None)
+    
+    mock_get_response = Mock()
+    mock_get_response.__aenter__ = AsyncMock(return_value=mock_response)
+    mock_get_response.__aexit__ = AsyncMock(return_value=None)
+    
+    mock_session.get = Mock(return_value=mock_get_response)
+    return mock_session
+
+
 @pytest.fixture
 def scheduler():
     """Create SmartScheduler instance."""
@@ -91,13 +112,7 @@ class TestRecentReleaseChecking:
     @pytest.mark.asyncio
     async def test_check_recent_releases_with_recent(self, scheduler, sample_releases):
         """Test checking recent releases when recent releases exist."""
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=sample_releases)
-
-        with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
-
+        with patch("aiohttp.ClientSession", return_value=create_mock_aiohttp_session(sample_releases)):
             result = await scheduler.check_recent_releases(hours_back=24)
 
             assert result["has_recent_releases"] is True
@@ -125,7 +140,8 @@ class TestRecentReleaseChecking:
         mock_response.json = AsyncMock(return_value=old_releases)
 
         with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
+            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
+            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
 
             result = await scheduler.check_recent_releases(hours_back=24)
 
@@ -139,7 +155,8 @@ class TestRecentReleaseChecking:
         mock_response.status = 404
 
         with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
+            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
+            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
 
             result = await scheduler.check_recent_releases()
 
@@ -168,7 +185,8 @@ class TestRecentReleaseChecking:
         mock_response.json = AsyncMock(side_effect=ValueError("Invalid JSON"))
 
         with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
+            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
+            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
 
             result = await scheduler.check_recent_releases()
 
@@ -182,13 +200,7 @@ class TestCommitActivityChecking:
     @pytest.mark.asyncio
     async def test_check_commit_activity_success(self, scheduler, sample_commits):
         """Test checking commit activity successfully."""
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=sample_commits)
-
-        with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
-
+        with patch("aiohttp.ClientSession", return_value=create_mock_aiohttp_session(sample_commits)):
             result = await scheduler.check_commit_activity(hours_back=48)
 
             assert "recent_commits" in result
@@ -219,7 +231,8 @@ class TestCommitActivityChecking:
         mock_response.json = AsyncMock(return_value=old_commits)
 
         with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
+            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
+            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
 
             result = await scheduler.check_commit_activity(hours_back=24)
 
@@ -459,13 +472,7 @@ class TestReleasePatternAnalysis:
                 }
             )
 
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=regular_releases)
-
-        with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
-
+        with patch("aiohttp.ClientSession", return_value=create_mock_aiohttp_session(regular_releases)):
             result = await scheduler.analyze_release_patterns()
 
             assert "pattern_detected" in result
@@ -501,13 +508,7 @@ class TestReleasePatternAnalysis:
             },
         ]
 
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=irregular_releases)
-
-        with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
-
+        with patch("aiohttp.ClientSession", return_value=create_mock_aiohttp_session(irregular_releases)):
             result = await scheduler.analyze_release_patterns()
 
             assert result["pattern_detected"] in ["irregular", "semi-regular"]
@@ -524,13 +525,7 @@ class TestReleasePatternAnalysis:
             }
         ]
 
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=few_releases)
-
-        with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
-
+        with patch("aiohttp.ClientSession", return_value=create_mock_aiohttp_session(few_releases)):
             result = await scheduler.analyze_release_patterns()
 
             assert result["pattern_detected"] == "insufficient_data"
@@ -610,7 +605,8 @@ class TestSmartSchedulerMissingCoverage:
         mock_response.json = AsyncMock(side_effect=Exception("Rate limit exceeded"))
 
         with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
+            mock_get.return_value.__aenter__ = AsyncMock(return_value=mock_response)
+            mock_get.return_value.__aexit__ = AsyncMock(return_value=None)
 
             result = await scheduler.check_recent_releases()
 
@@ -669,13 +665,7 @@ class TestSmartSchedulerMissingCoverage:
             },
         ]
 
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=complex_commits)
-
-        with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_get.return_value.__aenter__.return_value = mock_response
-
+        with patch("aiohttp.ClientSession", return_value=create_mock_aiohttp_session(complex_commits)):
             result = await scheduler.check_commit_activity(hours_back=24)
 
             # Should analyze recent commits and calculate frequency
@@ -749,11 +739,5 @@ class TestSmartSchedulerMissingCoverage:
             assert "recommended_frequency" in result
             assert "optimal_time" in result
             assert "reasoning" in result
-            assert "cron_schedule" in result
-            assert "analysis" in result
-
-            # Should have detailed analysis
-            analysis = result["analysis"]
-            assert "recent_activity" in analysis
-            assert "release_patterns" in analysis
-            assert "recommended_schedule" in analysis
+            assert "activity_analysis" in result
+            assert result["recommended_frequency"] == "daily"

@@ -471,3 +471,35 @@ class TestAnimeScheduleAPI:
         # Test invalid year (too high)
         response = client.get("/external/animeschedule/seasonal/winter/2026")
         assert response.status_code == 422
+
+    @patch("src.api.external.animeschedule._animeschedule_service")
+    def test_missing_lines_coverage(self, mock_service, client):
+        """Test specific scenarios to cover missing lines in coverage report."""
+        
+        # Test generic Exception handling in get_timetable_by_date (lines 94-96)
+        mock_service.get_timetable_by_date = AsyncMock(
+            side_effect=Exception("Generic service error")
+        )
+        response = client.get("/external/animeschedule/timetable/2024-01-01")
+        assert response.status_code == 503
+        assert "AnimeSchedule timetable service unavailable" in response.json()["detail"]
+        
+        # Test generic Exception handling in get_seasonal_anime (lines 169-171)
+        mock_service.get_seasonal_anime = AsyncMock(
+            side_effect=Exception("Generic seasonal error")
+        )
+        response = client.get("/external/animeschedule/seasonal/winter/2024")
+        assert response.status_code == 503
+        assert "AnimeSchedule seasonal service unavailable" in response.json()["detail"]
+        
+        # Test Exception handling in health_check (lines 259-261)
+        mock_service.health_check = AsyncMock(
+            side_effect=Exception("Health check error")
+        )
+        response = client.get("/external/animeschedule/health")
+        assert response.status_code == 200  # Health check returns 200 even on error
+        data = response.json()
+        assert data["service"] == "animeschedule"
+        assert data["status"] == "unhealthy"
+        assert data["error"] == "Health check error"
+        assert data["circuit_breaker_open"] == True
