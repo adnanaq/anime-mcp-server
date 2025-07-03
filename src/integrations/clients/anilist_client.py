@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 
 from .base_client import BaseClient
+from ..rate_limiting import AniListRateLimitAdapter
+from ..rate_limiter import rate_limit_manager
 
 
 class AniListClient(BaseClient):
@@ -30,37 +32,29 @@ class AniListClient(BaseClient):
         super().__init__(service_name="anilist", circuit_breaker=circuit_breaker, cache_manager=cache_manager, error_handler=error_handler)
         self.base_url = "https://graphql.anilist.co"
         self.auth_token = auth_token
+        
+        # Register AniList rate limiting adapter with global rate limiter
+        self._rate_limit_adapter = AniListRateLimitAdapter()
+        rate_limit_manager.register_platform_adapter("anilist", self._rate_limit_adapter)
 
     async def _make_graphql_request(
-        self, query: str, variables: Optional[Dict[str, Any]] = None
+        self, query: str, variables: Optional[Dict[str, Any]] = None, correlation_id: str = None
     ) -> Dict[str, Any]:
-        """Make GraphQL request to AniList API."""
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
-
+        """Make GraphQL request using BaseClient infrastructure with enhanced error handling."""
+        # Prepare auth headers if token provided
+        headers = {}
         if self.auth_token:
             headers["Authorization"] = f"Bearer {self.auth_token}"
 
-        payload = {"query": query}
-
-        if variables:
-            payload["variables"] = variables
-
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                self.base_url, json=payload, headers=headers
-            ) as response:
-                if response.status == 429:
-                    retry_after = response.headers.get("Retry-After", "60")
-                    raise Exception(
-                        f"Rate limit exceeded. Retry after {retry_after} seconds"
-                    )
-
-                result = await response.json()
-
-                if "errors" in result:
-                    raise Exception(f"GraphQL error: {result['errors'][0]['message']}")
-
-                return result
+        # Use BaseClient's GraphQL support with correlation tracking
+        return await self.make_graphql_request(
+            url=self.base_url,
+            query=query,
+            variables=variables,
+            correlation_id=correlation_id,
+            headers=headers,
+            endpoint="graphql"
+        )
 
     async def get_anime_by_id(self, anime_id: int) -> Optional[Dict[str, Any]]:
         """Get anime by AniList ID."""
@@ -120,7 +114,8 @@ class AniListClient(BaseClient):
         """
 
         variables = {"id": anime_id}
-        response = await self._make_graphql_request(query=query, variables=variables)
+        correlation_id = f"anilist-get-anime-{anime_id}"
+        response = await self._make_graphql_request(query=query, variables=variables, correlation_id=correlation_id)
 
         if response and "data" in response and response["data"]["Media"]:
             return response["data"]["Media"]
@@ -308,8 +303,9 @@ class AniListClient(BaseClient):
         # Remove None values to avoid GraphQL errors
         variables = {k: v for k, v in variables.items() if v is not None}
 
+        correlation_id = f"anilist-search-{hash(str(variables))}"
         response = await self._make_graphql_request(
-            query=search_query, variables=variables
+            query=search_query, variables=variables, correlation_id=correlation_id
         )
 
         if response and "data" in response and "Page" in response["data"]:
@@ -374,7 +370,8 @@ class AniListClient(BaseClient):
         """
 
         variables = {"id": anime_id}
-        response = await self._make_graphql_request(query=query, variables=variables)
+        correlation_id = f"anilist-characters-{anime_id}"
+        response = await self._make_graphql_request(query=query, variables=variables, correlation_id=correlation_id)
 
         if response and "data" in response and response["data"]["Media"]:
             edges = response["data"]["Media"]["characters"]["edges"]
@@ -410,7 +407,8 @@ class AniListClient(BaseClient):
         """
 
         variables = {"id": anime_id}
-        response = await self._make_graphql_request(query=query, variables=variables)
+        correlation_id = f"anilist-staff-{anime_id}"
+        response = await self._make_graphql_request(query=query, variables=variables, correlation_id=correlation_id)
 
         if response and "data" in response and response["data"]["Media"]:
             edges = response["data"]["Media"]["staff"]["edges"]
@@ -423,3 +421,71 @@ class AniListClient(BaseClient):
                 for edge in edges
             ]
         return []
+    
+    # ANILIST-SPECIFIC RATE LIMITING OVERRIDES
+    # Override BaseClient hooks with AniList-specific behavior
+    
+    async def handle_rate_limit_response(self, response):
+        """Handle AniList-specific rate limiting using the registered strategy.
+        
+        This method is called by BaseClient when a 429 is encountered.
+        It now delegates to the global rate limiter's AniList strategy.
+        
+        Args:
+            response: HTTP response with 429 status
+        """
+        # Extract rate limit info using our adapter
+        rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
+        
+        # Use the strategy to handle the response
+        strategy = self._rate_limit_adapter.get_strategy()
+        await strategy.handle_rate_limit_response(rate_info)
+    
+    async def monitor_rate_limits(self, response):
+        """Monitor AniList-specific rate limit headers for proactive management.
+        
+        This method extracts AniList headers and logs warnings, but the actual
+        rate limit data is now processed by the global rate limiter.
+        
+        Args:
+            response: HTTP response object
+        """
+        # Extract rate limit info using our adapter
+        rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
+        
+        if rate_info.remaining is not None and rate_info.limit:
+            # Calculate usage percentage
+            usage_percent = ((rate_info.limit - rate_info.remaining) / rate_info.limit) * 100
+            
+            # Log warnings at AniList-specific thresholds
+            if usage_percent >= 90:
+                self.logger.warning(
+                    f"AniList rate limit critical: {rate_info.remaining}/{rate_info.limit} requests remaining ({usage_percent:.1f}% used)"
+                )
+            elif usage_percent >= 75:
+                self.logger.warning(
+                    f"AniList rate limit high: {rate_info.remaining}/{rate_info.limit} requests remaining ({usage_percent:.1f}% used)"
+                )
+            elif usage_percent >= 50:
+                self.logger.info(
+                    f"AniList rate limit moderate: {rate_info.remaining}/{rate_info.limit} requests remaining ({usage_percent:.1f}% used)"
+                )
+    
+    async def calculate_backoff_delay(self, response, attempt: int = 0):
+        """Calculate AniList-specific backoff delay using the registered strategy.
+        
+        Args:
+            response: HTTP response object (may be None for retry scenarios)
+            attempt: Current retry attempt number
+            
+        Returns:
+            Delay in seconds (float)
+        """
+        # Extract rate limit info if response is available
+        rate_info = None
+        if response:
+            rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
+        
+        # Use the strategy to calculate backoff
+        strategy = self._rate_limit_adapter.get_strategy()
+        return await strategy.calculate_backoff_delay(rate_info, attempt)

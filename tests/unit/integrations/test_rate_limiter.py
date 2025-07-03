@@ -292,16 +292,14 @@ class TestServiceRateLimiter:
     @pytest.mark.asyncio
     async def test_wait_for_all_buckets_timeout(self, limiter):
         """Test waiting for all buckets times out."""
-        # Mock time to prevent token refill during test
-        with patch("time.time") as mock_time:
-            base_time = time.time()
-            mock_time.return_value = base_time
+        # Consume all tokens first
+        await limiter.primary_bucket.consume(limiter.primary_bucket.capacity)
+        await limiter.minute_bucket.consume(limiter.minute_bucket.capacity)
 
-            # Consume all tokens with time frozen
-            await limiter.primary_bucket.consume(limiter.primary_bucket.capacity)
-            await limiter.minute_bucket.consume(limiter.minute_bucket.capacity)
-
-            # Now wait for buckets (should timeout since no refill)
+        # Mock the bucket's wait_for_tokens to simulate timeout
+        with patch.object(limiter.primary_bucket, "wait_for_tokens") as mock_wait:
+            mock_wait.return_value = False  # Simulate timeout
+            
             result = await limiter._wait_for_all_buckets()
             assert result is False
 

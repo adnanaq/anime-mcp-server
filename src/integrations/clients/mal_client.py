@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional
 from src.exceptions import APIError
 
 from .base_client import BaseClient
+from ..rate_limiting import MALRateLimitAdapter, JikanRateLimitAdapter
+from ..rate_limiter import rate_limit_manager
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +51,15 @@ class MALClient(BaseClient):
         self.client_secret = client_secret
         self.access_token = None
         self.refresh_token = None
+        
+        # Register platform-specific rate limiting adapters
+        # Since this client handles both MAL and Jikan APIs, register both
+        self._mal_rate_limit_adapter = MALRateLimitAdapter()
+        self._jikan_rate_limit_adapter = JikanRateLimitAdapter()
+        
+        # Register with global rate limiter using dual service approach
+        rate_limit_manager.register_platform_adapter("mal", self._mal_rate_limit_adapter)
+        rate_limit_manager.register_platform_adapter("jikan", self._jikan_rate_limit_adapter)
 
     async def _make_mal_request(self, endpoint: str, **kwargs) -> Dict[str, Any]:
         """Make request to official MAL API using rate-limited base client."""
@@ -840,6 +851,88 @@ class MALClient(BaseClient):
         )
 
         return error_context
+
+    # PLATFORM-SPECIFIC RATE LIMITING OVERRIDES
+    # Override BaseClient hooks to handle dual API strategy (MAL + Jikan)
+    
+    async def handle_rate_limit_response(self, response):
+        """Handle rate limiting for MAL/Jikan based on request URL.
+        
+        This method intelligently routes to the appropriate platform strategy
+        based on which API was called (MAL or Jikan).
+        """
+        # Determine which API was called based on response URL
+        response_url = str(response.url) if hasattr(response, 'url') else ""
+        
+        if "myanimelist.net" in response_url:
+            # Official MAL API
+            rate_info = self._mal_rate_limit_adapter.extract_rate_limit_info(response)
+            strategy = self._mal_rate_limit_adapter.get_strategy()
+            await strategy.handle_rate_limit_response(rate_info)
+        elif "jikan.moe" in response_url:
+            # Jikan API
+            rate_info = self._jikan_rate_limit_adapter.extract_rate_limit_info(response)
+            strategy = self._jikan_rate_limit_adapter.get_strategy()
+            await strategy.handle_rate_limit_response(rate_info)
+        else:
+            # Fallback to generic handling
+            await self._generic_rate_limit_backoff(response)
+    
+    async def monitor_rate_limits(self, response):
+        """Monitor rate limits for both MAL and Jikan APIs."""
+        response_url = str(response.url) if hasattr(response, 'url') else ""
+        
+        if "myanimelist.net" in response_url:
+            # MAL API monitoring
+            rate_info = self._mal_rate_limit_adapter.extract_rate_limit_info(response)
+            
+            # MAL-specific monitoring (status code based since no headers)
+            if response.status == 403:
+                self.logger.warning(
+                    "MAL API DoS protection activated - requests may be blocked"
+                )
+            elif rate_info.degraded:
+                self.logger.warning(
+                    f"MAL API rate limiting detected: Status {response.status}"
+                )
+                
+        elif "jikan.moe" in response_url:
+            # Jikan API monitoring  
+            rate_info = self._jikan_rate_limit_adapter.extract_rate_limit_info(response)
+            
+            # Jikan-specific monitoring (no headers available)
+            if rate_info.degraded:
+                self.logger.warning(
+                    "Jikan API rate limiting detected - no precise timing available"
+                )
+    
+    async def calculate_backoff_delay(self, response, attempt: int = 0):
+        """Calculate backoff delay based on the API being used."""
+        if not response:
+            # Generic calculation when no response available
+            import random
+            base_delay = 2 ** attempt
+            jitter = random.uniform(0.1, 0.3) * base_delay
+            return base_delay + jitter
+        
+        response_url = str(response.url) if hasattr(response, 'url') else ""
+        
+        if "myanimelist.net" in response_url:
+            # MAL API backoff
+            rate_info = self._mal_rate_limit_adapter.extract_rate_limit_info(response)
+            strategy = self._mal_rate_limit_adapter.get_strategy()
+            return await strategy.calculate_backoff_delay(rate_info, attempt)
+        elif "jikan.moe" in response_url:
+            # Jikan API backoff
+            rate_info = self._jikan_rate_limit_adapter.extract_rate_limit_info(response)
+            strategy = self._jikan_rate_limit_adapter.get_strategy()
+            return await strategy.calculate_backoff_delay(rate_info, attempt)
+        else:
+            # Generic backoff
+            import random
+            base_delay = 2 ** attempt
+            jitter = random.uniform(0.1, 0.3) * base_delay
+            return base_delay + jitter
 
     async def refresh_access_token(
         self, *, correlation_id: Optional[str] = None

@@ -21,7 +21,61 @@ logger = logging.getLogger(__name__)
 
 
 class BaseClient:
-    """Base client that integrates all error handling components."""
+    """Base client that integrates all error handling components.
+    
+    EXTENSIBLE RATE LIMITING ARCHITECTURE:
+    =====================================
+    
+    This BaseClient provides a clean, extensible architecture for platform-specific
+    rate limiting using the Template Method pattern. Platform-specific clients can
+    override specific hooks to implement their own rate limiting behavior.
+    
+    EXTENSIBLE HOOKS:
+    ----------------
+    Override these methods in platform-specific clients (e.g., AniListClient, MALClient):
+    
+    1. handle_rate_limit_response(response)
+       - Called when a 429 rate limit error occurs
+       - Implement platform-specific backoff logic
+       - Parse platform-specific rate limit headers
+    
+    2. monitor_rate_limits(response) 
+       - Called on every successful response
+       - Parse and log platform-specific rate limit headers
+       - Implement proactive rate limit monitoring
+    
+    3. calculate_backoff_delay(response, attempt)
+       - Calculate platform-specific backoff delays
+       - Implement custom retry strategies
+       - Return delay in seconds (float)
+    
+    EXAMPLE IMPLEMENTATION:
+    ----------------------
+    class MyPlatformClient(BaseClient):
+        async def handle_rate_limit_response(self, response):
+            # Parse MyPlatform-specific headers
+            retry_after = response.headers.get("X-MyPlatform-Retry-After")
+            # Implement MyPlatform-specific backoff
+            await asyncio.sleep(int(retry_after or 60))
+        
+        async def monitor_rate_limits(self, response):
+            # Parse MyPlatform rate limit headers
+            remaining = response.headers.get("X-MyPlatform-Remaining")
+            if remaining and int(remaining) < 10:
+                self.logger.warning("MyPlatform rate limit low")
+        
+        async def calculate_backoff_delay(self, response, attempt):
+            # MyPlatform-specific backoff calculation
+            return min(120, 3 ** attempt)  # Cap at 2 minutes
+    
+    BENEFITS:
+    ---------
+    - BaseClient remains generic and reusable
+    - Each platform handles its own rate limiting quirks  
+    - No hard-coded platform logic in base class
+    - Easy to add new platforms without modifying existing code
+    - Follows SOLID principles (Single Responsibility, Open/Closed)
+    """
 
     def __init__(
         self,
@@ -96,9 +150,10 @@ class BaseClient:
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.request(method, url, **kwargs) as response:
-                        # Record response for rate limit adaptation
+                        # Record response for rate limit adaptation with platform-specific monitoring
+                        await self.monitor_rate_limits(response)
                         rate_limit_manager.record_response(
-                            self.service_name, response.status, 0  # Simple timing
+                            self.service_name, response.status, 0, response  # Include response for header extraction
                         )
 
                         # Parse response
@@ -111,13 +166,20 @@ class BaseClient:
                         else:
                             response_data = await response.text()
 
-                        # Check for HTTP errors
+                        # Check for HTTP errors with AniList-specific rate limiting
                         if response.status >= 400:
                             error_msg = (
                                 f"{self.service_name} API error: {response.status}"
                             )
                             if isinstance(response_data, dict):
                                 error_msg += f" - {response_data.get('error', response_data.get('message', ''))}"
+                            
+                            # Enhanced 429 handling with platform-specific rate limiting
+                            if response.status == 429:
+                                await self.handle_rate_limit_response(response)
+                                # After backoff, retry the request automatically
+                                return await self._request_with_retry(_request, max_retries=2)
+                                
                             self.logger.error(error_msg)
                             raise APIError(error_msg)
 
@@ -575,6 +637,182 @@ class BaseClient:
                 )
 
             raise e
+    
+    # EXTENSIBLE HOOKS FOR PLATFORM-SPECIFIC BEHAVIOR
+    # These methods can be overridden by platform-specific clients
+    
+    async def handle_rate_limit_response(self, response):
+        """Handle platform-specific rate limiting when 429 is encountered.
+        
+        Override this method in platform-specific clients to implement
+        custom rate limiting logic (e.g., AniList, MAL, Kitsu specific handling).
+        
+        Args:
+            response: HTTP response with 429 status
+        """
+        # Default implementation: basic exponential backoff
+        await self._generic_rate_limit_backoff(response)
+    
+    async def monitor_rate_limits(self, response):
+        """Monitor platform-specific rate limit headers for proactive management.
+        
+        Override this method in platform-specific clients to parse and monitor
+        platform-specific rate limit headers (e.g., X-RateLimit-*, Retry-After).
+        
+        Args:
+            response: HTTP response object
+        """
+        # Default implementation: no-op (generic clients don't need monitoring)
+        pass
+    
+    async def calculate_backoff_delay(self, response, attempt: int = 0):
+        """Calculate platform-specific backoff delay.
+        
+        Override this method to implement platform-specific backoff strategies.
+        
+        Args:
+            response: HTTP response object
+            attempt: Current retry attempt number
+            
+        Returns:
+            Delay in seconds (float)
+        """
+        # Default implementation: simple exponential backoff
+        import random
+        base_delay = 2 ** attempt  # 1s, 2s, 4s, etc.
+        jitter = random.uniform(0.1, 0.3) * base_delay
+        return base_delay + jitter
+    
+    async def _generic_rate_limit_backoff(self, response):
+        """Generic rate limiting backoff implementation."""
+        import asyncio
+        
+        # Extract standard Retry-After header if available
+        retry_after = response.headers.get("Retry-After")
+        
+        if retry_after:
+            try:
+                delay = int(retry_after)
+            except ValueError:
+                delay = 60  # Default fallback
+        else:
+            delay = 60  # Default backoff
+            
+        self.logger.warning(
+            f"{self.service_name} rate limit hit. Backing off for {delay}s."
+        )
+        
+        await asyncio.sleep(delay)
+    
+    async def _request_with_retry(self, request_func, max_retries: int = 2):
+        """Execute request with exponential backoff retry logic.
+        
+        Args:
+            request_func: The request function to retry
+            max_retries: Maximum number of retry attempts
+            
+        Returns:
+            Response data
+            
+        Raises:
+            APIError: If all retries are exhausted
+        """
+        import asyncio
+        import random
+        
+        for attempt in range(max_retries + 1):
+            try:
+                return await request_func()
+            except APIError as e:
+                if attempt == max_retries:
+                    # Final attempt failed, re-raise
+                    raise e
+                    
+                if "429" in str(e) or "rate limit" in str(e).lower():
+                    # Use platform-specific backoff calculation
+                    delay = await self.calculate_backoff_delay(None, attempt)
+                    
+                    self.logger.info(
+                        f"Retry attempt {attempt + 1}/{max_retries} after rate limit. "
+                        f"Waiting {delay:.1f}s before retry..."
+                    )
+                    
+                    await asyncio.sleep(delay)
+                else:
+                    # Non-rate-limit error, don't retry
+                    raise e
+
+    async def make_graphql_request(
+        self,
+        url: str,
+        query: str,
+        variables: Dict[str, Any] = None,
+        correlation_id: str = None,
+        priority: int = 1,
+        endpoint: str = "",
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Make GraphQL request with full error handling support.
+        
+        Args:
+            url: GraphQL endpoint URL
+            query: GraphQL query string
+            variables: GraphQL variables
+            correlation_id: Optional correlation ID for tracking
+            priority: Request priority
+            endpoint: Endpoint identifier
+            **kwargs: Additional request parameters
+            
+        Returns:
+            GraphQL response data
+            
+        Raises:
+            APIError: If request fails or GraphQL errors occur
+        """
+        # Prepare GraphQL payload
+        payload = {"query": query}
+        if variables:
+            payload["variables"] = variables
+        
+        # Set GraphQL headers
+        headers = kwargs.get("headers", {})
+        headers.update({
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        })
+        kwargs["headers"] = headers
+        kwargs["json"] = payload
+        
+        # Use enhanced error handling for better observability
+        if correlation_id:
+            result = await self.make_request_with_enhanced_error_handling(
+                url=url,
+                correlation_id=correlation_id, 
+                method="POST",
+                priority=priority,
+                endpoint=endpoint,
+                **kwargs
+            )
+        else:
+            # Generate correlation ID for enhanced error handling
+            import uuid
+            correlation_id = f"graphql-{uuid.uuid4().hex[:8]}"
+            result = await self.make_request_with_enhanced_error_handling(
+                url=url,
+                correlation_id=correlation_id,
+                method="POST",
+                priority=priority,
+                endpoint=endpoint,
+                **kwargs
+            )
+        
+        # Check for GraphQL errors
+        if isinstance(result, dict) and "errors" in result:
+            error_details = result["errors"][0] if result["errors"] else {}
+            error_message = error_details.get("message", "Unknown GraphQL error")
+            raise APIError(f"GraphQL error: {error_message}")
+        
+        return result
 
     async def make_request_with_correlation_chain(
         self,

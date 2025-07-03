@@ -274,13 +274,10 @@ class UniversalSearchParams(BaseModel):
     # DURATION FILTERS
     min_duration: Optional[int] = Field(None, ge=1, description="Minimum episode duration in minutes")
     max_duration: Optional[int] = Field(None, ge=1, description="Maximum episode duration in minutes")
+    duration: Optional[int] = Field(None, ge=1, description="Episode duration in minutes")
     
-    # DATE FILTERS
-    
-    # STUDIO/PRODUCER EXCLUDES
-    studios_exclude: Optional[List[str]] = Field(None, description="Exclude studios")
-    producers_exclude: Optional[List[str]] = Field(None, description="Exclude producers")
-    staff_exclude: Optional[List[str]] = Field(None, description="Exclude staff members")
+    # EPISODE FILTERS
+    episodes: Optional[int] = Field(None, ge=0, description="Episode count")
     
     # RESULT CONTROL
     limit: int = Field(default=20, ge=1, le=100, description="Maximum number of results")
@@ -428,6 +425,21 @@ class UniversalSearchParams(BaseModel):
     
     # KITSU-SPECIFIC PROPERTIES
     kitsu_streamers: Optional[List[str]] = Field(None, description="Kitsu-specific: Streaming platform filters (e.g., ['Crunchyroll', 'Funimation'])")
+    
+    # ANIMESCHEDULE-SPECIFIC PROPERTIES (API v3 verified, all 25 parameters)
+    animeschedule_mt: Optional[str] = Field(None, pattern="^(any|all)$", description="AnimeSchedule-specific: Matching type for filters (any/all, default: all)")
+    animeschedule_st: Optional[str] = Field(None, pattern="^(popularity|score|alphabetic|releaseDate)$", description="AnimeSchedule-specific: Sort type (popularity/score/alphabetic/releaseDate)")
+    animeschedule_streams: Optional[List[str]] = Field(None, description="AnimeSchedule-specific: Streaming platform filters (e.g., ['Crunchyroll', 'Netflix'])")
+    animeschedule_streams_exclude: Optional[List[str]] = Field(None, description="AnimeSchedule-specific: Exclude streaming platforms")
+    animeschedule_sources_exclude: Optional[List[str]] = Field(None, description="AnimeSchedule-specific: Exclude source materials (e.g., ['Manga', 'Light Novel'])")
+    animeschedule_studios_exclude: Optional[List[str]] = Field(None, description="AnimeSchedule-specific: Exclude studios (e.g., ['MAPPA', 'Toei Animation'])")
+    animeschedule_media_types_exclude: Optional[List[str]] = Field(None, description="AnimeSchedule-specific: Exclude media formats (e.g., ['TV', 'Movie', 'OVA'])")
+    animeschedule_airing_statuses_exclude: Optional[List[str]] = Field(None, description="AnimeSchedule-specific: Exclude airing statuses (e.g., ['finished', 'ongoing'])")
+    animeschedule_years_exclude: Optional[List[int]] = Field(None, description="AnimeSchedule-specific: Exclude years")
+    animeschedule_seasons_exclude: Optional[List[str]] = Field(None, description="AnimeSchedule-specific: Exclude seasons (e.g., ['Winter', 'Spring'])")
+    animeschedule_mal_ids: Optional[List[int]] = Field(None, description="AnimeSchedule-specific: Filter by MyAnimeList IDs")
+    animeschedule_anilist_ids: Optional[List[int]] = Field(None, description="AnimeSchedule-specific: Filter by AniList IDs")
+    animeschedule_anidb_ids: Optional[List[int]] = Field(None, description="AnimeSchedule-specific: Filter by AniDB IDs")
     
     @field_validator("sort_order")
     @classmethod
