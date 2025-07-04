@@ -154,10 +154,11 @@ When users make requests, carefully analyze their natural language to extract:
 
 When calling the search_anime tool, you MUST:
 1. Include the original user query text in the 'query' parameter (REQUIRED)
-2. Extract and include relevant structured parameters for enhanced filtering
-3. Use your understanding to make intelligent parameter choices that match the user's intent
+2. For simple genre queries (like "science fiction", "action", "romance"), use ONLY the query parameter and DO NOT extract genre filters
+3. Only extract structured parameters for complex queries with multiple requirements
+4. Use your understanding to make intelligent parameter choices that match the user's intent
 
-**IMPORTANT**: The 'query' field is required and must contain the user's original search text. Always include both the original query AND extracted parameters for the best results."""
+**IMPORTANT**: The 'query' field is required and must contain the user's original search text. For simple searches, rely on semantic search rather than strict filtering."""
 
     async def process_conversation(
         self,
@@ -186,9 +187,10 @@ When calling the search_anime tool, you MUST:
         )
 
         try:
-            # Configure checkpointing
+            # Configure checkpointing with recursion limit
             config: RunnableConfig = {
-                "configurable": {"thread_id": thread_id or session_id}
+                "configurable": {"thread_id": thread_id or session_id},
+                "recursion_limit": 10  # Prevent infinite loops
             }
 
             # Prepare input message with search parameters if provided
@@ -305,9 +307,10 @@ When calling the search_anime tool, you MUST:
         logger.info(f"Streaming conversation for session {session_id}")
 
         try:
-            # Configure checkpointing
+            # Configure checkpointing with recursion limit
             config: RunnableConfig = {
-                "configurable": {"thread_id": thread_id or session_id}
+                "configurable": {"thread_id": thread_id or session_id},
+                "recursion_limit": 10  # Prevent infinite loops
             }
 
             # Prepare input

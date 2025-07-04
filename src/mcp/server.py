@@ -11,6 +11,8 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from fastmcp import FastMCP
+from mcp.server.fastmcp import Context
+from pydantic import BaseModel, Field
 
 from ..config import get_settings
 from ..vector.qdrant_client import QdrantClient
@@ -18,11 +20,133 @@ from ..vector.qdrant_client import QdrantClient
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# Initialize FastMCP server
-mcp = FastMCP("Anime Search Server")
+# Initialize FastMCP server with proper MCP metadata
+mcp = FastMCP(
+    name="Anime Search Server",
+    instructions=(
+        "Comprehensive anime search and discovery server providing semantic search, "
+        "visual similarity matching, and detailed anime metadata. Supports text queries, "
+        "image-based search, and multimodal discovery with advanced filtering options."
+    ),
+    dependencies=[
+        "qdrant-client>=1.11.0",
+        "fastembed>=0.3.0", 
+        "pillow>=10.0.0",
+        "torch>=2.0.0",
+        "transformers>=4.30.0"
+    ]
+)
 
 # Global Qdrant client - initialized in main()
 qdrant_client: Optional[QdrantClient] = None
+
+
+# Pydantic Schema Models for Input Validation
+class SearchAnimeInput(BaseModel):
+    """Input schema for anime search with comprehensive validation."""
+    
+    query: str = Field(
+        description="Natural language search query (e.g., 'romantic comedy school anime')",
+        min_length=1,
+        max_length=500
+    )
+    limit: int = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Maximum number of results to return"
+    )
+    genres: Optional[List[str]] = Field(
+        None,
+        description="List of anime genres to filter by (e.g., ['Action', 'Comedy'])"
+    )
+    year_range: Optional[List[int]] = Field(
+        None,
+        description="Year range as [start_year, end_year] (e.g., [2020, 2023])",
+        min_length=2,
+        max_length=2
+    )
+    anime_types: Optional[List[str]] = Field(
+        None,
+        description="List of anime types (e.g., ['TV', 'Movie', 'OVA'])"
+    )
+    studios: Optional[List[str]] = Field(
+        None,
+        description="List of animation studios (e.g., ['Mappa', 'Studio Ghibli'])"
+    )
+    exclusions: Optional[List[str]] = Field(
+        None,
+        description="List of genres/themes to exclude (e.g., ['Horror', 'Ecchi'])"
+    )
+    mood_keywords: Optional[List[str]] = Field(
+        None,
+        description="List of mood descriptors (e.g., ['dark', 'serious', 'funny'])"
+    )
+
+
+class AnimeDetailsInput(BaseModel):
+    """Input schema for getting anime details."""
+    
+    anime_id: str = Field(
+        description="Unique anime identifier",
+        min_length=1
+    )
+
+
+class SimilarAnimeInput(BaseModel):
+    """Input schema for finding similar anime."""
+    
+    anime_id: str = Field(
+        description="Reference anime ID to find similar anime for",
+        min_length=1
+    )
+    limit: int = Field(
+        default=10,
+        ge=1,
+        le=20,
+        description="Maximum number of similar anime to return"
+    )
+
+
+class ImageSearchInput(BaseModel):
+    """Input schema for image-based anime search."""
+    
+    image_data: str = Field(
+        description="Base64 encoded image data (supports JPG, PNG, WebP formats)",
+        min_length=1
+    )
+    limit: int = Field(
+        default=10,
+        ge=1,
+        le=30,
+        description="Maximum number of results to return"
+    )
+
+
+class MultimodalSearchInput(BaseModel):
+    """Input schema for multimodal anime search."""
+    
+    query: str = Field(
+        description="Text search query (e.g., 'mecha robots fighting')",
+        min_length=1,
+        max_length=500
+    )
+    image_data: Optional[str] = Field(
+        None,
+        description="Optional base64 encoded image for visual similarity"
+    )
+    limit: int = Field(
+        default=10,
+        ge=1,
+        le=25,
+        description="Maximum number of results to return"
+    )
+    text_weight: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="Weight for text similarity (0.0-1.0), default 0.7 means 70% text, 30% image"
+    )
 
 
 def _build_search_filters(
@@ -90,7 +214,76 @@ def _build_search_filters(
     return filters if filters else None
 
 
-@mcp.tool
+@mcp.tool()
+async def search_anime_advanced(
+    search_params: SearchAnimeInput,
+    ctx: Optional[Context] = None,
+) -> List[Dict[str, Any]]:
+    """Search for anime using semantic search with comprehensive validation.
+    
+    Modern MCP implementation using Pydantic schema for input validation.
+    """
+    if not qdrant_client:
+        raise RuntimeError("Qdrant client not initialized")
+
+    # Extract validated parameters
+    query = search_params.query
+    limit = search_params.limit
+    
+    # CRITICAL DEBUG: Parameter validation for advanced search
+    logger.error(f"🔍 MCP ADVANCED SEARCH DEBUG:")
+    logger.error(f"  - search_params object: {search_params}")
+    logger.error(f"  - Raw query: {query!r}")
+    logger.error(f"  - Query type: {type(query)}")
+    logger.error(f"  - Query length: {len(query) if query else 'None'}")
+    logger.error(f"  - Limit: {limit!r}")
+    
+    # Fix empty query issue for advanced search too
+    if not query or not query.strip():
+        logger.error("  - FIXING: Empty query in advanced search, using default")
+        query = "anime"  # Default fallback query
+    
+    # Build filters from validated parameters
+    filters = _build_search_filters(
+        genres=search_params.genres,
+        year_range=search_params.year_range,
+        anime_types=search_params.anime_types,
+        studios=search_params.studios,
+        exclusions=search_params.exclusions,
+        mood_keywords=search_params.mood_keywords,
+    )
+
+    # Use MCP Context for enhanced logging if available
+    if ctx:
+        await ctx.info(f"Starting anime search for: '{query}' (limit: {limit})")
+        if filters:
+            await ctx.debug(f"Applied search filters: {filters}")
+    
+    logger.info(f"Advanced search request: '{query}' (limit: {limit})")
+    if filters:
+        logger.debug(f"Applied filters: {filters}")
+
+    try:
+        # Use enhanced search with filters if available
+        results = await qdrant_client.search(query=query, limit=limit, filters=filters)
+        
+        if ctx:
+            await ctx.info(f"Search completed: found {len(results)} results")
+            
+        logger.info(f"Found {len(results)} results for query: '{query}'")
+        return results
+    except Exception as e:
+        error_msg = f"Search failed: {str(e)}"
+        if ctx:
+            await ctx.error(f"Anime search error: {error_msg}")
+            
+        logger.error(f"Search failed: {e}")
+        logger.error(f"Failed with query: {query!r}, limit: {limit!r}")
+        raise RuntimeError(error_msg)
+
+
+# Keep the original function for backward compatibility
+@mcp.tool()
 async def search_anime(
     query: str,
     limit: int = 10,
@@ -100,6 +293,7 @@ async def search_anime(
     studios: Optional[List[str]] = None,
     exclusions: Optional[List[str]] = None,
     mood_keywords: Optional[List[str]] = None,
+    ctx: Optional[Context] = None,
 ) -> List[Dict[str, Any]]:
     """Search for anime using semantic search with natural language queries.
 
@@ -132,6 +326,27 @@ async def search_anime(
         mood_keywords=mood_keywords,
     )
 
+    # Use MCP Context for enhanced logging if available
+    if ctx:
+        await ctx.info(f"Starting anime search for: '{query}' (limit: {limit})")
+        if filters:
+            await ctx.debug(f"Applied search filters: {filters}")
+    
+    # CRITICAL DEBUG: Parameter validation and debugging
+    logger.error(f"🔍 MCP SEARCH DEBUG - Parameter Analysis:")
+    logger.error(f"  - Raw query: {query!r}")
+    logger.error(f"  - Query type: {type(query)}")
+    logger.error(f"  - Query length: {len(query) if query else 'None'}")
+    logger.error(f"  - Query bool: {bool(query)}")
+    logger.error(f"  - Limit: {limit!r}")
+    logger.error(f"  - Filters: {filters!r}")
+    logger.error(f"  - Process ID: {__import__('os').getpid()}")
+    
+    # Fix empty query issue
+    if not query or not query.strip():
+        logger.error("  - FIXING: Empty query detected, using default")
+        query = "anime"  # Default fallback query
+    
     logger.info(f"Search request: '{query}' (limit: {limit})")
     if filters:
         logger.debug(f"Applied filters: {filters}")
@@ -139,16 +354,24 @@ async def search_anime(
     try:
         # Use enhanced search with filters if available
         results = await qdrant_client.search(query=query, limit=limit, filters=filters)
+        
+        if ctx:
+            await ctx.info(f"Search completed: found {len(results)} results")
+            
         logger.info(f"Found {len(results)} results for query: '{query}'")
         return results
     except Exception as e:
+        error_msg = f"Search failed: {str(e)}"
+        if ctx:
+            await ctx.error(f"Anime search error: {error_msg}")
+            
         logger.error(f"Search failed: {e}")
         logger.error(f"Failed with query: {query!r}, limit: {limit!r}")
-        raise RuntimeError(f"Search failed: {str(e)}")
+        raise RuntimeError(error_msg)
 
 
-@mcp.tool
-async def get_anime_details(anime_id: str) -> Dict[str, Any]:
+@mcp.tool()
+async def get_anime_details(anime_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
     """Get detailed information about a specific anime by ID.
 
     Args:
@@ -160,22 +383,35 @@ async def get_anime_details(anime_id: str) -> Dict[str, Any]:
     if not qdrant_client:
         raise RuntimeError("Qdrant client not initialized")
 
+    if ctx:
+        await ctx.info(f"Fetching details for anime ID: {anime_id}")
+        
     logger.info(f"MCP details request for anime: {anime_id}")
 
     try:
         anime = await qdrant_client.get_by_id(anime_id)
         if not anime:
-            raise ValueError(f"Anime not found: {anime_id}")
+            error_msg = f"Anime not found: {anime_id}"
+            if ctx:
+                await ctx.warning(error_msg)
+            raise ValueError(error_msg)
 
-        logger.info(f"Retrieved details for anime: {anime.get('title', 'Unknown')}")
+        title = anime.get('title', 'Unknown')
+        if ctx:
+            await ctx.info(f"Successfully retrieved details for: {title}")
+            
+        logger.info(f"Retrieved details for anime: {title}")
         return anime
     except Exception as e:
+        error_msg = f"Failed to get anime details: {str(e)}"
+        if ctx:
+            await ctx.error(error_msg)
         logger.error(f"Failed to get anime details: {e}")
-        raise RuntimeError(f"Failed to get anime details: {str(e)}")
+        raise RuntimeError(error_msg)
 
 
-@mcp.tool
-async def find_similar_anime(anime_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+@mcp.tool()
+async def find_similar_anime(anime_id: str, limit: int = 10, ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
     """Find anime similar to a given anime by ID.
 
     Args:
@@ -371,6 +607,98 @@ async def search_multimodal_anime(
         raise RuntimeError(f"Multimodal search failed: {str(e)}")
 
 
+# MCP Prompts for Anime Discovery
+@mcp.prompt()
+def anime_discovery_prompt(
+    genre: str = "any",
+    mood: str = "any", 
+    content_type: str = "any"
+) -> str:
+    """Create an optimized prompt for anime discovery based on preferences.
+    
+    Args:
+        genre: Preferred anime genre (e.g., "action", "romance", "slice of life")
+        mood: Desired mood (e.g., "lighthearted", "dark", "emotional", "exciting")
+        content_type: Type of content (e.g., "TV series", "movie", "OVA")
+    
+    Returns:
+        Optimized search prompt for anime discovery
+    """
+    prompt_parts = ["Find anime recommendations"]
+    
+    if genre != "any":
+        prompt_parts.append(f"in the {genre} genre")
+    
+    if mood != "any":
+        prompt_parts.append(f"with a {mood} mood/tone")
+        
+    if content_type != "any":
+        prompt_parts.append(f"specifically {content_type}")
+    
+    prompt_parts.append("that would be engaging and well-suited for the specified preferences")
+    
+    return " ".join(prompt_parts) + "."
+
+
+@mcp.prompt()
+def anime_comparison_prompt(anime_title: str) -> str:
+    """Create a prompt for finding anime similar to a specific title.
+    
+    Args:
+        anime_title: Name of the reference anime
+        
+    Returns:
+        Prompt for finding similar anime
+    """
+    return (
+        f"Find anime similar to '{anime_title}' in terms of themes, genre, "
+        f"art style, or storytelling approach. Include brief explanations of "
+        f"why each recommendation is similar."
+    )
+
+
+@mcp.prompt()
+def anime_analysis_prompt(anime_title: str, analysis_type: str = "overview") -> str:
+    """Create a prompt for analyzing anime characteristics.
+    
+    Args:
+        anime_title: Name of the anime to analyze
+        analysis_type: Type of analysis ("overview", "themes", "characters", "production")
+        
+    Returns:
+        Prompt for anime analysis
+    """
+    analysis_prompts = {
+        "overview": f"Provide a comprehensive overview of '{anime_title}' including plot, characters, and overall appeal.",
+        "themes": f"Analyze the major themes and deeper meanings in '{anime_title}'.",
+        "characters": f"Analyze the main characters in '{anime_title}' and their development throughout the series.",
+        "production": f"Discuss the production quality, animation style, and technical aspects of '{anime_title}'."
+    }
+    
+    return analysis_prompts.get(
+        analysis_type, 
+        f"Analyze '{anime_title}' focusing on {analysis_type}"
+    )
+
+
+@mcp.prompt()
+def seasonal_anime_prompt(year: int, season: str) -> str:
+    """Create a prompt for discovering seasonal anime.
+    
+    Args:
+        year: Year to search (e.g., 2024)
+        season: Season to search ("spring", "summer", "fall", "winter")
+        
+    Returns:
+        Prompt for seasonal anime discovery
+    """
+    return (
+        f"Find the best anime from {season.title()} {year}. Include both "
+        f"popular titles and hidden gems from that season, with brief "
+        f"descriptions of what makes each worth watching."
+    )
+
+
 @mcp.resource("anime://database/stats")
 async def database_stats() -> str:
     """Provides current anime database statistics and health information."""
@@ -441,8 +769,19 @@ async def initialize_mcp_server():
 
     logger.info("Initializing Anime Search MCP Server")
 
+    # DEBUG: Log process and configuration details
+    logger.error(f"🔍 MCP SERVER INIT DEBUG:")
+    logger.error(f"  - Process ID: {__import__('os').getpid()}")
+    logger.error(f"  - Settings: {settings}")
+    logger.error(f"  - Qdrant URL: {settings.qdrant_url}")
+    logger.error(f"  - Collection: {settings.qdrant_collection_name}")
+
     # Initialize Qdrant client
     qdrant_client = QdrantClient(settings=settings)
+    
+    # DEBUG: Log client details after initialization
+    logger.error(f"  - QdrantClient created: {qdrant_client}")
+    logger.error(f"  - Client ID: {id(qdrant_client)}")
 
     # Verify connection
     if not await qdrant_client.health_check():
@@ -450,6 +789,24 @@ async def initialize_mcp_server():
             "Qdrant connection failed - MCP server may have limited functionality"
         )
         raise RuntimeError("Cannot initialize MCP server without database connection")
+
+    # DEBUG: Test search capability during initialization
+    try:
+        test_results = await qdrant_client.search(query="test", limit=1)
+        logger.error(f"  - Test search results: {len(test_results)} items")
+        if test_results:
+            logger.error(f"  - Sample result: {test_results[0].get('title', 'No title')}")
+        
+        # CRITICAL TEST: Compare embeddings between processes
+        test_embedding = qdrant_client._create_embedding("science fiction")
+        logger.error(f"  - 'science fiction' embedding (first 5 dims): {test_embedding[:5] if test_embedding else None}")
+        
+        # Test the exact failing query
+        scifi_results = await qdrant_client.search(query="science fiction", limit=1)
+        logger.error(f"  - 'science fiction' search results: {len(scifi_results)} items")
+        
+    except Exception as test_error:
+        logger.error(f"  - Test search failed: {test_error}")
 
     logger.info("Qdrant connection verified - MCP server ready")
 
