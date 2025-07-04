@@ -118,67 +118,25 @@ class AniSearchScraper(BaseScraper):
         """Extract anime-specific data from AniSearch page."""
         data = {}
 
-        # Title - multiple possible selectors
-        title_selectors = [
-            ("h1", {"class": "anime-title"}),
-            ("h1", {}),
-            (".anime-title", {}),
-            ("h2", {"class": "title"}),
-        ]
-
-        title = None
-        for tag, attrs in title_selectors:
-            if "." in tag:
-                title_elem = soup.select_one(tag)
-            else:
-                title_elem = soup.find(tag, attrs)
-
-            if title_elem:
-                title = self._clean_text(title_elem.text)
-                break
-
-        data["title"] = title
-
-        # Description from various locations
-        description_selectors = [
-            (".anime-description p", {}),
-            (".description", {}),
-            (".synopsis", {}),
-            ("div", {"class": "anime-description"}),
-        ]
-
-        description = None
-        for selector, attrs in description_selectors:
-            if "." in selector or " " in selector:
-                desc_elem = soup.select_one(selector)
-            else:
-                desc_elem = soup.find(selector, attrs)
-
-            if desc_elem:
-                description = self._clean_text(desc_elem.text)
-                break
-
+        # Extract description/synopsis from content areas
+        description = self._extract_actual_synopsis(soup)
         data["description"] = description
 
         # Extract metadata from header elements
         header_data = self._extract_header_data(soup)
         data.update(header_data)
 
+        # Extract title variants and primary title
+        title_data = self._extract_title_variants(soup)
+        data.update(title_data)
+        
         # Extract enhanced data from JSON-LD and OpenGraph
         enhanced_data = self._extract_enhanced_anisearch_data(soup)
         data.update(enhanced_data)
 
-        # Extract title variants and synonyms
-        title_data = self._extract_title_variants(soup)
-        data.update(title_data)
-
         # Extract additional missing properties
         additional_data = self._extract_additional_properties(soup)
         data.update(additional_data)
-
-        # Extract metadata from info items (legacy fallback)
-        info_data = self._extract_info_items(soup)
-        data.update(info_data)
 
         # Extract genres
         genres = self._extract_genres(soup)
@@ -191,51 +149,6 @@ class AniSearchScraper(BaseScraper):
 
         return data
 
-    def _extract_info_items(self, soup) -> Dict[str, Any]:
-        """Extract information from AniSearch info items."""
-        info_data = {}
-
-        # Look for info items in various locations
-        info_containers = [
-            soup.find("div", class_="anime-info"),
-            soup.find("div", class_="info-box"),
-            soup.find(".anime-details"),
-            soup.find(".details"),
-        ]
-
-        for container in info_containers:
-            if not container:
-                continue
-
-            # Find info items
-            info_items = container.find_all("div", class_="info-item")
-
-            for item in info_items:
-                label_elem = item.find("span", class_="label") or item.find(".label")
-                value_elem = item.find("span", class_="value") or item.find(".value")
-
-                if label_elem and value_elem:
-                    label = self._clean_text(label_elem.text).lower().replace(":", "")
-                    value = self._clean_text(value_elem.text)
-
-                    # Map German labels to English
-                    if label in ["typ", "type"]:
-                        info_data["type"] = value
-                    elif label in ["episoden", "episodes"]:
-                        info_data["episodes"] = value
-                    elif label in ["status"]:
-                        info_data["status"] = value
-                    elif label in ["jahr", "year"]:
-                        info_data["year"] = value
-                    elif label in ["studio", "studios"]:
-                        info_data["studio"] = value
-                    elif label in ["genre", "genres"]:
-                        info_data["genre"] = value
-
-            if info_data:  # If we found data, break
-                break
-
-        return info_data
 
     def _extract_genres(self, soup) -> List[str]:
         """Extract genres/tags from the page."""
@@ -336,11 +249,13 @@ class AniSearchScraper(BaseScraper):
                 if status:
                     data["status"] = status
                     
-        # Enhanced staff extraction fallback (for anime without "Staff:" header)
+        # Enhanced staff extraction fallback only for .creators selector
         if not data.get("staff"):
-            enhanced_staff = self._extract_staff_from_creators_selector(soup)
-            if enhanced_staff:
-                data["staff"] = enhanced_staff
+            creators_elements = soup.select(".creators")
+            if creators_elements:
+                enhanced_staff = self._extract_staff_from_creators_selector(soup)
+                if enhanced_staff:
+                    data["staff"] = enhanced_staff
                     
         return data
 
@@ -417,22 +332,6 @@ class AniSearchScraper(BaseScraper):
                             "url": full_href,
                             "role": "Creator"
                         })
-        
-        # Also try finding all person links anywhere on the page (fallback)
-        if not staff:
-            all_person_links = soup.find_all("a", href=lambda href: href and "person/" in href)
-            for link in all_person_links[:10]:  # Limit to first 10 to avoid noise
-                staff_name = self._clean_text(link.text)
-                if staff_name and len(staff_name.split()) <= 3:  # Reasonable name length
-                    full_href = link.get("href", "")
-                    if not full_href.startswith('http'):
-                        full_href = f"{self.base_url}/{full_href}"
-                    
-                    staff.append({
-                        "name": staff_name,
-                        "url": full_href,
-                        "role": "Staff"
-                    })
         
         return staff
 
@@ -578,8 +477,22 @@ class AniSearchScraper(BaseScraper):
             return "UNKNOWN"
 
     def _extract_title_variants(self, soup) -> Dict[str, Any]:
-        """Extract native title and synonyms from AniSearch page."""
+        """Extract primary title, native title and synonyms from AniSearch page."""
         data = {}
+        
+        # Primary title from h1 or OpenGraph
+        primary_title = None
+        h1_elem = soup.find("h1")
+        if h1_elem:
+            primary_title = self._clean_text(h1_elem.text)
+        
+        # Fallback to OpenGraph title
+        if not primary_title:
+            og_title = soup.find("meta", property="og:title")
+            if og_title:
+                primary_title = og_title.get("content", "")
+        
+        data["title"] = primary_title
         
         # Find title elements that are likely anime titles (not character names)
         title_elements = soup.find_all(['div', 'span'], class_='title')
@@ -610,9 +523,6 @@ class AniSearchScraper(BaseScraper):
             has_japanese = any(ord(char) > 127 for char in title_text)
             if has_japanese and not native_title:
                 native_title = title_text
-            elif not has_japanese and not english_title and ":" in title_text:
-                # Titles with colons are often the full English title
-                english_title = title_text
             elif not has_japanese and not english_title:
                 english_title = title_text
         
@@ -621,20 +531,20 @@ class AniSearchScraper(BaseScraper):
             data["title_native"] = native_title
             
         # Set English title if different from main title
-        current_title = data.get("title", "")
-        main_title_clean = current_title.replace(" (1995)", "").replace(" (1996)", "").replace(" (1997)", "").replace(" (2002)", "")
-        if english_title and english_title != main_title_clean:
+        import re
+        main_title_clean = re.sub(r'\s*\(\d{4}\)\s*$', '', primary_title or '') if primary_title else ''
+        if english_title and english_title != main_title_clean and english_title != primary_title:
             data["title_english"] = english_title
             
         # Create synonyms list (exclude main, native, and English titles)
-        exclude_titles = {main_title_clean, native_title, english_title, current_title}
+        exclude_titles = {main_title_clean, native_title, english_title, primary_title}
         
         synonyms = []
         for title in anime_titles:
             # Clean up title and check if it's a valid synonym
             if title not in exclude_titles and title:
                 # Skip obvious non-synonym titles
-                skip_patterns = [" - op:", "cm gekijou", "(1997)", "kimi to ita", "opening", "ending"]
+                skip_patterns = [" - op:", "cm gekijou", "opening", "ending"]
                 if not any(skip in title.lower() for skip in skip_patterns):
                     synonyms.append(title)
         
@@ -678,18 +588,11 @@ class AniSearchScraper(BaseScraper):
 
     def _extract_duration(self, soup) -> Optional[str]:
         """Extract episode duration from page text."""
-        # Look for duration text patterns
-        duration_patterns = [r"(\d+)\s*min", r"(\d+)\s*minutes"]
-        
-        for text in soup.find_all(string=True):
-            text_content = text.strip()
-            if "min" in text_content.lower():
-                import re
-                for pattern in duration_patterns:
-                    match = re.search(pattern, text_content, re.IGNORECASE)
-                    if match:
-                        return f"{match.group(1)} min"
-        return None
+        import re
+        # Look for duration text patterns in page text
+        page_text = soup.get_text()
+        match = re.search(r'(\d+)\s*min', page_text, re.IGNORECASE)
+        return f"{match.group(1)} min" if match else None
 
     def _get_episode_count_from_json(self, soup) -> Optional[str]:
         """Get episode count from JSON-LD if not already extracted."""
@@ -765,5 +668,27 @@ class AniSearchScraper(BaseScraper):
                     match = re.search(pattern, text_content, re.IGNORECASE)
                     if match:
                         return match.group(0)
+        
+        return None
+
+    def _extract_actual_synopsis(self, soup) -> Optional[str]:
+        """Extract actual anime synopsis from textblock details-text with lang=en."""
+        # Look for the exact element: div with lang="en" and class="textblock details-text"
+        synopsis_element = soup.find('div', {'lang': 'en', 'class': 'textblock details-text'})
+        
+        if synopsis_element:
+            text = self._clean_text(synopsis_element.text)
+            
+            if len(text) > 50:  # Make sure it's substantial
+                # Clean up the text by removing technical annotations
+                end_markers = ['annotation:', 'source:', 'note:', 'episodes were later']
+                clean_text = text
+                
+                for marker in end_markers:
+                    if marker.lower() in text.lower():
+                        clean_text = text[:text.lower().find(marker.lower())].strip()
+                        break
+                
+                return clean_text
         
         return None

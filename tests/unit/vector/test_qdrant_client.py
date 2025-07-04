@@ -622,7 +622,7 @@ class TestQdrantClientAdditionalCoverage:
             mock_sdk.return_value = mock_qdrant
             
             mock_point = MagicMock()
-            mock_point.vector = {"image": [0.1] * 512}
+            mock_point.vector = {"picture": [0.1] * 512}
             mock_qdrant.retrieve.return_value = [mock_point]
             
             mock_hit = MagicMock()
@@ -1330,7 +1330,7 @@ class TestQdrantClientFullCoverage:
             mock_sdk.return_value = mock_qdrant
             
             mock_point = MagicMock()
-            mock_point.vector = {"image": [0.0] * 512}  # All zeros
+            mock_point.vector = {"picture": [0.0] * 512}  # All zeros
             mock_qdrant.retrieve.return_value = [mock_point]
             
             client = QdrantClient()
@@ -1456,7 +1456,7 @@ class TestQdrantClientFullCoverage:
             
             # Mock collection info with multi-vector config
             mock_collection = MagicMock()
-            mock_vectors_config = {"text": MagicMock(), "image": MagicMock()}
+            mock_vectors_config = {"text": MagicMock(), "picture": MagicMock()}
             mock_collection.config.params.vectors = mock_vectors_config
             mock_qdrant.get_collection.return_value = mock_collection
             

@@ -1,7 +1,7 @@
 """Tests for Qdrant collection migration to multi-vector support.
 
 This module tests the migration process from single-vector (text-only) to
-multi-vector (text + image) collections while preserving all existing data.
+multi-vector (text + picture + thumbnail) collections while preserving all existing data.
 
 Following TDD approach: tests written first to define expected behavior.
 """

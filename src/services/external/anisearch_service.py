@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from ...integrations.error_handling import ErrorContext
-from ...integrations.scrapers.extractors.anisearch import AniSearchScraper
+from ...integrations.scrapers.extractors.anisearch_scraper import AniSearchScraper
 from .base_service import BaseExternalService
 
 logger = logging.getLogger(__name__)

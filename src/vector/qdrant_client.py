@@ -534,7 +534,7 @@ class QdrantClient:
                 query_vector = NamedVector(
                     name="text",
                     vector=reference_vector.get(
-                        "text", reference_vector.get("image", [])
+                        "text", reference_vector.get("picture", [])
                     ),
                 )
             else:
@@ -763,13 +763,14 @@ class QdrantClient:
             return False
 
     async def search_by_image(
-        self, image_data: str, limit: int = 10
+        self, image_data: str, limit: int = 10, use_combined_vectors: bool = True
     ) -> List[Dict[str, Any]]:
-        """Search for anime by image similarity.
+        """Search for anime by image similarity using comprehensive visual search.
 
         Args:
             image_data: Base64 encoded image data
             limit: Maximum number of results
+            use_combined_vectors: If True, combines picture and thumbnail vectors for better accuracy
 
         Returns:
             List of anime with visual similarity scores
@@ -787,27 +788,104 @@ class QdrantClient:
 
             loop = asyncio.get_event_loop()
 
-            # Search using image vector
-            search_result = await loop.run_in_executor(
-                None,
-                lambda: self.client.search(
-                    collection_name=self.collection_name,
-                    query_vector=NamedVector(name="image", vector=image_embedding),
-                    limit=limit,
-                    with_payload=True,
-                    with_vectors=False,
-                ),
-            )
+            if use_combined_vectors:
+                # Comprehensive search: combine picture and thumbnail results
+                # Search picture vectors (main/cover images)
+                picture_results = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.search(
+                        collection_name=self.collection_name,
+                        query_vector=NamedVector(name="picture", vector=image_embedding),
+                        limit=limit * 2,  # Get more for fusion
+                        with_payload=True,
+                        with_vectors=False,
+                    ),
+                )
 
-            # Format results
-            results = []
-            for hit in search_result:
-                result = dict(hit.payload)
-                result["visual_similarity_score"] = hit.score
-                result["_id"] = hit.id
-                results.append(result)
+                # Search thumbnail vectors  
+                thumbnail_results = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.search(
+                        collection_name=self.collection_name,
+                        query_vector=NamedVector(name="thumbnail", vector=image_embedding),
+                        limit=limit * 2,  # Get more for fusion
+                        with_payload=True,
+                        with_vectors=False,
+                    ),
+                )
 
-            return results
+                # Combine results with weighted scoring (favor picture over thumbnail)
+                picture_scores = {
+                    hit.payload.get("anime_id", hit.id): hit.score 
+                    for hit in picture_results
+                }
+                thumbnail_scores = {
+                    hit.payload.get("anime_id", hit.id): hit.score 
+                    for hit in thumbnail_results
+                }
+
+                # Weighted combination: 70% picture, 30% thumbnail
+                combined_results = {}
+                all_anime_ids = set(picture_scores.keys()) | set(thumbnail_scores.keys())
+                
+                for anime_id in all_anime_ids:
+                    picture_score = picture_scores.get(anime_id, 0.0)
+                    thumbnail_score = thumbnail_scores.get(anime_id, 0.0)
+                    
+                    # Combined score with higher weight on picture
+                    if picture_score > 0 or thumbnail_score > 0:
+                        combined_score = 0.7 * picture_score + 0.3 * thumbnail_score
+                        combined_results[anime_id] = combined_score
+
+                # Sort by combined score and get top results
+                sorted_anime_ids = sorted(
+                    combined_results.keys(), 
+                    key=lambda x: combined_results[x], 
+                    reverse=True
+                )[:limit]
+
+                # Get full anime data for results
+                results = []
+                for anime_id in sorted_anime_ids:
+                    # Find the anime data from either result set
+                    anime_data = None
+                    for hit in picture_results + thumbnail_results:
+                        if (hit.payload.get("anime_id", hit.id) == anime_id):
+                            anime_data = dict(hit.payload)
+                            break
+                    
+                    if anime_data:
+                        anime_data["visual_similarity_score"] = combined_results[anime_id]
+                        anime_data["picture_score"] = picture_scores.get(anime_id, 0.0)
+                        anime_data["thumbnail_score"] = thumbnail_scores.get(anime_id, 0.0)
+                        anime_data["_id"] = anime_id
+                        results.append(anime_data)
+
+                logger.info(f"Combined image search: {len(picture_results)} picture + {len(thumbnail_results)} thumbnail = {len(results)} final results")
+                return results
+
+            else:
+                # Simple search using only picture vector
+                search_result = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.search(
+                        collection_name=self.collection_name,
+                        query_vector=NamedVector(name="picture", vector=image_embedding),
+                        limit=limit,
+                        with_payload=True,
+                        with_vectors=False,
+                    ),
+                )
+
+                # Format results
+                results = []
+                for hit in search_result:
+                    result = dict(hit.payload)
+                    result["visual_similarity_score"] = hit.score
+                    result["_id"] = hit.id
+                    results.append(result)
+
+                return results
 
         except Exception as e:
             logger.error(f"Image search failed: {e}")
@@ -959,8 +1037,8 @@ class QdrantClient:
 
             # Extract image vector
             reference_vectors = reference_point[0].vector
-            if isinstance(reference_vectors, dict) and "image" in reference_vectors:
-                image_vector = reference_vectors["image"]
+            if isinstance(reference_vectors, dict) and "picture" in reference_vectors:
+                image_vector = reference_vectors["picture"]
                 # Check if image vector is all zeros (no image processed)
                 if all(v == 0.0 for v in image_vector):
                     logger.warning(
@@ -968,7 +1046,7 @@ class QdrantClient:
                     )
                     return []
             else:
-                logger.warning(f"No image vector found for anime: {anime_id}")
+                logger.warning(f"No picture vector found for anime: {anime_id}")
                 return []
 
             # Filter to exclude the reference anime itself
@@ -978,12 +1056,12 @@ class QdrantClient:
                 ]
             )
 
-            # Search using image vector
+            # Search using picture vector
             search_result = await loop.run_in_executor(
                 None,
                 lambda: self.client.search(
                     collection_name=self.collection_name,
-                    query_vector=NamedVector(name="image", vector=image_vector),
+                    query_vector=NamedVector(name="picture", vector=image_vector),
                     query_filter=filter_out_self,
                     limit=limit,
                     with_payload=True,
@@ -1040,7 +1118,7 @@ class QdrantClient:
             if (
                 isinstance(vectors_config, dict)
                 and "text" in vectors_config
-                and "image" in vectors_config
+                and "picture" in vectors_config
             ):
                 result["already_migrated"] = True
                 result["migration_successful"] = True
@@ -1116,7 +1194,10 @@ class QdrantClient:
             # Create new multi-vector collection
             multi_vector_config = {
                 "text": VectorParams(size=self._vector_size, distance=Distance.COSINE),
-                "image": VectorParams(
+                "picture": VectorParams(
+                    size=self._image_vector_size, distance=Distance.COSINE
+                ),
+                "thumbnail": VectorParams(
                     size=self._image_vector_size, distance=Distance.COSINE
                 ),
             }
@@ -1133,10 +1214,11 @@ class QdrantClient:
             if all_points:
                 migrated_points = []
                 for point in all_points:
-                    # Create named vectors - text from existing vector, zero image vector
+                    # Create named vectors - text from existing vector, zero picture/thumbnail vectors
                     named_vectors = {
                         "text": point.vector,
-                        "image": [0.0] * self._image_vector_size,
+                        "picture": [0.0] * self._image_vector_size,
+                        "thumbnail": [0.0] * self._image_vector_size,
                     }
 
                     migrated_points.append(

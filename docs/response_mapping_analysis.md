@@ -6,13 +6,13 @@ Based on analysis of anime-offline-database and external API sources, here's the
 
 ### Core Identity Properties
 
-| Universal Property | Offline DB      | MAL API v2 ✅                      | MAL/Jikan ✅          | AniList ✅         | Kitsu ✅                            | AniDB ✅                           | Anime-Planet ✅                 | AnimeSchedule ✅               | AniSearch ✅              |
-| ------------------ | --------------- | ---------------------------------- | --------------------- | ------------------ | ----------------------------------- | ---------------------------------- | ------------------------------- | ------------------------------ | ------------------------- |
-| **id**             | (generated)     | `id` ✅                            | `mal_id` ✅           | `id` ✅            | `id` ✅                             | `@id` ✅                           | `url` ✅                        | `id` ✅                        | `anime_id` ✅             |
-| **title**          | `title` ✅      | `title` ✅                         | `title` ✅            | `title.romaji` ✅  | `attributes.canonicalTitle` ✅      | `titles.title[@type='main']` ✅    | `json_ld.name` ✅               | `title` ✅                     | `og:title` ✅             |
-| **title_english**  | (in synonyms)   | `alternative_titles.en` ✅         | `title_english` ✅    | `title.english` ✅ | `attributes.titles.en` ✅           | `titles.title[@xml:lang='en']` ✅  | `json_ld.name` (English) ✅     | `title` _(main is English)_ ✅ | `og:title` (localized) ✅ |
-| **title_native**   | (in synonyms)   | `alternative_titles.ja` ✅         | `title_japanese` ✅   | `title.native` ✅  | `attributes.titles.ja_jp` ✅        | `titles.title[@xml:lang='ja']` ✅  | `alt titles (native)` ✅        | `names.native` ✅              | `json_ld.name` ✅         |
-| **synonyms**       | `synonyms[]` ✅ | `alternative_titles.synonyms[]` ✅ | `title_synonyms[]` ✅ | `synonyms[]` ✅    | `attributes.abbreviatedTitles[]` ✅ | `titles.title[@type='synonym']` ✅ | `alt titles (romaji/native)` ✅ | `names.synonyms[]` ✅          | `.synonyms` ✅            |
+| Universal Property | Offline DB      | MAL API v2 ✅                      | MAL/Jikan ✅          | AniList ✅         | Kitsu ✅                            | AniDB ✅                           | Anime-Planet ✅                 | AnimeSchedule ✅               | AniSearch ✅                        |
+| ------------------ | --------------- | ---------------------------------- | --------------------- | ------------------ | ----------------------------------- | ---------------------------------- | ------------------------------- | ------------------------------ | ----------------------------------- |
+| **id**             | (generated)     | `id` ✅                            | `mal_id` ✅           | `id` ✅            | `id` ✅                             | `@id` ✅                           | `url` ✅                        | `id` ✅                        | `anime_id` ✅                       |
+| **title**          | `title` ✅      | `title` ✅                         | `title` ✅            | `title.romaji` ✅  | `attributes.canonicalTitle` ✅      | `titles.title[@type='main']` ✅    | `json_ld.name` ✅               | `title` ✅                     | `og:title` ✅                       |
+| **title_english**  | (in synonyms)   | `alternative_titles.en` ✅         | `title_english` ✅    | `title.english` ✅ | `attributes.titles.en` ✅           | `titles.title[@xml:lang='en']` ✅  | `json_ld.name` (English) ✅     | `title` _(main is English)_ ✅ | `og:title` (localized) ✅           |
+| **title_native**   | (in synonyms)   | `alternative_titles.ja` ✅         | `title_japanese` ✅   | `title.native` ✅  | `attributes.titles.ja_jp` ✅        | `titles.title[@xml:lang='ja']` ✅  | `alt titles (native)` ✅        | `names.native` ✅              | `class="title"` (Japanese chars) ✅ |
+| **synonyms**       | `synonyms[]` ✅ | `alternative_titles.synonyms[]` ✅ | `title_synonyms[]` ✅ | `synonyms[]` ✅    | `attributes.abbreviatedTitles[]` ✅ | `titles.title[@type='synonym']` ✅ | `alt titles (romaji/native)` ✅ | `names.synonyms[]` ✅          | `class="title"` (filtered) ✅       |
 
 ### Content Classification
 
@@ -20,7 +20,7 @@ Based on analysis of anime-offline-database and external API sources, here's the
 | ------------------ | ------------------- | ----------------------------- | ------------- | ------------- | ----------------------------- | ---------------------------- | ----------------------------- | ---------------------- | ---------------------------- |
 | **type/format**    | `type` ✅           | `media_type` ✅               | `type` ✅     | `format` ✅   | `attributes.subtype` ✅       | `type` ✅                    | `json_ld.@type` ✅            | `mediaTypes[].name` ✅ | `og:type` ✅                 |
 | **episodes**       | `episodes` ✅       | `num_episodes` ✅             | `episodes` ✅ | `episodes` ✅ | `attributes.episodeCount` ✅  | `episodecount` ✅            | `json_ld.numberOfEpisodes` ✅ | `episodes` ✅          | `numberOfEpisodes` ✅        |
-| **duration**       | `duration.value` ✅ | `average_episode_duration` ✅ | `duration` ✅ | `duration` ✅ | `attributes.episodeLength` ✅ | (via episodes[].length) ✅   | ❌                            | `lengthMin` ✅         | ❌                           |
+| **duration**       | `duration.value` ✅ | `average_episode_duration` ✅ | `duration` ✅ | `duration` ✅ | `attributes.episodeLength` ✅ | (via episodes[].length) ✅   | ❌                            | `lengthMin` ✅         | `regex: \d+ min` ✅          |
 | **status**         | `status` ✅         | `status` ✅                   | `status` ✅   | `status` ✅   | `attributes.status` ✅        | (startDate+endDate logic) ✅ | (startDate+endDate logic) ✅  | `status` ✅            | (startDate+endDate logic) ✅ |
 | **rating**         | ❌                  | `rating` ✅                   | `rating` ✅   | ❌            | `attributes.ageRating` ✅     | ❌                           | ❌                            | ❌                     | ❌                           |
 | **nsfw**           | ❌                  | `nsfw` ✅                     | ❌            | `isAdult` ✅  | `attributes.nsfw` ✅          | `@restricted` ✅             | ❌                            | ❌                     | ❌                           |
@@ -38,18 +38,18 @@ Based on analysis of anime-offline-database and external API sources, here's the
 
 ### Format/Type Values Mapping (VERIFIED from Schema Documentation)
 
-| Universal Format | Offline DB   | MAL API v2 ✅ | MAL/Jikan ✅ | AniList ✅    | Kitsu ✅     | AniDB ✅        | Anime-Planet ✅ | AnimeSchedule ✅ | AniSearch ✅       |
-| ---------------- | ------------ | ------------- | ------------ | ------------- | ------------ | --------------- | --------------- | ---------------- | ------------------ |
-| **TV**           | `TV` ✅      | `tv` ✅       | `TV` ✅      | `TV` ✅       | `TV` ✅      | `TV Series` ✅  | `TVSeries` ✅   | `TV` ✅          | `video.tv_show` ✅ |
-| **TV_SHORT**     | ❌           | ❌            | ❌           | `TV_SHORT` ✅ | ❌           | ❌              | ❌              | ❌               | ❌                 |
-| **MOVIE**        | `MOVIE` ✅   | `movie` ✅    | `Movie` ✅   | `MOVIE` ✅    | `movie` ✅   | `Movie` ✅      | `Movie` ✅      | `Movie` ✅       | `video.movie` ✅   |
-| **SPECIAL**      | `SPECIAL` ✅ | `special` ✅  | `Special` ✅ | `SPECIAL` ✅  | `special` ✅ | `TV Special` ✅ | ❌              | `Special` ✅     | ❌                 |
-| **OVA**          | `OVA` ✅     | `ova` ✅      | `OVA` ✅     | `OVA` ✅      | `OVA` ✅     | `OVA` ✅        | ❌              | `OVA` ✅         | ❌                 |
-| **ONA**          | `ONA` ✅     | `ona` ✅      | `ONA` ✅     | `ONA` ✅      | `ONA` ✅     | `Web` ✅        | ❌              | ❌               | ❌                 |
-| **MUSIC**        | ❌           | `music` ✅    | ❌           | `MUSIC` ✅    | `music` ✅   | ❌              | ❌              | ❌               | ❌                 |
-| **TV_SPECIAL**   | ❌           | `tv_special` ✅| ❌          | ❌            | ❌           | ❌              | ❌              | ❌               | ❌                 |
-| **MANGA**        | ❌           | ❌            | ❌           | `MANGA` ✅    | ❌           | ❌              | ❌              | ❌               | ❌                 |
-| **UNKNOWN**      | `UNKNOWN` ✅ | ❌            | `Unknown` ✅ | ❌            | ❌           | `Other` ✅      | ❌              | ❌               | ❌                 |
+| Universal Format | Offline DB   | MAL API v2 ✅   | MAL/Jikan ✅ | AniList ✅    | Kitsu ✅     | AniDB ✅        | Anime-Planet ✅ | AnimeSchedule ✅ | AniSearch ✅       |
+| ---------------- | ------------ | --------------- | ------------ | ------------- | ------------ | --------------- | --------------- | ---------------- | ------------------ |
+| **TV**           | `TV` ✅      | `tv` ✅         | `TV` ✅      | `TV` ✅       | `TV` ✅      | `TV Series` ✅  | `TVSeries` ✅   | `TV` ✅          | `video.tv_show` ✅ |
+| **TV_SHORT**     | ❌           | ❌              | ❌           | `TV_SHORT` ✅ | ❌           | ❌              | ❌              | ❌               | ❌                 |
+| **MOVIE**        | `MOVIE` ✅   | `movie` ✅      | `Movie` ✅   | `MOVIE` ✅    | `movie` ✅   | `Movie` ✅      | `Movie` ✅      | `Movie` ✅       | `video.movie` ✅   |
+| **SPECIAL**      | `SPECIAL` ✅ | `special` ✅    | `Special` ✅ | `SPECIAL` ✅  | `special` ✅ | `TV Special` ✅ | ❌              | `Special` ✅     | ❌                 |
+| **OVA**          | `OVA` ✅     | `ova` ✅        | `OVA` ✅     | `OVA` ✅      | `OVA` ✅     | `OVA` ✅        | ❌              | `OVA` ✅         | ❌                 |
+| **ONA**          | `ONA` ✅     | `ona` ✅        | `ONA` ✅     | `ONA` ✅      | `ONA` ✅     | `Web` ✅        | ❌              | ❌               | ❌                 |
+| **MUSIC**        | ❌           | `music` ✅      | ❌           | `MUSIC` ✅    | `music` ✅   | ❌              | ❌              | ❌               | ❌                 |
+| **TV_SPECIAL**   | ❌           | `tv_special` ✅ | ❌           | ❌            | ❌           | ❌              | ❌              | ❌               | ❌                 |
+| **MANGA**        | ❌           | ❌              | ❌           | `MANGA` ✅    | ❌           | ❌              | ❌              | ❌               | ❌                 |
+| **UNKNOWN**      | `UNKNOWN` ✅ | ❌              | `Unknown` ✅ | ❌            | ❌           | `Other` ✅      | ❌              | ❌               | ❌                 |
 
 ### Relationship/Connection Types Mapping (VERIFIED from API Responses)
 
@@ -87,13 +87,13 @@ Based on analysis of anime-offline-database and external API sources, here's the
 
 ### Content Description
 
-| Universal Property | Offline DB  | MAL API v2 ✅      | MAL/Jikan ✅             | AniList ✅       | Kitsu ✅                 | AniDB ✅         | Anime-Planet ✅          | AnimeSchedule ✅   | AniSearch ✅        |
-| ------------------ | ----------- | ------------------ | ------------------------ | ---------------- | ------------------------ | ---------------- | ------------------------ | ------------------ | ------------------- |
-| **description**    | ❌          | `synopsis` ✅      | `synopsis` ✅            | `description` ✅ | `attributes.synopsis` ✅ | `description` ✅ | `json_ld.description` ✅ | `description` ✅   | `og:description` ✅ |
-| **background**     | ❌          | ❌                 | `background` ✅          | ❌               | ❌                       | ❌               | ❌                       | ❌                 | ❌                  |
-| **genres**         | `tags[]` ✅ | `genres[].name` ✅ | `genres[].name` ✅       | `genres[]` ✅    | `categories[]` ✅        | `tags[].name` ✅ | `json_ld.genre[]` ✅     | `genres[].name` ✅ | `genre[]` ✅        |
-| **themes**         | `tags[]` ✅ | ❌                 | `themes[].name` ✅       | `tags[].name` ✅ | ❌                       | `tags[].name` ✅ | `tags[]` ✅              | ❌                 | ❌                  |
-| **demographics**   | `tags[]` ✅ | ❌                 | `demographics[].name` ✅ | ❌               | ❌                       | ❌               | ❌                       | ❌                 | ❌                  |
+| Universal Property | Offline DB  | MAL API v2 ✅      | MAL/Jikan ✅             | AniList ✅       | Kitsu ✅                 | AniDB ✅         | Anime-Planet ✅          | AnimeSchedule ✅   | AniSearch ✅                                        |
+| ------------------ | ----------- | ------------------ | ------------------------ | ---------------- | ------------------------ | ---------------- | ------------------------ | ------------------ | --------------------------------------------------- |
+| **description**    | ❌          | `synopsis` ✅      | `synopsis` ✅            | `description` ✅ | `attributes.synopsis` ✅ | `description` ✅ | `json_ld.description` ✅ | `description` ✅   | `div[lang="en"][class="textblock details-text"]` ✅ |
+| **background**     | ❌          | ❌                 | `background` ✅          | ❌               | ❌                       | ❌               | ❌                       | ❌                 | ❌                                                  |
+| **genres**         | `tags[]` ✅ | `genres[].name` ✅ | `genres[].name` ✅       | `genres[]` ✅    | `categories[]` ✅        | `tags[].name` ✅ | `json_ld.genre[]` ✅     | `genres[].name` ✅ | `json_ld.genre[]` ✅                                |
+| **themes**         | `tags[]` ✅ | ❌                 | `themes[].name` ✅       | `tags[].name` ✅ | ❌                       | `tags[].name` ✅ | `tags[]` ✅              | ❌                 | ❌                                                  |
+| **demographics**   | `tags[]` ✅ | ❌                 | `demographics[].name` ✅ | ❌               | ❌                       | ❌               | ❌                       | ❌                 | ❌                                                  |
 
 ### Scoring & Popularity
 
@@ -109,7 +109,7 @@ Based on analysis of anime-offline-database and external API sources, here's the
 | **temporary_score**  | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | `ratings.temporary` ✅         | ❌                                       | ❌                      | ❌                               |
 | **review_score**     | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | `ratings.review` ✅            | ❌                                       | ❌                      | ❌                               |
 | **rating_scale_min** | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.worstRating` ✅ | ❌                      | `aggregateRating.worstRating` ✅ |
-| **rating_scale_max** | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.bestRating` ✅ | ❌                      | `aggregateRating.bestRating` ✅  |
+| **rating_scale_max** | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.bestRating` ✅  | ❌                      | `aggregateRating.bestRating` ✅  |
 | **review_count**     | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.reviewCount` ✅ | ❌                      | ❌                               |
 | **review_type**      | ❌                        | ❌                     | ❌              | ❌                             | ❌                                | ❌                             | `json_ld.aggregateRating.@type` ✅       | ❌                      | ❌                               |
 
@@ -125,41 +125,36 @@ Based on analysis of anime-offline-database and external API sources, here's the
 
 ### Production Information
 
-| Universal Property | Offline DB       | MAL API v2 ✅       | MAL/Jikan ✅          | AniList ✅                | Kitsu ✅                | AniDB ✅                        | Anime-Planet ✅                                                   | AnimeSchedule ✅    | AniSearch ✅   |
-| ------------------ | ---------------- | ------------------- | --------------------- | ------------------------- | ----------------------- | ------------------------------- | ----------------------------------------------------------------- | ------------------- | -------------- |
-| **studios**        | `studios[]` ✅   | `studios[].name` ✅ | `studios[].name` ✅   | `studios.nodes[].name` ✅ | `productions[]` ✅      | (via creators) ✅               | `json_ld.director[]` / `.CharacterCard__body` ✅                  | `studios[].name` ✅ | `.company` ✅  |
-| **producers**      | `producers[]` ✅ | ❌                  | `producers[].name` ✅ | ❌                        | `animeProductions[]` ✅ | (via creators) ✅               | ❌                                                                | ❌                  | ❌             |
-| **licensors**      | ❌               | ❌                  | `licensors[].name` ✅ | ❌                        | ❌                      | ❌                              | ❌                                                                | ❌                  | ❌             |
-| **source**         | ❌               | `source` ✅         | `source` ✅           | `source` ✅               | ❌                      | (via creators/original work) ✅ | ❌                                                                | `sources[].name` ✅ | `.adapted` ✅  |
-| **staff**          | ❌               | ❌                  | ❌                    | `staff[]` ✅              | `staff[]` ✅            | `creators[]` ✅                 | `json_ld.actor[]` / `json_ld.director[]` / `json_ld.musicBy[]` ✅ | ❌                  | `.creators` ✅ |
-| **characters**     | ❌               | ❌                  | ❌                    | `characters[]` ✅         | ❌                      | ❌                              | `json_ld.character[]` ✅                                          | ❌                  | ❌             |
+| Universal Property | Offline DB       | MAL API v2 ✅       | MAL/Jikan ✅          | AniList ✅                | Kitsu ✅                | AniDB ✅                        | Anime-Planet ✅                                                   | AnimeSchedule ✅    | AniSearch ✅                   |
+| ------------------ | ---------------- | ------------------- | --------------------- | ------------------------- | ----------------------- | ------------------------------- | ----------------------------------------------------------------- | ------------------- | ------------------------------ |
+| **studios**        | `studios[]` ✅   | `studios[].name` ✅ | `studios[].name` ✅   | `studios.nodes[].name` ✅ | `productions[]` ✅      | (via creators) ✅               | `json_ld.director[]` / `.CharacterCard__body` ✅                  | `studios[].name` ✅ | `.company` ✅                  |
+| **producers**      | `producers[]` ✅ | ❌                  | `producers[].name` ✅ | ❌                        | `animeProductions[]` ✅ | (via creators) ✅               | ❌                                                                | ❌                  | ❌                             |
+| **licensors**      | ❌               | ❌                  | `licensors[].name` ✅ | ❌                        | ❌                      | ❌                              | ❌                                                                | ❌                  | ❌                             |
+| **source**         | ❌               | `source` ✅         | `source` ✅           | `source` ✅               | ❌                      | (via creators/original work) ✅ | ❌                                                                | `sources[].name` ✅ | `.adapted` ✅                  |
+| **staff**          | ❌               | ❌                  | ❌                    | `staff[]` ✅              | `staff[]` ✅            | `creators[]` ✅                 | `json_ld.actor[]` / `json_ld.director[]` / `json_ld.musicBy[]` ✅ | ❌                  | `span.header` + `.creators` ✅ |
+| **characters**     | ❌               | ❌                  | ❌                    | `characters[]` ✅         | ❌                      | ❌                              | `json_ld.character[]` ✅                                          | ❌                  | ❌                             |
 
 ### External Links & IDs
 
-| Universal Property   | Offline DB                  | MAL API v2 ✅ | MAL/Jikan ✅ | AniList ✅           | Kitsu ✅                   | AniDB ✅                | Anime-Planet ✅  | AnimeSchedule ✅ | AniSearch ✅            |
-| -------------------- | --------------------------- | ------------- | ------------ | -------------------- | -------------------------- | ----------------------- | ---------------- | ---------------- | ----------------------- |
-| **mal_id**           | (extracted from sources) ✅ | `id` ✅       | `mal_id` ✅  | `idMal` ✅           | `mappings[].externalId` ✅ | `resources[type=1]` ✅  | ❌               | ❌               | ❌                      |
-| **anilist_id**       | (extracted from sources) ✅ | ❌            | ❌           | `id` ✅              | `mappings[].externalId` ✅ | `resources[type=44]` ✅ | ❌               | ❌               | ❌                      |
-| **kitsu_id**         | (extracted from sources) ✅ | ❌            | ❌           | ❌                   | `id` ✅                    | ❌                      | ❌               | ❌               | ❌                      |
-| **anidb_id**         | (extracted from sources) ✅ | ❌            | ❌           | ❌                   | `mappings[].externalId` ✅ | `@id` ✅                | ❌               | ❌               | ❌                      |
-| **animeplanet_id**   | (extracted from sources) ✅ | ❌            | ❌           | ❌                   | ❌                         | ❌                      | `slug` ✅        | ❌               | ❌                      |
-| **animeschedule_id** | ❌                          | ❌            | ❌           | ❌                   | ❌                         | ❌                      | ❌               | `id` ✅          | ❌                      |
-| **anisearch_id**     | ❌                          | ❌            | ❌           | ❌                   | ❌                         | ❌                      | ❌               | ❌               | `anime_id` ✅           |
-| **canonical_id**     | ❌                          | ❌            | ❌           | ❌                   | ❌                         | ❌                      | ❌               | ❌               | `@id` ✅                |
-| **external_links**   | `sources[]` ✅              | ❌            | ❌           | `externalLinks[]` ✅ | `streamingLinks[]` ✅      | `resources[]` ✅        | ❌               | `websites` ✅    | `.websites` ✅          |
-| **streaming_links**  | ❌                          | ❌            | ❌           | ❌                   | `streamingLinks[]` ✅      | ❌                      | ❌               | ❌               | `.streamcover a` ✅     |
+| Universal Property   | Offline DB                  | MAL API v2 ✅ | MAL/Jikan ✅ | AniList ✅           | Kitsu ✅                   | AniDB ✅                | Anime-Planet ✅                              | AnimeSchedule ✅ | AniSearch ✅            |
+| -------------------- | --------------------------- | ------------- | ------------ | -------------------- | -------------------------- | ----------------------- | -------------------------------------------- | ---------------- | ----------------------- |
+| **mal_id**           | (extracted from sources) ✅ | `id` ✅       | `mal_id` ✅  | `idMal` ✅           | `mappings[].externalId` ✅ | `resources[type=1]` ✅  | ❌                                           | ❌               | ❌                      |
+| **anilist_id**       | (extracted from sources) ✅ | ❌            | ❌           | `id` ✅              | `mappings[].externalId` ✅ | `resources[type=44]` ✅ | ❌                                           | ❌               | ❌                      |
+| **kitsu_id**         | (extracted from sources) ✅ | ❌            | ❌           | ❌                   | `id` ✅                    | ❌                      | ❌                                           | ❌               | ❌                      |
+| **anidb_id**         | (extracted from sources) ✅ | ❌            | ❌           | ❌                   | `mappings[].externalId` ✅ | `@id` ✅                | ❌                                           | ❌               | ❌                      |
+| **animeplanet_id**   | (extracted from sources) ✅ | ❌            | ❌           | ❌                   | ❌                         | ❌                      | `slug` ✅                                    | ❌               | ❌                      |
+| **animeschedule_id** | ❌                          | ❌            | ❌           | ❌                   | ❌                         | ❌                      | ❌                                           | `id` ✅          | ❌                      |
+| **external_links**   | `sources[]` ✅              | ❌            | ❌           | `externalLinks[]` ✅ | `streamingLinks[]` ✅      | `resources[]` ✅        | ❌                                           | `websites` ✅    | `.websites` ✅          |
+| **streaming_links**  | ❌                          | ❌            | ❌           | ❌                   | `streamingLinks[]` ✅      | ❌                      | ❌                                           | ❌               | `.streamcover a` ✅     |
 | **related_anime**    | `relatedAnime[]` ✅         | ❌            | ❌           | `relations` ✅       | `mediaRelationships[]` ✅  | `relatedanime[]` ✅     | `#tabs--relations--anime--same_franchise` ✅ | `relations` ✅   | (relationship links) ✅ |
-| **url**              | ❌                          | ❌            | `url` ✅     | `siteUrl` ✅         | `attributes.slug` ✅       | `url` ✅                | `json_ld.url` ✅ | `route` ✅       | `url` ✅                |
-| **updated_at**       | ❌                          | ❌            | ❌           | `updatedAt` ✅       | `attributes.updatedAt` ✅  | ❌                      | ❌               | ❌               | ❌                      |
-| **created_at**       | ❌                          | ❌            | ❌           | ❌                   | `attributes.createdAt` ✅  | ❌                      | ❌               | ❌               | ❌                      |
-
-## NEW Properties Found in MAL API v2 (Missing from Current Mapping)
+| **url**              | ❌                          | ❌            | `url` ✅     | `siteUrl` ✅         | `attributes.slug` ✅       | `url` ✅                | `json_ld.url` ✅                             | `route` ✅       | `url` ✅                |
+| **updated_at**       | ❌                          | ❌            | ❌           | `updatedAt` ✅       | `attributes.updatedAt` ✅  | ❌                      | ❌                                           | ❌               | ❌                      |
+| **created_at**       | ❌                          | ❌            | ❌           | ❌                   | `attributes.createdAt` ✅  | ❌                      | ❌                                           | ❌               | ❌                      |
 
 ### User Engagement & Statistics
 
 | Universal Property | Offline DB | MAL API v2 ✅          | MAL/Jikan ✅   | AniList     | Kitsu                    | AniDB                     |
 | ------------------ | ---------- | ---------------------- | -------------- | ----------- | ------------------------ | ------------------------- |
-| **list_users**     | ❌         | `num_list_users` ✅    | `members` ✅   | ❌          | `attributes.userCount`   | ❌                        |
 | **scoring_users**  | ❌         | `num_scoring_users` ✅ | `scored_by` ✅ | ❌          | `attributes.ratingCount` | `ratings.permanent.count` |
 | **created_at**     | ❌         | `created_at` ✅        | ❌             | ❌          | `attributes.createdAt`   | ❌                        |
 | **updated_at**     | ❌         | `updated_at` ✅        | ❌             | `updatedAt` | `attributes.updatedAt`   | ❌                        |
@@ -175,11 +170,11 @@ Based on analysis of anime-offline-database and external API sources, here's the
 
 ### Enhanced Temporal Data
 
-| Universal Property     | Offline DB | MAL API v2 ✅   | MAL/Jikan ✅    | AniList     | Kitsu                  | AniDB       |
-| ---------------------- | ---------- | --------------- | --------------- | ----------- | ---------------------- | ----------- |
-| **precise_start_date** | ❌         | `start_date` ✅ | `aired.from` ✅ | `startDate` | `attributes.startDate` | `startdate` |
-| **precise_end_date**   | ❌         | `end_date` ✅   | `aired.to` ✅   | `endDate`   | `attributes.endDate`   | `enddate`   |
-| **broadcast_info**     | ❌         | `broadcast` ✅  | `broadcast` ✅  | ❌          | ❌                     | ❌          |
+| Universal Property | Offline DB | MAL API v2 ✅   | MAL/Jikan ✅    | AniList     | Kitsu                  | AniDB       |
+| ------------------ | ---------- | --------------- | --------------- | ----------- | ---------------------- | ----------- |
+| **start_date**     | ❌         | `start_date` ✅ | `aired.from` ✅ | `startDate` | `attributes.startDate` | `startdate` |
+| **end_date**       | ❌         | `end_date` ✅   | `aired.to` ✅   | `endDate`   | `attributes.endDate`   | `enddate`   |
+| **broadcast_info** | ❌         | `broadcast` ✅  | `broadcast` ✅  | ❌          | ❌                     | ❌          |
 
 ### Enhanced Media Information
 
@@ -190,7 +185,7 @@ Based on analysis of anime-offline-database and external API sources, here's the
 | **titles_array**             | ❌           | ❌                            | `titles[]` ✅          | ❌           | ❌                         | ❌              |
 | **explicit_genres**          | ❌           | ❌                            | `explicit_genres[]` ✅ | ❌           | ❌                         | ❌              |
 
-## Additional Anime-Planet Properties (Via JSON-LD Structured Data)
+## Additional Anime-Planet-Only Properties
 
 | Universal Property      | Offline DB | MAL API v2 | MAL/Jikan | AniList                      | Kitsu | AniDB | Anime-Planet ✅      |
 | ----------------------- | ---------- | ---------- | --------- | ---------------------------- | ----- | ----- | -------------------- |
@@ -207,32 +202,36 @@ Based on analysis of anime-offline-database and external API sources, here's the
 - **CDN Image URLs**: Direct access to optimized anime cover images
 - **Comprehensive Genre Data**: Both JSON-LD genres and scraped tags available
 
-## Additional AniDB-Only Properties (Not in Other Sources)
+## Additional AniDB-Only Properties
 
-| Universal Property     | Offline DB | MAL API v2 | MAL/Jikan | AniList | Kitsu | AniDB ✅                               |
-| ---------------------- | ---------- | ---------- | --------- | ------- | ----- | -------------------------------------- |
-| **similar_anime**      | ❌         | ❌         | ❌        | ❌      | ❌    | `similaranime[]` ✅                    |
-| **recommendations**    | ❌         | ❌         | ❌        | ❌      | ❌    | `recommendations[]` ✅                 |
-| **tag_weights**        | ❌         | ❌         | ❌        | ❌      | ❌    | `tags[].weight` ✅                     |
-| **tag_spoiler_flags**  | ❌         | ❌         | ❌        | ❌      | ❌    | `tags[].localspoiler/globalspoiler` ✅ |
-| **tag_verification**   | ❌         | ❌         | ❌        | ❌      | ❌    | `tags[].verified` ✅                   |
-| **tag_descriptions**   | ❌         | ❌         | ❌        | ❌      | ❌    | `tags[].description` ✅                |
-| **creator_roles**      | ❌         | ❌         | ❌        | ❌      | ❌    | `creators[].type` ✅                   |
-| **episode_details**    | ❌         | ❌         | ❌        | ❌      | ❌    | `episodes[]` ✅                        |
-| **external_resources** | ❌         | ❌         | ❌        | ❌      | ❌    | `resources[]` ✅                       |
-| **restricted_flag**    | ❌         | ❌         | ❌        | ❌      | ❌    | `@restricted` ✅                       |
+| AniDB Property         | Selector/Method                        | Description                            |
+| ---------------------- | -------------------------------------- | -------------------------------------- |
+| **similar_anime**      | `similaranime[]` ✅                    | Similar anime recommendations array    |
+| **recommendations**    | `recommendations[]` ✅                 | User-generated anime recommendations   |
+| **tag_weights**        | `tags[].weight` ✅                     | Tag relevance weights (0-1 scale)      |
+| **tag_spoiler_flags**  | `tags[].localspoiler/globalspoiler` ✅ | Tag spoiler level indicators           |
+| **tag_verification**   | `tags[].verified` ✅                   | Tag verification status by moderators  |
+| **tag_descriptions**   | `tags[].description` ✅                | Detailed tag explanations and context  |
+| **creator_roles**      | `creators[].type` ✅                   | Specific roles of creators/staff       |
+| **episode_details**    | `episodes[]` ✅                        | Individual episode information array   |
+| **external_resources** | `resources[]` ✅                       | External links and resource references |
+| **restricted_flag**    | `@restricted` ✅                       | Content restriction/age rating flag    |
 
-## Additional AniSearch Properties (German-Focused Anime Database)
+## Additional AniSearch-Only Properties
 
-| Universal Property       | Offline DB | MAL API v2 | MAL/Jikan | AniList | Kitsu | AniDB | Anime-Planet | AnimeSchedule | AniSearch ✅                |
-| ------------------------ | ---------- | ---------- | --------- | ------- | ----- | ----- | ------------ | ------------- | --------------------------- |
-| **german_description**   | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | ❌            | `og:description` ✅         |
-| **high_quality_covers**  | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | ❌            | `og:image` (600px) ✅       |
-| **studio_extraction**    | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | ❌            | (regex from description) ✅ |
-| **main_genre_german**    | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | ❌            | `main_genre` ✅             |
-| **content_type_schema**  | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | ❌            | `og:type` ✅                |
-| **cdn_optimized_images** | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | ❌            | `cdn.anisearch.de` ✅       |
-| **nsfw_genre_detection** | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | ❌            | (Hentai detection) ✅       |
+| AniSearch Property     | Selector/Method                          | Description                               |
+| ---------------------- | ---------------------------------------- | ----------------------------------------- |
+| **episode_duration**   | `regex: \d+ min` ✅                      | Episode duration extracted from page text |
+| **broadcast_schedule** | `regex: time patterns` ✅                | Broadcast timing (e.g., "Sunday 23:15")   |
+| **total_runtime**      | `calculated from episodes × duration` ✅ | Total viewing time calculation            |
+| **title_alternative**  | `og:title` (when different) ✅           | Alternative title from OpenGraph          |
+| **meta_description**   | `meta[name="description"]` ✅            | HTML meta description tag                 |
+| **page_title**         | `<title>` element ✅                     | HTML page title                           |
+| **json_ld_full**       | `complete JSON-LD object` ✅             | Full structured data object               |
+| **opengraph_full**     | `complete OpenGraph object` ✅           | Complete OpenGraph metadata               |
+| **domain_identifier**  | `"anisearch"` ✅                         | Platform identifier string                |
+| **anisearch_id**       | `anime_id` ✅                            | AniSearch database ID                     |
+| **canonical_id**       | `json_ld.@id` ✅                         | Schema.org canonical identifier URL       |
 
 **Key AniSearch Advantages:**
 
@@ -281,39 +280,39 @@ Based on analysis of anime-offline-database and external API sources, here's the
 - **Multi-Language Publishers**: `.company` → Regional publisher information
 - **Total Runtime**: Calculated from episodes × duration
 
-## Additional Kitsu-Only Properties (Not in Other Sources)
+## Additional Kitsu-Only Properties
 
-| Universal Property     | Offline DB | MAL API v2 | MAL/Jikan | AniList | Kitsu ✅                            | AniDB |
-| ---------------------- | ---------- | ---------- | --------- | ------- | ----------------------------------- | ----- |
-| **total_length**       | ❌         | ❌         | ❌        | ❌      | `attributes.totalLength` ✅         | ❌    |
-| **rating_frequencies** | ❌         | ❌         | ❌        | ❌      | `attributes.ratingFrequencies` ✅   | ❌    |
-| **age_rating_guide**   | ❌         | ❌         | ❌        | ❌      | `attributes.ageRatingGuide` ✅      | ❌    |
-| **cover_image_offset** | ❌         | ❌         | ❌        | ❌      | `attributes.coverImageTopOffset` ✅ | ❌    |
-| **show_type**          | ❌         | ❌         | ❌        | ❌      | `attributes.showType` ✅            | ❌    |
-| **tba**                | ❌         | ❌         | ❌        | ❌      | `attributes.tba` ✅                 | ❌    |
-| **next_release**       | ❌         | ❌         | ❌        | ❌      | `attributes.nextRelease` ✅         | ❌    |
-| **slug**               | ❌         | ❌         | ❌        | ❌      | `attributes.slug` ✅                | ❌    |
+| Kitsu Property         | Selector/Method                     | Description                       |
+| ---------------------- | ----------------------------------- | --------------------------------- |
+| **total_length**       | `attributes.totalLength` ✅         | Total series length in minutes    |
+| **rating_frequencies** | `attributes.ratingFrequencies` ✅   | Rating distribution histogram     |
+| **age_rating_guide**   | `attributes.ageRatingGuide` ✅      | Detailed age rating explanation   |
+| **cover_image_offset** | `attributes.coverImageTopOffset` ✅ | Cover image positioning offset    |
+| **show_type**          | `attributes.showType` ✅            | Detailed show type classification |
+| **tba**                | `attributes.tba` ✅                 | To-be-announced status flag       |
+| **next_release**       | `attributes.nextRelease` ✅         | Next episode/volume release date  |
+| **slug**               | `attributes.slug` ✅                | URL-friendly identifier string    |
 
-## Additional AniList-Only Properties (Not in MAL API v2 or Jikan)
+## Additional AniList-Only Properties
 
-| Universal Property      | Offline DB | MAL API v2 | MAL/Jikan | AniList ✅                      | Kitsu | AniDB |
-| ----------------------- | ---------- | ---------- | --------- | ------------------------------- | ----- | ----- |
-| **country_origin**      | ❌         | ❌         | ❌        | `countryOfOrigin` ✅            | ❌    | ❌    |
-| **hashtag**             | ❌         | ❌         | ❌        | `hashtag` ✅                    | ❌    | ❌    |
-| **rankings_detailed**   | ❌         | ❌         | ❌        | `rankings[]` ✅                 | ❌    | ❌    |
-| **score_distribution**  | ❌         | ❌         | ❌        | `stats.scoreDistribution[]` ✅  | ❌    | ❌    |
-| **status_distribution** | ❌         | ❌         | ❌        | `stats.statusDistribution[]` ✅ | ❌    | ❌    |
-| **tag_ranks**           | ❌         | ❌         | ❌        | `tags[].rank` ✅                | ❌    | ❌    |
-| **is_spoiler_tags**     | ❌         | ❌         | ❌        | `tags[].isMediaSpoiler` ✅      | ❌    | ❌    |
-| **streaming_episodes**  | ❌         | ❌         | ❌        | `streamingEpisodes[]` ✅        | ❌    | ❌    |
-| **next_airing**         | ❌         | ❌         | ❌        | `nextAiringEpisode` ✅          | ❌    | ❌    |
-| **trends_data**         | ❌         | ❌         | ❌        | `trends[]` ✅                   | ❌    | ❌    |
-| **reviews**             | ❌         | ❌         | ❌        | `reviews[]` ✅                  | ❌    | ❌    |
-| **recommendations**     | ❌         | ❌         | ❌        | `recommendations[]` ✅          | ❌    | ❌    |
-| **characters**          | ❌         | ❌         | ❌        | `characters[]` ✅               | ❌    | ❌    |
-| **staff**               | ❌         | ❌         | ❌        | `staff[]` ✅                    | ❌    | ❌    |
+| AniList Property        | Selector/Method                 | Description                                   |
+| ----------------------- | ------------------------------- | --------------------------------------------- |
+| **country_origin**      | `countryOfOrigin` ✅            | Country where anime was produced              |
+| **hashtag**             | `hashtag` ✅                    | Official social media hashtag                 |
+| **rankings_detailed**   | `rankings[]` ✅                 | Detailed ranking across categories            |
+| **score_distribution**  | `stats.scoreDistribution[]` ✅  | User score distribution histogram             |
+| **status_distribution** | `stats.statusDistribution[]` ✅ | User status distribution (watching/completed) |
+| **tag_ranks**           | `tags[].rank` ✅                | Tag popularity rankings                       |
+| **is_spoiler_tags**     | `tags[].isMediaSpoiler` ✅      | Tag spoiler indicators                        |
+| **streaming_episodes**  | `streamingEpisodes[]` ✅        | Individual streaming episode data             |
+| **next_airing**         | `nextAiringEpisode` ✅          | Next episode airing information               |
+| **trends_data**         | `trends[]` ✅                   | Popularity trends over time                   |
+| **reviews**             | `reviews[]` ✅                  | User-written reviews array                    |
+| **recommendations**     | `recommendations[]` ✅          | User-generated recommendations                |
+| **characters**          | `characters[]` ✅               | Character information with voice actors       |
+| **staff**               | `staff[]` ✅                    | Detailed staff and crew information           |
 
-## Additional Jikan-Only Properties (Not in MAL API v2)
+## Additional Jikan-Only Properties
 
 | Universal Property  | Offline DB | MAL API v2 | MAL/Jikan ✅                | AniList      | Kitsu                       | AniDB |
 | ------------------- | ---------- | ---------- | --------------------------- | ------------ | --------------------------- | ----- |
@@ -325,22 +324,22 @@ Based on analysis of anime-offline-database and external API sources, here's the
 | **explicit_genres** | ❌         | ❌         | `explicit_genres[].name` ✅ | ❌           | ❌                          | ❌    |
 | **background_info** | ❌         | ❌         | `background` ✅             | ❌           | ❌                          | ❌    |
 
-## Additional AnimeSchedule-Only Properties (Not in Other Sources)
+## Additional AnimeSchedule-Only Properties
 
-| Universal Property    | Offline DB | MAL API v2 | MAL/Jikan | AniList | Kitsu | AniDB | Anime-Planet | AnimeSchedule ✅                        |
-| --------------------- | ---------- | ---------- | --------- | ------- | ----- | ----- | ------------ | --------------------------------------- |
-| **abbreviation**      | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `names.abbreviation` ✅                 |
-| **premier_date**      | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `premier` ✅                            |
-| **sub_premier**       | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `subPremier` ✅                         |
-| **dub_premier**       | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `dubPremier` ✅                         |
-| **schedule_month**    | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `month` ✅                              |
-| **episode_overrides** | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `episodeOverride` ✅                    |
-| **delay_information** | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `delayedFrom/delayedUntil` ✅           |
-| **broadcast_times**   | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `jpnTime/subTime/dubTime` ✅            |
-| **season_route**      | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `season.route` ✅                       |
-| **tracked_rating**    | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `stats.trackedRating` ✅                |
-| **color_themes**      | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `stats.colorLightMode/colorDarkMode` ✅ |
-| **streaming_links**   | ❌         | ❌         | ❌        | ❌      | ❌    | ❌    | ❌           | `websites` ✅                           |
+| AnimeSchedule Property | Selector/Method                         | Description                         |
+| ---------------------- | --------------------------------------- | ----------------------------------- |
+| **abbreviation**       | `names.abbreviation` ✅                 | Short anime title abbreviation      |
+| **premier_date**       | `premier` ✅                            | Original Japanese premiere date     |
+| **sub_premier**        | `subPremier` ✅                         | Subtitled version premiere date     |
+| **dub_premier**        | `dubPremier` ✅                         | Dubbed version premiere date        |
+| **schedule_month**     | `month` ✅                              | Broadcast month information         |
+| **episode_overrides**  | `episodeOverride` ✅                    | Episode count corrections/overrides |
+| **delay_information**  | `delayedFrom/delayedUntil` ✅           | Broadcasting delay information      |
+| **broadcast_times**    | `jpnTime/subTime/dubTime` ✅            | Broadcast times across regions      |
+| **season_route**       | `season.route` ✅                       | Season navigation routing           |
+| **tracked_rating**     | `stats.trackedRating` ✅                | User tracking engagement rating     |
+| **color_themes**       | `stats.colorLightMode/colorDarkMode` ✅ | UI theme color information          |
+| **streaming_links**    | `websites` ✅                           | Direct streaming platform links     |
 
 **Key AnimeSchedule Advantages:**
 
@@ -521,9 +520,8 @@ Based on this analysis, the universal schema should:
 **SPECIALIZED PROPERTIES (Platform-specific unique features):**
 
 **Anime-Planet Exclusive:**
+
 - **review_count** - Number of written reviews (1/9 sources: Anime-Planet only)
 - **review_type** - Type of aggregate rating system (1/9 sources: Anime-Planet only)
-- **rating_scale_min** - Minimum rating value (2/9 sources: Anime-Planet, AniSearch)
-- **rating_scale_max** - Maximum rating value (2/9 sources: Anime-Planet, AniSearch)
 
 This analysis provides a solid foundation for building a universal anime schema that can reliably map data from all 9 major anime data sources while maintaining high data coverage and consistency.
