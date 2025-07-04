@@ -24,6 +24,8 @@ services:
       - anime-mcp-network
     depends_on:
       - qdrant
+    env_file:
+      - .env
     environment:
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION_NAME=anime_database
@@ -43,6 +45,8 @@ services:
       - anime-mcp-network
     depends_on:
       - qdrant
+    env_file:
+      - .env
     environment:
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION_NAME=anime_database
