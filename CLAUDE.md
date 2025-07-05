@@ -73,13 +73,7 @@ This is an **Anime MCP (Model Context Protocol) Server** built with FastAPI and 
 - **ID Generation**: Unique anime IDs generated from title + first source URL
 - **AI Query Understanding**: Natural language → structured search parameters
 
-## Development Notes
-
-### Performance Targets
-
-- **Search Response**: <200ms for text search, ~1s for image search
-- **AI Processing**: ~500ms for LLM query understanding
-- **Smart Orchestration**: 50ms average (faster than standard workflows)
+## Development Notes and Rules
 
 ### 🧱 Code Structure & Modularity
 
@@ -250,6 +244,11 @@ docker-compose up
 # Start only required services
 docker-compose up -d qdrant
 docker-compose up -d fastapi qdrant
+
+# MCP Server modes
+python -m src.mcp.server                            # stdio mode (default)
+python -m src.mcp.server --mode http --port 8001    # HTTP mode
+python -m src.mcp.server --mode http --verbose      # HTTP with verbose logging
 ```
 
 ### Data Management

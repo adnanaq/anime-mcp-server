@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 # ReactAgent-based workflow engine with create_react_agent (Phase 2.5)
 from ..langgraph.react_agent_workflow import create_react_agent_workflow_engine
-from ..mcp.fastmcp_client_adapter import get_all_mcp_tools
+from ..anime_mcp.modern_client import get_all_mcp_tools
 
 logger = logging.getLogger(__name__)
 

@@ -66,14 +66,14 @@ async def lifespan(app: FastAPI):
     yield
 
     # Cleanup (if needed)
-    logger.info("🛑 Shutting down MCP server")
+    logger.info("Shutting down MCP server")
 
     # Disconnect global MCP client if connected
     try:
-        from .mcp.fastmcp_client_adapter import disconnect_global_adapter
+        from .anime_mcp.modern_client import disconnect_global_client
 
-        await disconnect_global_adapter()
-        logger.info("✅ MCP client disconnected gracefully")
+        await disconnect_global_client()
+        logger.info("MCP client disconnected gracefully")
     except Exception as e:
         logger.warning(f"Error disconnecting MCP client: {e}")
 
