@@ -390,3 +390,30 @@ def handle_exception_safely(func):
             )
 
     return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+
+
+# Universal search integration exceptions
+class AnimeServiceException(AnimeServerError):
+    """Base exception for anime service operations."""
+    pass
+
+
+class PlatformNotAvailableException(AnimeServiceException):
+    """Exception raised when a requested platform is not available."""
+    pass
+
+
+class AllSourcesFailedException(AnimeServiceException):
+    """Exception raised when all data sources fail."""
+    pass
+
+
+class QdrantException(AnimeServiceException):
+    """Base exception for Qdrant-related errors."""
+    pass
+
+
+class AnimeHandlerException(AnimeServiceException):
+    """Exception for anime handler operations."""
+    pass
+

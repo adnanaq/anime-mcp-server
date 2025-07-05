@@ -1,0 +1,700 @@
+"""Unit tests for MAL-specific MCP tools."""
+
+import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Dict, Any, List
+
+from src.anime_mcp.tools.mal_tools import (
+    search_anime_mal,
+    get_anime_mal,
+    get_mal_seasonal_anime,
+    mal_client,
+    mal_mapper
+)
+from src.models.universal_anime import UniversalAnime, UniversalSearchParams
+
+
+class TestMALTools:
+    """Test suite for MAL MCP tools."""
+
+    @pytest.fixture
+    def mock_mal_client(self):
+        """Create mock MAL client."""
+        client = AsyncMock()
+        client.search_anime.return_value = [
+            {
+                "id": 16498,
+                "title": "Attack on Titan",
+                "main_picture": {"medium": "https://example.com/aot.jpg"},
+                "mean": 8.54,
+                "rank": 50,
+                "popularity": 1,
+                "num_list_users": 3000000,
+                "num_scoring_users": 1500000,
+                "nsfw": "white",
+                "media_type": "tv",
+                "status": "finished_airing",
+                "num_episodes": 25,
+                "start_date": "2013-04-07",
+                "end_date": "2013-09-28",
+                "rating": "r",
+                "source": "manga",
+                "broadcast": {"day_of_the_week": "sunday", "start_time": "17:00"},
+                "created_at": "2008-10-03T00:54:00+00:00",
+                "updated_at": "2022-01-30T08:15:00+00:00",
+                "synopsis": "Humanity fights against titans",
+                "genres": [{"id": 1, "name": "Action"}, {"id": 8, "name": "Drama"}],
+                "studios": [{"id": 858, "name": "Wit Studio"}]
+            }
+        ]
+        
+        client.get_anime_by_id.return_value = {
+            "id": 16498,
+            "title": "Attack on Titan",
+            "main_picture": {"large": "https://example.com/aot_large.jpg"},
+            "alternative_titles": {
+                "synonyms": ["Shingeki no Kyojin"],
+                "en": "Attack on Titan",
+                "ja": "進撃の巨人"
+            },
+            "mean": 8.54,
+            "rank": 50,
+            "popularity": 1,
+            "num_list_users": 3000000,
+            "num_scoring_users": 1500000,
+            "nsfw": "white",
+            "media_type": "tv",
+            "status": "finished_airing",
+            "num_episodes": 25,
+            "start_date": "2013-04-07",
+            "end_date": "2013-09-28",
+            "rating": "r",
+            "source": "manga",
+            "average_episode_duration": 1440,
+            "start_season": {"year": 2013, "season": "spring"},
+            "broadcast": {"day_of_the_week": "sunday", "start_time": "17:00"},
+            "synopsis": "Detailed synopsis about humanity fighting titans",
+            "background": "Background information about the series",
+            "related_anime": [
+                {"node": {"id": 25777, "title": "Attack on Titan Season 2"}}
+            ],
+            "related_manga": [
+                {"node": {"id": 23390, "title": "Attack on Titan Manga"}}
+            ],
+            "recommendations": [
+                {"node": {"id": 11061, "title": "Hunter x Hunter"}}
+            ],
+            "statistics": {
+                "status": {
+                    "watching": 100000,
+                    "completed": 2500000,
+                    "on_hold": 200000,
+                    "dropped": 100000,
+                    "plan_to_watch": 100000
+                }
+            },
+            "genres": [{"id": 1, "name": "Action"}, {"id": 8, "name": "Drama"}],
+            "studios": [{"id": 858, "name": "Wit Studio"}],
+            "pictures": [
+                {"medium": "https://example.com/pic1.jpg"},
+                {"medium": "https://example.com/pic2.jpg"}
+            ]
+        }
+        
+        client.get_seasonal_anime.return_value = [
+            {
+                "id": 12345,
+                "title": "Spring 2023 Anime",
+                "mean": 7.8,
+                "popularity": 100,
+                "num_list_users": 500000,
+                "media_type": "tv",
+                "num_episodes": 12,
+                "synopsis": "A great spring anime",
+                "genres": [{"id": 4, "name": "Comedy"}]
+            }
+        ]
+        
+        return client
+
+    @pytest.fixture
+    def mock_mal_mapper(self):
+        """Create mock MAL mapper."""
+        mapper = MagicMock()
+        
+        # Mock to_mal_search_params
+        mapper.to_mal_search_params.return_value = {
+            "q": "attack on titan",
+            "limit": 20,
+            "offset": 0,
+            "nsfw": "white"
+        }
+        
+        # Mock to_universal_anime
+        mapper.to_universal_anime.return_value = UniversalAnime(
+            id="mal_16498",
+            title="Attack on Titan",
+            type_format="TV",
+            episodes=25,
+            score=8.54,
+            year=2013,
+            status="FINISHED",
+            genres=["Action", "Drama"],
+            studios=["Wit Studio"],
+            description="Humanity fights against titans",
+            image_url="https://example.com/aot.jpg",
+            data_quality_score=0.95
+        )
+        
+        return mapper
+
+    @pytest.fixture
+    def mock_context(self):
+        """Create mock MCP context."""
+        context = AsyncMock()
+        context.info = AsyncMock()
+        context.error = AsyncMock()
+        return context
+
+    @pytest.mark.asyncio
+    async def test_search_anime_mal_success(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test successful MAL anime search."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await search_anime_mal(
+                query="attack on titan",
+                limit=20,
+                ctx=mock_context
+            )
+            
+            # Verify result structure
+            assert isinstance(result, list)
+            assert len(result) == 1
+            
+            anime = result[0]
+            assert anime["id"] == "mal_16498"
+            assert anime["title"] == "Attack on Titan"
+            assert anime["mal_id"] == 16498
+            assert anime["mal_score"] == 8.54
+            assert anime["source_platform"] == "mal"
+            
+            # Verify client calls
+            mock_mal_client.search_anime.assert_called_once()
+            mock_mal_mapper.to_mal_search_params.assert_called_once()
+            mock_mal_mapper.to_universal_anime.assert_called_once()
+            
+            # Verify context calls
+            mock_context.info.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_search_anime_mal_with_filters(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test MAL search with various filters."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await search_anime_mal(
+                query="mecha anime",
+                nsfw="gray",
+                rating="pg13",
+                broadcast_day="saturday",
+                source="manga",
+                limit=10,
+                offset=20,
+                ctx=mock_context
+            )
+            
+            # Verify mapper was called with MAL-specific params
+            call_args = mock_mal_mapper.to_mal_search_params.call_args
+            universal_params = call_args[0][0]
+            mal_specific = call_args[0][1]
+            
+            assert universal_params.query == "mecha anime"
+            assert universal_params.limit == 10
+            assert universal_params.offset == 20
+            
+            assert mal_specific["nsfw"] == "gray"
+            assert mal_specific["rating"] == "pg13"
+            assert mal_specific["broadcast_day"] == "saturday"
+            assert mal_specific["source"] == "manga"
+
+    @pytest.mark.asyncio
+    async def test_search_anime_mal_limit_validation(self, mock_mal_client, mock_mal_mapper):
+        """Test MAL search limit validation."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            # Test limit over maximum (should clamp to 100)
+            await search_anime_mal(query="test", limit=200)
+            
+            call_args = mock_mal_mapper.to_mal_search_params.call_args
+            universal_params = call_args[0][0]
+            mal_specific = call_args[0][1]
+            
+            assert universal_params.limit == 100
+            assert mal_specific["limit"] == 100
+
+    @pytest.mark.asyncio
+    async def test_search_anime_mal_no_client(self, mock_context):
+        """Test MAL search when client not available."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', None):
+            
+            with pytest.raises(RuntimeError, match="MAL client not available"):
+                await search_anime_mal(query="test", ctx=mock_context)
+            
+            mock_context.error.assert_called_with("MAL client not configured - missing API key")
+
+    @pytest.mark.asyncio
+    async def test_search_anime_mal_client_error(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test MAL search when client raises error."""
+        mock_mal_client.search_anime.side_effect = Exception("API error")
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            with pytest.raises(RuntimeError, match="MAL search failed: API error"):
+                await search_anime_mal(query="test", ctx=mock_context)
+            
+            mock_context.error.assert_called_with("MAL search failed: API error")
+
+    @pytest.mark.asyncio
+    async def test_search_anime_mal_mapper_error(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test MAL search when mapper fails for individual results."""
+        mock_mal_mapper.to_universal_anime.side_effect = Exception("Mapping error")
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await search_anime_mal(query="test", ctx=mock_context)
+            
+            # Should return empty list when all mappings fail
+            assert result == []
+            mock_context.error.assert_called_with("Failed to process MAL result: Mapping error")
+
+    @pytest.mark.asyncio
+    async def test_get_anime_mal_success(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test successful MAL anime detail retrieval."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await get_anime_mal(
+                mal_id=16498,
+                include_statistics=True,
+                include_related=True,
+                ctx=mock_context
+            )
+            
+            # Verify result structure
+            assert isinstance(result, dict)
+            assert result["id"] == "mal_16498"
+            assert result["title"] == "Attack on Titan"
+            assert result["mal_id"] == 16498
+            assert result["alternative_titles"]["en"] == "Attack on Titan"
+            assert "statistics" in result
+            assert "related_anime" in result
+            assert result["source_platform"] == "mal"
+            
+            # Verify client was called with correct fields
+            mock_mal_client.get_anime_by_id.assert_called_once()
+            call_args = mock_mal_client.get_anime_by_id.call_args
+            assert call_args[0][0] == 16498
+            assert "statistics" in call_args[1]["fields"]
+            assert "related_anime" in call_args[1]["fields"]
+
+    @pytest.mark.asyncio
+    async def test_get_anime_mal_minimal_options(self, mock_mal_client, mock_mal_mapper):
+        """Test MAL anime detail with minimal options."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await get_anime_mal(
+                mal_id=16498,
+                include_statistics=False,
+                include_related=False
+            )
+            
+            # Should have empty statistics and related content
+            assert result["statistics"] == {}
+            assert result["related_anime"] == []
+            assert result["related_manga"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_anime_mal_not_found(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test MAL anime detail when anime not found."""
+        mock_mal_client.get_anime_by_id.return_value = None
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await get_anime_mal(mal_id=99999, ctx=mock_context)
+            
+            assert result is None
+            mock_context.info.assert_called_with("Anime with MAL ID 99999 not found")
+
+    @pytest.mark.asyncio
+    async def test_get_anime_mal_no_client(self, mock_context):
+        """Test MAL anime detail when client not available."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', None):
+            
+            with pytest.raises(RuntimeError, match="MAL client not available"):
+                await get_anime_mal(mal_id=16498, ctx=mock_context)
+
+    @pytest.mark.asyncio
+    async def test_get_anime_mal_client_error(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test MAL anime detail when client raises error."""
+        mock_mal_client.get_anime_by_id.side_effect = Exception("API error")
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            with pytest.raises(RuntimeError, match="Failed to get MAL anime 16498: API error"):
+                await get_anime_mal(mal_id=16498, ctx=mock_context)
+
+    @pytest.mark.asyncio
+    async def test_get_mal_seasonal_anime_success(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test successful MAL seasonal anime retrieval."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await get_mal_seasonal_anime(
+                year=2023,
+                season="spring",
+                sort="anime_score",
+                limit=50,
+                ctx=mock_context
+            )
+            
+            # Verify result structure
+            assert isinstance(result, list)
+            assert len(result) == 1
+            
+            anime = result[0]
+            assert anime["season"] == "spring"
+            assert anime["season_year"] == 2023
+            assert anime["source_platform"] == "mal"
+            
+            # Verify client call
+            mock_mal_client.get_seasonal_anime.assert_called_once_with({
+                "year": 2023,
+                "season": "spring",
+                "sort": "anime_score",
+                "limit": 50
+            })
+
+    @pytest.mark.asyncio
+    async def test_get_mal_seasonal_anime_limit_validation(self, mock_mal_client, mock_mal_mapper):
+        """Test MAL seasonal anime limit validation."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            await get_mal_seasonal_anime(
+                year=2023,
+                season="summer",
+                limit=1000  # Should clamp to 500
+            )
+            
+            call_args = mock_mal_client.get_seasonal_anime.call_args[0][0]
+            assert call_args["limit"] == 500
+
+    @pytest.mark.asyncio
+    async def test_get_mal_seasonal_anime_sort_options(self, mock_mal_client, mock_mal_mapper):
+        """Test MAL seasonal anime with different sort options."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            # Test anime_num_list_users sort
+            await get_mal_seasonal_anime(
+                year=2023,
+                season="fall",
+                sort="anime_num_list_users"
+            )
+            
+            call_args = mock_mal_client.get_seasonal_anime.call_args[0][0]
+            assert call_args["sort"] == "anime_num_list_users"
+
+    @pytest.mark.asyncio
+    async def test_get_mal_seasonal_anime_no_client(self, mock_context):
+        """Test MAL seasonal anime when client not available."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', None):
+            
+            with pytest.raises(RuntimeError, match="MAL client not available"):
+                await get_mal_seasonal_anime(
+                    year=2023,
+                    season="winter",
+                    ctx=mock_context
+                )
+
+    @pytest.mark.asyncio
+    async def test_get_mal_seasonal_anime_client_error(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test MAL seasonal anime when client raises error."""
+        mock_mal_client.get_seasonal_anime.side_effect = Exception("Seasonal API error")
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            with pytest.raises(RuntimeError, match="MAL seasonal search failed: Seasonal API error"):
+                await get_mal_seasonal_anime(
+                    year=2023,
+                    season="summer",
+                    ctx=mock_context
+                )
+
+    @pytest.mark.asyncio
+    async def test_get_mal_seasonal_anime_mapper_error(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test MAL seasonal anime when mapper fails."""
+        mock_mal_mapper.to_universal_anime.side_effect = Exception("Seasonal mapping error")
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await get_mal_seasonal_anime(
+                year=2023,
+                season="winter",
+                ctx=mock_context
+            )
+            
+            # Should return empty list when mapping fails
+            assert result == []
+            mock_context.error.assert_called_with("Failed to process seasonal result: Seasonal mapping error")
+
+
+class TestMALToolsEdgeCases:
+    """Test edge cases and error scenarios for MAL tools."""
+
+    @pytest.mark.asyncio
+    async def test_search_anime_mal_without_context(self):
+        """Test MAL search without context (no logging)."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', None):
+            
+            with pytest.raises(RuntimeError, match="MAL client not available"):
+                await search_anime_mal(query="test")  # No ctx parameter
+
+    @pytest.mark.asyncio
+    async def test_mal_tools_parameter_validation(self):
+        """Test parameter validation for MAL tools."""
+        # Test valid literal values
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        mock_mapper.to_mal_search_params.return_value = {}
+        mock_client.search_anime.return_value = []
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            # Test all valid nsfw values
+            for nsfw in ["white", "gray", "black"]:
+                await search_anime_mal(query="test", nsfw=nsfw)
+            
+            # Test all valid rating values
+            for rating in ["g", "pg", "pg13", "r", "r+", "rx"]:
+                await search_anime_mal(query="test", rating=rating)
+            
+            # Test all valid broadcast days
+            for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]:
+                await search_anime_mal(query="test", broadcast_day=day)
+            
+            # Test all valid source types
+            for source in ["manga", "light_novel", "web_manga", "novel", "original", "other"]:
+                await search_anime_mal(query="test", source=source)
+
+    @pytest.mark.asyncio
+    async def test_mal_seasonal_parameter_validation(self):
+        """Test parameter validation for seasonal MAL tools."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        mock_mapper.to_universal_anime.return_value = UniversalAnime(
+            id="test", title="Test", data_quality_score=0.8
+        )
+        mock_client.get_seasonal_anime.return_value = []
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            # Test all valid seasons
+            for season in ["winter", "spring", "summer", "fall"]:
+                await get_mal_seasonal_anime(year=2023, season=season)
+            
+            # Test all valid sort options
+            for sort in ["anime_score", "anime_num_list_users"]:
+                await get_mal_seasonal_anime(year=2023, season="spring", sort=sort)
+
+    @pytest.mark.asyncio
+    async def test_mal_tools_data_quality_scoring(self, mock_context):
+        """Test data quality scoring in MAL tools."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        
+        # Mock different quality scores
+        mock_mapper.to_universal_anime.side_effect = [
+            UniversalAnime(id="high_quality", title="High Quality", data_quality_score=0.95),
+            UniversalAnime(id="low_quality", title="Low Quality", data_quality_score=0.65)
+        ]
+        
+        mock_client.search_anime.return_value = [
+            {"id": 1, "title": "High Quality Anime"},
+            {"id": 2, "title": "Low Quality Anime"}
+        ]
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            result = await search_anime_mal(query="test", ctx=mock_context)
+            
+            assert len(result) == 2
+            assert result[0]["data_quality_score"] == 0.95
+            assert result[1]["data_quality_score"] == 0.65
+
+    @pytest.mark.asyncio
+    async def test_mal_tools_empty_results(self, mock_context):
+        """Test MAL tools with empty results."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        mock_client.search_anime.return_value = []
+        mock_client.get_seasonal_anime.return_value = []
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            # Test search with no results
+            result = await search_anime_mal(query="nonexistent", ctx=mock_context)
+            assert result == []
+            mock_context.info.assert_called_with("Found 0 anime on MAL")
+            
+            # Test seasonal with no results
+            result = await get_mal_seasonal_anime(year=1900, season="spring", ctx=mock_context)
+            assert result == []
+            mock_context.info.assert_called_with("Found 0 seasonal anime")
+
+    @pytest.mark.asyncio
+    async def test_mal_tools_partial_data_handling(self, mock_context):
+        """Test MAL tools handling partial/missing data."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        
+        # Mock result with missing optional fields
+        mock_client.search_anime.return_value = [
+            {
+                "id": 123,
+                "title": "Minimal Data Anime",
+                # Missing many optional fields
+            }
+        ]
+        
+        mock_mapper.to_universal_anime.return_value = UniversalAnime(
+            id="minimal_123",
+            title="Minimal Data Anime",
+            genres=None,  # Test None handling
+            studios=None,
+            data_quality_score=0.5
+        )
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            result = await search_anime_mal(query="test", ctx=mock_context)
+            
+            assert len(result) == 1
+            anime = result[0]
+            
+            # Should handle None values gracefully
+            assert anime["genres"] == []  # None converted to empty list
+            assert anime["studios"] == []  # None converted to empty list
+            
+            # Missing MAL-specific fields should be handled
+            assert anime.get("mal_score") is None
+            assert anime.get("mal_rank") is None
+
+
+class TestMALToolsIntegration:
+    """Integration tests for MAL tools with real-like data flows."""
+
+    @pytest.mark.asyncio
+    async def test_mal_search_to_detail_workflow(self, mock_context):
+        """Test workflow from search to getting details."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        
+        # Setup search result
+        mock_client.search_anime.return_value = [{"id": 16498, "title": "Attack on Titan"}]
+        
+        # Setup detail result
+        mock_client.get_anime_by_id.return_value = {
+            "id": 16498,
+            "title": "Attack on Titan",
+            "synopsis": "Detailed synopsis"
+        }
+        
+        search_universal = UniversalAnime(
+            id="mal_16498", title="Attack on Titan", data_quality_score=0.9
+        )
+        detail_universal = UniversalAnime(
+            id="mal_16498", title="Attack on Titan", description="Detailed synopsis", data_quality_score=0.95
+        )
+        
+        mock_mapper.to_universal_anime.side_effect = [search_universal, detail_universal]
+        mock_mapper.to_mal_search_params.return_value = {"q": "attack"}
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            # Step 1: Search
+            search_results = await search_anime_mal(query="attack", ctx=mock_context)
+            assert len(search_results) == 1
+            mal_id = search_results[0]["mal_id"]
+            
+            # Step 2: Get details
+            detail_result = await get_anime_mal(mal_id=mal_id, ctx=mock_context)
+            assert detail_result["id"] == "mal_16498"
+            assert detail_result["synopsis"] == "Detailed synopsis"
+
+    @pytest.mark.asyncio
+    async def test_mal_tools_annotation_verification(self):
+        """Verify that MAL tools have correct MCP annotations."""
+        from src.anime_mcp.tools.mal_tools import mcp
+        
+        # Get registered tools
+        tools = mcp._tools
+        
+        # Verify search_anime_mal annotations
+        search_tool = tools.get("search_anime_mal")
+        assert search_tool is not None
+        assert search_tool.annotations["title"] == "MAL Anime Search"
+        assert search_tool.annotations["readOnlyHint"] is True
+        assert search_tool.annotations["idempotentHint"] is True
+        
+        # Verify get_anime_mal annotations
+        detail_tool = tools.get("get_anime_mal")
+        assert detail_tool is not None
+        assert detail_tool.annotations["title"] == "MAL Anime Details"
+        assert detail_tool.annotations["readOnlyHint"] is True
+        
+        # Verify get_mal_seasonal_anime annotations
+        seasonal_tool = tools.get("get_mal_seasonal_anime")
+        assert seasonal_tool is not None
+        assert seasonal_tool.annotations["title"] == "MAL Seasonal Anime"
+
+    @pytest.mark.asyncio
+    async def test_mal_tools_comprehensive_error_coverage(self, mock_context):
+        """Test comprehensive error scenarios."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        
+        # Test different types of errors
+        error_scenarios = [
+            ("Network timeout", "Request timeout"),
+            ("Rate limited", "Too many requests"),
+            ("Invalid API key", "Authentication failed"),
+            ("Server error", "Internal server error")
+        ]
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            for error_type, error_msg in error_scenarios:
+                mock_client.search_anime.side_effect = Exception(error_msg)
+                
+                with pytest.raises(RuntimeError, match=f"MAL search failed: {error_msg}"):
+                    await search_anime_mal(query="test", ctx=mock_context)
+                
+                mock_context.error.assert_called_with(f"MAL search failed: {error_msg}")
+                mock_context.reset_mock()
