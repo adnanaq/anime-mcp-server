@@ -132,7 +132,6 @@ async def root():
                 "animeschedule": "/api/external/animeschedule",
                 "anidb": "/api/external/anidb",
                 "animeplanet": "/api/external/animeplanet",
-                "livechart": "/api/external/livechart",
                 "anisearch": "/api/external/anisearch",
                 "animecountdown": "/api/external/animecountdown",
             },

@@ -1,223 +1,190 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this anime MCP server codebase.
 
-## Project Overview
+## 🎯 CRITICAL CONTEXT (Read First)
 
-This is an **Anime MCP (Model Context Protocol) Server** built with FastAPI and Qdrant vector database. It provides semantic search capabilities over 38,000+ anime entries from the anime-offline-database, designed to be integrated as an MCP tool for AI assistants.
+**Project**: Anime MCP Server - FastAPI + Qdrant vector database providing semantic search over 38,000+ anime entries
+**Purpose**: MCP tool integration for AI assistants with advanced search capabilities
+**Key Tech**: FastAPI, Qdrant, LangGraph, CLIP, FastEmbed, Pydantic
 
-## Documentation File Responsibilities
+### Essential Pre-Work Checklist
 
-**IMPORTANT**: Keep clear separation between documentation files:
+- [ ] Always use `source venv/bin/activate` before Python commands
+- [ ] Check `PLANNING.md` for architecture context
+- [ ] Check `TASKS.md` before starting new tasks
+- [ ] Run formatting before commits: `black src/ tests/ scripts/`
 
-### STRATEGIC OVERVIEW
+## 🏗️ ARCHITECTURE OVERVIEW
 
-- **Purpose**: Condensed historical context, strategic roadmap, system overview
-- **Content**: Completed phases (condensed), architecture, capabilities, vision
-- **Updates**: Updated when major phases complete, strategic changes occur
-- **Scope**: High-level context for understanding the project's current state and direction
+### Core Stack
 
-### 🔄 Project Awareness & Context
+```
+FastAPI Server (src/main.py)
+├── Qdrant Vector DB (multi-vector: text + image)
+├── LangGraph Workflows (smart orchestration)
+├── MCP Server (modern_server.py + platform-specific tools)
+└── External APIs (9 platforms)
+```
 
-- **Always read `PLANNING.md`** at the start of a new conversation to understand the project's architecture, goals, style, and constraints.
-- **Check `TASK.md`** before starting a new task. If the task isn’t listed, add it with a brief description and today's date.
-- **Use consistent naming conventions, file structure, and architecture patterns** as described in `PLANNING.md`.
-- **Use venv** (the virtual environment) whenever executing Python commands, including for unit tests.
+### Critical Files to Know
 
-## Code Architecture
+- `src/config.py` - All environment variables and settings
+- `src/services/data_service.py` - Core data processing pipeline
+- `src/vector/qdrant_client.py` - Vector database operations
+- `src/langgraph/react_agent_workflow.py` - AI workflow orchestration
+- `src/anime_mcp/modern_server.py` - Modern MCP server with LangGraph workflows
+- `src/anime_mcp/server.py` - Core MCP server implementation
+- `src/anime_mcp/tools/` - Platform-specific MCP tools
 
-### Architecture
+### Data Flow
 
-- **FastAPI Server**: Main application with REST API endpoints (`src/main.py`)
-- **Qdrant Vector Database**: Multi-vector search using `qdrant==1.11.3`
-- **Data Pipeline**: Processes anime-offline-database JSON into searchable vectors
-- **MCP Integration**: Provides structured anime search tools for AI assistants
-- **LangGraph**: Workflow orchestration with smart query processing
-- **CLIP**: Image embeddings for visual similarity search
+1. **Ingest**: anime-offline-database JSON → Data Service
+2. **Process**: Text + image embeddings → Qdrant multi-vector
+3. **Query**: Natural language → LangGraph → Structured search
+4. **Results**: Ranked anime with quality scores
 
-### Core Components
+## 🚀 QUICK START
 
-1. **Vector Database Client** (`src/vector/qdrant_client.py`)
+### Development Setup
 
-   - Multi-vector collection (text + image embeddings)
-   - Uses FastEmbed (BAAI/bge-small-en-v1.5) for text embeddings
-   - Uses CLIP (ViT-B/32) for image embeddings
+```bash
+# Start services
+docker-compose up -d qdrant
+source venv/bin/activate
+pip install -r requirements.txt
 
-2. **Data Service** (`src/services/data_service.py`)
+# Start server
+python -m src.main
+# OR with auto-reload
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-   - Downloads anime-offline-database JSON (38,894 entries)
-   - Processes raw anime data into searchable vectors
-   - Creates embedding text from: title + synopsis + tags + studios
+### Essential Commands
 
-3. **LLM Service** (`src/services/llm_service.py`)
+```bash
+# Testing
+pytest tests/ -v                    # All tests
+pytest -m unit -v                   # Unit tests only
+pytest -m integration -v            # Integration tests only
 
-   - OpenAI/Anthropic integration for AI-powered query understanding
-   - Natural language parameter extraction
-   - Structured output parsing with Pydantic schemas
+# Data management
+curl -X POST http://localhost:8000/api/admin/update-full
+curl http://localhost:8000/stats
 
-4. **LangGraph Workflows** (`src/langgraph/`)
+# MCP server modes (choose based on use case)
+python -m src.anime_mcp.modern_server               # Modern workflow server (stdio mode)
+python -m src.anime_mcp.modern_server --mode sse --port 8001  # Modern server (SSE mode)
+python -m src.anime_mcp.server                     # Core MCP server (stdio mode)
+python -m src.anime_mcp.server --mode sse --port 8001       # Core server (SSE mode)
+```
 
-   - Smart orchestration with complexity assessment
-   - Multi-step discovery and result refinement
-   - Conversation continuity and preference learning
+## 🔗 MCP PROTOCOL INTEGRATION
 
-5. **MCP Server** (`src/mcp/server.py`)
-   - 7 MCP tools including image search capabilities
-   - Dual protocol support (stdio + HTTP)
+### MCP Servers (Two Available)
 
-### Key Implementation Details
+**Core Server** (`src.anime_mcp.server`) - **8 core tools + platform tools**
+- **Use for**: Basic search, image search, detailed anime data
+- **Transport modes**: stdio, http, sse, streamable
+- **Tools**: search_anime, get_anime_details, find_similar_anime, search_anime_by_image, etc.
 
-- **Multi-Vector Search**: Text (384-dim) + Image (512-dim) embeddings
-- **Batch Processing**: Documents processed in batches for memory efficiency
-- **Quality Scoring**: Data quality calculated based on metadata completeness
-- **ID Generation**: Unique anime IDs generated from title + first source URL
-- **AI Query Understanding**: Natural language → structured search parameters
+**Modern Server** (`src.anime_mcp.modern_server`) - **4 workflow tools + LangGraph**
+- **Use for**: AI-powered discovery, multi-agent workflows, complex queries
+- **Transport modes**: stdio, sse
+- **Tools**: discover_anime, get_currently_airing_anime, find_similar_anime_workflow
 
-## Development Notes and Rules
+### Quick MCP Commands
 
-### 🧱 Code Structure & Modularity
+```bash
+# Local development (stdio mode) - recommended for AI assistants
+python -m src.anime_mcp.modern_server           # Workflow tools + LangGraph
+python -m src.anime_mcp.server                 # Core tools + platform tools
 
-- **Never create a file longer than 500 lines of code.** If a file approaches this limit, refactor by splitting it into modules or helper files.
-- **Organize code into clearly separated modules**, grouped by feature or responsibility.
-  For agents this looks like:
-  - `agent.py` - Main agent definition and execution logic
-  - `tools.py` - Tool functions used by the agent
+# Web/remote clients - core server only (modern server only supports sse)
+python -m src.anime_mcp.server --mode http --port 8001     # HTTP transport
+python -m src.anime_mcp.server --mode sse --port 8001      # Server-Sent Events
+python -m src.anime_mcp.server --mode streamable --port 8001  # Streamable HTTP
+
+# Test MCP functionality
+python scripts/verify_mcp_server.py            # Comprehensive testing
+```
+
+### MCP Development Notes
+
+- **Default choice**: `modern_server` for AI assistants, `core_server` for basic tools/testing
+- **Protocol guide**: `stdio` (local), `http` (testing), `sse` (web clients), `streamable` (advanced)
+- **Testing**: Always run `verify_mcp_server.py` after MCP changes
+- **Tool count**: 31 total (8 core + 4 workflow + 14 platform + 5 enrichment)
+
+## 📁 FILE STRUCTURE
+
+```
+src/
+├── main.py                 # FastAPI app entry point
+├── config.py              # Environment settings
+├── api/                   # REST endpoints
+│   ├── search.py          # Search endpoints
+│   ├── admin.py           # Admin endpoints
+│   └── workflow.py        # LangGraph workflow endpoints
+├── langgraph/             # AI workflow orchestration
+│   ├── langchain_tools.py        # LangChain tool creation
+│   └── react_agent_workflow.py  # Main ReactAgent workflow
+├── vector/                # Qdrant + CLIP integration
+│   ├── qdrant_client.py          # Multi-vector database ops
+│   └── vision_processor.py      # CLIP image processing
+├── services/              # Core business logic
+│   ├── data_service.py           # Data processing pipeline
+│   ├── smart_scheduler.py        # Rate limiting coordination
+│   └── update_service.py         # Database update management
+├── anime_mcp/             # MCP implementation
+│   ├── modern_server.py          # LangGraph workflow MCP server
+│   ├── server.py                 # Core MCP server
+│   ├── handlers/                 # MCP request handlers
+│   └── tools/                    # Platform-specific MCP tools
+├── models/                # Pydantic data models
+│   ├── anime.py                  # Core anime models
+│   └── universal_anime.py        # Universal schema mapping
+└── integrations/          # External platform integrations
+    ├── clients/                  # HTTP clients (9 platforms)
+    ├── mappers/                  # Data transformation
+    ├── scrapers/                 # Web scraping
+    └── rate_limiting/            # Multi-tier rate limiting
+```
+
+## 💻 DEVELOPMENT RULES
+
+### Code Quality Standards
+
+- **File Size Limit**: Never exceed 500 lines per file
+- **Module Organization**:
+  - `agent.py` - Main agent logic
+  - `tools.py` - Tool functions
   - `prompts.py` - System prompts
-- **Use clear, consistent imports** (prefer relative imports within packages).
-- **Use .venv and load_env()** for environment variables.
-
-### Testing & Quality
-
-- **Always use TDD approach**
-- **Run all tests**: `pytest tests/ -v`
-- **Run single test**: `pytest tests/unit/services/test_data_service.py::test_specific_function -v`
-- **Run test by marker**: `pytest -m unit -v` or `pytest -m integration -v`
-- **Code formatting**: `black src/ tests/ scripts/`
-- **Type checking**: `mypy src/`
-- **Coverage report**: `pytest tests/ --cov=src --cov-report=html`
-- **Always create Pytest unit tests for new features** (functions, classes, routes, etc).
-- **After updating any logic**, check whether existing unit tests need to be updated. If so, do it.
-- **Tests should live in a `/tests` folder** mirroring the main app structure.
-
-  - Include at least:
-    - 1 test for expected use
-    - 1 edge case
-    - 1 failure case
-
-- NEVER create new test files unless absolutely necessary
-
-### Task Completion
-
-- Mark completed tasks in TASK.md immediately after finishing them.
-- Add new sub-tasks or TODOs discovered during development to TASK.md under a “Discovered During Work” section.
-
-### Style & Conventions
-
-- Do not use emojis unless specified
-- Use Python as the primary language.
-- Follow PEP8, use type hints, and format with black.
-- Use pydantic for data validation.
-- Use FastAPI for APIs
-- Write docstrings for every function using the Google style:
-
-```
-def example():
-    """
-    Brief summary.
-
-    Args:
-        param1 (type): Description.
-
-    Returns:
-        type: Description.
-    """
-```
-
-- **ALWAYS run formatting before staging/committing**:
+- **Testing**: Always use TDD, create unit tests for new features
+- **Formatting**: Always run before commits:
   ```bash
   autoflake --recursive --in-place --remove-all-unused-imports --remove-unused-variables src/ tests/ scripts/
   isort src/ tests/ scripts/
   black src/ tests/ scripts/
   ```
 
-### Documentation & Explainability
+### Python Conventions
 
-- Update README.md when new features are added, dependencies change, or setup steps are modified.
-- Comment non-obvious code and ensure everything is understandable to a mid-level developer.
-- When writing complex logic, add an inline # Reason: comment explaining the why, not just the what.
+- Use type hints and Google-style docstrings
+- Use Pydantic for data validation
+- Prefer relative imports within packages
+- Use `.venv` and `load_env()` for environment variables
 
-## AI Behavior Rules
+### Testing Requirements
 
-- Never assume missing context. Ask questions if uncertain.
-- Never hallucinate libraries or functions – only use known, verified Python packages.
-- Always confirm file paths and module names exist before referencing them in code or tests.
-- Never delete or overwrite existing code unless explicitly instructed to or if part of a task from TASK.md.
+- **Test Structure**: Mirror main app structure in `/tests`
+- **Coverage**: Minimum 3 tests per feature (expected use, edge case, failure case)
+- **Markers**: Use `pytest -m unit` or `pytest -m integration`
+- **Never create new test files** unless absolutely necessary
 
-## File Structure Context & Key Files
+## 🎛️ ENVIRONMENT SETUP
 
-```
-src/
-├── main.py              # FastAPI app with lifespan management
-├── config.py            # Centralized configuration with environment settings
-├── api/                 # REST API endpoints
-│   ├── search.py        # Search endpoints (/api/search/*)
-│   ├── admin.py         # Admin endpoints (/api/admin/*)
-│   └── workflow.py      # LangGraph workflow endpoints (/api/workflow/*)
-├── langgraph/           # LangGraph workflow orchestration
-│   ├── langchain_tools.py    # LangChain tool creation & ToolNode workflow
-│   └── react_agent_workflow.py    # Main ReactAgent workflow engine
-├── vector/              # Qdrant + CLIP integration
-│   ├── qdrant_client.py      # Multi-vector database operations
-│   └── vision_processor.py  # CLIP image processing
-├── services/            # Core business logic
-│   ├── data_service.py       # Data processing & indexing pipeline
-│   ├── smart_scheduler.py    # Rate limiting & service coordination
-│   └── update_service.py     # Database update management
-├── mcp/                 # FastMCP protocol implementation
-│   ├── server.py             # FastMCP server with 7 tools
-│   └── fastmcp_client_adapter.py  # MCP client integration
-├── models/              # Pydantic data models
-│   ├── anime.py              # Core anime data models
-│   └── universal_anime.py    # Universal schema for platform mapping
-└── integrations/        # External platform integrations (9 platforms)
-    ├── clients/              # HTTP clients for each platform
-    ├── mappers/              # Data transformation layers
-    ├── scrapers/             # Web scraping components
-    └── rate_limiting/        # Multi-tier rate limiting system
-```
-
-**Critical Files for Understanding:**
-
-- `src/config.py` - All environment variables and settings
-- `src/services/data_service.py` - Core data processing pipeline
-- `src/vector/qdrant_client.py` - Vector database operations
-- `src/langgraph/react_agent_workflow.py` - AI workflow orchestration
-
-## Development Setup
-
-### Prerequisites
-
-```bash
-# Start Qdrant vector database
-docker-compose up qdrant
-
-# Or manually:
-docker run --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
-```
-
-### Virtual Environment
-
-```bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# OR
-venv\Scripts\activate     # Windows
-pip install -r requirements.txt
-```
-
-### Environment Variables
-
-Create `.env` file:
+### Required .env Variables
 
 ```
 QDRANT_URL=http://localhost:6333
@@ -228,67 +195,85 @@ DEBUG=True
 ENABLE_MULTI_VECTOR=true
 ```
 
-## Common Commands
-
-### Development
+### Docker Services
 
 ```bash
-# Start FastAPI server (development)
-python -m src.main
-# OR with auto-reload
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-
-# Full stack with Docker (recommended)
+# Full stack
 docker-compose up
 
-# Start only required services
+# Qdrant only
 docker-compose up -d qdrant
-docker-compose up -d fastapi qdrant
 
-# MCP Server modes
-python -m src.mcp.server                            # stdio mode (default)
-python -m src.mcp.server --mode http --port 8001    # HTTP mode
-python -m src.mcp.server --mode http --verbose      # HTTP with verbose logging
+# Manual Qdrant
+docker run --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
 ```
 
-### Data Management
+## 📊 KEY IMPLEMENTATION DETAILS
+
+### Vector Database
+
+- **Text Embeddings**: FastEmbed (BAAI/bge-small-en-v1.5, 384-dim)
+- **Image Embeddings**: CLIP (ViT-B/32, 512-dim)
+- **Multi-Vector**: Combined text + image search capabilities
+- **Batch Processing**: Memory-efficient document processing
+
+### Data Processing
+
+- **Source**: anime-offline-database (38,894 entries)
+- **ID Generation**: title + first source URL
+- **Quality Scoring**: Metadata completeness (0-1 scale)
+- **Embedding Text**: title + synopsis + tags + studios
+
+### AI Integration
+
+- **LangGraph**: Smart orchestration with complexity assessment
+- **Query Understanding**: Natural language → structured parameters
+- **Multi-step Discovery**: Result refinement and preference learning
+
+## 🔧 TASK MANAGEMENT
+
+### Documentation Responsibilities
+
+- **PLANNING.md**: Architecture, goals, constraints (read at conversation start)
+- **TASKS.md**: Current tasks, add new ones with date (note: filename is TASKS.md not TASK.md)
+- **CLAUDE.md**: This file - development guidance and context
+
+### Task Completion Process
+
+1. Mark completed tasks in TASKS.md immediately
+2. Add discovered sub-tasks to "Discovered During Work" section
+3. Update tests when logic changes
+4. Run formatting before commits
+
+## 🚨 AI BEHAVIOR RULES
+
+### Safety & Accuracy
+
+- Never assume missing context - ask questions if uncertain
+- Only use verified Python packages - no hallucination
+- Confirm file paths and module names exist before referencing
+- Never delete/overwrite code unless explicitly instructed
+
+### Documentation Updates
+
+- Update README.md when features/dependencies change
+- Comment non-obvious code for mid-level developer understanding
+- Add `# Reason:` comments for complex logic explaining why, not what
+
+## 🔍 VERIFICATION COMMANDS
+
+### Health Checks
 
 ```bash
-# Full data update (downloads + processes + indexes)
-curl -X POST http://localhost:8000/api/admin/update-full
-
-# Individual steps
-curl -X POST http://localhost:8000/api/admin/download-data
-curl -X POST http://localhost:8000/api/admin/process-data
-
-# Check update status
-curl http://localhost:8000/api/admin/update-status
+curl http://localhost:8000/health         # System health
+curl http://localhost:8000/stats          # Database stats
+curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"  # Search test
+python scripts/verify_mcp_server.py      # MCP server verification
 ```
 
-### Testing & Verification
+### Test Coverage
 
 ```bash
-# System health
-curl http://localhost:8000/health
-
-# Database stats
-curl http://localhost:8000/stats
-
-# Basic search test
-curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
-
-# MCP server verification (comprehensive)
-python scripts/verify_mcp_server.py
-
-# Run test suite
-pytest tests/ -v
-pytest -m unit -v        # Unit tests only
-pytest -m integration -v # Integration tests only
+pytest tests/ --cov=src --cov-report=html  # Coverage report
+mypy src/                                   # Type checking
 ```
-
-## Data Source
-
-- **Source**: [anime-offline-database](https://github.com/manami-project/anime-offline-database)
-- **Format**: JSON with 38,894 anime entries
-- **Updates**: Weekly automated updates with intelligent change detection
-- **Quality**: Tracked via quality scoring system (0-1 scale)

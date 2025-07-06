@@ -29,20 +29,26 @@ anime-mcp-server/
 │   │   ├── admin.py             # Admin endpoints
 │   │   ├── recommendations.py   # Recommendation endpoints (basic)
 │   │   └── workflow.py          # LangGraph workflow endpoints
-│   ├── mcp/
-│   │   ├── server.py            # FastMCP server implementation
-│   │   └── tools.py             # MCP utility functions
+│   ├── anime_mcp/
+│   │   ├── modern_server.py     # Modern MCP server with LangGraph workflows
+│   │   ├── server.py            # Core MCP server implementation
+│   │   ├── handlers/            # MCP request handlers
+│   │   └── tools/               # Platform-specific MCP tools
 │   ├── langgraph/
-│   │   ├── langchain_tools.py   # LangChain tool creation & ToolNode workflow
-│   │   └── workflow_engine.py   # Main anime workflow engine
+│   │   ├── langchain_tools.py         # LangChain tool creation & ToolNode workflow
+│   │   ├── react_agent_workflow.py   # ReactAgent workflow engine
+│   │   ├── anime_swarm.py             # Multi-agent swarm workflows
+│   │   └── agents/                    # Specialized workflow agents
 │   ├── vector/
 │   │   ├── qdrant_client.py     # Vector database operations
 │   │   └── vision_processor.py  # CLIP image processing
 │   ├── models/
 │   │   └── anime.py             # Pydantic data models
 │   ├── services/
-│   │   ├── data_service.py      # Data processing pipeline
-│   │   └── llm_service.py       # LLM service for AI-powered query understanding
+│   │   ├── data_service.py           # Data processing pipeline
+│   │   ├── smart_scheduler.py        # Rate limiting coordination
+│   │   ├── update_service.py         # Database update management
+│   │   └── external/                 # External platform services
 │   └── exceptions.py            # Custom exception classes
 ├── scripts/
 │   ├── test_mcp.py              # MCP server testing client
@@ -60,7 +66,7 @@ anime-mcp-server/
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.11+
 - Docker & Docker Compose
 - 4GB+ RAM (for vector processing)
 
@@ -114,7 +120,7 @@ docker compose up -d
    docker compose up -d qdrant
    
    # Run MCP server locally in stdio mode
-   python -m src.mcp.server
+   python -m src.anime_mcp.modern_server
    ```
 
 **Local Development**
@@ -175,27 +181,58 @@ curl http://localhost:8000/api/admin/update-status
 
 ### Transport Protocols
 
-The MCP server supports multiple transport protocols for different use cases:
+The MCP servers support multiple transport protocols for different use cases:
 
+**Core Server (`src.anime_mcp.server`):**
 | Protocol       | Use Case                            | Port | Command                                |
 | -------------- | ----------------------------------- | ---- | -------------------------------------- |
-| **stdio**      | Local development, Claude Code      | N/A  | `python -m src.mcp.server`             |
-| **HTTP (SSE)** | Web clients, Postman, remote access | 8001 | `python -m src.mcp.server --mode http` |
+| **stdio**      | Local development, Claude Code      | N/A  | `python -m src.anime_mcp.server`                    |
+| **http**       | HTTP clients                        | 8001 | `python -m src.anime_mcp.server --mode http`        |
+| **sse**        | Server-Sent Events, web clients     | 8001 | `python -m src.anime_mcp.server --mode sse`         |
+| **streamable** | Streamable HTTP transport           | 8001 | `python -m src.anime_mcp.server --mode streamable`  |
+
+**Modern Server (`src.anime_mcp.modern_server`):**
+| Protocol       | Use Case                            | Port | Command                                |
+| -------------- | ----------------------------------- | ---- | -------------------------------------- |
+| **stdio**      | Local development, Claude Code      | N/A  | `python -m src.anime_mcp.modern_server`             |
+| **sse**        | Server-Sent Events, web clients     | 8001 | `python -m src.anime_mcp.modern_server --mode sse`  |
 
 ### Running the MCP Server
 
+**Core Server (All transport protocols):**
 ```bash
 # Local development (stdio) - default mode
-python -m src.mcp.server
+python -m src.anime_mcp.server
 
-# Web/remote access (HTTP)
-python -m src.mcp.server --mode http --host 0.0.0.0 --port 8001
+# HTTP transport
+python -m src.anime_mcp.server --mode http --host 0.0.0.0 --port 8001
+
+# Server-Sent Events (SSE)
+python -m src.anime_mcp.server --mode sse --host 0.0.0.0 --port 8001
+
+# Streamable HTTP transport
+python -m src.anime_mcp.server --mode streamable --host 0.0.0.0 --port 8001
 
 # With verbose logging
-python -m src.mcp.server --mode http --verbose
+python -m src.anime_mcp.server --mode sse --verbose
+```
 
+**Modern Server (LangGraph workflows):**
+```bash
+# Local development (stdio) - default mode
+python -m src.anime_mcp.modern_server
+
+# Server-Sent Events (SSE)
+python -m src.anime_mcp.modern_server --mode sse --host 0.0.0.0 --port 8001
+
+# With verbose logging
+python -m src.anime_mcp.modern_server --mode sse --verbose
+```
+
+**Testing:**
+```bash
 # Test MCP functionality
-python scripts/test_mcp.py
+python scripts/verify_mcp_server.py
 ```
 
 ### Configuration Options
@@ -204,7 +241,7 @@ Environment variables for MCP server:
 
 ```bash
 # MCP Server Configuration
-SERVER_MODE=stdio          # Transport mode: stdio, http, sse, streamable
+SERVER_MODE=stdio          # Core server: stdio, http, sse, streamable | Modern server: stdio, sse
 MCP_HOST=0.0.0.0          # HTTP server host (for HTTP modes)
 MCP_PORT=8001             # HTTP server port (for HTTP modes)
 ```
@@ -218,35 +255,83 @@ MCP_PORT=8001             # HTTP server port (for HTTP modes)
   "mcpServers": {
     "anime-search": {
       "command": "python",
-      "args": ["-m", "src.mcp.server"],
+      "args": ["-m", "src.anime_mcp.modern_server"],
       "cwd": "/path/to/anime-mcp-server"
     }
   }
 }
 ```
 
-**Postman or Web Clients (HTTP mode)**
+**Web Clients (HTTP/SSE modes)**
 
-- Start server: `python -m src.mcp.server --mode http --port 8001`
-- MCP endpoint: `http://localhost:8001/sse/`
-- Health check: `curl http://localhost:8001/health`
+Core Server:
+- HTTP mode: `python -m src.anime_mcp.server --mode http --port 8001`
+- SSE mode: `python -m src.anime_mcp.server --mode sse --port 8001`
+- Streamable mode: `python -m src.anime_mcp.server --mode streamable --port 8001`
+
+Modern Server:
+- SSE mode: `python -m src.anime_mcp.modern_server --mode sse --port 8001`
+
+Endpoints:
+- MCP endpoint: `http://localhost:8001/` (varies by transport)
+- Health check: `curl http://localhost:8001/health` (when available)
 
 ### MCP Tools Available
 
-| Tool                          | Description                  | Parameters                              |
-| ----------------------------- | ---------------------------- | --------------------------------------- |
-| `search_anime`                | Semantic anime search        | `query` (string), `limit` (int)         |
-| `get_anime_details`           | Get detailed anime info      | `anime_id` (string)                     |
-| `find_similar_anime`          | Find similar anime           | `anime_id` (string), `limit` (int)      |
-| `get_anime_stats`             | Database statistics          | None                                    |
-| `search_anime_by_image`       | Image similarity search      | `image_data` (base64), `limit` (int)    |
-| `find_visually_similar_anime` | Visual similarity            | `anime_id` (string), `limit` (int)      |
-| `search_multimodal_anime`     | Text + image search          | `query`, `image_data`, `text_weight`    |
+**Core Search Tools (Core Server):**
+| Tool                               | Description                                | Parameters                              |
+| ---------------------------------- | ------------------------------------------ | --------------------------------------- |
+| `search_anime`                     | Semantic search with advanced filtering    | `query`, `limit`, `genres`, `year_range`, `exclusions` |
+| `get_anime_details`                | Get detailed anime information by ID       | `anime_id` (string)                     |
+| `find_similar_anime`               | Find similar anime by vector similarity    | `anime_id`, `limit` (optional)          |
+| `get_anime_stats`                  | Database statistics and health info        | None                                    |
+| `search_anime_by_image`            | Visual similarity search with image        | `image_data` (base64), `limit`          |
+| `find_visually_similar_anime`      | Visual similarity by anime ID              | `anime_id`, `limit` (optional)          |
+| `search_multimodal_anime`          | Combined text and image search             | `query`, `image_data`, `text_weight`, `limit` |
+
+**Workflow Tools (Modern Server):**
+| Tool                               | Description                                | Parameters                              |
+| ---------------------------------- | ------------------------------------------ | --------------------------------------- |
+| `discover_anime`                   | Intelligent multi-agent anime discovery    | `query` (string), `user_preferences`   |
+| `get_currently_airing_anime`       | Real-time broadcast schedules              | `day_filter`, `timezone`, `platforms`  |
+| `find_similar_anime_workflow`      | AI-powered similarity analysis             | `reference_anime`, `similarity_mode`   |
+| `search_by_streaming_platform`     | Platform-specific availability search      | `platforms` (array), `content_filters` |
+
+**Platform-Specific Tools:**
+| Tool                               | Description                                | Platform                                |
+| ---------------------------------- | ------------------------------------------ | --------------------------------------- |
+| `search_anime_mal`                 | MyAnimeList search with field selection    | MAL                                     |
+| `get_anime_mal`                    | Get MAL anime details by ID               | MAL                                     |
+| `get_mal_seasonal_anime`           | Get seasonal anime from MAL               | MAL                                     |
+| `search_anime_anilist`             | AniList GraphQL search                     | AniList                                 |
+| `get_anime_anilist`                | Get AniList anime details                  | AniList                                 |
+| `search_anime_kitsu`               | Kitsu JSON:API search                      | Kitsu                                   |
+| `get_anime_kitsu`                  | Get Kitsu anime details                    | Kitsu                                   |
+| `search_streaming_platforms`       | Search streaming platform availability     | Kitsu                                   |
+| `search_anime_jikan`               | Jikan (MAL unofficial) search              | Jikan                                   |
+| `get_anime_jikan`                  | Get Jikan anime details                    | Jikan                                   |
+| `get_jikan_seasonal`               | Get seasonal anime from Jikan             | Jikan                                   |
+| `search_anime_schedule`            | AnimeSchedule.net search                   | AnimeSchedule                           |
+| `get_schedule_data`                | Get detailed schedule data                 | AnimeSchedule                           |
+| `get_currently_airing`             | Get currently airing anime                 | AnimeSchedule                           |
+| `anime_semantic_search`            | Vector database semantic search            | Vector DB                               |
+| `anime_similar`                    | Vector similarity search                   | Vector DB                               |
+| `anime_vector_stats`               | Vector database statistics                 | Vector DB                               |
+
+**Cross-Platform Enrichment Tools:**
+| Tool                               | Description                                | Purpose                                 |
+| ---------------------------------- | ------------------------------------------ | --------------------------------------- |
+| `compare_anime_ratings_cross_platform` | Compare ratings across platforms      | Cross-platform analysis                |
+| `get_cross_platform_anime_data`   | Aggregate data from multiple platforms    | Data enrichment                         |
+| `correlate_anime_across_platforms` | Find correlations between platforms       | Data validation                         |
+| `get_streaming_availability_multi_platform` | Multi-platform streaming info    | Streaming discovery                     |
+| `detect_platform_discrepancies`   | Detect data inconsistencies               | Quality assurance                       |
 
 ### MCP Resources
 
-- `anime://database/stats` - Database statistics and health
-- `anime://database/schema` - Database schema information
+- `anime://server/capabilities` - Server capabilities and available tools
+- `anime://platforms/status` - Status of all anime platform integrations
+- `anime://workflow/architecture` - LangGraph workflow architecture information
 
 ## 📡 API Reference
 
@@ -336,7 +421,7 @@ curl -X POST http://localhost:8000/api/search/multimodal \
 | `/api/workflow/stats`              | GET    | Workflow statistics          | Get conversation metrics             |
 | `/api/workflow/health`             | GET    | Workflow system health       | Check LangGraph engine status        |
 
-**AI-Powered Query Understanding (Phase 6C):**
+**AI-Powered Query Understanding:**
 
 The system now features intelligent natural language processing that automatically extracts search parameters from user queries:
 
@@ -406,8 +491,13 @@ curl http://localhost:8000/api/workflow/health
 | Endpoint                   | Method | Purpose                    | Example                                                      |
 | -------------------------- | ------ | -------------------------- | ------------------------------------------------------------ |
 | `/api/admin/check-updates` | POST   | Check for updates          | `curl -X POST http://localhost:8000/api/admin/check-updates` |
-| `/api/admin/download-data` | POST   | Download latest anime data | `curl -X POST http://localhost:8000/api/admin/download-data` |
-| `/api/admin/process-data`  | POST   | Process and index data     | `curl -X POST http://localhost:8000/api/admin/process-data`  |
+| `/api/admin/update-incremental` | POST   | Perform incremental update | `curl -X POST http://localhost:8000/api/admin/update-incremental` |
+| `/api/admin/update-full`   | POST   | Perform full database update | `curl -X POST http://localhost:8000/api/admin/update-full` |
+| `/api/admin/update-status` | GET    | Get update status          | `curl http://localhost:8000/api/admin/update-status` |
+| `/api/admin/schedule-weekly-update` | POST | Schedule weekly updates | `curl -X POST http://localhost:8000/api/admin/schedule-weekly-update` |
+| `/api/admin/smart-schedule-analysis` | GET | Get smart schedule analysis | `curl http://localhost:8000/api/admin/smart-schedule-analysis` |
+| `/api/admin/update-safety-check` | GET | Check update safety | `curl http://localhost:8000/api/admin/update-safety-check` |
+| `/api/admin/smart-update`  | POST   | Perform smart update       | `curl -X POST http://localhost:8000/api/admin/smart-update` |
 
 ### 🎯 Response Formats
 
@@ -641,22 +731,22 @@ python scripts/verify_mcp_server.py --skip-image-tests
 ```bash
 # Start MCP server in one terminal
 source venv/bin/activate
-python -m src.mcp.server
+python -m src.anime_mcp.modern_server
 
 # Use the automated test script (recommended approach)
 python scripts/verify_mcp_server.py
 ```
 
-**HTTP mode (web/remote access):**
+**SSE mode (web/remote access):**
 
 ```bash
-# Start HTTP MCP server
-python -m src.mcp.server --mode http --port 8001
+# Start SSE MCP server
+python -m src.anime_mcp.modern_server --mode sse --port 8001
 
-# Test HTTP endpoint accessibility
+# Test SSE endpoint accessibility
 curl http://localhost:8001/sse/
 
-# Test with Postman or other HTTP MCP clients
+# Test with compatible MCP clients
 # Endpoint: http://localhost:8001/sse/
 ```
 
@@ -670,7 +760,7 @@ python run_tests.py
 pytest tests/unit/ -v
 pytest tests/integration/ -v
 
-# Test AI-powered query understanding (Phase 6C)
+# Test AI-powered query understanding
 pytest tests/unit/services/test_llm_service.py -v
 pytest tests/unit/langgraph/test_llm_integration.py -v
 
@@ -710,7 +800,7 @@ API_TITLE=Anime MCP Server                # API title
 API_VERSION=1.0.0                         # API version
 ALLOWED_ORIGINS=*                         # CORS origins
 
-# LLM Configuration (Phase 6C - AI-Powered Query Understanding)
+# LLM Configuration (AI-Powered Query Understanding)
 OPENAI_API_KEY=your_openai_key_here       # OpenAI API key for intelligent query parsing
 ANTHROPIC_API_KEY=your_anthropic_key_here # Anthropic API key (alternative)
 LLM_PROVIDER=openai                       # Default LLM provider: openai, anthropic
@@ -742,7 +832,7 @@ The system uses Docker Compose for orchestration with support for both REST API 
 - **Indexing Time**: 2-3 hours for complete database with image downloads
 - **Vector Storage**: Text (384D) + Picture (512D) + Thumbnail (512D) per anime
 - **Concurrency**: Supports multiple simultaneous searches and complex query processing
-- **MCP Protocol**: Full FastMCP 2.8.1 integration with 7 tools
+- **MCP Protocol**: Full FastMCP 2.8.1 integration with 8 core tools + 4 workflow tools + 14 platform tools + 5 enrichment tools (31 total)
 - **Workflow Processing**: 2-5 workflow steps per query depending on complexity
 - **Natural Language Processing**: Intelligent parameter extraction with graceful fallbacks
 
@@ -792,7 +882,7 @@ Visit **http://localhost:8000** for:
 python scripts/test_mcp.py
 
 # Start MCP server for AI integration
-python -m src.mcp.server
+python -m src.anime_mcp.server
 ```
 
 ## 🛠️ Development
@@ -801,9 +891,9 @@ python -m src.mcp.server
 
 ```bash
 # MCP Server Management
-python -m src.mcp.server                            # Start MCP server (stdio mode)
-python -m src.mcp.server --mode http --port 8001    # Start MCP server (HTTP mode)
-python -m src.mcp.server --help                     # View all CLI options
+python -m src.anime_mcp.modern_server                            # Start MCP server (stdio mode)
+python -m src.anime_mcp.modern_server --mode sse --port 8001     # Start MCP server (SSE mode)
+python -m src.anime_mcp.modern_server --help                     # View all CLI options
 
 # Data Management
 python scripts/migrate_to_multivector.py --dry-run    # Test collection migration
@@ -817,8 +907,8 @@ python scripts/verify_mcp_server.py --skip-image-tests  # Skip image tests if CL
 python run_tests.py                                 # Run full test suite
 
 # Data Pipeline
-curl -X POST http://localhost:8000/api/admin/download-data  # Download latest data
-curl -X POST http://localhost:8000/api/admin/process-data   # Process and index
+curl -X POST http://localhost:8000/api/admin/update-full    # Full database update
+curl -X POST http://localhost:8000/api/admin/update-incremental  # Incremental update
 ```
 
 ### Code Quality & Formatting
@@ -851,7 +941,8 @@ All tools configured in `pyproject.toml` with modern best practices and compatib
 ### Project Structure
 
 - **`src/main.py`**: FastAPI application entry point
-- **`src/mcp/server.py`**: FastMCP server with 7 tools + 2 resources
+- **`src/anime_mcp/server.py`**: Core FastMCP server with 8 tools + 2 resources
+- **`src/anime_mcp/modern_server.py`**: Modern MCP server with LangGraph workflows
 - **`src/vector/qdrant_client.py`**: Multi-vector database operations with CLIP
 - **`src/vector/vision_processor.py`**: CLIP image processing pipeline
 - **`src/config.py`**: Centralized configuration management
@@ -860,7 +951,7 @@ All tools configured in `pyproject.toml` with modern best practices and compatib
 
 ## 🔮 Technology Stack
 
-- **Backend**: FastAPI + Python 3.12
+- **Backend**: FastAPI + Python 3.11+
 - **Vector Database**: Qdrant 1.11.3 (multi-vector support)
 - **Text Embeddings**: FastEmbed (BAAI/bge-small-en-v1.5)
 - **Image Embeddings**: CLIP (ViT-B/32)
@@ -894,14 +985,14 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 netstat -tulpn | grep :8001
 
 # Use different port
-python -m src.mcp.server --mode http --port 8002
+python -m src.anime_mcp.modern_server --mode sse --port 8002
 ```
 
 **MCP Connection Issues**
 
 ```bash
 # Check server logs with verbose output
-python -m src.mcp.server --mode http --verbose
+python -m src.anime_mcp.modern_server --mode sse --verbose
 
 # Verify Qdrant connection
 curl http://localhost:6333/health
@@ -949,8 +1040,12 @@ curl -X POST http://localhost:8000/api/admin/update-full
 **Invalid Transport Mode**
 
 ```bash
-# Valid modes: stdio, http, sse, streamable
-python -m src.mcp.server --mode invalid
+# Core server valid modes: stdio, http, sse, streamable
+python -m src.anime_mcp.server --mode invalid
+# Error: argument --mode: invalid choice: 'invalid'
+
+# Modern server valid modes: stdio, sse
+python -m src.anime_mcp.modern_server --mode invalid
 # Error: argument --mode: invalid choice: 'invalid'
 ```
 
