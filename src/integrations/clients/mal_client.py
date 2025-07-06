@@ -559,10 +559,13 @@ class MALClient(BaseClient):
 
     async def search_anime(
         self,
-        query: Optional[str] = None,
+        q: Optional[str] = None,
+        limit: int = 10,
+        offset: int = 0,
+        fields: Optional[str] = None,
+        # Extended Jikan parameters
         genres: Optional[List[int]] = None,
         status: Optional[str] = None,
-        limit: int = 10,
         # Enhanced Jikan parameters
         anime_type: Optional[str] = None,
         score: Optional[float] = None,
@@ -586,10 +589,12 @@ class MALClient(BaseClient):
         """Search anime with all Jikan parameters and enhancements auto-enabled.
 
         Args:
-            query: Search query string
+            q: Search query string
+            limit: Maximum number of results (1-50)
+            offset: Offset for pagination
+            fields: Comma-separated list of response fields
             genres: List of genre IDs to include
             status: Anime status filter (airing, complete, upcoming)
-            limit: Maximum number of results (1-50)
             anime_type: Anime type filter (TV, Movie, OVA, ONA, Special)
             score: Exact score filter
             min_score: Minimum score filter (0.0-10.0)
@@ -623,7 +628,7 @@ class MALClient(BaseClient):
             trace_id = await self.execution_tracer.start_trace(
                 operation=operation,
                 context={
-                    "query": query,
+                    "query": q,
                     "service": "mal",
                     "api": "jikan",
                     "endpoint": "/anime",
@@ -636,22 +641,28 @@ class MALClient(BaseClient):
                 await self.execution_tracer.add_trace_step(
                     trace_id=trace_id,
                     step_name="search_start",
-                    step_data={"query": query, "genres": genres, "status": status},
+                    step_data={"query": q, "genres": genres, "status": status},
                 )
 
             # Jikan search endpoint
             endpoint = "/anime"
             params = {}
 
-            # Basic parameters
-            if query:
-                params["q"] = query
+            # Basic MAL API parameters
+            if q:
+                params["q"] = q
+            if limit:
+                params["limit"] = limit
+            if offset:
+                params["offset"] = offset
+            if fields:
+                params["fields"] = fields
+                
+            # Extended Jikan parameters
             if genres:
                 params["genres"] = ",".join(map(str, genres))
             if status:
                 params["status"] = status
-            if limit:
-                params["limit"] = limit
             
             # Enhanced Jikan parameters
             if anime_type:

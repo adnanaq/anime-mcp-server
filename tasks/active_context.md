@@ -289,3 +289,42 @@ This infrastructure analysis and documentation update session successfully:
 **Key Discovery**: The correlation/tracing infrastructure was already production-ready, contradicting task documentation. This highlights the importance of thorough code analysis before assuming implementation status.
 
 The Anime MCP Server has comprehensive observability infrastructure ready for MAL client development and testing.
+
+## Current Implementation Session (2025-07-06)
+
+### ServiceManager Consolidation - COMPLETED ✅
+**Task Type**: Architecture Consolidation & Testing
+**Status**: Successfully consolidated overlapping manager implementations
+
+#### ✅ Completed Tasks:
+1. **Manager Consolidation**: Removed unused IntegrationsManager (415 lines), fixed ServiceManager initialization bug
+2. **MAL Client Parameter Fix**: Changed method signature from `query=` to `q=` to match MAL/Jikan API specification
+3. **ServiceManager Return Type**: Modified to return raw responses directly for LLM processing instead of Universal format
+4. **MAL Integration Testing**: Thoroughly tested end-to-end MAL functionality with all parameters
+
+#### 🔍 Critical Discovery: MAL/Jikan API Confusion
+**Issue Found**: Current "MAL Client" is actually a hybrid mixing two different APIs:
+- **Uses Jikan endpoints** (`https://api.jikan.moe/v4/anime`) - unofficial MAL scraper
+- **Accepts MAL parameters** (`fields` for response filtering) - not supported by Jikan
+- **Accepts Jikan parameters** (`genres`, `status` filtering) - not supported by MAL API v2
+
+**Architecture Problem**: 
+- MAL API v2: `q`, `limit`, `offset`, `fields` (no filtering, field selection)
+- Jikan API: `q`, `limit`, `page`, `genres`, `status` (filtering, no field selection)
+- Current client: Confused hybrid of both
+
+#### 📋 Tasks Added for MAL/Jikan Separation:
+1. Rename current MALClient → JikanClient (reflects actual API usage)
+2. Create proper MALClient for official MAL API v2 with OAuth2
+3. Separate mappers: MALMapper (real) vs JikanMapper  
+4. Update ServiceManager to treat as separate platforms
+5. Independent testing of both clients
+
+#### ✅ Current MAL Testing Results:
+- **Parameter Integration**: ✅ Works with `q`, `limit`, `offset`, `fields`
+- **Mapper Integration**: ✅ Generates correct parameter format  
+- **Raw Response**: ✅ Returns 36+ fields of rich anime data for LLM
+- **ServiceManager**: ✅ End-to-end integration working
+- **Field Filtering**: ❌ Not working (expected - Jikan API limitation)
+
+**Next Phase**: Complete MAL/Jikan separation or move to next service (AniList) following systematic one-service-at-a-time approach.

@@ -23,6 +23,16 @@ logger = logging.getLogger(__name__)
 class AnimeHandler(BaseAnimeHandler):
     """Handler for anime-specific operations with business logic separation."""
 
+    def __init__(self, qdrant_client: Optional[QdrantClient], settings: Settings):
+        """Initialize anime handler.
+
+        Args:
+            qdrant_client: Qdrant vector database client
+            settings: Application settings
+        """
+        super().__init__(qdrant_client, settings)
+        self.service_manager = ServiceManager(settings)
+
     async def search_anime(
         self, params: SearchAnimeInput, ctx: Optional[Context] = None
     ) -> List[Dict[str, Any]]:

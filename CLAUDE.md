@@ -1,5 +1,20 @@
 # CLAUDE.md
 
+## ⚡ ESSENTIAL FLOW (Session Start)
+1. **Read Rules**: `rules/memory.mdc` → `rules/plan.mdc` OR `rules/implement.mdc`
+2. **Load Memory**: `docs/product_requirement_docs.md` → `docs/architecture.md` → `docs/technical.md` → `tasks/tasks_plan.md` → `tasks/active_context.md`
+3. **Check State**: `TodoRead` → Determine MODE (PLAN/ACT) → Get `src/` context if ACT
+4. **Environment**: `source venv/bin/activate` + `docker-compose up -d qdrant`
+5. **Execute**: PLAN (Strategy→Present→Document) OR ACT (6-Step Protocol: Analyze→Plan→Change→Test→Loop→Optimize)
+6. **Validate**: Update `src/` + `docs/` + `tasks/` + `rules/` + Complete testing before done
+7. **Critical**: Never exceed 500 lines/file, MANDATORY testing, preserve working code
+8. **Commands**: `pytest tests/ -v` (testing), `python -m src.anime_mcp.modern_server` (MCP), `python scripts/verify_mcp_server.py` (verify)
+9. **Debug**: DIAGNOSE→REASON→FIX→DOCUMENT in `rules/error-documentation.mdc`
+10. **Complete**: TodoWrite progress + Memory files updated + Ready for next task
+
+---
+*Full details below ↓*
+
 This file provides guidance to Claude Code when working with this anime MCP server codebase.
 
 ## 🎯 CRITICAL CONTEXT (Read First)

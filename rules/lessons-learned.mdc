@@ -46,6 +46,57 @@ correlation_id = (
 
 **Results**: Reduced codebase by 1,834 lines while preserving all functionality
 
+### ServiceManager Consolidation & API Client Architecture (2025-07-06)
+**Context**: Competing manager implementations and confused API client architecture
+
+**Problem Identified**:
+- ServiceManager (510 lines) vs IntegrationsManager (415 lines) overlap
+- MAL client mixing two different APIs: official MAL API v2 + Jikan API
+- Parameter name mismatches between mappers and clients
+- ServiceManager trying to return Universal format instead of raw responses for LLM
+
+**Solution Pattern**:
+1. **One-at-a-time testing**: Focus on single service (MAL) to establish patterns
+2. **Parameter name alignment**: Match client method signatures to actual API specifications
+3. **Raw response approach**: Return unprocessed API data directly to LLM
+4. **API separation principle**: Each API should have its own dedicated client
+
+**Critical Discovery - API Confusion Anti-Pattern**:
+```python
+# WRONG: Hybrid client mixing two APIs
+class MALClient:
+    def search_anime(self, query=None, genres=None, fields=None):  # Mix of both APIs
+        endpoint = "https://api.jikan.moe/v4/anime"              # Jikan endpoint
+        params = {"q": query, "fields": fields, "genres": genres} # Mixed parameters
+
+# RIGHT: Separate clients for separate APIs  
+class MALClient:     # Official MAL API v2
+    def search_anime(self, q=None, limit=10, offset=0, fields=None):
+        endpoint = "https://api.myanimelist.net/v2/anime"
+
+class JikanClient:   # Unofficial MAL scraper
+    def search_anime(self, q=None, limit=10, genres=None, status=None):
+        endpoint = "https://api.jikan.moe/v4/anime"
+```
+
+**Parameter Alignment Pattern**:
+```python
+# Mapper generates API-compatible parameters
+mapper_output = {"q": "naruto", "limit": 5}  # Matches API spec
+
+# Client accepts exactly what mapper generates  
+client.search_anime(**mapper_output)         # Direct unpacking works
+```
+
+**Key Insights**:
+- **API clarity principle**: One client per API, no hybrid implementations
+- **Parameter name consistency**: Mappers and clients must use identical parameter names
+- **Specification compliance**: Follow official API docs, not convenience naming
+- **Raw response for LLM**: AI can process rich unfiltered data better than pre-filtered
+- **Systematic testing**: Test one service completely before moving to next
+
+**Results**: MAL integration working end-to-end with proper parameter flow and raw response delivery
+
 ## Test Infrastructure & Coverage Patterns
 
 ### Async Context Manager Mocking Pattern (2025-07-06)

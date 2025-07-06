@@ -84,42 +84,71 @@ class ServiceManager:
         self.cache = CommunityCache(settings) if CommunityCache else None
         self.circuit_breakers = CircuitBreakerManager() if CircuitBreakerManager else None
         
-        # Initialize platform clients (only those that exist)
+        # Initialize platform clients with proper parameters
         self.clients = {}
+        self._init_clients()
         
-        # Initialize available clients
+    def _init_clients(self):
+        """Initialize all API clients with proper parameters."""
+        # Shared dependencies for clients that support them
+        shared_deps = {}
+        if self.circuit_breakers:
+            shared_deps["circuit_breaker"] = self.circuit_breakers
+        if self.cache:
+            shared_deps["cache_manager"] = self.cache
+            
+        # Initialize AniList client
         if AniListClient:
             try:
-                self.clients["anilist"] = AniListClient(settings)
+                # AniList client expects auth_token and shared deps
+                auth_token = getattr(self.settings, 'anilist_token', None)
+                self.clients["anilist"] = AniListClient(
+                    auth_token=auth_token,
+                    **shared_deps
+                )
             except Exception as e:
                 logger.warning(f"Failed to initialize AniListClient: {e}")
                 
+        # Initialize MAL client  
         if MALClient:
             try:
-                self.clients["mal"] = MALClient(settings)
+                # MAL client expects client_id, client_secret
+                client_id = getattr(self.settings, 'mal_client_id', None)
+                client_secret = getattr(self.settings, 'mal_client_secret', None)
+                self.clients["mal"] = MALClient(
+                    client_id=client_id,
+                    client_secret=client_secret,
+                    **shared_deps
+                )
             except Exception as e:
                 logger.warning(f"Failed to initialize MALClient: {e}")
                 
-        if KitsuClient:
-            try:
-                self.clients["kitsu"] = KitsuClient(settings)
-            except Exception as e:
-                logger.warning(f"Failed to initialize KitsuClient: {e}")
-                
+        # Initialize other clients with shared deps only (no individual params needed)
+        client_classes = [
+            (KitsuClient, "kitsu"),
+            (AnimeScheduleClient, "animeschedule"),
+        ]
+        
+        for client_class, name in client_classes:
+            if client_class:
+                try:
+                    self.clients[name] = client_class(**shared_deps)
+                except Exception as e:
+                    logger.warning(f"Failed to initialize {client_class.__name__}: {e}")
+        
+        # Initialize AniDB client (needs special parameters)
         if AniDBClient:
             try:
-                self.clients["anidb"] = AniDBClient(settings)
+                client_version = getattr(self.settings, 'anidb_clientver', '2')
+                self.clients["anidb"] = AniDBClient(
+                    client_version=client_version,
+                    **shared_deps
+                )
             except Exception as e:
                 logger.warning(f"Failed to initialize AniDBClient: {e}")
-                
-        if AnimeScheduleClient:
-            try:
-                self.clients["animeschedule"] = AnimeScheduleClient(settings)
-            except Exception as e:
-                logger.warning(f"Failed to initialize AnimeScheduleClient: {e}")
         
         # Vector database for fallback
-        self.vector_client = QdrantClient(settings)
+        self.vector_client = QdrantClient(settings=self.settings)
         
         # Platform priority order (highest to lowest capability and reliability)
         self.platform_priorities = [
@@ -132,13 +161,25 @@ class ServiceManager:
             "vector",       # Local fallback
         ]
         
+        # Mapper method names for each platform
+        self.mapper_methods = {
+            "anilist": "to_anilist_search_params",
+            "mal": "to_mal_search_params", 
+            "jikan": "to_jikan_search_params",
+            "kitsu": "to_kitsu_search_params",
+            "anidb": "to_anidb_search_params",
+            "animeschedule": "to_animeschedule_search_params",
+            "animeplanet": "to_animeplanet_search_params",
+            "anisearch": "to_anisearch_search_params"
+        }
+        
         logger.info("ServiceManager initialized with 5 platform clients + vector fallback")
     
     async def search_anime_universal(
         self, 
         params: UniversalSearchParams,
         correlation_id: Optional[str] = None
-    ) -> UniversalSearchResponse:
+    ) -> List[Dict[str, Any]]:
         """Execute universal anime search with intelligent routing and fallback.
         
         Args:
@@ -181,14 +222,9 @@ class ServiceManager:
             
             processing_time = (time.time() - start_time) * 1000
             
-            return UniversalSearchResponse(
-                query_params=params,
-                results=results,
-                total_results=len(results),
-                processing_time_ms=processing_time,
-                sources_used=list(set(result.source for result in results)),
-                cache_hit=False  # TODO: Implement cache hit detection
-            )
+            # Return raw results directly for LLM processing
+            logger.info(f"Returning {len(results)} raw results for LLM processing")
+            return results
             
         except Exception as e:
             logger.error(f"Universal search failed: {str(e)}")
@@ -289,32 +325,43 @@ class ServiceManager:
         mapper = MapperRegistry.get_mapper(platform)
         
         # Convert parameters to platform-specific format
-        platform_params = mapper.to_platform_params(
-            universal_params, 
-            platform_specific.get(platform, {})
-        )
-        
-        # Execute platform search
-        raw_results = await client.search_anime(platform_params)
-        
-        # Convert results to universal format
-        universal_results = []
-        for raw_result in raw_results:
-            universal_anime = mapper.to_universal_anime(raw_result)
+        mapper_method = self.mapper_methods.get(platform)
+        if not mapper_method:
+            raise ValueError(f"No mapper method defined for platform: {platform}")
             
-            # Calculate relevance score (basic implementation)
-            relevance_score = self._calculate_relevance_score(
-                universal_anime, universal_params
+        platform_method = getattr(mapper, mapper_method)
+        
+        # Convert universal_params dict back to UniversalSearchParams for mapper
+        universal_params_obj = UniversalSearchParams(**universal_params)
+        
+        # Check if mapper method accepts platform_specific parameter
+        import inspect
+        sig = inspect.signature(platform_method)
+        
+        if len(sig.parameters) >= 3:  # cls, universal_params, platform_specific
+            platform_params = platform_method(
+                universal_params_obj, 
+                platform_specific.get(platform, {})
             )
-            
-            universal_results.append(UniversalSearchResult(
-                anime=universal_anime,
-                relevance_score=relevance_score,
-                source=platform,
-                enrichment_sources=[]
-            ))
+        else:  # cls, universal_params only
+            platform_params = platform_method(universal_params_obj)
         
-        return universal_results
+        # Execute platform search with unpacked parameters
+        raw_results = await client.search_anime(**platform_params)
+        
+        # Return raw results for LLM to process
+        # TODO: Universal format conversion will be implemented later
+        raw_results_with_metadata = []
+        for raw_result in raw_results:
+            # Add platform metadata to raw result
+            result_with_meta = {
+                **raw_result,
+                "_source": platform,
+                "_relevance_score": 1.0  # Basic score for now
+            }
+            raw_results_with_metadata.append(result_with_meta)
+        
+        return raw_results_with_metadata
     
     async def _search_vector_database(
         self, universal_params: Dict[str, Any]
@@ -336,12 +383,9 @@ class ServiceManager:
                 return []
             
             # Use vector database for semantic search
-            vector_results = await self.vector_client.search_anime(
+            vector_results = await self.vector_client.search(
                 query=query,
-                limit=limit,
-                genres=universal_params.get("genres"),
-                year_range=universal_params.get("year_range"),
-                anime_types=universal_params.get("anime_types")
+                limit=limit
             )
             
             # Convert to universal format
@@ -433,7 +477,7 @@ class ServiceManager:
         for platform in platform_order:
             try:
                 if platform == "vector":
-                    result = await self.vector_client.get_anime_by_id(anime_id)
+                    result = await self.vector_client.get_by_id(anime_id)
                     if result:
                         return UniversalAnime(**result)
                     continue

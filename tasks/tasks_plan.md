@@ -177,18 +177,39 @@
 
 ### Phase 0: Overlapping Implementation Cleanup
 
-#### Task Group 0A: Correlation System Consolidation
-- **Task #63**: ❌ Correlation System Consolidation - DOCUMENTED, READY FOR IMPLEMENTATION
-  - **Status**: ❌ PLANNING COMPLETE - Two competing correlation implementations identified
-  - **Critical Issue**: CorrelationLogger (1,834 lines) vs CorrelationIDMiddleware (213 lines) overlap
-  - **Current State**: Main application ignores CorrelationLogger (`correlation_logger=None`), uses middleware
-  - **Industry Research**: Netflix/Uber/Google use lightweight middleware + external observability
-  - **Implementation Plan**: Remove CorrelationLogger entirely, keep well-designed middleware
-  - **Files Affected**: 6 files need cleanup (base_client.py, error_handling.py, mal.py, main.py, etc.)
-  - **Impact**: Reduce codebase by 1,834 lines (90% reduction), eliminate architectural confusion
-  - **Benefits**: Follow industry patterns, eliminate memory management issues, improve maintainability
-  - **Dependencies**: None - standalone architectural cleanup
-  - **Validation**: Verify correlation functionality preserved through middleware testing
+#### Task Group 0A: MAL/Jikan API Client Separation (NEW - 2025-07-06)
+- **Task #64**: ❌ MAL/Jikan Client Architecture Separation - CRITICAL API CONFUSION DISCOVERED
+  - **Status**: ❌ CRITICAL ISSUE - Current MAL client is confused hybrid of two different APIs
+  - **Critical Discovery**: `src/integrations/clients/mal_client.py` mixes MAL API v2 + Jikan API
+  - **Problem Details**:
+    - Uses Jikan endpoints (`https://api.jikan.moe/v4/anime`) but named MALClient
+    - Accepts MAL parameters (`fields`) not supported by Jikan
+    - Accepts Jikan parameters (`genres`, `status`) not supported by MAL API v2
+    - Creates parameter confusion in ServiceManager integration
+  - **API Specifications**:
+    - **MAL API v2**: `q`, `limit`, `offset`, `fields` (no filtering, OAuth2 required)
+    - **Jikan API**: `q`, `limit`, `page`, `genres`, `status` (filtering, no auth)
+  - **Required Changes**:
+    1. Rename `MALClient` → `JikanClient` (reflects actual API usage)
+    2. Create proper `MALClient` for official MAL API v2 with OAuth2
+    3. Create separate `JikanMapper` for Jikan API parameters
+    4. Update `MALMapper` for real MAL API v2 parameters only
+    5. Update ServiceManager to treat MAL and Jikan as separate platforms
+    6. Independent testing of both clients with proper API compliance
+  - **Dependencies**: None - standalone architectural fix
+  - **Impact**: Proper API separation, eliminates parameter confusion, enables both official and unofficial MAL data access
+
+#### Task Group 0B: Correlation System Consolidation  
+- **Task #63**: ✅ Correlation System Consolidation - COMPLETED (2025-07-06)
+  - **Status**: ✅ FULLY IMPLEMENTED - Overlapping correlation implementations consolidated
+  - **Implementation**: Removed 1,834-line CorrelationLogger, kept lightweight CorrelationIDMiddleware
+  - **Industry Alignment**: Follows Netflix/Uber/Google lightweight middleware patterns
+  - **Changes Made**: 
+    - Removed entire CorrelationLogger class and dependencies
+    - Updated 6 files to use middleware-only correlation
+    - Consolidated correlation priority: Middleware → Header → Generated
+  - **Results**: 90% reduction in correlation code while preserving all functionality
+  - **Testing**: Verified all correlation tracking maintained through middleware
 
 ## 🎯 HIGH PRIORITY - CORE ARCHITECTURE (Week 1-7)
 

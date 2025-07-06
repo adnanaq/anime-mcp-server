@@ -455,6 +455,38 @@ class MALClient(BaseClient):
         return await self._make_request("/anime", params)
 ```
 
+#### 🚨 **CRITICAL ISSUE DISCOVERED**: MAL/Jikan API Confusion
+
+**Current State**: The "MAL Client" (`src/integrations/clients/mal_client.py`) is actually a **confused hybrid** mixing two different APIs:
+
+**What it claims vs what it does:**
+- **Filename**: `mal_client.py` (suggests MAL API)
+- **Actual endpoint**: `https://api.jikan.moe/v4/anime` (Jikan API)
+- **Parameters accepted**: Mix of MAL API v2 and Jikan parameters
+- **Functionality**: Neither pure MAL nor pure Jikan
+
+**Two distinct APIs being confused:**
+
+1. **Official MAL API v2**:
+   - Endpoint: `https://api.myanimelist.net/v2/anime`
+   - Auth: OAuth2 required
+   - Parameters: `q`, `limit`, `offset`, `fields`
+   - Features: Field selection, official data
+   - Limitations: No filtering (genres, status, etc.)
+
+2. **Jikan API (Unofficial MAL Scraper)**:
+   - Endpoint: `https://api.jikan.moe/v4/anime`
+   - Auth: None required
+   - Parameters: `q`, `limit`, `page`, `genres`, `status`, `type`, `rating`
+   - Features: Advanced filtering, no authentication needed
+   - Limitations: No field selection, always returns full data
+
+**Required Refactoring**: 
+- Current `MALClient` → Rename to `JikanClient`
+- Create new proper `MALClient` for official MAL API v2
+- Separate mappers: `MALMapper` (real) vs `JikanMapper`
+- Update ServiceManager to treat as separate platforms
+
 **Kitsu JSON:API Client:**
 ```python
 class KitsuClient(BaseClient):
