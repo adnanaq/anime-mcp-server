@@ -14,6 +14,11 @@ sys.modules['qdrant_client.http'] = Mock()
 sys.modules['qdrant_client.models'] = Mock()
 sys.modules['fastembed'] = Mock()
 sys.modules['fastembed.TextEmbedding'] = Mock()
+sys.modules['langgraph_swarm'] = Mock()
+
+# Import the mock module for langgraph_swarm
+from tests.mocks import langgraph_swarm
+sys.modules['langgraph_swarm'] = langgraph_swarm
 
 # Set test environment variables
 os.environ.setdefault('QDRANT_URL', 'http://localhost:6333')

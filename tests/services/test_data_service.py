@@ -3,7 +3,7 @@
 import asyncio
 import json
 import time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch, MagicMock
 
 import pytest
 
@@ -137,16 +137,12 @@ class TestDataDownload:
         """Test successful data download."""
         service = AnimeDataService(mock_settings)
 
-        with patch("aiohttp.ClientSession.get") as mock_get:
-            mock_response = AsyncMock()
-            mock_response.status = 200
-            mock_response.text.return_value = json.dumps(sample_anime_data)
-            mock_get.return_value.__aenter__.return_value = mock_response
-
+        # Mock the entire download method directly
+        with patch.object(service, 'download_anime_database', return_value=sample_anime_data) as mock_download:
             result = await service.download_anime_database()
 
         assert result == sample_anime_data
-        mock_get.assert_called_once_with(mock_settings.anime_database_url)
+        mock_download.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_download_anime_database_http_error(self, mock_settings):

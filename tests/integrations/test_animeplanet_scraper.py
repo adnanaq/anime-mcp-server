@@ -6,7 +6,7 @@ import pytest
 
 from src.integrations.cache_manager import CollaborativeCacheSystem
 from src.integrations.error_handling import CircuitBreaker, ErrorContext
-from src.integrations.scrapers.extractors.anime_planet import AnimePlanetScraper
+from src.integrations.scrapers.extractors.anime_planet_scraper import AnimePlanetScraper
 
 
 class TestAnimePlanetScraper:

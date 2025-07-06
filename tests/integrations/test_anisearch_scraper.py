@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from bs4 import BeautifulSoup
 
-from src.integrations.scrapers.extractors.anisearch import AniSearchScraper
+from src.integrations.scrapers.extractors.anisearch_scraper import AniSearchScraper
 
 
 class TestAniSearchScraper:

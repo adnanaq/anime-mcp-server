@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.integrations.scrapers.extractors.animecountdown import AnimeCountdownScraper
+from src.integrations.scrapers.extractors.animecountdown_scraper import AnimeCountdownScraper
 
 
 class TestAnimeCountdownRealData:

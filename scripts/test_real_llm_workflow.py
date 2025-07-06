@@ -21,7 +21,7 @@ import time
 
 from src.config import get_settings
 from src.langgraph.react_agent_workflow import LLMProvider, ReactAgentWorkflowEngine
-from src.mcp.fastmcp_client_adapter import get_all_mcp_tools
+from src.anime_mcp.modern_client import get_all_mcp_tools
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

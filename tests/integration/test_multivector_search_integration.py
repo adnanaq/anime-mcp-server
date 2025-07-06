@@ -17,7 +17,7 @@ from PIL import Image
 from qdrant_client.models import VectorParams
 
 from src.config import get_settings
-from src.mcp.server import mcp
+from src.anime_mcp.server import mcp
 from src.vector.qdrant_client import QdrantClient
 from src.vector.vision_processor import MockVisionProcessor
 
@@ -313,7 +313,7 @@ class TestPhase4Integration:
         assert hasattr(mcp, "get_resources")
 
         # Verify image search tools are defined in the module
-        from src.mcp import server
+        from src.anime_mcp import server
 
         assert hasattr(server, "search_anime_by_image")
         assert hasattr(server, "find_visually_similar_anime")

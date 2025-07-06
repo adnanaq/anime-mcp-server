@@ -1,0 +1,24 @@
+---
+description: directory structure to follow
+globs: 
+alwaysApply: false
+---
+---
+description: the top-level directory structure for the project
+globs: 
+alwaysApply: false
+---     
+# Directory Structure
+```mermaid
+flowchart TD
+    Root[Project Root]
+    Root --> Docs[docs/]
+    Root --> Tasks[tasks/]
+    Root --> Cursor[rules/]
+    Root --> SourceCode[src/]
+    Root --> Test[tests/]
+    Root --> Utils[utils/]
+    Root --> Config[config/]
+    Root --> Data[data/]
+    Root --> Other[Other Directories]
+```

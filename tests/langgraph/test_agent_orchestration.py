@@ -9,8 +9,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, List
 import json
 
-from src.langgraph.agents.search_agent import SearchAgent
-from src.langgraph.agents.schedule_agent import ScheduleAgent
+# Mock langgraph_swarm since it's not installed
+with patch('langgraph_swarm.create_swarm'):
+    from src.langgraph.agents.search_agent import SearchAgent
+    from src.langgraph.agents.schedule_agent import ScheduleAgent
 
 
 class TestSearchAgentIntegration:

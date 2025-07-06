@@ -8,12 +8,28 @@ This file provides guidance to Claude Code when working with this anime MCP serv
 **Purpose**: MCP tool integration for AI assistants with advanced search capabilities
 **Key Tech**: FastAPI, Qdrant, LangGraph, CLIP, FastEmbed, Pydantic
 
-### Essential Pre-Work Checklist
+### Essential Pre-Work Checklist (MANDATORY RULE COMPLIANCE)
 
+**Rule Loading (ALWAYS FIRST):**
+- [ ] Read `rules/rules.mdc` (base improvement rules)
+- [ ] Read `rules/memory.mdc` (memory management workflow)
+- [ ] Read `rules/plan.mdc` (if planning) OR `rules/implement.mdc` (if coding)
+
+**Memory Hierarchy (Follow rules/memory.mdc sequence):**
+- [ ] Read `docs/product_requirement_docs.md` (foundation)
+- [ ] Read `docs/architecture.md` (system design)
+- [ ] Read `docs/technical.md` (implementation details)
+- [ ] Read `tasks/tasks_plan.md` (project progress)
+- [ ] Read `tasks/active_context.md` (current state)
+
+**Current State Assessment:**
+- [ ] Use `TodoRead` to check current tasks
+- [ ] Identify current MODE: PLAN (architect) vs ACT (code)
+- [ ] Get required code context from `src/` if needed
+
+**Development Environment:**
 - [ ] Always use `source venv/bin/activate` before Python commands
-- [ ] Check `PLANNING.md` for architecture context
-- [ ] Check `TASKS.md` before starting new tasks
-- [ ] Run formatting before commits: `black src/ tests/ scripts/`
+- [ ] Ensure Qdrant is running: `docker-compose up -d qdrant`
 
 ## 🏗️ ARCHITECTURE OVERVIEW
 
@@ -153,20 +169,52 @@ src/
 
 ## 💻 DEVELOPMENT RULES
 
+### 🔄 SYSTEMATIC CODE PROTOCOL (Implementation Tasks)
+
+**Step 1: ANALYZE CODE**
+- Dependency analysis: Which components affected?
+- Flow analysis: End-to-end impact assessment
+- Document dependencies thoroughly
+
+**Step 2: PLAN CODE**
+- Use CLARIFICATION process for unclear requirements
+- Provide STRUCTURED PROPOSALS: files changed, why, impacts, tradeoffs
+- Present REASONING for validation
+
+**Step 3: MAKE CHANGES**
+- INCREMENTAL ROLLOUTS: One logical change at a time
+- SIMULATION TESTING: Dry runs before implementation
+- Architecture preservation: Integrate with existing structure
+
+**Step 4: TESTING**
+- Write tests for new functionality
+- Run dependency-based testing
+- NO BREAKAGE ASSERTION: Verify no regressions
+
+**Step 5: LOOP** - Implement all changes systematically
+**Step 6: OPTIMIZE** - After all changes tested and verified
+
+### 🎯 Task Execution Rules
+
+**BEFORE Every Task:**
+- **Implementation**: Read docs/ + tasks/ + get src/ context + validate architecture
+- **Planning**: Read docs/ + tasks/ + get src/ context + deeper analysis
+
+**AFTER Every Task:**
+- **Implementation**: Update src/ + docs/ + tasks/ + complete testing + update lessons learned
+- **Planning**: Update docs/ + tasks/ + plans and context
+
+**Critical Rules**: 
+- "Stop only when you're done till successfully testing, not before"
+- Always validate changes against docs/architecture.md constraints
+
 ### Code Quality Standards
 
-- **File Size Limit**: Never exceed 500 lines per file
-- **Module Organization**:
-  - `agent.py` - Main agent logic
-  - `tools.py` - Tool functions
-  - `prompts.py` - System prompts
-- **Testing**: Always use TDD, create unit tests for new features
-- **Formatting**: Always run before commits:
-  ```bash
-  autoflake --recursive --in-place --remove-all-unused-imports --remove-unused-variables src/ tests/ scripts/
-  isort src/ tests/ scripts/
-  black src/ tests/ scripts/
-  ```
+- **File Size Limit**: Never exceed 500 lines per file (from rules/implement.mdc)
+- **Module Organization**: Break into atomic parts (modularity principle)
+- **Testing**: MANDATORY for any functionality (proactive_testing principle)
+- **Systematic Sequence**: Complete one step before starting another
+- **Code Preservation**: Don't modify working components without necessity
 
 ### Python Conventions
 
@@ -175,12 +223,40 @@ src/
 - Prefer relative imports within packages
 - Use `.venv` and `load_env()` for environment variables
 
-### Testing Requirements
+### Testing Requirements (Critical Rule Compliance)
 
 - **Test Structure**: Mirror main app structure in `/tests`
-- **Coverage**: Minimum 3 tests per feature (expected use, edge case, failure case)
+- **Mandatory Testing**: Any functionality MUST have tests (rules/implement.mdc)
+- **Test Types**: Unit tests for components, integration for workflows
+- **Coverage Target**: >80% (currently at 6% - major violation)
+- **Test Before Complete**: Never finish implementation without testing
 - **Markers**: Use `pytest -m unit` or `pytest -m integration`
-- **Never create new test files** unless absolutely necessary
+
+### 📋 Task Completion Validation (After Every Task)
+
+- [ ] All affected code updated in src/
+- [ ] Documentation updated in docs/ and tasks/
+- [ ] Testing completed (for implementation tasks)
+- [ ] TodoWrite updated with progress
+- [ ] Memory files updated if significant changes made
+- [ ] rules/lessons-learned.mdc updated if new patterns discovered
+- [ ] rules/error-documentation.mdc updated if errors resolved
+
+### 🐛 Debug Protocol (When Stuck)
+
+**DIAGNOSE:**
+- Gather error messages, logs, behavioral symptoms
+- Add relevant context from files
+- Retrieve project architecture, plan, current working task from memory files
+
+**DEBUGGING SEQUENCE:**
+1. Add context using DIAGNOSE
+2. Explain OBSERVATIONS and REASONINGS 
+3. Use STEP BY STEP REASONING for all possible causes
+4. Look for similar patterns in rules/error-documentation.mdc
+5. Present fix using REASONING PRESENTATION
+6. Implement using SYSTEMATIC CODE PROTOCOL
+7. Document solution in rules/error-documentation.mdc
 
 ## 🎛️ ENVIRONMENT SETUP
 
@@ -230,20 +306,6 @@ docker run --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
 - **Query Understanding**: Natural language → structured parameters
 - **Multi-step Discovery**: Result refinement and preference learning
 
-## 🔧 TASK MANAGEMENT
-
-### Documentation Responsibilities
-
-- **PLANNING.md**: Architecture, goals, constraints (read at conversation start)
-- **TASKS.md**: Current tasks, add new ones with date (note: filename is TASKS.md not TASK.md)
-- **CLAUDE.md**: This file - development guidance and context
-
-### Task Completion Process
-
-1. Mark completed tasks in TASKS.md immediately
-2. Add discovered sub-tasks to "Discovered During Work" section
-3. Update tests when logic changes
-4. Run formatting before commits
 
 ## 🚨 AI BEHAVIOR RULES
 

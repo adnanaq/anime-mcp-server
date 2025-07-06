@@ -59,7 +59,7 @@ class AniListService(BaseExternalService):
                 "AniList search: query='%s', limit=%d, page=%d", query, limit, page
             )
             # Note: AniList client doesn't support pagination in current implementation
-            return await self.client.search_anime(query=query, limit=limit)
+            return await self.client.search_anime(query=query, limit=limit, page=page)
         except Exception as e:
             logger.error("AniList search failed: %s", e)
             raise

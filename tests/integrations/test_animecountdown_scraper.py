@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from bs4 import BeautifulSoup
 
-from src.integrations.scrapers.extractors.animecountdown import AnimeCountdownScraper
+from src.integrations.scrapers.extractors.animecountdown_scraper import AnimeCountdownScraper
 
 
 class TestAnimeCountdownScraper:

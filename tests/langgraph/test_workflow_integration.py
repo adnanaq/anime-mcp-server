@@ -11,7 +11,10 @@ import json
 
 # Mock LangGraph dependencies
 from src.models.universal_anime import UniversalAnime
-from src.langgraph.anime_swarm import AnimeDiscoverySwarm
+
+# Mock langgraph_swarm since it's not installed
+with patch('src.langgraph.anime_swarm.create_swarm'):
+    from src.langgraph.anime_swarm import AnimeDiscoverySwarm
 
 
 class TestAnimeDiscoverySwarmIntegration:
