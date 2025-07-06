@@ -30,6 +30,7 @@ class AnimeServerError(Exception):
         self.error_code = error_code
         self.details = details or {}
 
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert exception to dictionary for API responses."""
         return {
@@ -263,6 +264,57 @@ class MCPClientError(MCPError):
         )
 
 
+# MCP Server-specific errors (consolidated from anime_mcp/errors.py)
+class ClientNotInitializedError(MCPError):
+    """Raised when Qdrant client is not initialized."""
+
+    def __init__(self, operation: str):
+        self.operation = operation
+        super().__init__(
+            f"Qdrant client not initialized. Server may be starting up.",
+            error_code="CLIENT_NOT_INITIALIZED",
+            details={"operation": operation},
+        )
+
+
+class SearchValidationError(MCPError):
+    """Raised when search parameters are invalid."""
+
+    def __init__(self, operation: str, details_text: str):
+        self.operation = operation
+        self.validation_details = details_text
+        super().__init__(
+            f"Invalid search parameters: {details_text}",
+            error_code="SEARCH_VALIDATION_ERROR",
+            details={"operation": operation, "validation_details": details_text},
+        )
+
+
+class MultiVectorNotAvailableError(MCPError):
+    """Raised when multi-vector features are requested but not enabled."""
+
+    def __init__(self, operation: str):
+        self.operation = operation
+        super().__init__(
+            "Multi-vector image search not enabled. Enable in server configuration.",
+            error_code="MULTI_VECTOR_NOT_AVAILABLE",
+            details={"operation": operation},
+        )
+
+
+class DatabaseOperationError(MCPError):
+    """Raised when database operations fail."""
+
+    def __init__(self, operation: str, details_text: str):
+        self.operation = operation
+        self.operation_details = details_text
+        super().__init__(
+            f"Database operation failed: {details_text}",
+            error_code="DATABASE_OPERATION_ERROR",
+            details={"operation": operation, "operation_details": details_text},
+        )
+
+
 class UpdateServiceError(AnimeServerError):
     """Base exception for update service related errors."""
 
@@ -298,8 +350,10 @@ class ConcurrentUpdateError(UpdateServiceError):
 HTTP_EXCEPTION_MAP = {
     400: InvalidSearchQueryError,
     404: AnimeNotFoundError,
+    422: SearchValidationError,  # MCP validation errors
     429: RateLimitExceededError,
     500: AnimeServerError,
+    502: ClientNotInitializedError,  # MCP client errors
     503: QdrantConnectionError,
 }
 

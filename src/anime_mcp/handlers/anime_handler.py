@@ -13,7 +13,7 @@ from ...config import Settings
 from ...vector.qdrant_client import QdrantClient
 from ...models.universal_anime import UniversalSearchParams
 from ...integrations.service_manager import ServiceManager
-from ..errors import AnimeNotFoundError
+from ...exceptions import AnimeNotFoundError
 from ..schemas import SearchAnimeInput
 from .base_handler import BaseAnimeHandler
 

@@ -11,7 +11,7 @@ from mcp.server.fastmcp import Context
 
 from ...config import Settings
 from ...vector.qdrant_client import QdrantClient
-from ..errors import (
+from ...exceptions import (
     AnimeServerError,
     ClientNotInitializedError,
     DatabaseOperationError,
@@ -124,7 +124,7 @@ class BaseAnimeHandler:
         Raises:
             MultiVectorNotAvailableError: If not available
         """
-        from ..errors import MultiVectorNotAvailableError
+        from ...exceptions import MultiVectorNotAvailableError
         
         if not self.qdrant_client or not getattr(
             self.qdrant_client, "_supports_multi_vector", False
@@ -155,8 +155,8 @@ class BaseAnimeHandler:
         return {
             "success": False,
             "error": {
-                "code": error.code,
-                "operation": error.operation,
+                "code": error.error_code,
+                "operation": getattr(error, 'operation', 'unknown'),
                 "message": str(error),
             },
         }
