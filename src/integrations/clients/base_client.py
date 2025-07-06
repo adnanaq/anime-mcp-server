@@ -9,7 +9,6 @@ from src.exceptions import APIError
 
 from ..error_handling import (
     CircuitBreaker,
-    CorrelationLogger,
     ErrorContext,
     ErrorSeverity,
     ExecutionTracer,
@@ -83,7 +82,6 @@ class BaseClient:
         circuit_breaker: Optional[CircuitBreaker] = None,
         cache_manager=None,
         error_handler=None,
-        correlation_logger: Optional[CorrelationLogger] = None,
         execution_tracer: Optional[ExecutionTracer] = None,
         timeout: float = 30.0,
     ):
@@ -94,7 +92,6 @@ class BaseClient:
             circuit_breaker: Circuit breaker instance
             cache_manager: Cache manager instance
             error_handler: Error handler instance
-            correlation_logger: Correlation logger instance
             execution_tracer: Execution tracer instance
             timeout: Request timeout in seconds
         """
@@ -102,7 +99,6 @@ class BaseClient:
         self.circuit_breaker = circuit_breaker or CircuitBreaker(api_name=service_name)
         self.cache_manager = cache_manager
         self.error_handler = error_handler
-        self.correlation_logger = correlation_logger
         self.execution_tracer = execution_tracer
         self.timeout = timeout
 

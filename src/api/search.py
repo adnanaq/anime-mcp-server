@@ -3,7 +3,7 @@ import base64
 import logging
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 
 from ..models.anime import SearchRequest, SearchResponse, SearchResult
 
@@ -12,14 +12,29 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/semantic", response_model=SearchResponse)
-async def semantic_search(request: SearchRequest):
+async def semantic_search(request: SearchRequest, http_request: Request):
     """Perform semantic search on anime database"""
+    correlation_id = getattr(http_request.state, 'correlation_id', None)
+    
     try:
         # Import qdrant_client from main app context
         from ..main import qdrant_client
 
         if not qdrant_client:
+            logger.error(
+                "Vector database not available",
+                extra={"correlation_id": correlation_id}
+            )
             raise HTTPException(status_code=503, detail="Vector database not available")
+        
+        logger.info(
+            f"Starting semantic search for query: {request.query}",
+            extra={
+                "correlation_id": correlation_id,
+                "query": request.query,
+                "limit": request.limit,
+            }
+        )
 
         # Perform search
         raw_results = await qdrant_client.search(
@@ -60,6 +75,16 @@ async def semantic_search(request: SearchRequest):
             )
             results.append(result)
 
+        logger.info(
+            f"Semantic search completed successfully",
+            extra={
+                "correlation_id": correlation_id,
+                "query": request.query,
+                "total_results": len(results),
+                "processing_time_ms": raw_results[0].get("processing_time_ms", 0) if raw_results else 0,
+            }
+        )
+
         return SearchResponse(
             query=request.query,
             results=results,
@@ -70,33 +95,66 @@ async def semantic_search(request: SearchRequest):
         )
 
     except Exception as e:
-        logger.error(f"Search failed: {e}")
+        logger.error(
+            f"Search failed: {e}",
+            extra={
+                "correlation_id": correlation_id,
+                "query": request.query,
+                "error_type": type(e).__name__,
+            }
+        )
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
 @router.get("/")
 async def search_anime(
+    http_request: Request,
     q: str = Query(..., description="Search query"),
     limit: int = Query(20, ge=1, le=100, description="Number of results"),
 ) -> SearchResponse:
     """Simple GET search endpoint"""
     request = SearchRequest(query=q, limit=limit)
-    return await semantic_search(request)
+    return await semantic_search(request, http_request)
 
 
 @router.get("/similar/{anime_id}")
 async def get_similar_anime(
     anime_id: str,
+    http_request: Request,
     limit: int = Query(10, ge=1, le=50, description="Number of similar anime"),
 ) -> Dict[str, Any]:
     """Get similar anime based on vector similarity"""
+    correlation_id = getattr(http_request.state, 'correlation_id', None)
+    
     try:
         from ..main import qdrant_client
 
         if not qdrant_client:
+            logger.error(
+                "Vector database not available for similar anime search",
+                extra={"correlation_id": correlation_id, "anime_id": anime_id}
+            )
             raise HTTPException(status_code=503, detail="Vector database not available")
 
+        logger.info(
+            f"Finding similar anime for ID: {anime_id}",
+            extra={
+                "correlation_id": correlation_id,
+                "anime_id": anime_id,
+                "limit": limit,
+            }
+        )
+
         similar_anime = await qdrant_client.get_similar_anime(anime_id, limit)
+
+        logger.info(
+            f"Similar anime search completed",
+            extra={
+                "correlation_id": correlation_id,
+                "anime_id": anime_id,
+                "similar_count": len(similar_anime),
+            }
+        )
 
         return {
             "anime_id": anime_id,
@@ -105,13 +163,21 @@ async def get_similar_anime(
         }
 
     except Exception as e:
-        logger.error(f"Similar anime search failed: {e}")
+        logger.error(
+            f"Similar anime search failed: {e}",
+            extra={
+                "correlation_id": correlation_id,
+                "anime_id": anime_id,
+                "error_type": type(e).__name__,
+            }
+        )
         raise HTTPException(status_code=500, detail=f"Similar search failed: {str(e)}")
 
 
 # Phase 4: Image Search Endpoints
 @router.post("/by-image")
 async def search_anime_by_image(
+    http_request: Request,
     image: UploadFile = File(..., description="Image file (JPG, PNG, WebP)"),
     limit: int = Form(10, ge=1, le=30, description="Number of results"),
 ) -> Dict[str, Any]:
@@ -120,11 +186,27 @@ async def search_anime_by_image(
     Upload an image to find anime with visually similar poster images.
     Supports JPG, PNG, and WebP formats.
     """
+    correlation_id = getattr(http_request.state, 'correlation_id', None)
+    
     try:
         from ..main import qdrant_client
 
         if not qdrant_client:
+            logger.error(
+                "Vector database not available for image search",
+                extra={"correlation_id": correlation_id}
+            )
             raise HTTPException(status_code=503, detail="Vector database not available")
+        
+        logger.info(
+            f"Starting image search",
+            extra={
+                "correlation_id": correlation_id,
+                "filename": image.filename,
+                "content_type": image.content_type,
+                "limit": limit,
+            }
+        )
 
         # Check if multi-vector support is enabled
         if not getattr(qdrant_client, "_supports_multi_vector", False):
@@ -157,7 +239,14 @@ async def search_anime_by_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Image search failed: {e}")
+        logger.error(
+            f"Image search failed: {e}",
+            extra={
+                "correlation_id": correlation_id,
+                "filename": image.filename if image else None,
+                "error_type": type(e).__name__,
+            }
+        )
         raise HTTPException(status_code=500, detail=f"Image search failed: {str(e)}")
 
 

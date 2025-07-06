@@ -8,7 +8,6 @@ import pytest
 from src.exceptions import APIError
 from src.integrations.clients.mal_client import MALClient
 from src.integrations.error_handling import (
-    CorrelationLogger,
     ExecutionTracer,
 )
 
@@ -25,14 +24,12 @@ class TestMALClientUnifiedAPI:
     @pytest.fixture
     def enhanced_mal_client(self):
         """Create MAL client with enhanced error handling components."""
-        correlation_logger = CorrelationLogger()
         execution_tracer = ExecutionTracer()
 
         with patch("src.integrations.clients.base_client.rate_limit_manager"):
             return MALClient(
                 client_id="test_client_id",
                 client_secret="test_client_secret",
-                correlation_logger=correlation_logger,
                 execution_tracer=execution_tracer,
             )
 

@@ -20,6 +20,7 @@ from .api.external import (
 
 # Import our modules
 from .config import get_settings
+from .middleware import CorrelationIDMiddleware
 from .vector.qdrant_client import QdrantClient
 
 # Get application settings
@@ -31,7 +32,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Global Qdrant client
+# Global instances
 qdrant_client = None
 
 
@@ -84,6 +85,14 @@ app = FastAPI(
     description=settings.api_description,
     version=settings.api_version,
     lifespan=lifespan,
+)
+
+# Add correlation middleware (will initialize its own logger)
+app.add_middleware(
+    CorrelationIDMiddleware,
+    auto_generate=True,
+    max_chain_depth=10,
+    log_requests=True,
 )
 
 # Configure CORS with centralized settings

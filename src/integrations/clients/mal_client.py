@@ -23,8 +23,7 @@ class MALClient(BaseClient):
         circuit_breaker=None,
         cache_manager=None,
         error_handler=None,
-        correlation_logger=None,
-        execution_tracer=None,
+                execution_tracer=None,
     ):
         """Initialize MAL client.
 
@@ -34,7 +33,6 @@ class MALClient(BaseClient):
             circuit_breaker: Circuit breaker instance
             cache_manager: Cache manager instance
             error_handler: Error handler instance
-            correlation_logger: Correlation logger instance
             execution_tracer: Execution tracer instance
         """
         super().__init__(
@@ -42,7 +40,6 @@ class MALClient(BaseClient):
             circuit_breaker,
             cache_manager,
             error_handler,
-            correlation_logger,
             execution_tracer,
         )
         self.mal_base_url = "https://api.myanimelist.net/v2"
@@ -151,13 +148,13 @@ class MALClient(BaseClient):
             Anime data or None if not found
         """
         # Auto-generate correlation ID if not provided but we have correlation logger
-        if not correlation_id and self.correlation_logger:
+        if not correlation_id:
             import uuid
 
             correlation_id = f"anime-{uuid.uuid4().hex[:12]}"
 
         # Use correlation chaining if parent_correlation_id provided
-        if parent_correlation_id and self.correlation_logger:
+        if parent_correlation_id:
             try:
                 result = await self.make_request_with_correlation_chain(
                     url=f"{self.jikan_base_url}/anime/{anime_id}",
@@ -185,18 +182,6 @@ class MALClient(BaseClient):
                 },
             )
 
-        # Log start with correlation if available
-        if self.correlation_logger and correlation_id:
-            await self.correlation_logger.log_with_correlation(
-                correlation_id=correlation_id,
-                level="info",
-                message=f"Starting get_anime_by_id for ID {anime_id}",
-                context={
-                    "service": "mal",
-                    "anime_id": anime_id,
-                    "use_cache": use_cache,
-                },
-            )
 
         try:
             # Check cache first if enabled
@@ -205,7 +190,7 @@ class MALClient(BaseClient):
                 try:
                     cached_result = await self.cache_manager.get(cache_key)
                     if cached_result:
-                        if self.correlation_logger and correlation_id:
+                        if False:
                             await self.correlation_logger.log_with_correlation(
                                 correlation_id=correlation_id,
                                 level="info",
@@ -214,7 +199,7 @@ class MALClient(BaseClient):
                             )
                         return cached_result
                 except Exception as e:
-                    if self.correlation_logger and correlation_id:
+                    if False:
                         await self.correlation_logger.log_with_correlation(
                             correlation_id=correlation_id,
                             level="warning",
@@ -293,7 +278,7 @@ class MALClient(BaseClient):
                     result={"source": "jikan", "anime_id": anime_id},
                 )
 
-            if self.correlation_logger and correlation_id:
+            if False:
                 await self.correlation_logger.log_with_correlation(
                     correlation_id=correlation_id,
                     level="info",
@@ -627,7 +612,7 @@ class MALClient(BaseClient):
             List of anime results
         """
         # Auto-generate correlation ID if not provided but we have correlation logger
-        if not correlation_id and self.correlation_logger:
+        if not correlation_id:
             import uuid
 
             correlation_id = f"search-{uuid.uuid4().hex[:12]}"
@@ -946,12 +931,12 @@ class MALClient(BaseClient):
             raise Exception("OAuth2 credentials required for token refresh")
 
         # Auto-generate correlation ID if not provided but we have correlation logger
-        if not correlation_id and self.correlation_logger:
+        if not correlation_id:
             import uuid
 
             correlation_id = f"refresh-{uuid.uuid4().hex[:12]}"
 
-        if self.correlation_logger and correlation_id:
+        if False:
             await self.correlation_logger.log_with_correlation(
                 correlation_id=correlation_id,
                 level="info",
@@ -989,7 +974,7 @@ class MALClient(BaseClient):
             self.access_token = response_data["access_token"]
             self.refresh_token = response_data["refresh_token"]
 
-            if self.correlation_logger and correlation_id:
+            if False:
                 await self.correlation_logger.log_with_correlation(
                     correlation_id=correlation_id,
                     level="info",
@@ -1005,7 +990,7 @@ class MALClient(BaseClient):
                 )
 
         except Exception as e:
-            if self.correlation_logger and correlation_id:
+            if False:
                 await self.correlation_logger.log_with_correlation(
                     correlation_id=correlation_id,
                     level="error",
@@ -1043,7 +1028,7 @@ class MALClient(BaseClient):
             Anime statistics data
         """
         # Use correlation chaining if parent_correlation_id provided
-        if parent_correlation_id and self.correlation_logger:
+        if parent_correlation_id:
             try:
                 result = await self.make_request_with_correlation_chain(
                     url=f"{self.jikan_base_url}/anime/{anime_id}/statistics",

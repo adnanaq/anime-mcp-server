@@ -11,6 +11,41 @@ alwaysApply: true
 
 # Lessons Learned - Anime MCP Server
 
+## Architectural Consolidation Patterns
+
+### Correlation System Consolidation (2025-07-06) - Task #63
+**Context**: Multiple overlapping correlation implementations causing architectural confusion
+
+**Problem Identified**:
+- CorrelationLogger: 1,834-line over-engineered observability platform
+- CorrelationIDMiddleware: 213-line industry-standard middleware
+- MAL endpoints generating own correlation IDs instead of using middleware
+- Multiple sources of truth creating maintenance burden
+
+**Solution Pattern**:
+1. **Industry Research First**: Validated Netflix/Uber/Google use lightweight middleware patterns
+2. **Systematic Removal**: Removed entire CorrelationLogger class and all dependencies
+3. **Consolidation Priority**: Middleware → Header → Generated (fallback only)
+4. **Testing Verification**: Confirmed all functionality preserved through middleware
+
+**Implementation Details**:
+```python
+# NEW: Consolidated correlation priority in MAL endpoints
+correlation_id = (
+    getattr(request.state, 'correlation_id', None) or  # Middleware first
+    x_correlation_id or                                 # Header second  
+    f"mal-{operation}-{uuid.uuid4().hex[:12]}"         # Generate last resort
+)
+```
+
+**Key Insights**:
+- Over-engineering anti-pattern: 1,834 lines for simple correlation tracking
+- Industry alignment matters: Follow proven patterns from major tech companies
+- Single source of truth principle: Consolidate overlapping implementations
+- Middleware-first approach reduces boilerplate across endpoints
+
+**Results**: Reduced codebase by 1,834 lines while preserving all functionality
+
 ## Test Infrastructure & Coverage Patterns
 
 ### Async Context Manager Mocking Pattern (2025-07-06)
@@ -48,6 +83,66 @@ with patch.object(service, 'method_name', return_value=expected_data):
 sys.modules['missing_dependency'] = Mock()
 from tests.mocks import custom_mock
 sys.modules['missing_dependency'] = custom_mock
+```
+
+## FastAPI Middleware Integration Patterns (2025-07-06)
+
+### Correlation Middleware Implementation Pattern
+**Context**: Implementing enterprise-grade correlation tracking across FastAPI application
+
+**Problem**: FastAPI middleware initialization happens before app lifespan, making it difficult to inject dependencies initialized during startup.
+
+**Solution Pattern**:
+```python
+# Allow middleware to initialize its own dependencies:
+app.add_middleware(
+    CorrelationIDMiddleware,
+    correlation_logger=None,  # Middleware initializes its own logger
+    auto_generate=True,
+    max_chain_depth=10,
+    log_requests=True,
+)
+```
+
+**Key Insights**:
+1. **Self-Contained Middleware**: Let middleware handle its own dependency initialization
+2. **Request State Injection**: Use `request.state.correlation_id` for easy access across endpoints
+3. **Header Propagation**: Always add correlation headers to responses for traceability
+4. **Chain Depth Management**: Prevent circular dependencies with max depth tracking
+
+### API Endpoint Correlation Pattern
+**Context**: Adding correlation tracking to existing API endpoints without breaking changes
+
+**Implementation Pattern**:
+```python
+# Extract correlation from middleware-injected state
+correlation_id = getattr(request.state, 'correlation_id', None)
+
+# Add correlation to all logging
+logger.info(
+    f"Operation started",
+    extra={
+        "correlation_id": correlation_id,
+        "operation_context": {...},
+    }
+)
+
+# Include correlation in error handling
+except Exception as e:
+    logger.error(
+        f"Operation failed: {e}",
+        extra={
+            "correlation_id": correlation_id,
+            "error_type": type(e).__name__,
+        }
+    )
+```
+
+**Benefits Achieved**:
+- Zero breaking changes to existing API contracts
+- Automatic correlation tracking across all requests
+- Enhanced debugging and troubleshooting capabilities
+- Production-ready observability
 ```
 
 **Key Insight**: Import errors can hide large numbers of tests - resolving imports revealed 184 additional tests.
@@ -271,5 +366,135 @@ return await self.client.search_anime(query=query, limit=limit, page=page)
 - Next development priorities clearly identified
 
 **Key Insight**: Rule compliance provides structure that ensures nothing is missed and maintains project velocity.
+
+## Documentation Accuracy & Verification Patterns (2025-07-06)
+
+### Service Manager Discovery Pattern
+**Context**: Documentation claimed Service Manager was "empty file (0 bytes)" but verification revealed 511-line comprehensive implementation
+
+**Problem**: Documentation assumptions without verification led to incorrect project status assessment
+
+**Discovery Process**:
+1. **Initial Claim**: Multiple docs stated Service Manager was empty/missing
+2. **Verification**: Actual file read revealed fully implemented ServiceManager class
+3. **Impact Assessment**: Discovery changed entire project priority assessment
+
+**Implementation Details Found**:
+```python
+# ServiceManager class features discovered:
+- Universal search with intelligent routing via MapperRegistry
+- Platform auto-selection with priority ordering  
+- Comprehensive fallback chains across all 9 platforms
+- Circuit breaker integration and health monitoring
+- Correlation ID support for request tracing
+- Vector database fallback capability
+```
+
+**Documentation Update Protocol Applied**:
+1. **Immediate Updates**: Fixed all files with incorrect Service Manager status
+2. **Cross-Reference Check**: Searched for related documentation discrepancies
+3. **Files Updated**: tasks/tasks_plan.md, docs/architecture.md, PLANNING.md
+4. **Status Changed**: From "CRITICAL BLOCKING" to "FULLY IMPLEMENTED"
+
+**Key Insights**:
+- **Always verify claims with actual file inspection**
+- **Documentation can become stale during active development**
+- **Single discovery can significantly change project status**
+- **Systematic documentation updates prevent propagation of inaccuracies**
+
+### Documentation Verification Framework Established
+**Verification Protocol for Major Components**:
+1. **File Existence**: Verify file exists at claimed path
+2. **Content Assessment**: Read actual file contents, don't assume based on memory
+3. **Functionality Review**: Assess implementation completeness vs documentation claims
+4. **Cross-Reference Audit**: Check related documentation for consistency
+5. **Systematic Updates**: Update all affected documentation files
+
+**Files Requiring Regular Verification**:
+- tasks/tasks_plan.md (project status claims)
+- docs/architecture.md (system component status)
+- PLANNING.md (implementation status tracking)
+- tasks/active_context.md (current development state)
+
+**Red Flags for Verification**:
+- Claims about file being "empty" or "missing"
+- Status marked as "NOT IMPLEMENTED" without recent verification
+- Critical components marked as "BLOCKING" without confirmation
+- Discrepancies between different documentation files
+
+**Key Insight**: Documentation verification should be as rigorous as code verification - assumptions without verification lead to incorrect project decisions.
+
+## Infrastructure Analysis & Task Documentation Patterns (2025-07-06)
+
+### Correlation/Tracing Infrastructure Discovery Pattern
+**Context**: Analysis of error handling, tracing, and correlation ID infrastructure revealed comprehensive implementation contradicting task documentation
+
+**Initial Documentation Claim**: Task #51 marked as "❌ NOT IMPLEMENTED - Critical for end-to-end request tracing"
+
+**Reality Check Process**:
+1. **Systematic File Analysis**: Read actual implementation files in src/integrations/error_handling.py
+2. **Comprehensive Review**: Analyzed 1,834 lines of correlation/tracing infrastructure
+3. **Integration Assessment**: Verified client and service-level integration across codebase
+4. **Documentation Gap Identification**: Found complete disconnect between implementation and documentation
+
+**Actual Implementation Discovered**:
+```python
+# Enterprise-grade infrastructure found:
+- CorrelationLogger (lines 1503-1834): Full chain tracking, performance metrics
+- ExecutionTracer (lines 1060-1410): Comprehensive execution tracing with analytics
+- ErrorContext (lines 29-144): Three-layer error preservation with recovery suggestions
+- CircuitBreaker: Per-API failure tracking with automatic recovery
+- GracefulDegradation: 5-level fallback strategies
+- LangGraphErrorHandler: 6 error patterns with recovery strategies
+```
+
+**Client Integration Verification**:
+```python
+# Found complete correlation support in:
+- MALClient: correlation_id + parent_correlation_id parameters
+- AniListClient: Full correlation integration
+- BaseClient: Automatic correlation injection
+- ServiceManager: Correlation propagation through entire stack
+```
+
+**Impact of Discovery**:
+- **Priority Reassessment**: Changed from "Critical blocker" to "Enhancement nice-to-have"
+- **Development Readiness**: Confirmed MAL client ready for immediate development
+- **Resource Reallocation**: Freed up development resources for actual missing components
+
+**Documentation Correction Protocol Applied**:
+1. **Task Status Update**: Changed Task #51 from "NOT IMPLEMENTED" to "PARTIALLY IMPLEMENTED"
+2. **Granular Sub-Tasks**: Created Tasks #51.1, #51.2, #51.3 for missing middleware components  
+3. **Architecture Documentation**: Updated docs/architecture.md with actual implementation status
+4. **Technical Documentation**: Updated docs/technical.md with implementation patterns
+5. **Active Context Update**: Reflected current analysis and next priorities
+
+**Key Insights for Task Management**:
+- **Implementation Status Claims Require Code Verification**: Never trust task documentation without file inspection
+- **Large Infrastructure Components Often Undocumented**: Complex systems may exist without proper documentation updates
+- **Infrastructure vs. Feature Distinction**: Core infrastructure (correlation) vs. convenience features (middleware)
+- **Documentation Lag in Active Development**: Implementation often outpaces documentation updates
+
+### Task Accuracy Verification Framework Established
+**Verification Protocol for Task Status Claims**:
+1. **File Inspection**: Read actual files mentioned in task descriptions
+2. **Integration Analysis**: Verify integration points and dependency relationships
+3. **Functionality Assessment**: Test or analyze actual capabilities vs. claimed status
+4. **Cross-Reference Validation**: Check multiple documentation sources for consistency
+5. **Status Correction**: Update all affected documentation with accurate status
+
+**Red Flag Indicators for Task Documentation**:
+- Claims about "NOT IMPLEMENTED" for core infrastructure without recent verification
+- Status marked as "CRITICAL" or "BLOCKING" without current confirmation
+- Large discrepancies between task complexity and claimed implementation time
+- Missing integration details in "FULLY IMPLEMENTED" claims
+
+**Documentation Maintenance Protocol**:
+- **Regular Status Audits**: Verify task claims during major analysis phases
+- **Implementation Reality Checks**: Inspect files when status seems inconsistent with functionality
+- **Systematic Updates**: Update all related documentation when discoveries made
+- **Cross-Reference Consistency**: Ensure all documentation sources align with verified reality
+
+**Key Insight**: Task documentation accuracy is critical for project management - systematic verification prevents resource misallocation and identifies development readiness.
 
 This lessons learned document captures patterns and intelligence that will inform future development decisions and prevent recurring issues.

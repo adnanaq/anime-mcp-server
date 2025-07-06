@@ -18,7 +18,6 @@ from ...integrations.error_handling import (
     CircuitBreaker, 
     GracefulDegradation,
     ExecutionTracer,
-    CorrelationLogger,
     TraceContext
 )
 
@@ -34,7 +33,6 @@ settings = get_settings()
 _circuit_breaker = CircuitBreaker(api_name="mal_api", failure_threshold=5, recovery_timeout=30)
 _graceful_degradation = GracefulDegradation()
 _execution_tracer = ExecutionTracer()
-_correlation_logger = CorrelationLogger()
 
 # Initialize MAL service (singleton pattern) with error handling infrastructure
 _mal_service = MALService(
@@ -43,13 +41,18 @@ _mal_service = MALService(
 
 
 async def _handle_endpoint_common_setup(
+    request: Request,
     x_correlation_id: Optional[str], 
     response: Response, 
     operation: str
 ) -> str:
     """Handle common endpoint setup: correlation ID generation and circuit breaker check."""
-    # Generate correlation ID
-    correlation_id = x_correlation_id or f"mal-{operation}-{uuid.uuid4().hex[:12]}"
+    # Use middleware correlation ID first, then header, then generate
+    correlation_id = (
+        getattr(request.state, 'correlation_id', None) or 
+        x_correlation_id or 
+        f"mal-{operation}-{uuid.uuid4().hex[:12]}"
+    )
     response.headers["X-Correlation-ID"] = correlation_id
     
     # Check circuit breaker
@@ -78,12 +81,7 @@ async def _handle_endpoint_logging(
         message = f"MAL {operation} request started"
         log_context = {"operation": f"mal_{operation}", **context}
     
-    await _correlation_logger.log_with_correlation(
-        correlation_id=correlation_id,
-        level="info",
-        message=message,
-        context=log_context
-    )
+# correlation logging removed
 
 
 
@@ -118,22 +116,6 @@ async def _create_error_response(
         timestamp=datetime.now(timezone.utc)
     )
     
-    # Log with correlation
-    await _correlation_logger.log_with_correlation(
-        correlation_id=correlation_id,
-        level=severity.value.lower(),
-        message=f"MAL API error in {operation}",
-        context={
-            "operation": operation,
-            "error_type": type(error).__name__,
-            "severity": severity.value,
-            "user_message": error_context.user_message
-        },
-        error_details={
-            "exception_type": type(error).__name__,
-            "message": str(error)
-        }
-    )
     
     # Add breadcrumb for debugging
     error_context.add_breadcrumb(
@@ -195,17 +177,6 @@ def _get_user_friendly_message(error: Exception, severity: ErrorSeverity) -> str
 async def _handle_circuit_breaker_check(correlation_id: str) -> Optional[Dict[str, Any]]:
     """Check circuit breaker and return appropriate response if open."""
     if _circuit_breaker.is_open():
-        # Log circuit breaker activation
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="warning",
-            message="MAL API circuit breaker is open",
-            context={
-                "circuit_breaker_state": "open",
-                "failure_count": _circuit_breaker.failure_count,
-                "recovery_timeout": _circuit_breaker.recovery_timeout
-            }
-        )
         
         # Return circuit breaker response
         error_context = ErrorContext(
@@ -234,6 +205,7 @@ async def _handle_circuit_breaker_check(correlation_id: str) -> Optional[Dict[st
 
 @router.get("/search")
 async def search_anime(
+    request: Request,
     response: Response,
     q: str = Query("", description="Search query string"),
     limit: int = Query(10, ge=1, le=50, description="Maximum number of results"),
@@ -331,7 +303,7 @@ async def search_anime(
     """
     try:
         # Handle common setup (correlation ID + circuit breaker)
-        correlation_id = await _handle_endpoint_common_setup(x_correlation_id, response, "api")
+        correlation_id = await _handle_endpoint_common_setup(request, x_correlation_id, response, "api")
         
         # Start execution tracing
         trace_id = await _execution_tracer.start_trace(
@@ -465,7 +437,6 @@ async def search_anime(
                 }
             )
 
-        # Log successful completion
         await _handle_endpoint_logging(correlation_id, "API search", {
             "results_count": len(results),
             "query": q,
@@ -593,17 +564,6 @@ async def search_anime(
                     }
                 )
                 
-                # Log graceful degradation
-                await _correlation_logger.log_with_correlation(
-                    correlation_id=error_correlation_id,
-                    level="warning",
-                    message="MAL API using graceful degradation",
-                    context={
-                        "operation": "mal_search_degradation",
-                        "original_error": str(e),
-                        "degradation_applied": True
-                    }
-                )
                 
                 response.headers["X-Correlation-ID"] = error_correlation_id
                 return degraded_response
@@ -637,6 +597,7 @@ async def search_anime(
 
 @router.get("/anime/{anime_id}")
 async def get_anime_details(
+    request: Request,
     response: Response,
     anime_id: int = Path(..., ge=1, description="MAL anime ID"),
     x_correlation_id: Optional[str] = Header(
@@ -657,7 +618,7 @@ async def get_anime_details(
     """
     try:
         # Handle common setup (correlation ID + circuit breaker)
-        correlation_id = await _handle_endpoint_common_setup(x_correlation_id, response, "details")
+        correlation_id = await _handle_endpoint_common_setup(request, x_correlation_id, response, "details")
 
         # Log request start
         await _handle_endpoint_logging(correlation_id, "anime details", {"anime_id": anime_id})
@@ -669,7 +630,6 @@ async def get_anime_details(
                 status_code=404, detail=f"Anime with ID {anime_id} not found on MAL"
             )
 
-        # Log successful completion
         await _handle_endpoint_logging(correlation_id, "anime details", {"anime_id": anime_id}, is_success=True)
 
         response_data = {
@@ -732,6 +692,7 @@ async def get_anime_details(
 
 @router.get("/seasonal/{year}/{season}")
 async def get_seasonal_anime(
+    request: Request,
     response: Response,
     year: int = Path(..., ge=1990, le=2030, description="Year (1990-2030)"),
     season: str = Path(
@@ -758,14 +719,13 @@ async def get_seasonal_anime(
     """
     try:
         # Handle common setup (correlation ID + circuit breaker)
-        correlation_id = await _handle_endpoint_common_setup(x_correlation_id, response, "seasonal")
+        correlation_id = await _handle_endpoint_common_setup(request, x_correlation_id, response, "seasonal")
 
         # Log request start
         await _handle_endpoint_logging(correlation_id, "seasonal anime", {"year": year, "season": season})
 
         results = await _mal_service.get_seasonal_anime(year, season, correlation_id=correlation_id)
 
-        # Log successful completion
         await _handle_endpoint_logging(correlation_id, "seasonal anime", {
             "year": year, 
             "season": season, 
@@ -864,27 +824,9 @@ async def get_current_season_anime(
                 headers={"X-Correlation-ID": correlation_id}
             )
 
-        # Log request start with correlation
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL current season anime request started",
-            context={"operation": "mal_current_season"}
-        )
 
         results = await _mal_service.get_current_season(correlation_id=correlation_id)
 
-        # Log successful completion
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL current season anime completed successfully",
-            context={
-                "operation": "mal_current_season", 
-                "results_count": len(results),
-                "success": True
-            }
-        )
 
         response_data = {
             "source": "mal",
@@ -979,13 +921,6 @@ async def get_anime_statistics(
                 headers={"X-Correlation-ID": correlation_id}
             )
 
-        # Log request start with correlation
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL anime statistics request started",
-            context={"operation": "mal_anime_statistics", "anime_id": anime_id}
-        )
 
         stats = await _mal_service.get_anime_statistics(anime_id, correlation_id=correlation_id)
 
@@ -995,13 +930,6 @@ async def get_anime_statistics(
                 detail=f"Statistics for anime ID {anime_id} not found on MAL",
             )
 
-        # Log successful completion
-        await _correlation_logger.log_with_correlation(
-            correlation_id=correlation_id,
-            level="info",
-            message="MAL anime statistics completed successfully",
-            context={"operation": "mal_anime_statistics", "anime_id": anime_id, "success": True}
-        )
 
         response_data = {
             "source": "mal", 

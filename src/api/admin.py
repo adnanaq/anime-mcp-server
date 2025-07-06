@@ -2,7 +2,7 @@
 import logging
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
 from ..services.smart_scheduler import SmartScheduler
 from ..services.update_service import UpdateService
@@ -21,14 +21,30 @@ def get_qdrant_client() -> Optional[QdrantClient]:
 
 
 @router.post("/check-updates")
-async def check_for_updates() -> Dict[str, Any]:
+async def check_for_updates(request: Request) -> Dict[str, Any]:
     """Check if anime database has updates available"""
+    correlation_id = getattr(request.state, 'correlation_id', None)
+    
     try:
+        logger.info(
+            "Starting database update check",
+            extra={"correlation_id": correlation_id}
+        )
+        
         qdrant_client = get_qdrant_client()
         update_service = UpdateService(qdrant_client=qdrant_client)
         has_updates = await update_service.check_for_updates()
 
         metadata = update_service.load_metadata()
+
+        logger.info(
+            f"Update check completed - has_updates: {has_updates}",
+            extra={
+                "correlation_id": correlation_id,
+                "has_updates": has_updates,
+                "entry_count": metadata.get("entry_count"),
+            }
+        )
 
         return {
             "has_updates": has_updates,
@@ -39,7 +55,13 @@ async def check_for_updates() -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Update check failed: {e}")
+        logger.error(
+            f"Update check failed: {e}",
+            extra={
+                "correlation_id": correlation_id,
+                "error_type": type(e).__name__,
+            }
+        )
         raise HTTPException(status_code=500, detail=f"Update check failed: {str(e)}")
 
 

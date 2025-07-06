@@ -11,7 +11,6 @@ from src.exceptions import APIError
 from src.integrations.clients.base_client import BaseClient
 from src.integrations.error_handling import (
     CircuitBreaker,
-    CorrelationLogger,
     ErrorContext,
     ErrorSeverity,
     ExecutionTracer,
@@ -309,7 +308,6 @@ class TestBaseClient:
                 assert result == {"direct": True}
                 # Verify we manually set circuit breaker to None
                 assert client.circuit_breaker is None
-            assert client.correlation_logger is None
             assert client.execution_tracer is None
 
     @pytest.mark.asyncio
@@ -569,10 +567,6 @@ class TestBaseClientEnhancedErrorHandling:
         cache.set = AsyncMock()
         return cache
 
-    @pytest.fixture
-    def correlation_logger(self):
-        """Create correlation logger for testing."""
-        return CorrelationLogger()
 
     @pytest.fixture
     def execution_tracer(self):
@@ -952,12 +946,10 @@ class TestBaseClientEnhancedErrorHandling:
         with patch("src.integrations.clients.base_client.rate_limit_manager"):
             client = BaseClient(
                 service_name="basic_service",
-                correlation_logger=None,
                 execution_tracer=None,
             )
 
             assert client.service_name == "basic_service"
-            assert client.correlation_logger is None
             assert client.execution_tracer is None
             assert client.timeout == 30.0  # Default timeout
 
