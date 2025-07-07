@@ -1,35 +1,40 @@
-"""MAL/Jikan REST client implementation."""
+"""Official MAL API v2 client implementation."""
 
 import asyncio
 import logging
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlencode
 
 from src.exceptions import APIError
 
 from .base_client import BaseClient
-from ..rate_limiting import MALRateLimitAdapter, JikanRateLimitAdapter
+from ..rate_limiting import MALRateLimitAdapter
 from ..rate_limiting.core import rate_limit_manager
 
 logger = logging.getLogger(__name__)
 
 
 class MALClient(BaseClient):
-    """MAL/Jikan REST API client with dual API strategy."""
+    """Official MyAnimeList API v2 client with OAuth2 authentication."""
 
     def __init__(
         self,
-        client_id: Optional[str] = None,
+        client_id: str,
         client_secret: Optional[str] = None,
+        access_token: Optional[str] = None,
+        refresh_token: Optional[str] = None,
         circuit_breaker=None,
         cache_manager=None,
         error_handler=None,
-                execution_tracer=None,
+        execution_tracer=None,
     ):
-        """Initialize MAL client.
+        """Initialize MAL API v2 client.
 
         Args:
-            client_id: MAL OAuth2 client ID
-            client_secret: MAL OAuth2 client secret
+            client_id: MAL OAuth2 client ID (required)
+            client_secret: MAL OAuth2 client secret (for token refresh)
+            access_token: OAuth2 access token
+            refresh_token: OAuth2 refresh token
             circuit_breaker: Circuit breaker instance
             cache_manager: Cache manager instance
             error_handler: Error handler instance
@@ -42,57 +47,37 @@ class MALClient(BaseClient):
             error_handler,
             execution_tracer,
         )
-        self.mal_base_url = "https://api.myanimelist.net/v2"
-        self.jikan_base_url = "https://api.jikan.moe/v4"
+        self.base_url = "https://api.myanimelist.net/v2"
+        self.oauth_url = "https://myanimelist.net/v1/oauth2"
         self.client_id = client_id
         self.client_secret = client_secret
-        self.access_token = None
-        self.refresh_token = None
+        self.access_token = access_token
+        self.refresh_token = refresh_token
         
-        # Register platform-specific rate limiting adapters
-        # Since this client handles both MAL and Jikan APIs, register both
-        self._mal_rate_limit_adapter = MALRateLimitAdapter()
-        self._jikan_rate_limit_adapter = JikanRateLimitAdapter()
+        if not client_id:
+            raise ValueError("MAL API requires client_id")
         
-        # Register with global rate limiter using dual service approach
-        rate_limit_manager.register_platform_adapter("mal", self._mal_rate_limit_adapter)
-        rate_limit_manager.register_platform_adapter("jikan", self._jikan_rate_limit_adapter)
+        # Register platform-specific rate limiting adapter
+        self._rate_limit_adapter = MALRateLimitAdapter()
+        rate_limit_manager.register_platform_adapter("mal", self._rate_limit_adapter)
 
-    async def _make_mal_request(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, Any]] = None, **kwargs
+    ) -> Dict[str, Any]:
         """Make request to official MAL API using rate-limited base client."""
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
-        # Add X-MAL-CLIENT-ID header if client_id is available
-        if self.client_id:
-            headers["X-MAL-CLIENT-ID"] = self.client_id
+        # Add X-MAL-CLIENT-ID header (required for all requests)
+        headers["X-MAL-CLIENT-ID"] = self.client_id
 
         # Add Authorization header if access_token is available
         if self.access_token:
             headers["Authorization"] = f"Bearer {self.access_token}"
         elif not self.client_id:
-            raise Exception("MAL API requires either client_id or access_token")
+            raise APIError("MAL API requires either client_id or access_token")
 
-        url = f"{self.mal_base_url}{endpoint}"
+        url = f"{self.base_url}{endpoint}"
 
-        # Use inherited rate-limited make_request method
-        return await self.make_request(
-            url=url,
-            method="GET",
-            priority=1,
-            endpoint=endpoint,
-            headers=headers,
-            **kwargs,
-        )
-
-    async def _make_jikan_request(
-        self, endpoint: str, params: Optional[Dict[str, Any]] = None, **kwargs
-    ) -> Dict[str, Any]:
-        """Make request to Jikan API using rate-limited base client."""
-        headers = {"Content-Type": "application/json", "Accept": "application/json"}
-
-        url = f"{self.jikan_base_url}{endpoint}"
-
-        # Use inherited rate-limited make_request method
         return await self.make_request(
             url=url,
             method="GET",
@@ -103,43 +88,20 @@ class MALClient(BaseClient):
             **kwargs,
         )
 
-    async def _make_jikan_request_with_retry(
-        self, endpoint: str, max_retries: int = 3, **kwargs
-    ) -> Dict[str, Any]:
-        """Make Jikan request with exponential backoff retry."""
-        for attempt in range(max_retries):
-            try:
-                return await self._make_jikan_request(endpoint, **kwargs)
-            except Exception as e:
-                if attempt == max_retries - 1:
-                    raise e
-                if "500" in str(e) or "502" in str(e) or "503" in str(e):
-                    # Exponential backoff for server errors
-                    await asyncio.sleep(2**attempt)
-                    continue
-                else:
-                    # Don't retry for other errors
-                    raise e
-
     async def get_anime_by_id(
         self,
         anime_id: int,
+        fields: Optional[str] = None,
         *,
         correlation_id: Optional[str] = None,
         parent_correlation_id: Optional[str] = None,
         use_cache: bool = True,
     ) -> Optional[Dict[str, Any]]:
-        """Get anime by ID with all available enhancements auto-enabled.
-
-        This method automatically uses all available enhanced features:
-        - Correlation logging (if correlation_logger available)
-        - Execution tracing (if execution_tracer available)
-        - Enhanced error contexts and graceful degradation
-        - Dual API strategy (MAL → Jikan fallback)
-        - Intelligent caching
+        """Get anime by ID from official MAL API.
 
         Args:
-            anime_id: Anime ID to fetch
+            anime_id: MAL anime ID
+            fields: Comma-separated list of fields to include in response
             correlation_id: Optional correlation ID for tracking
             parent_correlation_id: Optional parent correlation ID for chaining
             use_cache: Whether to use cache (default: True)
@@ -147,24 +109,21 @@ class MALClient(BaseClient):
         Returns:
             Anime data or None if not found
         """
-        # Auto-generate correlation ID if not provided but we have correlation logger
+        # Auto-generate correlation ID if not provided
         if not correlation_id:
             import uuid
-
-            correlation_id = f"anime-{uuid.uuid4().hex[:12]}"
+            correlation_id = f"mal-anime-{uuid.uuid4().hex[:12]}"
 
         # Use correlation chaining if parent_correlation_id provided
         if parent_correlation_id:
             try:
                 result = await self.make_request_with_correlation_chain(
-                    url=f"{self.jikan_base_url}/anime/{anime_id}",
+                    url=f"{self.base_url}/anime/{anime_id}",
                     parent_correlation_id=parent_correlation_id,
                     method="GET",
                     endpoint=f"/anime/{anime_id}",
                 )
-                if result and "data" in result:
-                    return result["data"]
-                return None
+                return result
             except Exception:
                 # Fall through to regular handling if chaining fails
                 pass
@@ -178,121 +137,55 @@ class MALClient(BaseClient):
                     "anime_id": anime_id,
                     "service": "mal",
                     "correlation_id": correlation_id,
-                    "dual_api": True,
+                    "fields": fields,
                 },
             )
 
-
         try:
             # Check cache first if enabled
-            cache_key = f"mal_anime_{anime_id}"
+            cache_key = f"mal_anime_{anime_id}_{fields or 'default'}"
             if use_cache and self.cache_manager:
                 try:
                     cached_result = await self.cache_manager.get(cache_key)
                     if cached_result:
-                        if False:
-                            await self.correlation_logger.log_with_correlation(
-                                correlation_id=correlation_id,
-                                level="info",
-                                message=f"Cache hit for anime {anime_id}",
-                                context={"service": "mal", "cache_key": cache_key},
-                            )
+                        logger.info(f"Cache hit for MAL anime {anime_id}")
                         return cached_result
                 except Exception as e:
-                    if False:
-                        await self.correlation_logger.log_with_correlation(
-                            correlation_id=correlation_id,
-                            level="warning",
-                            message=f"Cache error for anime {anime_id}: {str(e)}",
-                            context={"service": "mal", "error": str(e)},
-                        )
+                    logger.warning(f"Cache error for MAL anime {anime_id}: {str(e)}")
 
-            # Try MAL API first if available
-            if self.client_id:
-                if self.execution_tracer and trace_id:
-                    await self.execution_tracer.add_trace_step(
-                        trace_id=trace_id,
-                        step_name="mal_api_attempt",
-                        step_data={"endpoint": f"/anime/{anime_id}", "api": "mal"},
-                    )
-
-                try:
-                    endpoint = f"/anime/{anime_id}"
-                    result = await self._make_mal_request(endpoint)
-
-                    if self.execution_tracer and trace_id:
-                        await self.execution_tracer.add_trace_step(
-                            trace_id=trace_id,
-                            step_name="mal_api_success",
-                            step_data={"anime_id": anime_id},
-                        )
-
-                    if self.execution_tracer and trace_id:
-                        await self.execution_tracer.end_trace(
-                            trace_id=trace_id,
-                            status="success",
-                            result={"source": "mal", "anime_id": anime_id},
-                        )
-
-                    return result
-
-                except APIError as e:
-                    # Enhanced MAL error handling
-                    if self.execution_tracer and trace_id:
-                        await self.execution_tracer.add_trace_step(
-                            trace_id=trace_id,
-                            step_name="mal_api_failed",
-                            step_data={"error": str(e), "fallback": "jikan"},
-                        )
-
-                    # Create enhanced error context if correlation_id available
-                    if correlation_id:
-                        await self._create_enhanced_error_context(
-                            error=e,
-                            correlation_id=correlation_id,
-                            api="mal",
-                            endpoint=endpoint,
-                            operation="get_anime_by_id",
-                        )
-                    else:
-                        # Fallback to basic error handling
-                        logger.warning(
-                            f"MAL API failed for anime {anime_id}, falling back to Jikan: {e}"
-                        )
-
-            # Fallback to Jikan API
+            # Make MAL API request
             if self.execution_tracer and trace_id:
                 await self.execution_tracer.add_trace_step(
                     trace_id=trace_id,
-                    step_name="jikan_fallback",
-                    step_data={"endpoint": f"/anime/{anime_id}", "api": "jikan"},
+                    step_name="mal_api_request",
+                    step_data={"endpoint": f"/anime/{anime_id}", "fields": fields},
                 )
 
             endpoint = f"/anime/{anime_id}"
-            response = await self._make_jikan_request(endpoint)
+            params = {}
+            
+            if fields:
+                params["fields"] = fields
+
+            response = await self._make_request(endpoint, params=params)
 
             if self.execution_tracer and trace_id:
                 await self.execution_tracer.end_trace(
                     trace_id=trace_id,
                     status="success",
-                    result={"source": "jikan", "anime_id": anime_id},
+                    result={"source": "mal", "anime_id": anime_id},
                 )
 
-            if False:
-                await self.correlation_logger.log_with_correlation(
-                    correlation_id=correlation_id,
-                    level="info",
-                    message=f"Successfully retrieved anime {anime_id}",
-                    context={
-                        "service": "mal",
-                        "anime_id": anime_id,
-                        "source": "jikan",
-                        "found": response is not None and "data" in response,
-                    },
-                )
+            logger.info(f"Successfully retrieved anime {anime_id} from MAL API")
 
-            if response and "data" in response:
-                return response["data"]
+            # Cache the result
+            if use_cache and self.cache_manager and response:
+                try:
+                    await self.cache_manager.set(cache_key, response, ttl=3600)
+                except Exception as e:
+                    logger.warning(f"Cache set error for MAL anime {anime_id}: {str(e)}")
+            
+            return response
 
         except Exception as e:
             # Enhanced error handling
@@ -302,24 +195,18 @@ class MALClient(BaseClient):
                 )
 
             if correlation_id:
-                # Use enhanced error context
-                await self._create_enhanced_error_context(
+                await self.create_mal_error_context(
                     error=e,
                     correlation_id=correlation_id,
-                    api="jikan",
                     endpoint=f"/anime/{anime_id}",
                     operation="get_anime_by_id",
                 )
             else:
-                # Fallback to basic error logging
-                logger.error(
-                    f"Both MAL and Jikan APIs failed for anime {anime_id}: {e}"
-                )
+                logger.error(f"MAL API failed for anime {anime_id}: {e}")
 
-            # Try graceful degradation if enhanced error handling available
+            # Try graceful degradation if available
             if correlation_id and hasattr(self, "handle_enhanced_graceful_degradation"):
                 try:
-
                     async def primary_func():
                         raise e  # Re-raise the original error
 
@@ -330,7 +217,6 @@ class MALClient(BaseClient):
                             "operation": "get_anime_by_id",
                             "anime_id": anime_id,
                             "service": "mal",
-                            "api_strategy": "dual",
                         },
                         cache_key=cache_key,
                     )
@@ -340,287 +226,39 @@ class MALClient(BaseClient):
 
         return None
 
-    async def get_seasonal_anime(self, year: int, season: str) -> List[Dict[str, Any]]:
-        """Get seasonal anime using Jikan API."""
-        endpoint = f"/seasons/{year}/{season}"
-
-        try:
-            response = await self._make_jikan_request(endpoint)
-            if response and "data" in response:
-                return response["data"]
-        except Exception as e:
-            logger.error(f"Jikan seasonal anime failed for {year} {season}: {e}")
-
-        return []
-
-    async def _handle_mal_error(
-        self, status_code: int, response_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Handle MAL API specific error responses.
-
-        Based on MAL API v2 documentation:
-        - 400 Bad Request: Invalid Parameters
-        - 401 Unauthorized: invalid_token
-        - 403 Forbidden: DoS detected
-        - 404 Not Found: Resource not found
-
-        Args:
-            status_code: HTTP status code
-            response_data: MAL API error response data
-
-        Returns:
-            Structured error information for logging and handling
-        """
-        error_info = {
-            "service": "mal",
-            "status": status_code,
-            "raw_response": response_data,
-        }
-
-        if status_code == 400:
-            # MAL API 400: Invalid Parameters
-            error_info.update(
-                {
-                    "error_type": "invalid_parameters",
-                    "message": f"Invalid parameters provided to MAL API: {response_data.get('error_description', 'Bad request')}",
-                    "recoverable": False,
-                }
-            )
-        elif status_code == 401:
-            # MAL API 401: Invalid or expired token
-            error_info.update(
-                {
-                    "error_type": "authentication_error",
-                    "message": f"MAL API authentication failed: {response_data.get('error_description', 'Invalid or expired token')}",
-                    "recoverable": True,
-                    "suggested_action": "refresh_token",
-                }
-            )
-        elif status_code == 403:
-            # MAL API 403: DoS detection
-            error_info.update(
-                {
-                    "error_type": "rate_limit_exceeded",
-                    "message": f"MAL API DoS protection activated: {response_data.get('error_description', 'Request blocked')}",
-                    "recoverable": True,
-                    "retry_after": 300,  # 5 minutes backoff for DoS detection
-                    "suggested_action": "backoff_and_retry",
-                }
-            )
-        elif status_code == 404:
-            # MAL API 404: Resource not found
-            error_info.update(
-                {
-                    "error_type": "not_found",
-                    "message": f"MAL API resource not found: {response_data.get('error_description', 'Resource does not exist')}",
-                    "recoverable": False,
-                }
-            )
-        else:
-            # Other MAL API errors
-            error_info.update(
-                {
-                    "error_type": "api_error",
-                    "message": f"MAL API error {status_code}: {response_data.get('error_description', 'Unknown error')}",
-                    "recoverable": status_code >= 500,  # Server errors are recoverable
-                }
-            )
-
-        # Log the structured error
-        logger.warning(
-            f"MAL API error: {error_info['error_type']} - {error_info['message']}"
-        )
-
-        return error_info
-
-    async def _handle_jikan_error(
-        self, status_code: int, response_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Handle Jikan API specific error responses.
-
-        Based on Jikan API documentation:
-        Structured error response with status, type, message, error, report_url
-
-        Args:
-            status_code: HTTP status code
-            response_data: Jikan API error response data
-
-        Returns:
-            Structured error information for logging and handling
-        """
-        error_info = {
-            "service": "jikan",
-            "status": status_code,
-            "raw_response": response_data,
-        }
-
-        # Extract Jikan-specific error fields
-        jikan_type = response_data.get("type", "")
-        jikan_message = response_data.get("message", "")
-        jikan_error = response_data.get("error", "")
-        report_url = response_data.get("report_url", "")
-
-        # Add Jikan-specific fields
-        error_info["original_type"] = jikan_type
-        error_info["report_url"] = report_url
-
-        if status_code == 429:
-            # Jikan API 429: Rate limit exceeded
-            error_info.update(
-                {
-                    "error_type": "rate_limit_exceeded",
-                    "message": f"Jikan API rate limit exceeded: {jikan_error or jikan_message}",
-                    "recoverable": True,
-                    "retry_after": 60,  # 1 minute backoff for rate limiting
-                    "suggested_action": "backoff_and_retry",
-                }
-            )
-        elif status_code >= 500:
-            # Jikan API 5xx: Server errors
-            error_info.update(
-                {
-                    "error_type": "server_error",
-                    "message": f"Jikan API server error: {jikan_error or jikan_message}",
-                    "recoverable": True,
-                    "retry_after": 30,  # 30 seconds backoff for server errors
-                    "suggested_action": "retry_later",
-                }
-            )
-        elif status_code == 404:
-            # Jikan API 404: Resource not found
-            error_info.update(
-                {
-                    "error_type": "not_found",
-                    "message": f"Jikan API resource not found: {jikan_error or jikan_message}",
-                    "recoverable": False,
-                }
-            )
-        elif status_code == 400:
-            # Jikan API 400: Bad request
-            error_info.update(
-                {
-                    "error_type": "invalid_parameters",
-                    "message": f"Jikan API bad request: {jikan_error or jikan_message}",
-                    "recoverable": False,
-                }
-            )
-        else:
-            # Other Jikan API errors
-            error_info.update(
-                {
-                    "error_type": "api_error",
-                    "message": f"Jikan API error {status_code}: {jikan_error or jikan_message}",
-                    "recoverable": status_code >= 500,
-                }
-            )
-
-        # Log the structured error
-        logger.warning(
-            f"Jikan API error: {error_info['error_type']} - {error_info['message']}"
-        )
-
-        return error_info
-
-    # Helper method for enhanced error context creation
-    async def _create_enhanced_error_context(
-        self,
-        error: Exception,
-        correlation_id: str,
-        api: str,
-        endpoint: str,
-        operation: str,
-        query_params: Optional[Dict[str, Any]] = None,
-    ) -> None:
-        """Create enhanced error context for both MAL and Jikan APIs.
-
-        Args:
-            error: Exception that occurred
-            correlation_id: Correlation ID
-            api: API name ("mal" or "jikan")
-            endpoint: API endpoint
-            operation: Operation being performed
-            query_params: Query parameters used (for Jikan)
-        """
-        if api == "mal":
-            await self.create_mal_error_context(
-                error=error,
-                correlation_id=correlation_id,
-                endpoint=endpoint,
-                operation=operation,
-            )
-        else:  # jikan
-            await self.create_jikan_error_context(
-                error=error,
-                correlation_id=correlation_id,
-                endpoint=endpoint,
-                operation=operation,
-                query_params=query_params,
-            )
-
     async def search_anime(
         self,
-        q: Optional[str] = None,
+        q: str,
         limit: int = 10,
         offset: int = 0,
         fields: Optional[str] = None,
-        # Extended Jikan parameters
-        genres: Optional[List[int]] = None,
-        status: Optional[str] = None,
-        # Enhanced Jikan parameters
-        anime_type: Optional[str] = None,
-        score: Optional[float] = None,
-        min_score: Optional[float] = None,
-        max_score: Optional[float] = None,
-        rating: Optional[str] = None,
-        sfw: Optional[bool] = None,
-        genres_exclude: Optional[List[int]] = None,
-        order_by: Optional[str] = None,
-        sort: Optional[str] = None,
-        letter: Optional[str] = None,
-        producers: Optional[List[int]] = None,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        page: Optional[int] = None,
-        unapproved: Optional[bool] = None,
         *,
         correlation_id: Optional[str] = None,
         operation: str = "anime_search",
     ) -> List[Dict[str, Any]]:
-        """Search anime with all Jikan parameters and enhancements auto-enabled.
+        """Search anime using official MAL API.
+
+        Note: MAL API v2 has limited search capabilities compared to Jikan.
+        No filtering by genre, status, type, etc. Only basic text search.
 
         Args:
-            q: Search query string
-            limit: Maximum number of results (1-50)
-            offset: Offset for pagination
+            q: Search query string (required)
+            limit: Maximum number of results (1-100, default 10)
+            offset: Offset for pagination (default 0)
             fields: Comma-separated list of response fields
-            genres: List of genre IDs to include
-            status: Anime status filter (airing, complete, upcoming)
-            anime_type: Anime type filter (TV, Movie, OVA, ONA, Special)
-            score: Exact score filter
-            min_score: Minimum score filter (0.0-10.0)
-            max_score: Maximum score filter (0.0-10.0)
-            rating: Content rating (G, PG, PG-13, R, R+, Rx)
-            sfw: Filter out adult content
-            genres_exclude: List of genre IDs to exclude
-            order_by: Order results by field
-            sort: Sort direction (asc, desc)
-            letter: Return entries starting with letter
-            producers: List of producer/studio IDs
-            start_date: Start date filter (YYYY-MM-DD)
-            end_date: End date filter (YYYY-MM-DD)
-            page: Page number for pagination
-            unapproved: Include unapproved entries
             correlation_id: Optional correlation ID for tracking
             operation: Operation name for tracing
 
         Returns:
             List of anime results
         """
-        # Auto-generate correlation ID if not provided but we have correlation logger
+        if not q:
+            raise ValueError("Search query 'q' is required for MAL API")
+
+        # Auto-generate correlation ID if not provided
         if not correlation_id:
             import uuid
-
-            correlation_id = f"search-{uuid.uuid4().hex[:12]}"
+            correlation_id = f"mal-search-{uuid.uuid4().hex[:12]}"
 
         # Start execution tracing if available
         trace_id = None
@@ -630,7 +268,6 @@ class MALClient(BaseClient):
                 context={
                     "query": q,
                     "service": "mal",
-                    "api": "jikan",
                     "endpoint": "/anime",
                     "limit": limit,
                 },
@@ -641,63 +278,24 @@ class MALClient(BaseClient):
                 await self.execution_tracer.add_trace_step(
                     trace_id=trace_id,
                     step_name="search_start",
-                    step_data={"query": q, "genres": genres, "status": status},
+                    step_data={"query": q, "limit": limit, "offset": offset},
                 )
 
-            # Jikan search endpoint
+            # Build MAL search parameters
             endpoint = "/anime"
-            params = {}
+            params = {
+                "q": q,
+                "limit": min(limit, 100),  # MAL max is 100
+                "offset": offset,
+            }
 
-            # Basic MAL API parameters
-            if q:
-                params["q"] = q
-            if limit:
-                params["limit"] = limit
-            if offset:
-                params["offset"] = offset
             if fields:
                 params["fields"] = fields
-                
-            # Extended Jikan parameters
-            if genres:
-                params["genres"] = ",".join(map(str, genres))
-            if status:
-                params["status"] = status
-            
-            # Enhanced Jikan parameters
-            if anime_type:
-                params["type"] = anime_type
-            if score is not None:
-                params["score"] = score
-            if min_score is not None:
-                params["min_score"] = min_score
-            if max_score is not None:
-                params["max_score"] = max_score
-            if rating:
-                params["rating"] = rating
-            if sfw is not None:
-                params["sfw"] = str(sfw).lower()
-            if genres_exclude:
-                params["genres_exclude"] = ",".join(map(str, genres_exclude))
-            if order_by:
-                params["order_by"] = order_by
-            if sort:
-                params["sort"] = sort
-            if letter:
-                params["letter"] = letter
-            if producers:
-                params["producers"] = ",".join(map(str, producers))
-            if start_date:
-                params["start_date"] = start_date
-            if end_date:
-                params["end_date"] = end_date
-            if page is not None:
-                params["page"] = page
-            if unapproved is not None:
-                params["unapproved"] = str(unapproved).lower()
 
             try:
-                response = await self._make_jikan_request(endpoint, params=params)
+                response = await self._make_request(endpoint, params=params)
+                
+                # MAL API returns {"data": [...], "paging": {...}}
                 if response and "data" in response:
                     result = response["data"]
 
@@ -705,26 +303,29 @@ class MALClient(BaseClient):
                         await self.execution_tracer.end_trace(
                             trace_id=trace_id,
                             status="success",
-                            result={"result_count": len(result), "query": query},
+                            result={"result_count": len(result), "query": q},
                         )
 
+                    logger.info(f"MAL search returned {len(result)} results for query: {q}")
                     return result
+                else:
+                    logger.warning(f"MAL search returned unexpected response format: {response}")
+                    return []
+                    
             except APIError as e:
                 # Enhanced error handling for search
                 if correlation_id:
-                    await self._create_enhanced_error_context(
+                    await self.create_mal_error_context(
                         error=e,
                         correlation_id=correlation_id,
-                        api="jikan",
                         endpoint=endpoint,
                         operation="search_anime",
                         query_params=params,
                     )
                 else:
-                    # Fallback to basic error logging
-                    logger.error(f"Jikan search failed for query '{query}': {e}")
+                    logger.error(f"MAL search failed for query '{q}': {e}")
             except Exception as e:
-                logger.error(f"Jikan search failed for query '{query}': {e}")
+                logger.error(f"MAL search failed for query '{q}': {e}")
 
             return []
 
@@ -735,228 +336,154 @@ class MALClient(BaseClient):
                 )
             raise
 
-    async def create_mal_error_context(
+    async def get_user_anime_list(
         self,
-        error: Exception,
-        correlation_id: str,
-        endpoint: str,
-        operation: str,
-    ) -> "ErrorContext":
-        """Create enhanced ErrorContext for MAL API errors.
+        username: str,
+        status: Optional[str] = None,
+        sort: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+        fields: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get user's anime list (requires user permission or public list).
 
         Args:
-            error: Exception that occurred
-            correlation_id: Correlation ID
-            endpoint: MAL API endpoint
-            operation: Operation being performed
+            username: MAL username
+            status: Filter by status (watching, completed, on_hold, dropped, plan_to_watch)
+            sort: Sort order (list_score, list_updated_at, anime_title, anime_start_date, anime_id)
+            limit: Maximum results (1-1000)
+            offset: Pagination offset
+            fields: Comma-separated response fields
 
         Returns:
-            Enhanced ErrorContext
+            List of user's anime entries
         """
-        from ..error_handling import ErrorSeverity
+        endpoint = f"/users/{username}/animelist"
+        params = {
+            "limit": min(limit, 1000),  # MAL max is 1000
+            "offset": offset,
+        }
 
-        # Determine severity and user message based on error
-        if "401" in str(error) or "invalid_token" in str(error):
-            severity = ErrorSeverity.ERROR
-            user_message = (
-                "MAL authentication failed. Please refresh your access token."
-            )
-        elif "403" in str(error) or "forbidden" in str(error):
-            severity = ErrorSeverity.WARNING
-            user_message = "MAL API access denied. Please check your permissions or try again later."
-        elif "429" in str(error) or "rate limit" in str(error):
-            severity = ErrorSeverity.WARNING
-            user_message = (
-                "MAL API rate limit exceeded. Please wait before making more requests."
-            )
-        elif "500" in str(error) or "server" in str(error):
-            severity = ErrorSeverity.ERROR
-            user_message = (
-                "MAL API server error. The service may be temporarily unavailable."
-            )
-        else:
-            severity = ErrorSeverity.ERROR
-            user_message = "MAL API request failed. Please try again."
+        if status:
+            params["status"] = status
+        if sort:
+            params["sort"] = sort
+        if fields:
+            params["fields"] = fields
 
-        error_context = await self.create_error_context(
-            error=error,
-            correlation_id=correlation_id,
-            user_message=user_message,
-            trace_data={
-                "api": "mal",
-                "endpoint": endpoint,
-                "operation": operation,
-                "client_id": self.client_id is not None,
-                "has_token": self.access_token is not None,
-            },
-            severity=severity,
-        )
+        try:
+            response = await self._make_request(endpoint, params=params)
+            if response and "data" in response:
+                return response["data"]
+        except Exception as e:
+            logger.error(f"MAL user anime list failed for {username}: {e}")
 
-        return error_context
+        return []
 
-    async def create_jikan_error_context(
+    async def get_anime_ranking(
         self,
-        error: Exception,
-        correlation_id: str,
-        endpoint: str,
-        operation: str,
-        query_params: Optional[Dict[str, Any]] = None,
-    ) -> "ErrorContext":
-        """Create enhanced ErrorContext for Jikan API errors.
+        ranking_type: str,
+        limit: int = 10,
+        offset: int = 0,
+        fields: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get anime ranking from MAL.
 
         Args:
-            error: Exception that occurred
-            correlation_id: Correlation ID
-            endpoint: Jikan API endpoint
-            operation: Operation being performed
-            query_params: Query parameters used
+            ranking_type: Type of ranking (all, airing, upcoming, tv, ova, movie, special, bypopularity, favorite)
+            limit: Maximum results (1-500)
+            offset: Pagination offset
+            fields: Comma-separated response fields
 
         Returns:
-            Enhanced ErrorContext
+            List of ranked anime
         """
-        from ..error_handling import ErrorSeverity
+        endpoint = "/anime/ranking"
+        params = {
+            "ranking_type": ranking_type,
+            "limit": min(limit, 500),  # MAL max is 500
+            "offset": offset,
+        }
 
-        # Determine severity and user message based on error
-        if "429" in str(error) or "rate limit" in str(error):
-            severity = ErrorSeverity.WARNING
-            user_message = "Jikan API rate limit exceeded. Please wait before making more requests."
-        elif "404" in str(error) or "not found" in str(error):
-            severity = ErrorSeverity.INFO
-            user_message = "The requested anime was not found."
-        elif "500" in str(error) or "server" in str(error):
-            severity = ErrorSeverity.ERROR
-            user_message = (
-                "Jikan API server error. The service may be temporarily unavailable."
-            )
-        else:
-            severity = ErrorSeverity.ERROR
-            user_message = "Jikan API request failed. Please try again."
+        if fields:
+            params["fields"] = fields
 
-        error_context = await self.create_error_context(
-            error=error,
-            correlation_id=correlation_id,
-            user_message=user_message,
-            trace_data={
-                "api": "jikan",
-                "endpoint": endpoint,
-                "operation": operation,
-                "query_params": query_params or {},
-                "base_url": self.jikan_base_url,
-            },
-            severity=severity,
-        )
+        try:
+            response = await self._make_request(endpoint, params=params)
+            if response and "data" in response:
+                return response["data"]
+        except Exception as e:
+            logger.error(f"MAL ranking failed for type {ranking_type}: {e}")
 
-        return error_context
+        return []
 
-    # PLATFORM-SPECIFIC RATE LIMITING OVERRIDES
-    # Override BaseClient hooks to handle dual API strategy (MAL + Jikan)
-    
-    async def handle_rate_limit_response(self, response):
-        """Handle rate limiting for MAL/Jikan based on request URL.
-        
-        This method intelligently routes to the appropriate platform strategy
-        based on which API was called (MAL or Jikan).
+    async def get_seasonal_anime(
+        self,
+        year: int,
+        season: str,
+        sort: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+        fields: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get seasonal anime from MAL.
+
+        Args:
+            year: Year (1917-current)
+            season: Season (winter, spring, summer, fall)
+            sort: Sort order (anime_score, anime_num_list_users)
+            limit: Maximum results (1-500)
+            offset: Pagination offset
+            fields: Comma-separated response fields
+
+        Returns:
+            List of seasonal anime
         """
-        # Determine which API was called based on response URL
-        response_url = str(response.url) if hasattr(response, 'url') else ""
-        
-        if "myanimelist.net" in response_url:
-            # Official MAL API
-            rate_info = self._mal_rate_limit_adapter.extract_rate_limit_info(response)
-            strategy = self._mal_rate_limit_adapter.get_strategy()
-            await strategy.handle_rate_limit_response(rate_info)
-        elif "jikan.moe" in response_url:
-            # Jikan API
-            rate_info = self._jikan_rate_limit_adapter.extract_rate_limit_info(response)
-            strategy = self._jikan_rate_limit_adapter.get_strategy()
-            await strategy.handle_rate_limit_response(rate_info)
-        else:
-            # Fallback to generic handling
-            await self._generic_rate_limit_backoff(response)
-    
-    async def monitor_rate_limits(self, response):
-        """Monitor rate limits for both MAL and Jikan APIs."""
-        response_url = str(response.url) if hasattr(response, 'url') else ""
-        
-        if "myanimelist.net" in response_url:
-            # MAL API monitoring
-            rate_info = self._mal_rate_limit_adapter.extract_rate_limit_info(response)
-            
-            # MAL-specific monitoring (status code based since no headers)
-            if response.status == 403:
-                self.logger.warning(
-                    "MAL API DoS protection activated - requests may be blocked"
-                )
-            elif rate_info.degraded:
-                self.logger.warning(
-                    f"MAL API rate limiting detected: Status {response.status}"
-                )
-                
-        elif "jikan.moe" in response_url:
-            # Jikan API monitoring  
-            rate_info = self._jikan_rate_limit_adapter.extract_rate_limit_info(response)
-            
-            # Jikan-specific monitoring (no headers available)
-            if rate_info.degraded:
-                self.logger.warning(
-                    "Jikan API rate limiting detected - no precise timing available"
-                )
-    
-    async def calculate_backoff_delay(self, response, attempt: int = 0):
-        """Calculate backoff delay based on the API being used."""
-        if not response:
-            # Generic calculation when no response available
-            import random
-            base_delay = 2 ** attempt
-            jitter = random.uniform(0.1, 0.3) * base_delay
-            return base_delay + jitter
-        
-        response_url = str(response.url) if hasattr(response, 'url') else ""
-        
-        if "myanimelist.net" in response_url:
-            # MAL API backoff
-            rate_info = self._mal_rate_limit_adapter.extract_rate_limit_info(response)
-            strategy = self._mal_rate_limit_adapter.get_strategy()
-            return await strategy.calculate_backoff_delay(rate_info, attempt)
-        elif "jikan.moe" in response_url:
-            # Jikan API backoff
-            rate_info = self._jikan_rate_limit_adapter.extract_rate_limit_info(response)
-            strategy = self._jikan_rate_limit_adapter.get_strategy()
-            return await strategy.calculate_backoff_delay(rate_info, attempt)
-        else:
-            # Generic backoff
-            import random
-            base_delay = 2 ** attempt
-            jitter = random.uniform(0.1, 0.3) * base_delay
-            return base_delay + jitter
+        endpoint = f"/anime/season/{year}/{season}"
+        params = {
+            "limit": min(limit, 500),  # MAL max is 500
+            "offset": offset,
+        }
+
+        if sort:
+            params["sort"] = sort
+        if fields:
+            params["fields"] = fields
+
+        try:
+            response = await self._make_request(endpoint, params=params)
+            if response and "data" in response:
+                logger.info(f"Retrieved {len(response['data'])} seasonal anime for {year} {season}")
+                return response["data"]
+        except Exception as e:
+            logger.error(f"MAL seasonal anime failed for {year} {season}: {e}")
+
+        return []
 
     async def refresh_access_token(
         self, *, correlation_id: Optional[str] = None
-    ) -> None:
-        """Refresh OAuth2 access token with optional correlation tracking.
+    ) -> Dict[str, str]:
+        """Refresh OAuth2 access token.
 
         Args:
             correlation_id: Optional correlation ID for tracking
+
+        Returns:
+            Token response with access_token and refresh_token
+
+        Raises:
+            ValueError: If required OAuth2 credentials are missing
+            APIError: If token refresh fails
         """
         if not self.client_id or not self.client_secret or not self.refresh_token:
-            raise Exception("OAuth2 credentials required for token refresh")
+            raise ValueError("OAuth2 credentials (client_id, client_secret, refresh_token) required for token refresh")
 
-        # Auto-generate correlation ID if not provided but we have correlation logger
+        # Auto-generate correlation ID if not provided
         if not correlation_id:
             import uuid
+            correlation_id = f"mal-refresh-{uuid.uuid4().hex[:12]}"
 
-            correlation_id = f"refresh-{uuid.uuid4().hex[:12]}"
-
-        if False:
-            await self.correlation_logger.log_with_correlation(
-                correlation_id=correlation_id,
-                level="info",
-                message="Starting OAuth2 token refresh",
-                context={
-                    "service": "mal",
-                    "has_refresh_token": self.refresh_token is not None,
-                },
-            )
+        logger.info("Starting MAL OAuth2 token refresh")
 
         trace_id = None
         if self.execution_tracer:
@@ -973,25 +500,21 @@ class MALClient(BaseClient):
                 "refresh_token": self.refresh_token,
             }
 
-            # Use base client's make_request to get error handling benefits
+            # Use base client's make_request for consistency
             response_data = await self.make_request(
-                url="https://myanimelist.net/v1/oauth2/token",
+                url=f"{self.oauth_url}/token",
                 method="POST",
                 priority=1,
                 endpoint="/oauth2/token",
                 data=data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
             )
 
+            # Update stored tokens
             self.access_token = response_data["access_token"]
             self.refresh_token = response_data["refresh_token"]
 
-            if False:
-                await self.correlation_logger.log_with_correlation(
-                    correlation_id=correlation_id,
-                    level="info",
-                    message="OAuth2 token refresh successful",
-                    context={"service": "mal", "token_updated": True},
-                )
+            logger.info("MAL OAuth2 token refresh successful")
 
             if self.execution_tracer and trace_id:
                 await self.execution_tracer.end_trace(
@@ -1000,76 +523,196 @@ class MALClient(BaseClient):
                     result={"token_refreshed": True},
                 )
 
+            return {
+                "access_token": self.access_token,
+                "refresh_token": self.refresh_token,
+                "token_type": response_data.get("token_type", "Bearer"),
+                "expires_in": response_data.get("expires_in"),
+            }
+
         except Exception as e:
-            if False:
-                await self.correlation_logger.log_with_correlation(
-                    correlation_id=correlation_id,
-                    level="error",
-                    message=f"OAuth2 token refresh failed: {str(e)}",
-                    context={"service": "mal"},
-                    error_details={
-                        "exception_type": type(e).__name__,
-                        "message": str(e),
-                    },
-                )
+            logger.error(f"MAL OAuth2 token refresh failed: {str(e)}")
 
             if self.execution_tracer and trace_id:
                 await self.execution_tracer.end_trace(
                     trace_id=trace_id, status="error", error=e
                 )
 
-            # Add specific context for token refresh failures
-            raise Exception(f"Token refresh failed: {str(e)}")
+            raise APIError(f"Token refresh failed: {str(e)}")
 
-    async def get_anime_statistics(
+    async def create_mal_error_context(
         self,
-        anime_id: int,
-        *,
-        correlation_id: Optional[str] = None,
-        parent_correlation_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """Get anime statistics with all available enhancements auto-enabled.
+        error: Exception,
+        correlation_id: str,
+        endpoint: str,
+        operation: str,
+        query_params: Optional[Dict[str, Any]] = None,
+    ) -> "ErrorContext":
+        """Create enhanced ErrorContext for MAL API errors.
 
         Args:
-            anime_id: Anime ID to get stats for
-            correlation_id: Optional correlation ID for tracking
-            parent_correlation_id: Optional parent correlation ID for chaining
+            error: Exception that occurred
+            correlation_id: Correlation ID
+            endpoint: MAL API endpoint
+            operation: Operation being performed
+            query_params: Query parameters used
 
         Returns:
-            Anime statistics data
+            Enhanced ErrorContext
         """
-        # Use correlation chaining if parent_correlation_id provided
-        if parent_correlation_id:
-            try:
-                result = await self.make_request_with_correlation_chain(
-                    url=f"{self.jikan_base_url}/anime/{anime_id}/statistics",
-                    parent_correlation_id=parent_correlation_id,
-                    method="GET",
-                    endpoint=f"/anime/{anime_id}/statistics",
-                )
-                if result and "data" in result:
-                    return result["data"]
-                return {}
-            except Exception:
-                # Fall through to regular handling if chaining fails
-                pass
+        from ..error_handling import ErrorSeverity
 
-        endpoint = f"/anime/{anime_id}/statistics"
+        # Determine severity and user message based on error
+        if "401" in str(error) or "invalid_token" in str(error):
+            severity = ErrorSeverity.ERROR
+            user_message = "MAL authentication failed. Please refresh your access token."
+        elif "403" in str(error) or "forbidden" in str(error):
+            severity = ErrorSeverity.WARNING
+            user_message = "MAL API access denied. Please check your permissions or try again later."
+        elif "429" in str(error) or "rate limit" in str(error):
+            severity = ErrorSeverity.WARNING
+            user_message = "MAL API rate limit exceeded. Please wait before making more requests."
+        elif "500" in str(error) or "server" in str(error):
+            severity = ErrorSeverity.ERROR
+            user_message = "MAL API server error. The service may be temporarily unavailable."
+        else:
+            severity = ErrorSeverity.ERROR
+            user_message = "MAL API request failed. Please try again."
+
+        error_context = await self.create_error_context(
+            error=error,
+            correlation_id=correlation_id,
+            user_message=user_message,
+            trace_data={
+                "api": "mal",
+                "endpoint": endpoint,
+                "operation": operation,
+                "query_params": query_params or {},
+                "client_id": self.client_id,
+                "has_token": self.access_token is not None,
+                "base_url": self.base_url,
+            },
+            severity=severity,
+        )
+
+        return error_context
+
+    # PLATFORM-SPECIFIC RATE LIMITING OVERRIDES
+    
+    async def handle_rate_limit_response(self, response):
+        """Handle rate limiting for MAL API."""
+        rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
+        strategy = self._rate_limit_adapter.get_strategy()
+        await strategy.handle_rate_limit_response(rate_info)
+    
+    async def monitor_rate_limits(self, response):
+        """Monitor rate limits for MAL API."""
+        rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
+        
+        # MAL-specific monitoring (status code based since no headers)
+        if response.status == 403:
+            logger.warning("MAL API DoS protection activated - requests may be blocked")
+        elif rate_info.degraded:
+            logger.warning(f"MAL API rate limiting detected: Status {response.status}")
+    
+    async def calculate_backoff_delay(self, response, attempt: int = 0):
+        """Calculate backoff delay for MAL API."""
+        if not response:
+            # Generic calculation when no response available
+            import random
+            base_delay = 2 ** attempt
+            jitter = random.uniform(0.1, 0.3) * base_delay
+            return base_delay + jitter
+        
+        rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
+        strategy = self._rate_limit_adapter.get_strategy()
+        return await strategy.calculate_backoff_delay(rate_info, attempt)
+
+    @staticmethod
+    def generate_oauth_url(
+        client_id: str,
+        redirect_uri: str,
+        state: Optional[str] = None,
+        code_challenge: Optional[str] = None,
+    ) -> str:
+        """Generate OAuth2 authorization URL for user consent.
+
+        Args:
+            client_id: MAL OAuth2 client ID
+            redirect_uri: Redirect URI registered with MAL
+            state: Optional state parameter for CSRF protection
+            code_challenge: Optional PKCE code challenge
+
+        Returns:
+            OAuth2 authorization URL
+        """
+        params = {
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+        }
+
+        if state:
+            params["state"] = state
+        if code_challenge:
+            params["code_challenge"] = code_challenge
+            params["code_challenge_method"] = "plain"
+
+        return f"https://myanimelist.net/v1/oauth2/authorize?{urlencode(params)}"
+
+    async def exchange_code_for_token(
+        self,
+        code: str,
+        redirect_uri: str,
+        code_verifier: Optional[str] = None,
+    ) -> Dict[str, str]:
+        """Exchange authorization code for access token.
+
+        Args:
+            code: Authorization code from OAuth2 callback
+            redirect_uri: Redirect URI used in authorization
+            code_verifier: Optional PKCE code verifier
+
+        Returns:
+            Token response with access_token and refresh_token
+        """
+        if not self.client_id or not self.client_secret:
+            raise ValueError("OAuth2 credentials (client_id, client_secret) required")
+
+        data = {
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": redirect_uri,
+        }
+
+        if code_verifier:
+            data["code_verifier"] = code_verifier
 
         try:
-            response = await self._make_jikan_request(endpoint)
-            if response and "data" in response:
-                return response["data"]
-        except Exception as e:
-            if correlation_id:
-                await self._create_enhanced_error_context(
-                    error=e,
-                    correlation_id=correlation_id,
-                    api="jikan",
-                    endpoint=endpoint,
-                    operation="get_anime_statistics",
-                )
-            else:
-                logger.error(f"Jikan statistics failed for anime {anime_id}: {e}")
+            response_data = await self.make_request(
+                url=f"{self.oauth_url}/token",
+                method="POST",
+                priority=1,
+                endpoint="/oauth2/token",
+                data=data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+            )
 
-        return {}
+            # Store tokens
+            self.access_token = response_data["access_token"]
+            self.refresh_token = response_data["refresh_token"]
+
+            logger.info("MAL OAuth2 token exchange successful")
+
+            return {
+                "access_token": self.access_token,
+                "refresh_token": self.refresh_token,
+                "token_type": response_data.get("token_type", "Bearer"),
+                "expires_in": response_data.get("expires_in"),
+            }
+
+        except Exception as e:
+            logger.error(f"MAL OAuth2 token exchange failed: {str(e)}")
+            raise APIError(f"Token exchange failed: {str(e)}")

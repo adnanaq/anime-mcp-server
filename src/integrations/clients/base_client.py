@@ -460,22 +460,18 @@ class BaseClient:
             },
         )
 
-        # Log error with correlation
-        if self.correlation_logger:
-            await self.correlation_logger.log_with_correlation(
-                correlation_id=correlation_id,
-                level="error",
-                message=f"Error context created: {user_message}",
-                context={
-                    "service": self.service_name,
-                    "error_type": type(error).__name__,
-                    "severity": severity.value,
-                },
-                error_details={
-                    "debug_info": error_context.debug_info,
-                    "trace_data": trace_data,
-                },
-            )
+        # Log error with correlation (using standard logging since correlation_logger was removed)
+        logger.error(
+            f"Error context created: {user_message}",
+            extra={
+                "correlation_id": correlation_id,
+                "service": self.service_name,
+                "error_type": type(error).__name__,
+                "severity": severity.value,
+                "debug_info": error_context.debug_info,
+                "trace_data": trace_data,
+            }
+        )
 
         return error_context
 

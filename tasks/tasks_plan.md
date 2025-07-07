@@ -21,7 +21,7 @@
 - **Image-Based Search**: CLIP ViT-B/32 embeddings for visual similarity  
 - **Multimodal Search**: Combined text+image with adjustable weights
 - **Advanced Filtering**: Year, genre, studio, exclusion filtering with AI parameter extraction
-- **Cross-Platform Integration**: 8 anime platforms (MAL, AniList, Kitsu, AniDB, etc.)
+- **Cross-Platform Integration**: 9 anime platforms with proper MAL/Jikan separation (MAL API v2, Jikan API v4, AniList, Kitsu, AniDB, etc.)
 
 ### ✅ AI & Workflow Features
 - **LangGraph Workflows**: Multi-agent anime discovery with conversation memory
@@ -177,26 +177,28 @@
 
 ### Phase 0: Overlapping Implementation Cleanup
 
-#### Task Group 0A: MAL/Jikan API Client Separation (NEW - 2025-07-06)
-- **Task #64**: ❌ MAL/Jikan Client Architecture Separation - CRITICAL API CONFUSION DISCOVERED
-  - **Status**: ❌ CRITICAL ISSUE - Current MAL client is confused hybrid of two different APIs
-  - **Critical Discovery**: `src/integrations/clients/mal_client.py` mixes MAL API v2 + Jikan API
-  - **Problem Details**:
-    - Uses Jikan endpoints (`https://api.jikan.moe/v4/anime`) but named MALClient
-    - Accepts MAL parameters (`fields`) not supported by Jikan
-    - Accepts Jikan parameters (`genres`, `status`) not supported by MAL API v2
-    - Creates parameter confusion in ServiceManager integration
-  - **API Specifications**:
-    - **MAL API v2**: `q`, `limit`, `offset`, `fields` (no filtering, OAuth2 required)
-    - **Jikan API**: `q`, `limit`, `page`, `genres`, `status` (filtering, no auth)
-  - **Required Changes**:
-    1. Rename `MALClient` → `JikanClient` (reflects actual API usage)
-    2. Create proper `MALClient` for official MAL API v2 with OAuth2
-    3. Create separate `JikanMapper` for Jikan API parameters
-    4. Update `MALMapper` for real MAL API v2 parameters only
-    5. Update ServiceManager to treat MAL and Jikan as separate platforms
-    6. Independent testing of both clients with proper API compliance
-  - **Dependencies**: None - standalone architectural fix
+#### Task Group 0A: MAL/Jikan API Client Separation (COMPLETED - 2025-07-06)
+- **Task #64**: ✅ MAL/Jikan Client Architecture Separation - COMPLETED
+  - **Status**: ✅ FULLY IMPLEMENTED - Successfully separated confused hybrid implementation
+  - **Implementation Results**:
+    - Created proper `MALClient` for official MAL API v2 with OAuth2
+    - Created clean `JikanClient` for Jikan API v4 (renamed from hybrid)
+    - Separated `MALService` and `JikanService` implementations
+    - Updated ServiceManager to treat MAL and Jikan as separate platforms
+    - Added comprehensive error handling, correlation, and tracing to both clients
+    - Platform priority: Jikan > MAL (no auth requirement advantage)
+  - **API Specifications Implemented**:
+    - **MAL API v2**: `q`, `limit`, `offset`, `fields` (OAuth2, field selection)
+    - **Jikan API v4**: `q`, `limit`, `page`, 17+ parameters (no auth, advanced filtering)
+  - **Testing Verification**: 112 tests passing (100%) with actual API calls through mapper system
+  - **Documentation**: Complete platform configuration guide and troubleshooting
+  - **Files Created/Updated**:
+    - `src/integrations/clients/mal_client.py` (proper MAL API v2)
+    - `src/integrations/clients/jikan_client.py` (clean Jikan API v4)
+    - `src/services/external/mal_service.py` (updated for real MAL)
+    - `src/services/external/jikan_service.py` (new Jikan service)
+    - Comprehensive test suites for both platforms
+    - Platform configuration documentation
   - **Impact**: Proper API separation, eliminates parameter confusion, enables both official and unofficial MAL data access
 
 #### Task Group 0B: Correlation System Consolidation  
@@ -549,6 +551,8 @@
 ## Current Status (Active Work)
 
 ### Recently Completed (Last 7 Days)
+- ✅ **Task #64**: MAL/Jikan API Client Separation - Complete API platform separation with unified observability
+- ✅ **Task #63**: Correlation System Consolidation - Removed overlapping implementations, middleware-only approach
 - ✅ **Documentation Overhaul**: Created comprehensive PRD, architecture, and technical docs
 - ✅ **Memory Files Compliance**: Updated all required memory files per project rules
 - ✅ **Codebase Analysis**: Complete understanding of current system capabilities

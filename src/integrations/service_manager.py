@@ -47,6 +47,11 @@ except ImportError:
     MALClient = None
 
 try:
+    from .clients.jikan_client import JikanClient
+except ImportError:
+    JikanClient = None
+
+try:
     from .clients.kitsu_client import KitsuClient
 except ImportError:
     KitsuClient = None
@@ -115,13 +120,23 @@ class ServiceManager:
                 # MAL client expects client_id, client_secret
                 client_id = getattr(self.settings, 'mal_client_id', None)
                 client_secret = getattr(self.settings, 'mal_client_secret', None)
-                self.clients["mal"] = MALClient(
-                    client_id=client_id,
-                    client_secret=client_secret,
-                    **shared_deps
-                )
+                if client_id:  # Only initialize if we have client_id
+                    self.clients["mal"] = MALClient(
+                        client_id=client_id,
+                        client_secret=client_secret,
+                        **shared_deps
+                    )
+                else:
+                    logger.info("MAL client_id not provided, skipping MAL client initialization")
             except Exception as e:
                 logger.warning(f"Failed to initialize MALClient: {e}")
+                
+        # Initialize Jikan client (no auth required)
+        if JikanClient:
+            try:
+                self.clients["jikan"] = JikanClient(**shared_deps)
+            except Exception as e:
+                logger.warning(f"Failed to initialize JikanClient: {e}")
                 
         # Initialize other clients with shared deps only (no individual params needed)
         client_classes = [
@@ -155,8 +170,8 @@ class ServiceManager:
             "anilist",      # 70+ parameters, best filtering, international content
             "animeschedule", # 25+ parameters, comprehensive scheduling, exclude options
             "kitsu",        # Streaming platform support, range syntax
-            "jikan",        # No auth, broad compatibility, good coverage
-            "mal",          # Official API but limited parameters
+            "jikan",        # No auth, broad compatibility, good coverage, unofficial MAL
+            "mal",          # Official API but limited parameters, requires OAuth2
             "anidb",        # Detailed data but ID-based only
             "vector",       # Local fallback
         ]
@@ -173,7 +188,7 @@ class ServiceManager:
             "anisearch": "to_anisearch_search_params"
         }
         
-        logger.info("ServiceManager initialized with 5 platform clients + vector fallback")
+        logger.info("ServiceManager initialized with platform clients (including separate MAL and Jikan) + vector fallback")
     
     async def search_anime_universal(
         self, 

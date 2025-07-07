@@ -1,19 +1,21 @@
 # CLAUDE.md
 
 ## ⚡ ESSENTIAL FLOW (Session Start)
-1. **Read Rules**: `rules/memory.mdc` → `rules/plan.mdc` OR `rules/implement.mdc`
+
+1. **Read Rules**: `Rules/memory.md` → `Rules/plan.md` OR `Rules/implement.md`
 2. **Load Memory**: `docs/product_requirement_docs.md` → `docs/architecture.md` → `docs/technical.md` → `tasks/tasks_plan.md` → `tasks/active_context.md`
 3. **Check State**: `TodoRead` → Determine MODE (PLAN/ACT) → Get `src/` context if ACT
-4. **Environment**: `source venv/bin/activate` + `docker-compose up -d qdrant`
+4. **Environment**: `source venv/bin/activate` + `docker compose up -d qdrant`
 5. **Execute**: PLAN (Strategy→Present→Document) OR ACT (6-Step Protocol: Analyze→Plan→Change→Test→Loop→Optimize)
-6. **Validate**: Update `src/` + `docs/` + `tasks/` + `rules/` + Complete testing before done
+6. **Validate**: Update `src/` + `docs/` + `tasks/` + `Rules/` + Complete testing before done
 7. **Critical**: Never exceed 500 lines/file, MANDATORY testing, preserve working code
 8. **Commands**: `pytest tests/ -v` (testing), `python -m src.anime_mcp.modern_server` (MCP), `python scripts/verify_mcp_server.py` (verify)
-9. **Debug**: DIAGNOSE→REASON→FIX→DOCUMENT in `rules/error-documentation.mdc`
+9. **Debug**: DIAGNOSE→REASON→FIX→DOCUMENT in `Rules/error-documentation.md`
 10. **Complete**: TodoWrite progress + Memory files updated + Ready for next task
 
 ---
-*Full details below ↓*
+
+_Full details below ↓_
 
 This file provides guidance to Claude Code when working with this anime MCP server codebase.
 
@@ -26,11 +28,13 @@ This file provides guidance to Claude Code when working with this anime MCP serv
 ### Essential Pre-Work Checklist (MANDATORY RULE COMPLIANCE)
 
 **Rule Loading (ALWAYS FIRST):**
-- [ ] Read `rules/rules.mdc` (base improvement rules)
-- [ ] Read `rules/memory.mdc` (memory management workflow)
-- [ ] Read `rules/plan.mdc` (if planning) OR `rules/implement.mdc` (if coding)
+
+- [ ] Read `Rules/rules.md` (base improvement rules)
+- [ ] Read `Rules/memory.md` (memory management workflow)
+- [ ] Read `Rules/plan.md` (if planning) OR `Rules/implement.md` (if coding)
 
 **Memory Hierarchy (Follow rules/memory.mdc sequence):**
+
 - [ ] Read `docs/product_requirement_docs.md` (foundation)
 - [ ] Read `docs/architecture.md` (system design)
 - [ ] Read `docs/technical.md` (implementation details)
@@ -38,11 +42,13 @@ This file provides guidance to Claude Code when working with this anime MCP serv
 - [ ] Read `tasks/active_context.md` (current state)
 
 **Current State Assessment:**
+
 - [ ] Use `TodoRead` to check current tasks
 - [ ] Identify current MODE: PLAN (architect) vs ACT (code)
 - [ ] Get required code context from `src/` if needed
 
 **Development Environment:**
+
 - [ ] Always use `source venv/bin/activate` before Python commands
 - [ ] Ensure Qdrant is running: `docker-compose up -d qdrant`
 
@@ -115,11 +121,13 @@ python -m src.anime_mcp.server --mode sse --port 8001       # Core server (SSE m
 ### MCP Servers (Two Available)
 
 **Core Server** (`src.anime_mcp.server`) - **8 core tools + platform tools**
+
 - **Use for**: Basic search, image search, detailed anime data
 - **Transport modes**: stdio, http, sse, streamable
 - **Tools**: search_anime, get_anime_details, find_similar_anime, search_anime_by_image, etc.
 
 **Modern Server** (`src.anime_mcp.modern_server`) - **4 workflow tools + LangGraph**
+
 - **Use for**: AI-powered discovery, multi-agent workflows, complex queries
 - **Transport modes**: stdio, sse
 - **Tools**: discover_anime, get_currently_airing_anime, find_similar_anime_workflow
@@ -187,21 +195,25 @@ src/
 ### 🔄 SYSTEMATIC CODE PROTOCOL (Implementation Tasks)
 
 **Step 1: ANALYZE CODE**
+
 - Dependency analysis: Which components affected?
 - Flow analysis: End-to-end impact assessment
 - Document dependencies thoroughly
 
 **Step 2: PLAN CODE**
+
 - Use CLARIFICATION process for unclear requirements
 - Provide STRUCTURED PROPOSALS: files changed, why, impacts, tradeoffs
 - Present REASONING for validation
 
 **Step 3: MAKE CHANGES**
+
 - INCREMENTAL ROLLOUTS: One logical change at a time
 - SIMULATION TESTING: Dry runs before implementation
 - Architecture preservation: Integrate with existing structure
 
 **Step 4: TESTING**
+
 - Write tests for new functionality
 - Run dependency-based testing
 - NO BREAKAGE ASSERTION: Verify no regressions
@@ -212,20 +224,23 @@ src/
 ### 🎯 Task Execution Rules
 
 **BEFORE Every Task:**
+
 - **Implementation**: Read docs/ + tasks/ + get src/ context + validate architecture
 - **Planning**: Read docs/ + tasks/ + get src/ context + deeper analysis
 
 **AFTER Every Task:**
+
 - **Implementation**: Update src/ + docs/ + tasks/ + complete testing + update lessons learned
 - **Planning**: Update docs/ + tasks/ + plans and context
 
-**Critical Rules**: 
+**Critical Rules**:
+
 - "Stop only when you're done till successfully testing, not before"
 - Always validate changes against docs/architecture.md constraints
 
 ### Code Quality Standards
 
-- **File Size Limit**: Never exceed 500 lines per file (from rules/implement.mdc)
+- **File Size Limit**: Never exceed 500 lines per file (from Rules/implement.md)
 - **Module Organization**: Break into atomic parts (modularity principle)
 - **Testing**: MANDATORY for any functionality (proactive_testing principle)
 - **Systematic Sequence**: Complete one step before starting another
@@ -241,7 +256,7 @@ src/
 ### Testing Requirements (Critical Rule Compliance)
 
 - **Test Structure**: Mirror main app structure in `/tests`
-- **Mandatory Testing**: Any functionality MUST have tests (rules/implement.mdc)
+- **Mandatory Testing**: Any functionality MUST have tests (Rules/implement.md)
 - **Test Types**: Unit tests for components, integration for workflows
 - **Coverage Target**: >80% (currently at 6% - major violation)
 - **Test Before Complete**: Never finish implementation without testing
@@ -254,24 +269,26 @@ src/
 - [ ] Testing completed (for implementation tasks)
 - [ ] TodoWrite updated with progress
 - [ ] Memory files updated if significant changes made
-- [ ] rules/lessons-learned.mdc updated if new patterns discovered
-- [ ] rules/error-documentation.mdc updated if errors resolved
+- [ ] Rules/lessons-learned.md updated if new patterns discovered
+- [ ] Rules/error-documentation.md updated if errors resolved
 
 ### 🐛 Debug Protocol (When Stuck)
 
 **DIAGNOSE:**
+
 - Gather error messages, logs, behavioral symptoms
 - Add relevant context from files
 - Retrieve project architecture, plan, current working task from memory files
 
 **DEBUGGING SEQUENCE:**
+
 1. Add context using DIAGNOSE
-2. Explain OBSERVATIONS and REASONINGS 
+2. Explain OBSERVATIONS and REASONINGS
 3. Use STEP BY STEP REASONING for all possible causes
-4. Look for similar patterns in rules/error-documentation.mdc
+4. Look for similar patterns in Rules/error-documentation.md
 5. Present fix using REASONING PRESENTATION
 6. Implement using SYSTEMATIC CODE PROTOCOL
-7. Document solution in rules/error-documentation.mdc
+7. Document solution in Rules/error-documentation.md
 
 ## 🎛️ ENVIRONMENT SETUP
 
@@ -320,7 +337,6 @@ docker run --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
 - **LangGraph**: Smart orchestration with complexity assessment
 - **Query Understanding**: Natural language → structured parameters
 - **Multi-step Discovery**: Result refinement and preference learning
-
 
 ## 🚨 AI BEHAVIOR RULES
 

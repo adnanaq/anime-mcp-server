@@ -438,7 +438,7 @@ async def find_similar_anime(anime_id: str, limit: int = 10, ctx: Optional[Conte
         raise RuntimeError(f"Similar anime search failed: {str(e)}")
 
 
-@mcp.tool
+@mcp.tool()
 async def get_anime_stats() -> Dict[str, Any]:
     """Get statistics about the anime database.
 
@@ -472,7 +472,7 @@ async def get_anime_stats() -> Dict[str, Any]:
 
 
 # Phase 4: Multi-Modal Image Search Tools
-@mcp.tool
+@mcp.tool()
 async def search_anime_by_image(
     image_data: str, limit: int = 10
 ) -> List[Dict[str, Any]]:
@@ -513,7 +513,7 @@ async def search_anime_by_image(
         raise RuntimeError(f"Image search failed: {str(e)}")
 
 
-@mcp.tool
+@mcp.tool()
 async def find_visually_similar_anime(
     anime_id: str, limit: int = 10
 ) -> List[Dict[str, Any]]:
@@ -554,7 +554,7 @@ async def find_visually_similar_anime(
         raise RuntimeError(f"Visual similarity search failed: {str(e)}")
 
 
-@mcp.tool
+@mcp.tool()
 async def search_multimodal_anime(
     query: str,
     image_data: Optional[str] = None,

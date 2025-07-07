@@ -455,36 +455,39 @@ class MALClient(BaseClient):
         return await self._make_request("/anime", params)
 ```
 
-#### 🚨 **CRITICAL ISSUE DISCOVERED**: MAL/Jikan API Confusion
+#### ✅ **RESOLVED**: MAL/Jikan API Separation Complete
 
-**Current State**: The "MAL Client" (`src/integrations/clients/mal_client.py`) is actually a **confused hybrid** mixing two different APIs:
+**Separation Status**: Successfully separated the confused hybrid implementation into two clean, focused clients:
 
-**What it claims vs what it does:**
-- **Filename**: `mal_client.py` (suggests MAL API)
-- **Actual endpoint**: `https://api.jikan.moe/v4/anime` (Jikan API)
-- **Parameters accepted**: Mix of MAL API v2 and Jikan parameters
-- **Functionality**: Neither pure MAL nor pure Jikan
+**Completed Refactoring:**
+- **Old hybrid file**: `mal_client_old.py` (removed)
+- **New MAL client**: `mal_client.py` (pure MAL API v2 with OAuth2)
+- **New Jikan client**: `jikan_client.py` (pure Jikan API v4)
+- **Separate services**: `MALService` and `JikanService`
 
-**Two distinct APIs being confused:**
+**Two Properly Separated APIs:**
 
-1. **Official MAL API v2**:
+1. **Official MAL API v2** (`MALClient`):
    - Endpoint: `https://api.myanimelist.net/v2/anime`
-   - Auth: OAuth2 required
+   - Auth: OAuth2 required (`client_id`, `client_secret`)
    - Parameters: `q`, `limit`, `offset`, `fields`
-   - Features: Field selection, official data
-   - Limitations: No filtering (genres, status, etc.)
+   - Features: Field selection, official data, user lists, rankings
+   - Limitations: No advanced filtering (genres, status, etc.)
+   - Rate limit: ~2 requests/second
 
-2. **Jikan API (Unofficial MAL Scraper)**:
+2. **Jikan API v4** (`JikanClient`):
    - Endpoint: `https://api.jikan.moe/v4/anime`
    - Auth: None required
-   - Parameters: `q`, `limit`, `page`, `genres`, `status`, `type`, `rating`
-   - Features: Advanced filtering, no authentication needed
+   - Parameters: 17+ parameters (`q`, `limit`, `genres`, `status`, `type`, `rating`, `min_score`, etc.)
+   - Features: Advanced filtering, seasonal data, statistics, no authentication
    - Limitations: No field selection, always returns full data
+   - Rate limit: ~1 request/second
 
-**Required Refactoring**: 
-- Current `MALClient` → Rename to `JikanClient`
-- Create new proper `MALClient` for official MAL API v2
-- Separate mappers: `MALMapper` (real) vs `JikanMapper`
+**Architecture Benefits**: 
+- Separate mappers: `MALMapper` vs `JikanMapper`
+- Independent error handling and correlation tracking
+- ServiceManager treats them as distinct platforms
+- Platform priority: Jikan > MAL (no auth requirement)
 - Update ServiceManager to treat as separate platforms
 
 **Kitsu JSON:API Client:**

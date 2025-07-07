@@ -1,0 +1,75 @@
+# Create a list of anime-related queries, ranging from simple to complex
+# Simple queries
+"Show me anime similar to Death Note.",
+"Find anime where the main character is overpowered.",
+"List anime released in 2021.",
+"Search for romance anime with high ratings.",
+"What are the top 5 shonen anime?",
+
+# Medium complexity
+"Find anime with a female protagonist who is a bounty hunter.",
+"Show anime like Naruto but with a darker tone.",
+"List anime set in post-apocalyptic worlds with less than 24 episodes.",
+"Which anime have a musical theme and are set in high school?",
+"Recommend anime with psychological elements and minimal action.",
+
+# High complexity
+"Find anime featuring AI or sentient robots that explore human emotions.",
+"I want anime like Steins;Gate but with a female lead and more romance.",
+"Search for anime based on novels, not manga, released after 2010.",
+"Give me anime where the main character dies and is reincarnated in a fantasy world, but the twist is they become the villain.",
+"Which anime have stories that span multiple generations of the same family?",
+
+# Very complex
+"I’m looking for an anime I watched years ago. The protagonist starts out as a hero but eventually becomes the antagonist due to moral conflict. The art style was realistic, and the soundtrack had jazz influences. I think it aired between 2006 and 2011.",
+"Find anime that blend sci-fi and slice-of-life, where the protagonist interacts with an alien or time traveler in a slow-paced, emotionally rich story. Preferably under 20 episodes.",
+"Search for anime where two timelines run in parallel and intersect in the final episode to reveal a tragic connection between the characters.",
+"Recommend anime with strong social commentary, minimal violence, a realistic art style, and no fantasy elements. Something akin to a political or economic thriller.",
+"I saw an anime years ago that involved underground tunnels, conspiracy theories, and a protagonist who communicates with a mysterious figure through dreams. It may have aired around 2010. Can you identify possible matches and rank them by likelihood?"
+
+# Test all params
+1. Show me the most popular anime.
+2. Recommend me 5 sci-fi or cyberpunk anime with strong female leads.
+3. I want dark mystery anime released between 2000 and 2010.
+4. Give me fantasy anime from 2015–2020 that fall under the action or adventure genres.
+5. Show romantic anime movies that feel warm and nostalgic.
+6. Find supernatural TV series by Kyoto Animation or Bones released after 2010.
+7. Recommend anime from 1995 to 2005, but exclude anything from the Naruto or Dragon Ball franchises.
+8. I want thriller anime with deep philosophical themes produced by Madhouse or Studio MAPPA between 2010 and 2023.
+9. Suggest slice-of-life anime that feel relaxing and cozy, made after 2018.
+10. Find psychological seinen anime movies from Studio Pierrot or A-1 Pictures between 2005 and 2020, exclude known shounen titles, and limit to 3 results.
+
+# COMPLEX MULTI-SOURCE QUERIES (Added 2024-01-28)
+
+    11. Compare Death Note's ratings across MAL, AniList, and Anime-Planet
+    12. Show me how LiveChart describes Frieren vs what AniSearch says
+    13. What's the German synopsis from AniSearch for Attack on Titan?
+    14. Get me the streaming info from Kitsu but the rating from MAL
+
+# TIME-BASED & CONDITIONAL QUERIES
+
+    15. Find anime airing tomorrow on Crunchyroll according to LiveChart
+    16. Show me what's trending on AniList but has high scores on MAL
+    17. Which anime finished airing last week according to AnimeSchedule?
+    18. Find anime that Kitsu says is on Netflix but MAL rates above 8
+
+# NARRATIVE & CONTEXTUAL QUERIES
+
+    19. I watched an anime 5 years ago about time loops, check all sources
+    20. Find me something like Death Note but darker according to AniSearch
+    21. What does Anime-Planet say about anime similar to my favorites?
+    22. Show me psychological anime that LiveChart says are currently airing
+
+# CROSS-PLATFORM VERIFICATION
+
+    23. Is Chainsaw Man season 2 confirmed on any of the anime news sites?
+    24. Check if this anime has different episode counts on different platforms
+    25. Find discrepancies in scores between Eastern (MAL) and Western (Anime-Planet) sites
+
+# ULTRA-SPECIFIC QUERIES
+
+    26. Get the exact airing time in JST from LiveChart for Jujutsu Kaisen
+    27. What's the Anime News Network encyclopedia entry for Studio Trigger?
+    28. Find anime that SIMKL users are currently watching the most
+    29. Show me AniSearch's German voice actor list for Spy x Family
+

@@ -298,19 +298,22 @@ Endpoints:
 | `search_by_streaming_platform`     | Platform-specific availability search      | `platforms` (array), `content_filters` |
 
 **Platform-Specific Tools:**
+
+*Note: MAL and Jikan are now properly separated platforms with distinct APIs and capabilities.*
+
 | Tool                               | Description                                | Platform                                |
 | ---------------------------------- | ------------------------------------------ | --------------------------------------- |
-| `search_anime_mal`                 | MyAnimeList search with field selection    | MAL                                     |
-| `get_anime_mal`                    | Get MAL anime details by ID               | MAL                                     |
-| `get_mal_seasonal_anime`           | Get seasonal anime from MAL               | MAL                                     |
+| `search_anime_mal`                 | Official MAL API v2 with OAuth2 & field selection | MAL API v2                         |
+| `get_anime_mal`                    | Get MAL anime details by ID               | MAL API v2                              |
+| `get_mal_seasonal_anime`           | Get seasonal anime from MAL               | MAL API v2                              |
 | `search_anime_anilist`             | AniList GraphQL search                     | AniList                                 |
 | `get_anime_anilist`                | Get AniList anime details                  | AniList                                 |
 | `search_anime_kitsu`               | Kitsu JSON:API search                      | Kitsu                                   |
 | `get_anime_kitsu`                  | Get Kitsu anime details                    | Kitsu                                   |
 | `search_streaming_platforms`       | Search streaming platform availability     | Kitsu                                   |
-| `search_anime_jikan`               | Jikan (MAL unofficial) search              | Jikan                                   |
-| `get_anime_jikan`                  | Get Jikan anime details                    | Jikan                                   |
-| `get_jikan_seasonal`               | Get seasonal anime from Jikan             | Jikan                                   |
+| `search_anime_jikan`               | Jikan API v4 with 17+ advanced parameters  | Jikan API v4                            |
+| `get_anime_jikan`                  | Get Jikan anime details                    | Jikan API v4                            |
+| `get_jikan_seasonal`               | Get seasonal anime from Jikan             | Jikan API v4                            |
 | `search_anime_schedule`            | AnimeSchedule.net search                   | AnimeSchedule                           |
 | `get_schedule_data`                | Get detailed schedule data                 | AnimeSchedule                           |
 | `get_currently_airing`             | Get currently airing anime                 | AnimeSchedule                           |
