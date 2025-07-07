@@ -7,7 +7,7 @@ eliminating hardcoded values and DRY violations across the codebase.
 
 from typing import List, Optional
 
-from pydantic import Field, validator
+from pydantic import ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -161,14 +161,16 @@ class Settings(BaseSettings):
         default="openai", description="Default LLM provider: openai, anthropic"
     )
 
-    @validator("qdrant_url")
+    @field_validator("qdrant_url")
+    @classmethod
     def validate_qdrant_url(cls, v):
         """Validate Qdrant URL format."""
         if not v.startswith(("http://", "https://")):
             raise ValueError("Qdrant URL must start with http:// or https://")
         return v
 
-    @validator("qdrant_distance_metric")
+    @field_validator("qdrant_distance_metric")
+    @classmethod
     def validate_distance_metric(cls, v):
         """Validate distance metric is supported by Qdrant."""
         valid_metrics = ["cosine", "euclid", "dot"]
@@ -176,7 +178,8 @@ class Settings(BaseSettings):
             raise ValueError(f"Distance metric must be one of: {valid_metrics}")
         return v.lower()
 
-    @validator("log_level")
+    @field_validator("log_level")
+    @classmethod
     def validate_log_level(cls, v):
         """Validate log level."""
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -184,7 +187,8 @@ class Settings(BaseSettings):
             raise ValueError(f"Log level must be one of: {valid_levels}")
         return v.upper()
 
-    @validator("server_mode")
+    @field_validator("server_mode")
+    @classmethod
     def validate_server_mode(cls, v):
         """Validate MCP server transport mode."""
         valid_modes = ["stdio", "http", "sse", "streamable"]
@@ -192,7 +196,8 @@ class Settings(BaseSettings):
             raise ValueError(f"Server mode must be one of: {valid_modes}")
         return v.lower()
 
-    @validator("fastembed_model")
+    @field_validator("fastembed_model")
+    @classmethod
     def validate_fastembed_model(cls, v):
         """Validate FastEmbed model format."""
         # Common FastEmbed models for validation
@@ -212,14 +217,13 @@ class Settings(BaseSettings):
             )
         return v
 
-    class Config:
-        """Pydantic configuration."""
-
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-        validate_assignment = True
-        extra = "ignore"  # Ignore unknown environment variables
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        validate_assignment=True,
+        extra="ignore",  # Ignore unknown environment variables
+    )
 
 
 # Global settings instance
