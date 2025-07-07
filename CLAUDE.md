@@ -264,6 +264,8 @@ src/
 
 ### 📋 Task Completion Validation (After Every Task)
 
+strictly follow steps defined in Rules/implement.md
+
 - [ ] All affected code updated in src/
 - [ ] Documentation updated in docs/ and tasks/
 - [ ] Testing completed (for implementation tasks)
@@ -282,12 +284,12 @@ src/
 
 **DEBUGGING SEQUENCE:**
 
-1. Add context using DIAGNOSE
+1. Add context using DIAGNOSE defined in Rules/debug.md
 2. Explain OBSERVATIONS and REASONINGS
-3. Use STEP BY STEP REASONING for all possible causes
+3. Use STEP BY STEP REASONING for all possible causes, defined in Rules/plan.md
 4. Look for similar patterns in Rules/error-documentation.md
-5. Present fix using REASONING PRESENTATION
-6. Implement using SYSTEMATIC CODE PROTOCOL
+5. Present fix using REASONING PRESENTATION, defined in Rules/plan.md
+6. Implement using SYSTEMATIC CODE PROTOCOL, defined in Rules/implement.md
 7. Document solution in Rules/error-documentation.md
 
 ## 🎛️ ENVIRONMENT SETUP

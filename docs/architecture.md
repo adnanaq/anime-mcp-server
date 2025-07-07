@@ -358,7 +358,7 @@ VIOLATION_PATTERNS = {
 - ✅ **Core MCP Server**: 8 fundamental tools with multi-transport support
 - ✅ **Modern MCP Server**: LangGraph workflows with ReactAgent
 - ✅ **Service Manager**: FULLY IMPLEMENTED - Complete with intelligent routing (510+ lines)
-- ⚠️ **Universal Query Endpoint**: NOT IMPLEMENTED - Core functionality missing
+- 🔄 **Universal Query Endpoint**: IN PROGRESS - API consolidation strategy (see Section 3.4)
 
 **Key Components:**
 - `src/vector/qdrant_client.py` - Multi-vector database operations
@@ -379,10 +379,47 @@ VIOLATION_PATTERNS = {
    - **Impact**: No 5-tier caching, reduced performance, higher API costs
    - **Required**: Full 5-tier cache architecture with community sharing
 
-3. **Universal Query Endpoint (CRITICAL)**: `/api/query`
-   - **Status**: 🚨 NOT IMPLEMENTED - Main architectural component missing
-   - **Impact**: Users must use individual endpoints instead of unified interface
-   - **Required**: Single universal endpoint for all anime queries
+3. **Universal Query Endpoint (IN PROGRESS)**: `/api/query` - API Consolidation Strategy
+   - **Status**: 🔄 IN PROGRESS - Consolidating workflow endpoints into universal interface
+   - **Strategy**: Rename and enhance existing `/api/workflow/conversation` → `/api/query`
+   - **Foundation**: LangGraph ReactAgent + 8 MCP tools already operational
+   - **Required**: Unified request/response models with auto-detection
+
+### 3.4 API Consolidation Strategy (Current Sprint)
+
+**Vision**: Transform from 15+ static endpoints to 2 universal endpoints for simplified LLM integration
+
+**Current State Analysis**:
+```
+Existing Endpoints:
+├── /api/search/*          (5+ endpoints)
+├── /api/workflow/*        (3 endpoints) ← CONSOLIDATION TARGET
+├── /api/admin/*           (3+ endpoints)
+└── /api/external/*        (9+ endpoints)
+```
+
+**Consolidation Strategy**:
+- **Phase 1**: Consolidate `/api/workflow/conversation`, `/api/workflow/multimodal`, `/api/workflow/smart-conversation` → `/api/query`
+- **Foundation**: Existing LangGraph ReactAgent + 8 MCP tools (✅ already implemented)
+- **Auto-Detection**: Single endpoint with intelligent routing based on request content
+- **Backward Compatibility**: Maintain existing functionality during transition
+
+**Target Architecture**:
+```python
+# Universal Query Endpoint
+@router.post("/query", response_model=UniversalQueryResponse)
+async def universal_query(request: UniversalQueryRequest):
+    """Single endpoint for all LLM-driven anime queries with multimodal support"""
+    # Auto-detect: text-only vs multimodal vs smart orchestration
+    # Route internally to appropriate LangGraph workflow
+    # Return unified response format
+```
+
+**Implementation Status**:
+- 🔄 **API Consolidation**: Rename and enhance workflow endpoints
+- 🔄 **Unified Models**: Create UniversalQueryRequest/Response 
+- 🔄 **Auto-Detection**: Implement content-based routing logic
+- ⏭️ **Multimodal Enhancement**: 4-phase roadmap for advanced capabilities
 
 4. **Correlation ID & Tracing (FULLY IMPLEMENTED)**: Enterprise-grade correlation system with automated FastAPI integration
    - **Status**: ✅ FULLY COMPLETE - Core infrastructure + FastAPI middleware operational

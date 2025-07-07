@@ -19,7 +19,7 @@ flowchart TD
     TC --> AC[ [active_context.md](tasks/active_context.md) ]
 
     AC --> ER[ [error-documentation.mdc](rules/error-documentation.md)]
-    AC --> LL[ [lessons-learned.mdc](rules/lessons-learned.md) ]
+    AC --> LL[ [lessons-learned.md](rules/lessons-learned.md) ]
 
     subgraph LIT[ docs/literature ]
         L1[...]
@@ -191,7 +191,7 @@ flowchart TD
 flowchart TD
     Start[Start] --> Context[Check Memory Files (Core Files always ("docs/": (a)"docs/architecture.md" (b)"docs/product_requirement_docs.md" (c)"docs/technical.md". "tasks/" : (a)"tasks/active_context.md" (b)"tasks/tasks_plan.md"), rest based on context (if needed further: "docs/literature" and "tasks/rfc")) ]
     Context --> Update[Update Documentation]
-    Update --> Rules[Update [lessons-learned.mdc](mdc:rules/lessons-learned.mdc), [error-documentation.mdc](mdc:rules/error-documentation.mdc) if needed]
+    Update --> Rules[Update [lessons-learned.md](mdc:rules/lessons-learned.md), [error-documentation.md](mdc:rules/error-documentation.md) if needed]
     Rules --> Execute[Execute Task]
     Execute --> Document[Document Changes in Memory Files ("docs/": (a)"docs/architecture.md" (b)"docs/product_requirement_docs.md" (c)"docs/technical.md". "tasks/" : (a)"tasks/active_context.md" (b)"tasks/tasks_plan.md" if needed further: "docs/literature" and "tasks/rfc") ]
 ```
@@ -214,7 +214,7 @@ flowchart TD
         P1[Review Core Files]
         P2[Document Current State in [active_context.md](mdc:tasks/active_context.md) and [tasks_plan.md](mdc:tasks/tasks_plan.md) ]
         P3[Clarify Next Steps and document in [tasks_plan.md](mdc:tasks/tasks_plan.md) ]
-        P4[Update [lessons-learned.mdc](mdc:rules/lessons-learned.mdc), [error-documentation.mdc](mdc:rules/error-documentation.mdc)]
+        P4[Update [lessons-learned.md](mdc:rules/lessons-learned.md), [error-documentation.md](mdc:rules/error-documentation.md)]
         P5 Update [ [architecture.md](mdc:docs/architecture.md) ]
 
         P1 --> P2 --> P3 --> P4
@@ -238,11 +238,11 @@ flowchart TD
     subgraph Learn [Learning Process]
         D1[Identify Pattern]
         D2[Validate with User]
-        D3[Document in [lessons-learned.mdc](mdc:rules/lessons-learned.mdc) ]
+        D3[Document in [lessons-learned.md](mdc:rules/lessons-learned.md) ]
     end
 
     subgraph Apply [Usage]
-        A1[Read [lessons-learned.mdc](mdc:rules/lessons-learned.mdc) ]
+        A1[Read [lessons-learned.md](mdc:rules/lessons-learned.md) ]
         A2[Apply Learned Patterns]
         A3[Improve Future Work]
     end

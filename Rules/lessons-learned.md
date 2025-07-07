@@ -470,8 +470,8 @@ return await self.client.search_anime(query=query, limit=limit, page=page)
    - `docs/architecture.md` - System-level changes and current status
    - `docs/technical.md` - Implementation patterns and technical details
    - `tasks/active_context.md` - Current session progress and completion
-   - `rules/lessons-learned.mdc` - Patterns and insights discovered
-   - `rules/error-documentation.mdc` - Problem resolution patterns
+   - `Rules/lessons-learned.md` - Patterns and insights discovered
+   - `Rules/error-documentation.md` - Problem resolution patterns
 
 2. **Content Strategy**:
    - Architecture: Add new sections for major system changes (testing infrastructure)
@@ -484,7 +484,7 @@ return await self.client.search_anime(query=query, limit=limit, page=page)
 
 ### Rule Compliance Protocol Success (2025-07-06)
 
-**Context**: Following rules/implement.mdc requirements for AFTER implementation phase
+**Context**: Following Rules/implement.md requirements for AFTER implementation phase
 
 **Proven Workflow**:
 
