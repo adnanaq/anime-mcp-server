@@ -447,8 +447,8 @@ class JikanService(BaseExternalService):
             ValueError: If any parameter is invalid
         """
         # Valid anime types according to Jikan API
-        valid_anime_types = {"TV", "Movie", "OVA", "ONA", "Special"}
-        if anime_type and anime_type not in valid_anime_types:
+        valid_anime_types = {"tv", "movie", "ova", "ona", "special", "music", "cm", "pv", "tv_special"}
+        if anime_type and anime_type.lower() not in valid_anime_types:
             raise ValueError(
                 f"Invalid anime type '{anime_type}'. Must be one of: {valid_anime_types}"
             )
@@ -464,9 +464,9 @@ class JikanService(BaseExternalService):
         if max_score is not None and (max_score < 0.0 or max_score > 10.0):
             raise ValueError("max_score must be between 0.0 and 10.0")
         
-        # Valid content ratings according to Jikan
-        valid_ratings = {"G", "PG", "PG-13", "R", "R+", "Rx"}
-        if rating and rating not in valid_ratings:
+        # Valid content ratings according to Jikan API
+        valid_ratings = {"g", "pg", "pg13", "r17", "r", "rx"}
+        if rating and rating.lower() not in valid_ratings:
             raise ValueError(
                 f"Invalid rating '{rating}'. Must be one of: {valid_ratings}"
             )

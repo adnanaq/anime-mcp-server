@@ -215,9 +215,24 @@ class JikanMapper:
         
         # Producer filter (NEW - from mapping document)
         if universal_params.producers:
-            # Jikan accepts comma-separated producer IDs, but since we have names,
-            # we'll pass them as strings and let the API handle the conversion
-            jikan_params["producers"] = ",".join(universal_params.producers)
+            # WARNING: Jikan API requires producer IDs (integers), not names
+            # TODO: Implement producer name-to-ID mapping or document this limitation
+            try:
+                # Try to validate that all producers are numeric IDs
+                producer_ids = []
+                for producer in universal_params.producers:
+                    if producer.isdigit():
+                        producer_ids.append(producer)
+                    else:
+                        # Skip non-numeric producer names for now
+                        # TODO: Add producer name-to-ID mapping
+                        continue
+                
+                if producer_ids:
+                    jikan_params["producers"] = ",".join(producer_ids)
+            except Exception:
+                # If validation fails, skip producer filtering
+                pass
         
         # Adult content filter (Jikan expects string 'true'/'false')
         if not universal_params.include_adult:

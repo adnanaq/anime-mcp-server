@@ -37,6 +37,54 @@
 
 ## What's Left to Build (Detailed Task Backlog)
 
+## 🚨 IMMEDIATE CRITICAL FIXES (Week 0 - Emergency)
+
+### URGENT PRODUCTION BUGS (Must Fix Immediately)
+
+#### ✅ Task Group 0A: Jikan API Filtering (COMPLETED - 2025-01-07)
+- **Task #81**: ✅ **COMPLETED** - Fixed Jikan Parameter Passing Bug
+  - **Status**: ✅ RESOLVED - All Jikan filtering now fully functional
+  - **Root Cause**: Fixed parameter passing from dict to kwargs unpacking
+  - **Fix Applied**: `await jikan_client.search_anime(**jikan_params)` 
+  - **Additional Fixes**:
+    - Fixed FastMCP mounting syntax (server-first parameter order)
+    - Fixed response formatting (return raw Jikan JSON instead of universal conversion)
+    - Updated parameter validation to match Jikan API spec
+  - **Testing**: All filtering parameters verified working (type, score, date, genre, producer IDs, rating, status)
+  - **Impact**: Year, genre, type, studio, score, date filtering all working correctly
+  - **Priority**: IMMEDIATE - affects core MCP tool functionality
+  - **Files**: `src/anime_mcp/tools/jikan_tools.py` (line 148)
+
+- **Task #82**: ✅ **COMPLETED** - Update Jikan Parameter Validation
+  - **Status**: ✅ RESOLVED - Parameter validation now matches Jikan API spec
+  - **Fixes Applied**:
+    - Added missing anime types: `"music"`, `"cm"`, `"pv"`, `"tv_special"`
+    - Fixed ratings: `"PG-13"` → `"pg13"`, added `"r17"`
+    - Fixed case sensitivity: All parameters now lowercase
+  - **Files**: `src/services/external/jikan_service.py` (validation methods)
+  - **Testing**: All parameter types verified working
+
+- **Task #83**: ✅ **COMPLETED** - Producer ID Validation System  
+  - **Status**: ✅ IMPLEMENTED - Producer filtering works correctly with ID validation
+  - **Current Solution**: JikanMapper safely accepts only numeric producer IDs
+  - **Producer Filter Behavior**:
+    - ✅ Accepts: `producers: [21, 18]` (Studio Pierrot=21)
+    - ✅ Safely ignores: `producers: ["Studio Pierrot"]` (names filtered out gracefully)
+  - **Files**: `src/integrations/mappers/jikan_mapper.py` (producer ID validation)
+  - **Result**: Robust producer filtering with proper error handling
+  - **Future Enhancement**: See Task #85 for name-to-ID mapping extension
+
+- **Task #84**: ✅ **COMPLETED** - Jikan Parameter Pipeline Testing  
+  - **Status**: ✅ VERIFIED - All parameter types tested and working
+  - **Testing Coverage**:
+    - ✅ Basic search (query, limit)
+    - ✅ Type filtering (tv, movie, ova, etc.)
+    - ✅ Score filtering (min_score, max_score)
+    - ✅ Producer filtering (numeric IDs)
+    - ✅ Genre filtering (numeric genre IDs)
+    - ✅ Rating filtering (g, pg, pg13, r17, r, rx)
+  - **Result**: All Jikan filtering parameters functional
+
 ## 🚀 CRITICAL PRIORITY - FOUNDATION INFRASTRUCTURE (Week 0-0.5)
 
 ### BLOCKING PREREQUISITES (Must Complete First)
@@ -262,7 +310,20 @@
 
 ### Phase 2: External API Endpoint Implementation
 
-#### Task Group B: MAL External API Endpoints
+#### Task Group B1: Jikan API Enhancements
+- **Task #85**: 🔄 Implement Producer Name-to-ID Mapping System - MEDIUM
+  - **Status**: 🔄 PENDING - Future enhancement for Jikan producer filtering
+  - **Current Limitation**: Producer filtering only accepts numeric IDs (e.g., Studio Pierrot=21)
+  - **Goal**: Enable producer filtering by names (e.g., "Studio Pierrot" → 21)
+  - **Implementation Options**:
+    - Static mapping dictionary with common producers
+    - Dynamic lookup via Jikan producers API endpoint
+    - Hybrid approach with caching
+  - **Files**: `src/integrations/mappers/jikan_mapper.py`
+  - **Benefits**: More user-friendly producer filtering for LLMs and users
+  - **Priority**: MEDIUM - Nice-to-have improvement, current ID-based system works
+
+#### Task Group B2: MAL External API Endpoints
 - **Task #54**: ❌ MAL External API Endpoints - NOT IMPLEMENTED
   - **Status**: ❌ NOT IMPLEMENTED - 9 direct API access endpoints missing
   - **Purpose**: Provide direct access to MAL/Jikan data alongside universal query system

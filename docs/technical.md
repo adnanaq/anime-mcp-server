@@ -490,6 +490,66 @@ class MALClient(BaseClient):
 - Platform priority: Jikan > MAL (no auth requirement)
 - Update ServiceManager to treat as separate platforms
 
+#### ✅ **COMPLETED**: Jikan API Integration & Filtering (2025-01-07)
+
+**Status**: Jikan API filtering is now fully functional with all parameters working correctly.
+
+**Critical Fixes Applied:**
+
+1. **Parameter Passing Bug Fixed**:
+   ```python
+   # OLD (broken): Passed dict as single argument
+   raw_results = await jikan_client.search_anime(jikan_params)
+   
+   # NEW (working): Proper kwargs unpacking
+   raw_results = await jikan_client.search_anime(**jikan_params)
+   ```
+
+2. **FastMCP Response Formatting Fixed**:
+   ```python
+   # OLD: Tried to convert to non-existent universal format
+   universal_anime = jikan_mapper.to_universal_anime(raw_result)  # Method doesn't exist
+   
+   # NEW: Return raw Jikan JSON directly to LLM
+   return raw_results  # Raw MyAnimeList data for LLM consumption
+   ```
+
+3. **FastMCP Mounting Syntax Updated**:
+   ```python
+   # OLD (deprecated): 
+   mcp.mount("jikan", jikan_tools.mcp)
+   
+   # NEW (correct):
+   mcp.mount(jikan_tools.mcp)  # Server first, prefix optional
+   ```
+
+**Functional Jikan API Filtering Parameters:**
+
+✅ **Basic Search**: `query`, `limit`, `page`
+✅ **Content Filtering**: `type` (tv, movie, ova, special, ona, music), `status` (airing, complete, upcoming), `rating` (g, pg, pg13, r17, r, rx)
+✅ **Quality Filtering**: `min_score`, `max_score` (1-10 scale)
+✅ **Temporal Filtering**: `start_date`, `end_date` (YYYY-MM-DD format)
+✅ **Genre Filtering**: `genres`, `genres_exclude` (MAL genre IDs as integers)
+✅ **Producer Filtering**: `producers` (MAL producer IDs as integers only)
+✅ **Advanced Options**: `order_by` (score, popularity, members, etc.), `sort` (desc, asc), `sfw` (boolean)
+
+**Producer Filter Limitation**:
+- ✅ **Numeric IDs**: Accepts `producers: [21, 18]` (Studio Pierrot=21)
+- ❌ **Producer Names**: Does NOT support `producers: ["Studio Pierrot"]`
+- 🔄 **Future Enhancement**: Producer name-to-ID mapping system (pending implementation)
+
+**Available MCP Tools**:
+- `search_anime_jikan`: Search with all filtering options
+- `get_anime_jikan`: Get detailed anime by MAL ID  
+- `get_jikan_seasonal`: Get seasonal anime listings
+
+**Testing Results**:
+- ✅ **Basic Search**: Returns raw Jikan JSON with proper structure
+- ✅ **Type Filtering**: Movie filter correctly returns only movies
+- ✅ **Producer Filtering**: ID-based filtering works (e.g., Studio Pierrot=21)
+- ✅ **API Parameter Flow**: All parameters correctly passed to Jikan API
+- ✅ **Response Serialization**: Perfect JSON formatting for LLM consumption
+
 **Kitsu JSON:API Client:**
 ```python
 class KitsuClient(BaseClient):

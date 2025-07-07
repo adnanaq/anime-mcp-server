@@ -16,7 +16,10 @@ from ...config import get_settings
 
 # Initialize components
 settings = get_settings()
-mal_client = MALClient() if hasattr(settings, 'mal_api_key') else None
+mal_client = MALClient(
+    client_id=settings.mal_client_id,
+    client_secret=settings.mal_client_secret
+) if hasattr(settings, 'mal_client_id') and settings.mal_client_id else None
 mal_mapper = MALMapper()
 
 # Create FastMCP instance for tools
@@ -90,59 +93,18 @@ async def _search_anime_mal_impl(
             ]
             mal_params["fields"] = ",".join(default_fields)
             
-        # Execute search
-        raw_results = await mal_client.search_anime(mal_params)
+        # Execute search and return raw MAL results directly (like Jikan)
+        raw_results = await mal_client.search_anime(**mal_params)
         
-        # Convert to standardized format
-        results = []
-        for raw_result in raw_results:
-            try:
-                universal_anime = mal_mapper.to_universal_anime(raw_result)
-                
-                # Add MAL-specific enrichment
-                result = {
-                    "id": universal_anime.id,
-                    "title": universal_anime.title,
-                    "type": universal_anime.type_format,
-                    "episodes": universal_anime.episodes,
-                    "score": universal_anime.score,
-                    "year": universal_anime.year,
-                    "status": universal_anime.status,
-                    "genres": universal_anime.genres or [],
-                    "studios": universal_anime.studios or [],
-                    "synopsis": universal_anime.description,
-                    "image_url": universal_anime.image_url,
-                    
-                    # MAL-specific data
-                    "mal_id": raw_result.get("id"),
-                    "mal_score": raw_result.get("mean"),
-                    "mal_rank": raw_result.get("rank"),
-                    "mal_popularity": raw_result.get("popularity"),
-                    "mal_num_list_users": raw_result.get("num_list_users"),
-                    "mal_num_scoring_users": raw_result.get("num_scoring_users"),
-                    "mal_nsfw": raw_result.get("nsfw"),
-                    "mal_rating": raw_result.get("rating"),
-                    "mal_source": raw_result.get("source"),
-                    "mal_broadcast": raw_result.get("broadcast", {}),
-                    "mal_created_at": raw_result.get("created_at"),
-                    "mal_updated_at": raw_result.get("updated_at"),
-                    
-                    # Source attribution
-                    "source_platform": "mal",
-                    "data_quality_score": universal_anime.data_quality_score
-                }
-                
-                results.append(result)
-                
-            except Exception as e:
-                if ctx:
-                    await ctx.error(f"Failed to process MAL result: {str(e)}")
-                continue
+        # Add source attribution to each result
+        for result in raw_results:
+            if isinstance(result, dict):
+                result["source_platform"] = "mal"
         
         if ctx:
-            await ctx.info(f"Found {len(results)} anime on MAL")
+            await ctx.info(f"Found {len(raw_results)} anime via MAL")
             
-        return results
+        return raw_results
         
     except Exception as e:
         error_msg = f"MAL search failed: {str(e)}"

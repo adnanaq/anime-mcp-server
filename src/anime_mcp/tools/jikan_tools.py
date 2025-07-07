@@ -144,136 +144,18 @@ async def search_anime_jikan(
         # Use mapper to convert parameters
         jikan_params = jikan_mapper.to_jikan_search_params(universal_params, jikan_specific)
         
-        # Execute search
-        raw_results = await jikan_client.search_anime(jikan_params)
+        # Execute search and return raw Jikan results directly
+        raw_results = await jikan_client.search_anime(**jikan_params)
         
-        # Convert to standardized format
-        results = []
-        for raw_result in raw_results:
-            try:
-                universal_anime = jikan_mapper.to_universal_anime(raw_result)
-                
-                # Build comprehensive result with Jikan-specific data
-                result = {
-                    "id": universal_anime.id,
-                    "title": universal_anime.title,
-                    "title_english": raw_result.get("title_english"),
-                    "title_japanese": raw_result.get("title_japanese"),
-                    "title_synonyms": raw_result.get("title_synonyms", []),
-                    "type": universal_anime.type_format,
-                    "episodes": universal_anime.episodes,
-                    "score": universal_anime.score,
-                    "year": universal_anime.year,
-                    "start_date": universal_anime.start_date,
-                    "end_date": universal_anime.end_date,
-                    "status": universal_anime.status,
-                    "genres": universal_anime.genres or [],
-                    "studios": universal_anime.studios or [],
-                    "synopsis": universal_anime.description,
-                    "image_url": universal_anime.image_url,
-                    
-                    # Jikan-specific MAL data
-                    "mal_id": raw_result.get("mal_id"),
-                    "jikan_url": raw_result.get("url"),
-                    "jikan_score": raw_result.get("score"),
-                    "jikan_scored_by": raw_result.get("scored_by"),
-                    "jikan_rank": raw_result.get("rank"),
-                    "jikan_popularity": raw_result.get("popularity"),
-                    "jikan_members": raw_result.get("members"),
-                    "jikan_favorites": raw_result.get("favorites"),
-                    "jikan_rating": raw_result.get("rating"),
-                    "jikan_source": raw_result.get("source"),
-                    "jikan_duration": raw_result.get("duration"),
-                    "jikan_season": raw_result.get("season"),
-                    "jikan_year": raw_result.get("year"),
-                    "jikan_broadcast": raw_result.get("broadcast", {}),
-                    "jikan_approved": raw_result.get("approved"),
-                    
-                    # Genre data (with IDs)
-                    "jikan_genres": [
-                        {
-                            "mal_id": genre.get("mal_id"),
-                            "type": genre.get("type"),
-                            "name": genre.get("name"),
-                            "url": genre.get("url")
-                        }
-                        for genre in raw_result.get("genres", [])
-                    ],
-                    
-                    # Themes and demographics
-                    "jikan_themes": [
-                        {
-                            "mal_id": theme.get("mal_id"),
-                            "type": theme.get("type"),
-                            "name": theme.get("name"),
-                            "url": theme.get("url")
-                        }
-                        for theme in raw_result.get("themes", [])
-                    ],
-                    "jikan_demographics": [
-                        {
-                            "mal_id": demo.get("mal_id"),
-                            "type": demo.get("type"),
-                            "name": demo.get("name"),
-                            "url": demo.get("url")
-                        }
-                        for demo in raw_result.get("demographics", [])
-                    ],
-                    
-                    # Producer and studio data (with IDs)
-                    "jikan_producers": [
-                        {
-                            "mal_id": prod.get("mal_id"),
-                            "type": prod.get("type"),
-                            "name": prod.get("name"),
-                            "url": prod.get("url")
-                        }
-                        for prod in raw_result.get("producers", [])
-                    ],
-                    "jikan_licensors": [
-                        {
-                            "mal_id": lic.get("mal_id"),
-                            "type": lic.get("type"),
-                            "name": lic.get("name"),
-                            "url": lic.get("url")
-                        }
-                        for lic in raw_result.get("licensors", [])
-                    ],
-                    "jikan_studios": [
-                        {
-                            "mal_id": studio.get("mal_id"),
-                            "type": studio.get("type"),
-                            "name": studio.get("name"),
-                            "url": studio.get("url")
-                        }
-                        for studio in raw_result.get("studios", [])
-                    ],
-                    
-                    # Images
-                    "jikan_images": {
-                        "jpg": raw_result.get("images", {}).get("jpg", {}),
-                        "webp": raw_result.get("images", {}).get("webp", {})
-                    },
-                    
-                    # Trailer
-                    "jikan_trailer": raw_result.get("trailer", {}),
-                    
-                    # Source attribution
-                    "source_platform": "jikan",
-                    "data_quality_score": universal_anime.data_quality_score
-                }
-                
-                results.append(result)
-                
-            except Exception as e:
-                if ctx:
-                    await ctx.error(f"Failed to process Jikan result: {str(e)}")
-                continue
-        
+        # Add source attribution to each result
+        for result in raw_results:
+            if isinstance(result, dict):
+                result["source_platform"] = "jikan"
+
         if ctx:
-            await ctx.info(f"Found {len(results)} anime via Jikan")
+            await ctx.info(f"Found {len(raw_results)} anime via Jikan")
             
-        return results
+        return raw_results
         
     except Exception as e:
         error_msg = f"Jikan search failed: {str(e)}"

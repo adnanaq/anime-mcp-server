@@ -8,7 +8,7 @@ Provides anime search tools to AI assistants via Model Context Protocol.
 import argparse
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 
 from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
@@ -761,6 +761,16 @@ def initialize_qdrant_client():
         logger.info("Initializing MCP tools Qdrant client")
         qdrant_client = QdrantClient(settings=settings)
         logger.info("MCP tools Qdrant client initialized")
+
+
+# Import and mount platform-specific tool servers  
+# Using correct FastMCP mounting syntax (server first, then optional prefix)
+from .tools import jikan_tools, mal_tools
+
+# Mount platform tool servers with the main MCP server using updated syntax
+# NEW syntax: mount(server, prefix=None) - server is first argument
+mcp.mount(jikan_tools.mcp)
+mcp.mount(mal_tools.mcp)
 
 
 async def initialize_mcp_server():
