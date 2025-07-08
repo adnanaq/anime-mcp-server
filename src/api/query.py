@@ -28,6 +28,7 @@ class QueryRequest(BaseModel):
     image_data: Optional[str] = Field(None, description="Base64 encoded image data for multimodal queries")
     session_id: Optional[str] = Field(None, description="Session ID for conversation continuity (only used if enable_conversation=True)")
     enable_conversation: bool = Field(False, description="Enable conversation flow and session memory")
+    enable_super_step: bool = Field(False, description="Enable Google Pregel-inspired super-step parallel execution for performance")
 
 
 class ConversationResponse(BaseModel):
@@ -54,20 +55,39 @@ class QueryStats(BaseModel):
 _workflow_engine = None
 
 
-async def get_workflow_engine():
-    """Get or create the ReactAgent workflow engine instance."""
+async def get_workflow_engine(enable_super_step: bool = False):
+    """Get or create the ReactAgent workflow engine instance.
+    
+    Args:
+        enable_super_step: Whether to enable super-step execution mode
+        
+    Returns:
+        ReactAgent workflow engine with appropriate execution mode
+    """
     global _workflow_engine
 
-    if _workflow_engine is None:
-        logger.info("Initializing ReactAgent workflow engine with FastMCP client...")
+    # Always create new engine if super-step mode is requested (stateless approach)
+    if enable_super_step or _workflow_engine is None:
+        logger.info(f"Initializing ReactAgent workflow engine with FastMCP client (super_step={enable_super_step})...")
 
         # Get all MCP tools using FastMCP client adapter
         mcp_tools = await get_all_mcp_tools()
         logger.info(f"Discovered {len(mcp_tools)} MCP tools via FastMCP client")
 
-        # Create ReactAgent workflow engine (replaces ToolNode + manual LLM service)
-        _workflow_engine = create_react_agent_workflow_engine(mcp_tools)
-        logger.info("ReactAgent workflow engine initialized successfully")
+        # Import execution mode enum
+        from ..langgraph.react_agent_workflow import ExecutionMode
+        
+        execution_mode = ExecutionMode.SUPER_STEP if enable_super_step else ExecutionMode.STANDARD
+
+        # Create ReactAgent workflow engine with appropriate execution mode
+        engine = create_react_agent_workflow_engine(mcp_tools, execution_mode=execution_mode)
+        logger.info(f"ReactAgent workflow engine initialized successfully in {execution_mode.value} mode")
+        
+        # Store standard engine for reuse, but always create fresh super-step engines
+        if not enable_super_step:
+            _workflow_engine = engine
+            
+        return engine
 
     return _workflow_engine
 
@@ -96,11 +116,12 @@ async def process_query(request: QueryRequest, http_request: Request) -> Convers
                 "query_length": len(request.message),
                 "has_image": bool(request.image_data),
                 "conversation_enabled": request.enable_conversation,
+                "super_step_enabled": request.enable_super_step,
                 "session_id": request.session_id,
             }
         )
         
-        engine = await get_workflow_engine()
+        engine = await get_workflow_engine(enable_super_step=request.enable_super_step)
         
         # Handle session management based on conversation setting
         if request.enable_conversation:

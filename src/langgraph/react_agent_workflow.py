@@ -31,6 +31,13 @@ from .langchain_tools import create_anime_langchain_tools
 logger = logging.getLogger(__name__)
 
 
+class ExecutionMode(Enum):
+    """Execution mode options for ReactAgent workflow."""
+
+    STANDARD = "standard"           # Standard ReactAgent execution
+    SUPER_STEP = "super_step"      # Google Pregel-inspired super-step execution
+
+
 class LLMProvider(Enum):
     """LLM provider options for ReactAgent workflow."""
 
@@ -49,16 +56,21 @@ class ReactAgentWorkflowEngine:
     """
 
     def __init__(
-        self, mcp_tools: Dict[str, Any], llm_provider: LLMProvider = LLMProvider.OPENAI
+        self, 
+        mcp_tools: Dict[str, Any], 
+        llm_provider: LLMProvider = LLMProvider.OPENAI,
+        execution_mode: ExecutionMode = ExecutionMode.STANDARD
     ):
         """Initialize the ReactAgent-based workflow engine.
 
         Args:
             mcp_tools: Dictionary mapping tool names to their callable functions
             llm_provider: LLM provider to use (OpenAI or Anthropic)
+            execution_mode: Execution mode (standard or super-step)
         """
         self.mcp_tools = mcp_tools
         self.llm_provider = llm_provider
+        self.execution_mode = execution_mode
         self.settings = get_settings()
 
         # Create LangChain tools from MCP tools
@@ -76,8 +88,15 @@ class ReactAgentWorkflowEngine:
             prompt=self._get_system_prompt(),
         )
 
+        # Initialize super-step executor if needed
+        self.super_step_executor = None
+        if execution_mode == ExecutionMode.SUPER_STEP:
+            from .parallel_supersteps import SuperStepParallelExecutor
+            self.super_step_executor = SuperStepParallelExecutor(mcp_tools, llm_provider)
+
         logger.info(
-            f"Initialized ReactAgentWorkflowEngine with {len(self.tools)} tools"
+            f"Initialized ReactAgentWorkflowEngine with {len(self.tools)} tools "
+            f"in {execution_mode.value} mode"
         )
 
     def _initialize_chat_model(self):
@@ -227,8 +246,14 @@ When calling search tools, you MUST:
             if search_parameters:
                 input_data["search_parameters"] = search_parameters
 
-            # Execute react agent
-            result = await self.agent.ainvoke(input_data, config=config)
+            # Execute with appropriate execution mode
+            if self.execution_mode == ExecutionMode.SUPER_STEP and self.super_step_executor:
+                # Use super-step parallel execution for performance
+                logger.info("Using super-step parallel execution")
+                result = await self._execute_super_step_workflow(enhanced_message, thread_id or session_id)
+            else:
+                # Use standard ReactAgent execution
+                result = await self.agent.ainvoke(input_data, config=config)
 
             # Convert to compatible format
             return self._convert_to_compatible_format(
@@ -273,6 +298,67 @@ When calling search tools, you MUST:
             thread_id=thread_id,
             search_parameters=search_parameters,
         )
+
+    async def _execute_super_step_workflow(self, query: str, session_id: str) -> Dict[str, Any]:
+        """Execute query using super-step parallel execution.
+        
+        Args:
+            query: User query to process
+            session_id: Session ID for conversation memory
+            
+        Returns:
+            Super-step execution result in ReactAgent format
+        """
+        try:
+            # Execute super-step workflow
+            super_step_result = await self.super_step_executor.execute_super_step_workflow(
+                query, session_id
+            )
+            
+            # Convert super-step result to ReactAgent format
+            if super_step_result["status"] == "success":
+                # Simulate ReactAgent message structure
+                return {
+                    "messages": [
+                        HumanMessage(content=query),
+                        {
+                            "content": f"Found anime results using super-step parallel execution.\n\n"
+                                     f"Performance: {super_step_result['performance_metrics']['total_execution_time']:.2f}s "
+                                     f"with {super_step_result['performance_metrics']['successful_agents']} agents.\n\n"
+                                     f"Results: {super_step_result['final_result']}",
+                            "type": "ai",
+                            "tool_calls": [],
+                            "additional_kwargs": {
+                                "super_step_metrics": super_step_result["performance_metrics"],
+                                "execution_history": super_step_result["execution_history"]
+                            }
+                        }
+                    ]
+                }
+            else:
+                # Handle error case
+                return {
+                    "messages": [
+                        HumanMessage(content=query),
+                        {
+                            "content": f"Super-step execution failed: {super_step_result.get('error', 'Unknown error')}",
+                            "type": "ai",
+                            "tool_calls": [],
+                            "additional_kwargs": {
+                                "super_step_error": super_step_result.get("error"),
+                                "execution_time": super_step_result.get("execution_time", 0)
+                            }
+                        }
+                    ]
+                }
+                
+        except Exception as e:
+            logger.error(f"Super-step execution failed: {e}")
+            # Fallback to standard execution
+            logger.info("Falling back to standard ReactAgent execution")
+            input_data = {"messages": [HumanMessage(content=query)]}
+            config = {"configurable": {"thread_id": session_id}}
+            return await self.agent.ainvoke(input_data, config=config)
 
     async def get_conversation_summary(
         self, session_id: str, thread_id: Optional[str] = None
@@ -457,6 +543,7 @@ When calling search tools, you MUST:
 def create_react_agent_workflow_engine(
     mcp_tools: Dict[str, Any],
     llm_provider: LLMProvider = LLMProvider.OPENAI,
+    execution_mode: ExecutionMode = ExecutionMode.STANDARD,
 ) -> ReactAgentWorkflowEngine:
     """Create ReactAgent workflow engine from MCP tool functions.
 
@@ -465,6 +552,7 @@ def create_react_agent_workflow_engine(
     Args:
         mcp_tools: Dictionary mapping tool names to their functions
         llm_provider: LLM provider to use (OpenAI or Anthropic)
+        execution_mode: Execution mode (standard or super-step)
 
     Returns:
         ReactAgentWorkflowEngine ready for conversation processing
@@ -472,8 +560,8 @@ def create_react_agent_workflow_engine(
     Raises:
         RuntimeError: If API keys or dependencies missing
     """
-    logger.info(f"Creating ReactAgent workflow engine with {len(mcp_tools)} MCP tools")
+    logger.info(f"Creating ReactAgent workflow engine with {len(mcp_tools)} MCP tools in {execution_mode.value} mode")
     logger.info(f"Creating ReactAgent with real {llm_provider.value} LLM")
-    engine = ReactAgentWorkflowEngine(mcp_tools, llm_provider)
+    engine = ReactAgentWorkflowEngine(mcp_tools, llm_provider, execution_mode)
     logger.info("ReactAgent workflow engine created successfully")
     return engine
