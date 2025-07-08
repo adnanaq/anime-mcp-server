@@ -5,7 +5,7 @@ Focused tools for MAL platform with clear parameter schemas and capabilities.
 MAL specializes in community data, ratings, and content filtering.
 """
 
-from typing import Dict, List, Literal, Optional, Any
+from typing import Dict, List, Literal, Optional, Any, Union
 from datetime import datetime
 from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
@@ -31,7 +31,7 @@ async def _search_anime_mal_impl(
     query: str,
     limit: int = 20,
     offset: int = 0,
-    fields: Optional[List[str]] = None,
+    fields: Optional[Union[str, List[str]]] = None,
     ctx: Optional[Context] = None
 ) -> List[Dict[str, Any]]:
     """
@@ -46,7 +46,7 @@ async def _search_anime_mal_impl(
         query: Search query for anime titles
         limit: Maximum number of results (default: 20, max: 100)
         offset: Pagination offset (default: 0)
-        fields: List of response fields to return (optional)
+        fields: List of response fields to return (optional). Can be a comma-separated string or list of strings.
         
     Returns:
         List of anime with MAL-specific data based on requested fields
@@ -78,7 +78,11 @@ async def _search_anime_mal_impl(
         
         # Add fields parameter - use provided fields or default comprehensive set from MAL mapper
         if fields:
-            mal_params["fields"] = ",".join(fields)
+            # Handle both string and list inputs for flexibility
+            if isinstance(fields, str):
+                mal_params["fields"] = fields
+            else:
+                mal_params["fields"] = ",".join(fields)
         else:
             # All available MAL API fields from mal_mapper.py (lines 78-156)
             default_fields = [
@@ -113,9 +117,6 @@ async def _search_anime_mal_impl(
             await ctx.error(error_msg)
         raise RuntimeError(error_msg)
 
-
-
-
 # MCP tool wrapper
 @mcp.tool(
     name="search_anime_mal",
@@ -130,7 +131,7 @@ async def search_anime_mal_mcp(
     query: str,
     limit: int = 20,
     offset: int = 0,
-    fields: Optional[List[str]] = None,
+    fields: Optional[Union[str, List[str]]] = None,
     ctx: Optional[Context] = None
 ) -> List[Dict[str, Any]]:
     """MCP wrapper for search_anime_mal."""

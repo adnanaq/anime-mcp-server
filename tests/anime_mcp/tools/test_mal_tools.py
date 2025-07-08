@@ -487,11 +487,15 @@ class TestMALToolsEdgeCases:
             await _search_anime_mal_impl(query="test", offset=5)
             await _search_anime_mal_impl(query="test", fields=["id", "title"])
             
+            # Test fields parameter flexibility (both string and list)
+            await _search_anime_mal_impl(query="test", fields="id,title,mean")  # String format
+            await _search_anime_mal_impl(query="test", fields=["id", "title", "mean"])  # List format
+            
             # Test limit validation (should clamp to 100)
             await _search_anime_mal_impl(query="test", limit=200)
             
             # Verify client was called
-            assert mock_client.search_anime.call_count >= 5
+            assert mock_client.search_anime.call_count >= 7
 
     @pytest.mark.asyncio
     async def test_mal_seasonal_parameter_validation(self):
