@@ -114,8 +114,6 @@ async def _search_anime_mal_impl(
         raise RuntimeError(error_msg)
 
 
-# Export the implementation function for testing
-search_anime_mal = _search_anime_mal_impl
 
 
 # MCP tool wrapper
