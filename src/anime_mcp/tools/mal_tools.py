@@ -26,6 +26,18 @@ mal_mapper = MALMapper()
 # Create FastMCP instance for tools
 mcp = FastMCP("MAL Tools")
 
+# Shared MAL API field definitions
+MAL_DEFAULT_FIELDS = [
+    # Core response fields
+    "id", "title", "main_picture", "alternative_titles",
+    "start_date", "end_date", "synopsis", "mean", "rank", 
+    "popularity", "num_list_users", "num_scoring_users",
+    "nsfw", "created_at", "updated_at", "media_type",
+    "status", "genres", "my_list_status", "num_episodes",
+    "start_season", "broadcast", "source", "average_episode_duration",
+    "rating", "studios"
+]
+
 
 async def _search_anime_mal_impl(
     query: str,
@@ -94,19 +106,7 @@ async def _search_anime_mal_impl(
         
         # Use default fields if no fields specified or empty string
         if not fields or (isinstance(fields, str) and not fields.strip()):
-            # All available MAL API fields from mal_mapper.py (lines 78-156)
-            default_fields = [
-                # Core response fields (lines 78-121)
-                "id", "title", "status", "media_type", "num_episodes", "mean", 
-                "genres", "start_date", "end_date", "synopsis", "popularity", 
-                "rank", "source", "rating", "studios",
-                # MAL-specific response fields (lines 124-155)  
-                "alternative_titles", "my_list_status", "num_list_users", 
-                "num_scoring_users", "nsfw", "average_episode_duration", 
-                "start_season", "broadcast", "main_picture", "created_at", 
-                "updated_at"
-            ]
-            mal_params["fields"] = ",".join(default_fields)
+            mal_params["fields"] = ",".join(MAL_DEFAULT_FIELDS)
             
         # Execute search and return raw MAL results directly (like Jikan)
         raw_results = await mal_client.search_anime(**mal_params)
@@ -260,7 +260,7 @@ async def get_anime_by_id_mal_mcp(
     return await _get_anime_mal_impl(mal_id, fields, ctx)
 
 
-async def _get_mal_seasonal_anime_impl(
+async def _get_seasonal_anime_mal_impl(
     year: int,
     season: Literal["winter", "spring", "summer", "fall"],
     sort: Literal["anime_score", "anime_num_list_users"] = "anime_score",
@@ -323,18 +323,7 @@ async def _get_mal_seasonal_anime_impl(
         
         # Use default fields if no fields specified or empty string
         if not fields or (isinstance(fields, str) and not fields.strip()):
-            # All available MAL API fields for seasonal anime
-            default_fields = [
-                # Core response fields
-                "id", "title", "main_picture", "alternative_titles",
-                "start_date", "end_date", "synopsis", "mean", "rank", 
-                "popularity", "num_list_users", "num_scoring_users",
-                "nsfw", "created_at", "updated_at", "media_type",
-                "status", "genres", "my_list_status", "num_episodes",
-                "start_season", "broadcast", "source", "average_episode_duration",
-                "rating", "studios"
-            ]
-            params["fields"] = ",".join(default_fields)
+            params["fields"] = ",".join(MAL_DEFAULT_FIELDS)
         
         # Execute request
         raw_results = await mal_client.get_seasonal_anime(
@@ -391,4 +380,4 @@ async def get_seasonal_anime_mal_mcp(
     ctx: Optional[Context] = None
 ) -> List[Dict[str, Any]]:
     """MCP wrapper for get_seasonal_anime_mal."""
-    return await _get_mal_seasonal_anime_impl(year, season, sort, limit, offset, fields, ctx)
+    return await _get_seasonal_anime_mal_impl(year, season, sort, limit, offset, fields, ctx)

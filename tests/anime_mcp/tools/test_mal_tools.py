@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 from src.anime_mcp.tools.mal_tools import (
     _search_anime_mal_impl,
     _get_anime_mal_impl,
-    _get_mal_seasonal_anime_impl,
+    _get_seasonal_anime_mal_impl,
     mal_client,
     mal_mapper
 )
@@ -413,7 +413,7 @@ class TestMALTools:
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
-            result = await _get_mal_seasonal_anime_impl(
+            result = await _get_seasonal_anime_mal_impl(
                 year=2023,
                 season="spring",
                 sort="anime_score",
@@ -453,7 +453,7 @@ class TestMALTools:
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
-            result = await _get_mal_seasonal_anime_impl(
+            result = await _get_seasonal_anime_mal_impl(
                 year=2023,
                 season="summer",
                 sort="anime_num_list_users",
@@ -491,18 +491,18 @@ class TestMALTools:
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
             
             # Test string fields
-            await _get_mal_seasonal_anime_impl(year=2023, season="spring", fields="id,title,mean")
+            await _get_seasonal_anime_mal_impl(year=2023, season="spring", fields="id,title,mean")
             
             # Test list fields
-            await _get_mal_seasonal_anime_impl(year=2023, season="spring", fields=["id", "title", "mean"])
+            await _get_seasonal_anime_mal_impl(year=2023, season="spring", fields=["id", "title", "mean"])
             
             # Test invalid type (int)
             with pytest.raises(RuntimeError, match="Fields must be string or list of strings, got: int"):
-                await _get_mal_seasonal_anime_impl(year=2023, season="spring", fields=123)
+                await _get_seasonal_anime_mal_impl(year=2023, season="spring", fields=123)
             
             # Test invalid list (contains non-strings)
             with pytest.raises(RuntimeError, match="All fields must be strings"):
-                await _get_mal_seasonal_anime_impl(year=2023, season="spring", fields=["id", 123, "title"])
+                await _get_seasonal_anime_mal_impl(year=2023, season="spring", fields=["id", 123, "title"])
 
     @pytest.mark.asyncio
     async def test_get_mal_seasonal_anime_limit_validation(self, mock_mal_client, mock_mal_mapper):
@@ -510,13 +510,14 @@ class TestMALTools:
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
-            await get_mal_seasonal_anime(
+            await _get_seasonal_anime_mal_impl(
                 year=2023,
                 season="summer",
                 limit=1000  # Should clamp to 500
             )
             
-            call_args = mock_mal_client.get_seasonal_anime.call_args[0][0]
+            # Parameters are now passed as keyword arguments
+            call_args = mock_mal_client.get_seasonal_anime.call_args[1]  # keyword arguments
             assert call_args["limit"] == 500
 
     @pytest.mark.asyncio
@@ -526,13 +527,14 @@ class TestMALTools:
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
             # Test anime_num_list_users sort
-            await get_mal_seasonal_anime(
+            await _get_seasonal_anime_mal_impl(
                 year=2023,
                 season="fall",
                 sort="anime_num_list_users"
             )
             
-            call_args = mock_mal_client.get_seasonal_anime.call_args[0][0]
+            # Parameters are now passed as keyword arguments
+            call_args = mock_mal_client.get_seasonal_anime.call_args[1]  # keyword arguments
             assert call_args["sort"] == "anime_num_list_users"
 
     @pytest.mark.asyncio
@@ -541,7 +543,7 @@ class TestMALTools:
         with patch('src.anime_mcp.tools.mal_tools.mal_client', None):
             
             with pytest.raises(RuntimeError, match="MAL client not available"):
-                await get_mal_seasonal_anime(
+                await _get_seasonal_anime_mal_impl(
                     year=2023,
                     season="winter",
                     ctx=mock_context
@@ -556,33 +558,41 @@ class TestMALTools:
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
             with pytest.raises(RuntimeError, match="MAL seasonal search failed: Seasonal API error"):
-                await get_mal_seasonal_anime(
+                await _get_seasonal_anime_mal_impl(
                     year=2023,
                     season="summer",
                     ctx=mock_context
                 )
 
     @pytest.mark.asyncio
-    async def test_get_mal_seasonal_anime_mapper_error(self, mock_mal_client, mock_mal_mapper, mock_context):
-        """Test MAL seasonal anime when mapper fails."""
-        mock_mal_mapper.to_universal_anime.side_effect = Exception("Seasonal mapping error")
+    async def test_get_mal_seasonal_anime_empty_results(self, mock_mal_client, mock_mal_mapper, mock_context):
+        """Test MAL seasonal anime with empty results."""
+        mock_mal_client.get_seasonal_anime.return_value = []
         
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
-            result = await get_mal_seasonal_anime(
-                year=2023,
+            result = await _get_seasonal_anime_mal_impl(
+                year=1900,  # Old year likely to have no results
                 season="winter",
                 ctx=mock_context
             )
             
-            # Should return empty list when mapping fails
+            # Should return empty list when no results
             assert result == []
-            mock_context.error.assert_called_with("Failed to process seasonal result: Seasonal mapping error")
+            mock_context.info.assert_called_with("Found 0 seasonal anime from MAL")
 
 
 class TestMALToolsEdgeCases:
     """Test edge cases and error scenarios for MAL tools."""
+    
+    @pytest.fixture
+    def mock_context(self):
+        """Create mock MCP context."""
+        context = AsyncMock()
+        context.info = AsyncMock()
+        context.error = AsyncMock()
+        return context
 
     @pytest.mark.asyncio
     async def test_search_anime_mal_without_context(self):
@@ -658,11 +668,11 @@ class TestMALToolsEdgeCases:
             
             # Test all valid seasons
             for season in ["winter", "spring", "summer", "fall"]:
-                await get_mal_seasonal_anime(year=2023, season=season)
+                await _get_seasonal_anime_mal_impl(year=2023, season=season)
             
             # Test all valid sort options
             for sort in ["anime_score", "anime_num_list_users"]:
-                await get_mal_seasonal_anime(year=2023, season="spring", sort=sort)
+                await _get_seasonal_anime_mal_impl(year=2023, season="spring", sort=sort)
 
     @pytest.mark.asyncio
     async def test_mal_tools_data_quality_scoring(self):
@@ -709,12 +719,24 @@ class TestMALToolsEdgeCases:
             # Test search with no results
             result = await _search_anime_mal_impl(query="nonexistent", ctx=mock_context)
             assert result == []
-            mock_context.info.assert_called_with("Found 0 anime on MAL")
+            mock_context.info.assert_called_with("Found 0 anime via MAL")
             
             # Test seasonal with no results
-            result = await get_mal_seasonal_anime(year=1900, season="spring", ctx=mock_context)
+            result = await _get_seasonal_anime_mal_impl(year=1900, season="spring", ctx=mock_context)
             assert result == []
-            mock_context.info.assert_called_with("Found 0 seasonal anime")
+            mock_context.info.assert_called_with("Found 0 seasonal anime from MAL")
+
+
+class TestMALToolsIntegration:
+    """Integration tests for MAL tools with real-like data flows."""
+    
+    @pytest.fixture
+    def mock_context(self):
+        """Create mock MCP context."""
+        context = AsyncMock()
+        context.info = AsyncMock()
+        context.error = AsyncMock()
+        return context
 
     @pytest.mark.asyncio
     async def test_mal_tools_partial_data_handling(self, mock_context):
@@ -722,22 +744,16 @@ class TestMALToolsEdgeCases:
         mock_client = AsyncMock()
         mock_mapper = MagicMock()
         
-        # Mock result with missing optional fields
+        # Mock result with missing optional fields - should return raw MAL data with source attribution
         mock_client.search_anime.return_value = [
             {
                 "id": 123,
                 "title": "Minimal Data Anime",
-                # Missing many optional fields
+                # Missing many optional fields that would normally be present
             }
         ]
         
-        mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="minimal_123",
-            title="Minimal Data Anime",
-            genres=None,  # Test None handling
-            studios=None,
-            data_quality_score=0.5
-        )
+        mock_mapper.to_mal_search_params.return_value = {"q": "test", "limit": 20, "offset": 0}
         
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
@@ -747,17 +763,14 @@ class TestMALToolsEdgeCases:
             assert len(result) == 1
             anime = result[0]
             
-            # Should handle None values gracefully
-            assert anime["genres"] == []  # None converted to empty list
-            assert anime["studios"] == []  # None converted to empty list
+            # Should return raw MAL data with source attribution
+            assert anime["id"] == 123
+            assert anime["title"] == "Minimal Data Anime"
+            assert anime["source_platform"] == "mal"
             
-            # Missing MAL-specific fields should be handled
-            assert anime.get("mal_score") is None
-            assert anime.get("mal_rank") is None
-
-
-class TestMALToolsIntegration:
-    """Integration tests for MAL tools with real-like data flows."""
+            # Missing fields should just be missing (not converted)
+            assert "mean" not in anime or anime.get("mean") is None
+            assert "rank" not in anime or anime.get("rank") is None
 
     @pytest.mark.asyncio
     async def test_mal_search_to_detail_workflow(self, mock_context):
@@ -775,15 +788,7 @@ class TestMALToolsIntegration:
             "synopsis": "Detailed synopsis"
         }
         
-        search_universal = UniversalAnime(
-            id="mal_16498", title="Attack on Titan", data_quality_score=0.9
-        )
-        detail_universal = UniversalAnime(
-            id="mal_16498", title="Attack on Titan", description="Detailed synopsis", data_quality_score=0.95
-        )
-        
-        mock_mapper.to_universal_anime.side_effect = [search_universal, detail_universal]
-        mock_mapper.to_mal_search_params.return_value = {"q": "attack"}
+        mock_mapper.to_mal_search_params.return_value = {"q": "attack", "limit": 20, "offset": 0}
         
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
@@ -791,12 +796,16 @@ class TestMALToolsIntegration:
             # Step 1: Search
             search_results = await _search_anime_mal_impl(query="attack", ctx=mock_context)
             assert len(search_results) == 1
-            mal_id = search_results[0]["mal_id"]
+            assert search_results[0]["id"] == 16498
+            assert search_results[0]["title"] == "Attack on Titan"
+            assert search_results[0]["source_platform"] == "mal"
             
-            # Step 2: Get details
-            detail_result = await get_anime_mal(mal_id=mal_id, ctx=mock_context)
-            assert detail_result["id"] == "mal_16498"
+            # Step 2: Get details  
+            detail_result = await _get_anime_mal_impl(mal_id=16498, ctx=mock_context)
+            assert detail_result["id"] == 16498
+            assert detail_result["title"] == "Attack on Titan" 
             assert detail_result["synopsis"] == "Detailed synopsis"
+            assert detail_result["source_platform"] == "mal"
 
     @pytest.mark.asyncio
     async def test_mal_tools_annotation_verification(self):
