@@ -262,7 +262,7 @@ def register_platform_tools():
     try:
         from ..anime_mcp.tools import (
             # MAL tools
-            search_anime_mal, get_anime_mal, get_mal_seasonal_anime,
+            search_anime_mal, get_anime_by_id_mal, get_mal_seasonal_anime,
             # AniList tools  
             search_anime_anilist, get_anime_anilist,
             # Jikan tools
@@ -283,7 +283,7 @@ def register_platform_tools():
         platform_tools = {
             # MAL tools
             "search_anime_mal": search_anime_mal,
-            "get_anime_mal": get_anime_mal,
+            "get_anime_by_id_mal": get_anime_by_id_mal,
             "get_mal_seasonal_anime": get_mal_seasonal_anime,
             
             # AniList tools  

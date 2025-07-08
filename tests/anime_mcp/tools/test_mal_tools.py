@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 
 from src.anime_mcp.tools.mal_tools import (
     _search_anime_mal_impl,
-    get_anime_mal,
+    _get_anime_mal_impl,
     get_mal_seasonal_anime,
     mal_client,
     mal_mapper
@@ -277,46 +277,54 @@ class TestMALTools:
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
-            result = await get_anime_mal(
+            result = await _get_anime_mal_impl(
                 mal_id=16498,
-                include_statistics=True,
-                include_related=True,
                 ctx=mock_context
             )
             
-            # Verify result structure
+            # Verify result structure - should return raw MAL data with source attribution
             assert isinstance(result, dict)
-            assert result["id"] == "mal_16498"
+            assert result["id"] == 16498  # Raw MAL ID
             assert result["title"] == "Attack on Titan"
             assert result["mal_id"] == 16498
             assert result["alternative_titles"]["en"] == "Attack on Titan"
-            assert "statistics" in result
-            assert "related_anime" in result
+            assert "statistics" in result  # Should be included in default fields
+            assert "related_anime" in result  # Should be included in default fields
             assert result["source_platform"] == "mal"
             
-            # Verify client was called with correct fields
+            # Verify client was called with default comprehensive fields
             mock_mal_client.get_anime_by_id.assert_called_once()
             call_args = mock_mal_client.get_anime_by_id.call_args
             assert call_args[0][0] == 16498
-            assert "statistics" in call_args[1]["fields"]
-            assert "related_anime" in call_args[1]["fields"]
+            fields_list = call_args[1]["fields"]
+            assert "statistics" in fields_list
+            assert "related_anime" in fields_list
+            assert "id" in fields_list
+            assert "title" in fields_list
 
     @pytest.mark.asyncio
-    async def test_get_anime_mal_minimal_options(self, mock_mal_client, mock_mal_mapper):
-        """Test MAL anime detail with minimal options."""
+    async def test_get_anime_mal_with_custom_fields(self, mock_mal_client, mock_mal_mapper):
+        """Test MAL anime detail with custom fields."""
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
-            result = await get_anime_mal(
+            result = await _get_anime_mal_impl(
                 mal_id=16498,
-                include_statistics=False,
-                include_related=False
+                fields=["id", "title", "mean"]
             )
             
-            # Should have empty statistics and related content
-            assert result["statistics"] == {}
-            assert result["related_anime"] == []
-            assert result["related_manga"] == []
+            # Should return raw MAL data with source attribution
+            assert isinstance(result, dict)
+            assert result["id"] == 16498
+            assert result["title"] == "Attack on Titan"
+            assert result["mal_id"] == 16498
+            assert result["source_platform"] == "mal"
+            
+            # Verify client was called with custom fields
+            mock_mal_client.get_anime_by_id.assert_called_once()
+            call_args = mock_mal_client.get_anime_by_id.call_args
+            assert call_args[0][0] == 16498
+            assert call_args[1]["fields"] == ["id", "title", "mean"]
 
     @pytest.mark.asyncio
     async def test_get_anime_mal_not_found(self, mock_mal_client, mock_mal_mapper, mock_context):
@@ -326,7 +334,7 @@ class TestMALTools:
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
-            result = await get_anime_mal(mal_id=99999, ctx=mock_context)
+            result = await _get_anime_mal_impl(mal_id=99999, ctx=mock_context)
             
             assert result is None
             mock_context.info.assert_called_with("Anime with MAL ID 99999 not found")
@@ -337,7 +345,7 @@ class TestMALTools:
         with patch('src.anime_mcp.tools.mal_tools.mal_client', None):
             
             with pytest.raises(RuntimeError, match="MAL client not available"):
-                await get_anime_mal(mal_id=16498, ctx=mock_context)
+                await _get_anime_mal_impl(mal_id=16498, ctx=mock_context)
 
     @pytest.mark.asyncio
     async def test_get_anime_mal_client_error(self, mock_mal_client, mock_mal_mapper, mock_context):
@@ -348,7 +356,56 @@ class TestMALTools:
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
             with pytest.raises(RuntimeError, match="Failed to get MAL anime 16498: API error"):
-                await get_anime_mal(mal_id=16498, ctx=mock_context)
+                await _get_anime_mal_impl(mal_id=16498, ctx=mock_context)
+
+    @pytest.mark.asyncio
+    async def test_get_anime_mal_fields_type_safety(self):
+        """Test type safety of fields parameter in get_anime_mal."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        mock_client.get_anime_by_id.return_value = {"id": 123, "title": "Test"}
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            # Test string fields
+            await _get_anime_mal_impl(mal_id=123, fields="id,title,mean")
+            
+            # Test list fields
+            await _get_anime_mal_impl(mal_id=123, fields=["id", "title", "mean"])
+            
+            # Test invalid type (int)
+            with pytest.raises(RuntimeError, match="Fields must be string or list of strings, got: int"):
+                await _get_anime_mal_impl(mal_id=123, fields=123)
+            
+            # Test invalid list (contains non-strings)
+            with pytest.raises(RuntimeError, match="All fields must be strings"):
+                await _get_anime_mal_impl(mal_id=123, fields=["id", 123, "title"])
+
+    @pytest.mark.asyncio
+    async def test_get_anime_mal_empty_fields_handling(self):
+        """Test empty fields handling in get_anime_mal."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        mock_client.get_anime_by_id.return_value = {"id": 123, "title": "Test"}
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            # Test empty string should use default fields
+            await _get_anime_mal_impl(mal_id=123, fields="")
+            
+            # Test None should use default fields
+            await _get_anime_mal_impl(mal_id=123, fields=None)
+            
+            # Verify default fields were used
+            assert mock_client.get_anime_by_id.call_count == 2
+            for call in mock_client.get_anime_by_id.call_args_list:
+                fields_arg = call[1]["fields"]
+                assert isinstance(fields_arg, list)
+                assert "id" in fields_arg
+                assert "title" in fields_arg
+                assert "statistics" in fields_arg
 
     @pytest.mark.asyncio
     async def test_get_mal_seasonal_anime_success(self, mock_mal_client, mock_mal_mapper, mock_context):

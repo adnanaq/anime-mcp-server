@@ -14,7 +14,7 @@ from datetime import datetime
 from ..models.universal_anime import UniversalAnime, UniversalSearchParams
 from ..anime_mcp.tools import (
     search_anime_mal,
-    get_anime_mal,
+    get_anime_by_id_mal,
     search_anime_anilist,
     get_anime_anilist,
     search_anime_schedule,
@@ -42,7 +42,7 @@ class CrossPlatformEnrichment:
 
     def __init__(self):
         self.platform_tools = {
-            "mal": {"search": search_anime_mal, "get": get_anime_mal},
+            "mal": {"search": search_anime_mal, "get": get_anime_by_id_mal},
             "anilist": {"search": search_anime_anilist, "get": get_anime_anilist},
             "jikan": {"search": search_anime_jikan, "get": get_anime_jikan},
             "animeschedule": {

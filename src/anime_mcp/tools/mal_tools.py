@@ -148,34 +148,22 @@ async def search_anime_mal_mcp(
     return await _search_anime_mal_impl(query, limit, offset, fields, ctx)
 
 
-@mcp.tool(
-    name="get_anime_mal",
-    description="Get detailed anime information from MyAnimeList by ID",
-    annotations={
-        "title": "MAL Anime Details",
-        "readOnlyHint": True,
-        "idempotentHint": True,
-    }
-)
-async def get_anime_mal(
+async def _get_anime_mal_impl(
     mal_id: int,
-    include_statistics: bool = True,
-    include_related: bool = True,
+    fields: Optional[Union[str, List[str]]] = None,
     ctx: Optional[Context] = None
 ) -> Optional[Dict[str, Any]]:
     """
     Get detailed anime information from MyAnimeList by MAL ID.
     
-    Provides comprehensive MAL data including:
-    - Community statistics and engagement metrics
-    - Related anime (sequels, prequels, adaptations)
-    - Detailed broadcast and production information
-    - User list statistics and scoring data
+    MAL API v2 Reality:
+    - Takes anime ID as path parameter
+    - Uses fields parameter to control what data is returned
+    - All data (statistics, related content, etc.) are response fields
     
     Args:
         mal_id: MyAnimeList anime ID
-        include_statistics: Include community statistics (default: True)
-        include_related: Include related anime information (default: True)
+        fields: List of response fields to return (optional). Can be a comma-separated string or list of strings.
         
     Returns:
         Detailed anime information with MAL-specific data, or None if not found
@@ -189,25 +177,44 @@ async def get_anime_mal(
         await ctx.info(f"Fetching MAL anime details for ID: {mal_id}")
     
     try:
-        # Build request fields
-        fields = [
-            "id", "title", "main_picture", "alternative_titles",
-            "start_date", "end_date", "synopsis", "mean", "rank", 
-            "popularity", "num_list_users", "num_scoring_users",
-            "nsfw", "created_at", "updated_at", "media_type",
-            "status", "genres", "my_list_status", "num_episodes",
-            "start_season", "broadcast", "source", "average_episode_duration",
-            "rating", "pictures", "background", "related_anime",
-            "related_manga", "recommendations", "studios"
-        ]
+        # Handle fields parameter with type safety
+        if fields:
+            if isinstance(fields, str):
+                if fields.strip():  # Only process non-empty strings
+                    request_fields = fields.split(",")
+                else:
+                    request_fields = None  # Use default
+            elif isinstance(fields, list):
+                # Type-safe check that all elements are strings
+                if all(isinstance(field, str) for field in fields):
+                    request_fields = fields
+                else:
+                    raise TypeError(f"All fields must be strings, got: {[type(f).__name__ for f in fields]}")
+            else:
+                raise TypeError(f"Fields must be string or list of strings, got: {type(fields).__name__}")
+        else:
+            request_fields = None
         
-        if include_statistics:
-            fields.extend(["statistics"])
-        if include_related:
-            fields.extend(["related_anime", "related_manga"])
+        # Use default comprehensive fields if no fields specified or empty string
+        if not request_fields:
+            # All available MAL API fields for anime details
+            request_fields = [
+                # Core anime fields
+                "id", "title", "main_picture", "alternative_titles",
+                "start_date", "end_date", "synopsis", "mean", "rank", 
+                "popularity", "num_list_users", "num_scoring_users",
+                "nsfw", "created_at", "updated_at", "media_type",
+                "status", "genres", "my_list_status", "num_episodes",
+                "start_season", "broadcast", "source", "average_episode_duration",
+                "rating", "pictures", "background", "studios",
+                
+                # Optional detailed fields
+                "statistics", "related_anime", "related_manga", 
+                "recommendations"
+            ]
             
         # Execute request
-        raw_result = await mal_client.get_anime_by_id(mal_id, fields=fields)
+        raw_result = await mal_client.get_anime_by_id(mal_id, fields=request_fields)
         
         if not raw_result:
             if ctx:
@@ -217,20 +224,13 @@ async def get_anime_mal(
         # Return raw MAL API response with source attribution
         result = {
             **raw_result,  # Include all raw MAL data
-            "source_platform": "myanimelist",
+            "source_platform": "mal",
             "mal_id": mal_id,
-            "fetched_at": datetime.now().isoformat(),
-            
-            # Optional statistics
-            "statistics": raw_result.get("statistics", {}) if include_statistics else {},
-            
-            # Optional related content
-            "related_anime": raw_result.get("related_anime", []) if include_related else [],
-            "related_manga": raw_result.get("related_manga", []) if include_related else [],
+            "fetched_at": datetime.now().isoformat()
         }
         
         if ctx:
-            await ctx.info(f"Retrieved detailed MAL data for '{result['title']}'")
+            await ctx.info(f"Retrieved detailed MAL data for '{result.get('title', 'Unknown')}'")
             
         return result
         
@@ -239,6 +239,25 @@ async def get_anime_mal(
         if ctx:
             await ctx.error(error_msg)
         raise RuntimeError(error_msg)
+
+
+# MCP tool wrapper
+@mcp.tool(
+    name="get_anime_by_id_mal",
+    description="Get detailed anime information from MyAnimeList by ID with response field selection",
+    annotations={
+        "title": "MAL Anime Details by ID",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+    }
+)
+async def get_anime_by_id_mal_mcp(
+    mal_id: int,
+    fields: Optional[Union[str, List[str]]] = None,
+    ctx: Optional[Context] = None
+) -> Optional[Dict[str, Any]]:
+    """MCP wrapper for get_anime_by_id_mal."""
+    return await _get_anime_mal_impl(mal_id, fields, ctx)
 
 
 @mcp.tool(

@@ -5,7 +5,7 @@ This module provides focused, schema-clear tools for each anime platform,
 following MCP best practices for tool design and capability exposure.
 """
 
-from .mal_tools import search_anime_mal_mcp as search_anime_mal, get_anime_mal, get_mal_seasonal_anime
+from .mal_tools import search_anime_mal_mcp as search_anime_mal, get_anime_by_id_mal_mcp as get_anime_by_id_mal, get_mal_seasonal_anime
 from .anilist_tools import search_anime_anilist, get_anime_anilist  
 from .schedule_tools import search_anime_schedule, get_schedule_data, get_currently_airing
 from .kitsu_tools import search_anime_kitsu, get_anime_kitsu, search_streaming_platforms
@@ -22,7 +22,7 @@ from .enrichment_tools import (
 __all__ = [
     # MAL tools
     "search_anime_mal",
-    "get_anime_mal",
+    "get_anime_by_id_mal",
     "get_mal_seasonal_anime",
     
     # AniList tools  
