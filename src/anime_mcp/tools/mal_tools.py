@@ -26,7 +26,7 @@ mal_mapper = MALMapper()
 # Create FastMCP instance for tools
 mcp = FastMCP("MAL Tools")
 
-# Shared MAL API field definitions
+# Shared MAL API field definitions for list operations (search, seasonal)
 MAL_DEFAULT_FIELDS = [
     # Core response fields
     "id", "title", "main_picture", "alternative_titles",
@@ -37,6 +37,79 @@ MAL_DEFAULT_FIELDS = [
     "start_season", "broadcast", "source", "average_episode_duration",
     "rating", "studios"
 ]
+
+# Additional fields only available for individual anime details (get_anime_by_id)
+MAL_DETAIL_ONLY_FIELDS = [
+    "pictures",         # Array of Picture objects - cannot be used in lists
+    "background",       # Background text - cannot be used in lists  
+    "related_anime",    # Array of RelatedAnimeEdge - cannot be used in lists
+    "related_manga",    # Array of RelatedMangaEdge - cannot be used in lists
+    "recommendations",  # Array of recommendations - cannot be used in lists
+    "statistics"        # Statistics object - cannot be used in lists
+]
+
+# Complete field set for anime details (list fields + detail-only fields)
+MAL_DETAIL_FIELDS = MAL_DEFAULT_FIELDS + MAL_DETAIL_ONLY_FIELDS
+
+
+async def _validate_mal_client(ctx: Optional[Context] = None) -> None:
+    """Validate MAL client is available and configured."""
+    if not mal_client:
+        if ctx:
+            await ctx.error("MAL client not configured - missing API key")
+        raise RuntimeError("MAL client not available")
+
+
+def _process_fields_parameter(
+    fields: Optional[Union[str, List[str]]], 
+    default_fields: List[str]
+) -> str:
+    """Process and validate fields parameter, returning comma-separated string.
+    
+    Args:
+        fields: Fields parameter (string, list, or None)
+        default_fields: Default fields to use if none specified
+        
+    Returns:
+        Comma-separated string of fields
+        
+    Raises:
+        TypeError: If fields parameter has invalid type or content
+    """
+    # Validate fields parameter type safety
+    if fields is not None:
+        if isinstance(fields, str):
+            # String fields are valid
+            pass
+        elif isinstance(fields, list):
+            # Type-safe check that all elements are strings
+            if not all(isinstance(field, str) for field in fields):
+                raise TypeError(f"All fields must be strings, got: {[type(f).__name__ for f in fields]}")
+        else:
+            raise TypeError(f"Fields must be string or list of strings, got: {type(fields).__name__}")
+    
+    # Process fields into comma-separated string
+    if fields:
+        if isinstance(fields, str):
+            if fields.strip():  # Only process non-empty strings
+                return fields
+            # Empty string falls through to use default fields
+        elif isinstance(fields, list):
+            return ",".join(fields)
+    
+    # Use default fields if no fields specified or empty string
+    return ",".join(default_fields)
+
+
+async def _handle_mal_error(
+    exception: Exception, 
+    error_message: str, 
+    ctx: Optional[Context] = None
+) -> None:
+    """Handle MAL API errors with consistent logging and exception raising."""
+    if ctx:
+        await ctx.error(error_message)
+    raise RuntimeError(error_message)
 
 
 async def _search_anime_mal_impl(
@@ -63,10 +136,7 @@ async def _search_anime_mal_impl(
     Returns:
         List of anime with MAL-specific data based on requested fields
     """
-    if not mal_client:
-        if ctx:
-            await ctx.error("MAL client not configured - missing API key")
-        raise RuntimeError("MAL client not available")
+    await _validate_mal_client(ctx)
     
     if ctx:
         await ctx.info(f"Searching MAL for '{query}' with {limit} results")
@@ -88,25 +158,8 @@ async def _search_anime_mal_impl(
         # Use mapper to convert parameters
         mal_params = mal_mapper.to_mal_search_params(universal_params, mal_specific)
         
-        # Add fields parameter - use provided fields or default comprehensive set from MAL mapper
-        if fields:
-            # Handle both string and list inputs for flexibility with type safety
-            if isinstance(fields, str):
-                if fields.strip():  # Only process non-empty strings
-                    mal_params["fields"] = fields
-                # Empty string falls through to use default fields
-            elif isinstance(fields, list):
-                # Type-safe check that all elements are strings
-                if all(isinstance(field, str) for field in fields):
-                    mal_params["fields"] = ",".join(fields)
-                else:
-                    raise TypeError(f"All fields must be strings, got: {[type(f).__name__ for f in fields]}")
-            else:
-                raise TypeError(f"Fields must be string or list of strings, got: {type(fields).__name__}")
-        
-        # Use default fields if no fields specified or empty string
-        if not fields or (isinstance(fields, str) and not fields.strip()):
-            mal_params["fields"] = ",".join(MAL_DEFAULT_FIELDS)
+        # Process fields parameter
+        mal_params["fields"] = _process_fields_parameter(fields, MAL_DEFAULT_FIELDS)
             
         # Execute search and return raw MAL results directly (like Jikan)
         raw_results = await mal_client.search_anime(**mal_params)
@@ -122,10 +175,7 @@ async def _search_anime_mal_impl(
         return raw_results
         
     except Exception as e:
-        error_msg = f"MAL search failed: {str(e)}"
-        if ctx:
-            await ctx.error(error_msg)
-        raise RuntimeError(error_msg)
+        await _handle_mal_error(e, f"MAL search failed: {str(e)}", ctx)
 
 # MCP tool wrapper
 @mcp.tool(
@@ -168,53 +218,17 @@ async def _get_anime_mal_impl(
     Returns:
         Detailed anime information with MAL-specific data, or None if not found
     """
-    if not mal_client:
-        if ctx:
-            await ctx.error("MAL client not configured - missing API key")
-        raise RuntimeError("MAL client not available")
+    await _validate_mal_client(ctx)
     
     if ctx:
         await ctx.info(f"Fetching MAL anime details for ID: {mal_id}")
     
     try:
-        # Handle fields parameter with type safety
-        if fields:
-            if isinstance(fields, str):
-                if fields.strip():  # Only process non-empty strings
-                    request_fields = fields.split(",")
-                else:
-                    request_fields = None  # Use default
-            elif isinstance(fields, list):
-                # Type-safe check that all elements are strings
-                if all(isinstance(field, str) for field in fields):
-                    request_fields = fields
-                else:
-                    raise TypeError(f"All fields must be strings, got: {[type(f).__name__ for f in fields]}")
-            else:
-                raise TypeError(f"Fields must be string or list of strings, got: {type(fields).__name__}")
-        else:
-            request_fields = None
+        # Process fields parameter
+        mal_params = {"fields": _process_fields_parameter(fields, MAL_DETAIL_FIELDS)}
         
-        # Use default comprehensive fields if no fields specified or empty string
-        if not request_fields:
-            # All available MAL API fields for anime details
-            request_fields = [
-                # Core anime fields
-                "id", "title", "main_picture", "alternative_titles",
-                "start_date", "end_date", "synopsis", "mean", "rank", 
-                "popularity", "num_list_users", "num_scoring_users",
-                "nsfw", "created_at", "updated_at", "media_type",
-                "status", "genres", "my_list_status", "num_episodes",
-                "start_season", "broadcast", "source", "average_episode_duration",
-                "rating", "pictures", "background", "studios",
-                
-                # Optional detailed fields
-                "statistics", "related_anime", "related_manga", 
-                "recommendations"
-            ]
-            
         # Execute request
-        raw_result = await mal_client.get_anime_by_id(mal_id, fields=request_fields)
+        raw_result = await mal_client.get_anime_by_id(mal_id, fields=mal_params["fields"])
         
         if not raw_result:
             if ctx:
@@ -288,17 +302,14 @@ async def _get_seasonal_anime_mal_impl(
     Returns:
         List of seasonal anime with raw MAL data
     """
-    if not mal_client:
-        if ctx:
-            await ctx.error("MAL client not configured - missing API key")
-        raise RuntimeError("MAL client not available")
+    await _validate_mal_client(ctx)
     
     if ctx:
         await ctx.info(f"Fetching MAL seasonal anime for {season.title()} {year} (limit: {limit}, offset: {offset})")
     
     try:
         # Build MAL API parameters
-        params = {
+        mal_params = {
             "year": year,
             "season": season,
             "sort": sort,
@@ -306,33 +317,17 @@ async def _get_seasonal_anime_mal_impl(
             "offset": offset
         }
         
-        # Handle fields parameter with type safety
-        if fields:
-            if isinstance(fields, str):
-                if fields.strip():  # Only process non-empty strings
-                    params["fields"] = fields
-                # Empty string falls through to use default fields
-            elif isinstance(fields, list):
-                # Type-safe check that all elements are strings
-                if all(isinstance(field, str) for field in fields):
-                    params["fields"] = ",".join(fields)
-                else:
-                    raise TypeError(f"All fields must be strings, got: {[type(f).__name__ for f in fields]}")
-            else:
-                raise TypeError(f"Fields must be string or list of strings, got: {type(fields).__name__}")
-        
-        # Use default fields if no fields specified or empty string
-        if not fields or (isinstance(fields, str) and not fields.strip()):
-            params["fields"] = ",".join(MAL_DEFAULT_FIELDS)
+        # Process fields parameter
+        mal_params["fields"] = _process_fields_parameter(fields, MAL_DEFAULT_FIELDS)
         
         # Execute request
         raw_results = await mal_client.get_seasonal_anime(
             year=year,
             season=season,
             sort=sort,
-            limit=params["limit"],
-            offset=params["offset"],
-            fields=params.get("fields")
+            limit=mal_params["limit"],
+            offset=mal_params["offset"],
+            fields=mal_params.get("fields")
         )
         
         # Add source attribution to each result
@@ -354,10 +349,7 @@ async def _get_seasonal_anime_mal_impl(
         return results
         
     except Exception as e:
-        error_msg = f"MAL seasonal search failed: {str(e)}"
-        if ctx:
-            await ctx.error(error_msg)
-        raise RuntimeError(error_msg)
+        await _handle_mal_error(e, f"MAL seasonal search failed: {str(e)}", ctx)
 
 
 # MCP tool wrapper

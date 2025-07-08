@@ -320,11 +320,11 @@ class TestMALTools:
             assert result["mal_id"] == 16498
             assert result["source_platform"] == "mal"
             
-            # Verify client was called with custom fields
+            # Verify client was called with custom fields (as comma-separated string)
             mock_mal_client.get_anime_by_id.assert_called_once()
             call_args = mock_mal_client.get_anime_by_id.call_args
             assert call_args[0][0] == 16498
-            assert call_args[1]["fields"] == ["id", "title", "mean"]
+            assert call_args[1]["fields"] == "id,title,mean"
 
     @pytest.mark.asyncio
     async def test_get_anime_mal_not_found(self, mock_mal_client, mock_mal_mapper, mock_context):
@@ -398,11 +398,14 @@ class TestMALTools:
             # Test None should use default fields
             await _get_anime_mal_impl(mal_id=123, fields=None)
             
-            # Verify default fields were used
+            # Verify default fields were used (as comma-separated string)
             assert mock_client.get_anime_by_id.call_count == 2
             for call in mock_client.get_anime_by_id.call_args_list:
                 fields_arg = call[1]["fields"]
-                assert isinstance(fields_arg, list)
+                assert isinstance(fields_arg, str)
+                # Should contain detail-only fields like 'pictures', 'background', etc.
+                assert "pictures" in fields_arg
+                assert "background" in fields_arg
                 assert "id" in fields_arg
                 assert "title" in fields_arg
                 assert "statistics" in fields_arg
