@@ -308,7 +308,7 @@ class UniversalSearchParams(BaseModel):
     mal_start_date: Optional[str] = Field(None, pattern="^\\d{4}-\\d{2}-\\d{2}$", description="MAL-specific: Precise start date (YYYY-MM-DD)")
     mal_start_season: Optional[str] = Field(None, pattern="^\\d{4},(winter|spring|summer|fall)$", description="MAL-specific: Start season as 'year,season' (e.g., '2024,winter')")
     
-    # CORE RESPONSE FIELDS (Available response fields from all platforms)
+    # CORE RESPONSE FIELDS (Available field parameters from all platforms)
     # These indicate what fields each platform can return in responses (not filtering capabilities)
     id_field: Optional[bool] = Field(None, description="Request ID field in response")
     title_field: Optional[bool] = Field(None, description="Request title field in response")
@@ -420,6 +420,7 @@ class UniversalSearchParams(BaseModel):
     anilist_sort: Optional[List[str]] = Field(None, description="AniList-specific: Sort options (ID, TITLE_ROMAJI, SCORE_DESC, etc.)")
     
     # JIKAN-SPECIFIC PROPERTIES (API v4 verified, only unique features, type-safe)
+    jikan_score: Optional[int] = Field(None, ge=0, le=10, description="Jikan-specific: Exact score match (0-10)")
     jikan_letter: Optional[str] = Field(None, pattern="^[A-Za-z]$", description="Jikan-specific: Alphabetical filter (unique to Jikan)")
     jikan_unapproved: Optional[bool] = Field(None, description="Jikan-specific: Include unapproved entries (unique to Jikan)")
     

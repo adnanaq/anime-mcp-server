@@ -70,12 +70,12 @@ class MALMapper:
             mal_params["q"] = universal_params.query
         
         # MAL API v2 does not support filtering by status, format, score, episodes, dates, or adult content
-        # These are response fields only - handle via fields parameter instead
+        # These are field parameters only - handle via fields parameter instead
         
         # Handle response field requests using MAL's fields parameter
         requested_fields = []
         
-        # Core response fields
+        # Core field parameters
         if getattr(universal_params, 'id_field', None):
             requested_fields.append('id')
             
@@ -120,7 +120,7 @@ class MALMapper:
         if getattr(universal_params, 'studios_field', None):
             requested_fields.append('studios')
             
-        # MAL-specific response fields
+        # MAL-specific field parameters
         if getattr(universal_params, 'mal_alternative_titles_field', None):
             requested_fields.append('alternative_titles')
             
@@ -159,10 +159,10 @@ class MALMapper:
             mal_params['fields'] = ','.join(requested_fields)
         
         # Note: rating, nsfw, source, num_list_users, num_scoring_users, created_at, updated_at 
-        # are all response fields, not query parameters for MAL API v2
+        # are all field parameters, not query parameters for MAL API v2
         
         # Note: duration, studios, broadcast, main_picture, end_date, rank 
-        # are all response fields, not query parameters for MAL API v2
+        # are all field parameters, not query parameters for MAL API v2
         
         # Result control
         limit = mal_specific.get("limit") or universal_params.limit
@@ -171,7 +171,7 @@ class MALMapper:
         if offset:
             mal_params["offset"] = offset
         
-        # Note: popularity, mean, title are response fields, not query parameters for MAL API v2
+        # Note: popularity, mean, title are field parameters, not query parameters for MAL API v2
         
         return mal_params
     

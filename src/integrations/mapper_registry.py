@@ -123,14 +123,14 @@ class MapperRegistry:
                 "mal_id", "scored_by", "members", "favorites", "start_date", "end_date"
             ],
             "unique_params": [
-                "jikan_letter", "jikan_unapproved"
+                "jikan_score", "jikan_letter", "jikan_unapproved"
             ],
             "unsupported_features": [
                 "episode_range_filtering", "duration_filtering"
             ],
             "api_type": "rest",
             "auth_required": False,
-            "total_parameters": 17,  # Updated count including new parameters
+            "total_parameters": 18,  # Updated count including jikan_score parameter
         },
         "anidb": {
             "strengths": ["detailed_episode_data", "comprehensive_staff_credits", "extensive_tag_system"],

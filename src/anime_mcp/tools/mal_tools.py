@@ -28,7 +28,7 @@ mcp = FastMCP("MAL Tools")
 
 # Shared MAL API field definitions for list operations (search, seasonal)
 MAL_DEFAULT_FIELDS = [
-    # Core response fields
+    # Core field parameters
     "id", "title", "main_picture", "alternative_titles",
     "start_date", "end_date", "synopsis", "mean", "rank", 
     "popularity", "num_list_users", "num_scoring_users",
@@ -124,14 +124,14 @@ async def _search_anime_mal_impl(
     
     MAL API v2 Reality:
     - Only supports query (q), limit, offset as search parameters
-    - All other data (rating, nsfw, source, broadcast, etc.) are response fields
+    - All other data (rating, nsfw, source, broadcast, etc.) are field parameters
     - Use fields parameter to control what data is returned
     
     Args:
         query: Search query for anime titles
         limit: Maximum number of results (default: 20, max: 100)
         offset: Pagination offset (default: 0)
-        fields: List of response fields to return (optional). Can be a comma-separated string or list of strings.
+        fields: List of field parameters to return (optional). Can be a comma-separated string or list of strings.
         
     Returns:
         List of anime with MAL-specific data based on requested fields
@@ -209,11 +209,11 @@ async def _get_anime_mal_impl(
     MAL API v2 Reality:
     - Takes anime ID as path parameter
     - Uses fields parameter to control what data is returned
-    - All data (statistics, related content, etc.) are response fields
+    - All data (statistics, related content, etc.) are field parameters
     
     Args:
         mal_id: MyAnimeList anime ID
-        fields: List of response fields to return (optional). Can be a comma-separated string or list of strings.
+        fields: List of field parameters to return (optional). Can be a comma-separated string or list of strings.
         
     Returns:
         Detailed anime information with MAL-specific data, or None if not found
@@ -297,7 +297,7 @@ async def _get_seasonal_anime_mal_impl(
         sort: Sort criteria (anime_score or anime_num_list_users)
         limit: Maximum results (default: 50, max: 500)
         offset: Pagination offset (default: 0)
-        fields: List of response fields to return (optional). Can be a comma-separated string or list of strings.
+        fields: List of field parameters to return (optional). Can be a comma-separated string or list of strings.
         
     Returns:
         List of seasonal anime with raw MAL data

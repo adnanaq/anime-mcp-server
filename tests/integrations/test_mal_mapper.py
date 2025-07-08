@@ -49,7 +49,7 @@ class TestMALMapper:
         assert mal_params["limit"] == 20
         
         # MAL API v2 does not support filtering by status, format, score, etc.
-        # These are response fields only
+        # These are field parameters only
         assert "status" not in mal_params
         assert "media_type" not in mal_params
         assert "start_date" not in mal_params
@@ -76,7 +76,7 @@ class TestMALMapper:
         assert "nsfw" in mal_params["fields"]
 
     def test_to_mal_search_params_mal_specific_fields(self):
-        """Test MAL-specific response fields generate proper fields parameter."""
+        """Test MAL-specific field parameters generate proper fields parameter."""
         params = UniversalSearchParams(
             query="test",
             mal_alternative_titles_field=True,

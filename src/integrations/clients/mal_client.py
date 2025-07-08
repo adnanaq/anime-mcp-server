@@ -245,7 +245,7 @@ class MALClient(BaseClient):
             q: Search query string (required)
             limit: Maximum number of results (1-100, default 10)
             offset: Offset for pagination (default 0)
-            fields: Comma-separated list of response fields
+            fields: Comma-separated list of field parameters
             correlation_id: Optional correlation ID for tracking
             operation: Operation name for tracing
 
@@ -353,7 +353,7 @@ class MALClient(BaseClient):
             sort: Sort order (list_score, list_updated_at, anime_title, anime_start_date, anime_id)
             limit: Maximum results (1-1000)
             offset: Pagination offset
-            fields: Comma-separated response fields
+            fields: Comma-separated field parameters
 
         Returns:
             List of user's anime entries
@@ -393,7 +393,7 @@ class MALClient(BaseClient):
             ranking_type: Type of ranking (all, airing, upcoming, tv, ova, movie, special, bypopularity, favorite)
             limit: Maximum results (1-500)
             offset: Pagination offset
-            fields: Comma-separated response fields
+            fields: Comma-separated field parameters
 
         Returns:
             List of ranked anime
@@ -434,7 +434,7 @@ class MALClient(BaseClient):
             sort: Sort order (anime_score, anime_num_list_users)
             limit: Maximum results (1-500)
             offset: Pagination offset
-            fields: Comma-separated response fields
+            fields: Comma-separated field parameters
 
         Returns:
             List of seasonal anime

@@ -53,7 +53,7 @@ class MALService(BaseExternalService):
             query: Search query string (required)
             limit: Maximum number of results (1-100, default 10)
             offset: Offset for pagination (default 0)
-            fields: Comma-separated list of response fields to include
+            fields: Comma-separated list of field parameters to include
             correlation_id: Correlation ID for request tracing
 
         Returns:
@@ -93,7 +93,7 @@ class MALService(BaseExternalService):
 
         Args:
             anime_id: MAL anime ID
-            fields: Comma-separated list of response fields to include
+            fields: Comma-separated list of field parameters to include
             correlation_id: Optional correlation ID for request tracing
 
         Returns:
@@ -128,7 +128,7 @@ class MALService(BaseExternalService):
             sort: Sort order (list_score, list_updated_at, anime_title, anime_start_date)
             limit: Maximum number of results (1-1000, default 100)
             offset: Offset for pagination
-            fields: Comma-separated list of response fields
+            fields: Comma-separated list of field parameters
             correlation_id: Optional correlation ID for request tracing
 
         Returns:
@@ -163,7 +163,7 @@ class MALService(BaseExternalService):
             ranking_type: Type of ranking (all, airing, upcoming, tv, ova, movie, special, bypopularity, favorite)
             limit: Maximum number of results (1-500, default 100)
             offset: Offset for pagination
-            fields: Comma-separated list of response fields
+            fields: Comma-separated list of field parameters
             correlation_id: Optional correlation ID for request tracing
 
         Returns:
@@ -199,7 +199,7 @@ class MALService(BaseExternalService):
             sort: Sort order (anime_score, anime_num_list_users)
             limit: Maximum number of results (1-500, default 100)
             offset: Offset for pagination
-            fields: Comma-separated list of response fields
+            fields: Comma-separated list of field parameters
             correlation_id: Optional correlation ID for request tracing
 
         Returns:

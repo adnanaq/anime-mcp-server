@@ -239,8 +239,6 @@ class JikanClient(BaseClient):
         self,
         q: Optional[str] = None,
         limit: int = 10,
-        offset: int = 0,
-        fields: Optional[str] = None,
         # Extended Jikan parameters
         genres: Optional[List[int]] = None,
         status: Optional[str] = None,
@@ -270,7 +268,7 @@ class JikanClient(BaseClient):
             q: Search query string
             limit: Maximum number of results (1-50)
             offset: Offset for pagination
-            fields: Comma-separated list of response fields
+            fields: Comma-separated list of field parameters
             genres: List of genre IDs to include
             status: Anime status filter (airing, complete, upcoming)
             anime_type: Anime type filter (TV, Movie, OVA, ONA, Special)

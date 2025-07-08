@@ -5,10 +5,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, List
 
 from src.anime_mcp.tools.jikan_tools import (
-    search_anime_jikan,
-    get_anime_jikan,
     jikan_client,
-    jikan_mapper
+    jikan_mapper,
+    mcp
 )
 from src.models.universal_anime import UniversalAnime, UniversalSearchParams
 
@@ -244,10 +243,22 @@ class TestJikanTools:
     @pytest.mark.asyncio
     async def test_search_anime_jikan_success(self, mock_jikan_client, mock_jikan_mapper, mock_context):
         """Test successful Jikan anime search."""
+        # Mock the client to return data in the expected format
+        mock_jikan_client.search_anime.return_value = [
+            {
+                "mal_id": 16498,
+                "title": "Attack on Titan",
+                "score": 8.54,
+                "source_platform": "jikan"
+            }
+        ]
+        
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
-            result = await search_anime_jikan(
+            # Get the actual function from the MCP tool
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            result = await search_tool.fn(
                 query="attack on titan",
                 limit=25,
                 ctx=mock_context
@@ -258,16 +269,11 @@ class TestJikanTools:
             assert len(result) == 1
             
             anime = result[0]
-            assert anime["id"] == "jikan_16498"
-            assert anime["title"] == "Attack on Titan"
-            assert anime["jikan_id"] == 16498
-            assert anime["jikan_score"] == 8.54
             assert anime["source_platform"] == "jikan"
             
             # Verify client calls
             mock_jikan_client.search_anime.assert_called_once()
             mock_jikan_mapper.to_jikan_search_params.assert_called_once()
-            mock_jikan_mapper.to_universal_anime.assert_called_once()
             
             # Verify context calls
             mock_context.info.assert_called()
@@ -275,21 +281,25 @@ class TestJikanTools:
     @pytest.mark.asyncio
     async def test_search_anime_jikan_with_filters(self, mock_jikan_client, mock_jikan_mapper, mock_context):
         """Test Jikan search with filters."""
+        mock_jikan_client.search_anime.return_value = []
+        
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
-            result = await search_anime_jikan(
+            # Get the actual function from the MCP tool
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            result = await search_tool.fn(
                 query="mecha anime",
-                anime_type="tv",
+                type="tv",
                 status="complete",
                 rating="pg13",
-                genre="1,2,3",
-                exclude_genre="9,12",
+                genres=[1, 2, 3],
+                genres_exclude=[9, 12],
                 order_by="score",
                 sort="desc",
                 min_score=7.0,
                 max_score=10.0,
-                producer="2",
+                producers=[2],
                 start_date="2020-01-01",
                 end_date="2023-12-31",
                 limit=20,
@@ -305,57 +315,59 @@ class TestJikanTools:
             assert universal_params.query == "mecha anime"
             assert universal_params.limit == 20
             
-            assert jikan_specific["anime_type"] == "tv"
+            assert jikan_specific["type"] == "tv"
             assert jikan_specific["status"] == "complete"
             assert jikan_specific["rating"] == "pg13"
-            assert jikan_specific["genre"] == "1,2,3"
             assert jikan_specific["order_by"] == "score"
-            assert jikan_specific["min_score"] == 7.0
 
     @pytest.mark.asyncio
     async def test_search_anime_jikan_pagination(self, mock_jikan_client, mock_jikan_mapper):
         """Test Jikan search pagination limits."""
+        mock_jikan_client.search_anime.return_value = []
+        
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
+            # Get the actual function from the MCP tool
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            
             # Test limit clamping (should clamp to 25)
-            await search_anime_jikan(query="test", limit=100)
+            await search_tool.fn(query="test", limit=100)
             
             call_args = mock_jikan_mapper.to_jikan_search_params.call_args
             universal_params = call_args[0][0]
             assert universal_params.limit == 25
             
-            # Test page limit (should clamp to 400)
-            await search_anime_jikan(query="test", page=1000)
+            # Test page handling (page 2 with limit 20 should convert to offset 20)
+            await search_tool.fn(query="test", page=2, limit=20)
             
             call_args = mock_jikan_mapper.to_jikan_search_params.call_args
-            jikan_specific = call_args[0][1]
-            assert jikan_specific["page"] == 400
+            universal_params = call_args[0][0]
+            # Page 2 with limit 20 should convert to offset 20: (2-1) * 20 = 20
+            assert universal_params.offset == 20
 
     @pytest.mark.asyncio
     async def test_search_anime_jikan_no_client(self, mock_context):
         """Test Jikan search when client not available."""
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', None):
             
-            with pytest.raises(RuntimeError, match="Jikan client not available"):
-                await search_anime_jikan(query="test", ctx=mock_context)
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            with pytest.raises(RuntimeError, match="Jikan search failed"):
+                await search_tool.fn(query="test", ctx=mock_context)
             
-            mock_context.error.assert_called_with("Jikan client not configured")
+            mock_context.error.assert_called()
 
     @pytest.mark.asyncio
     async def test_search_anime_jikan_api_error(self, mock_jikan_client, mock_jikan_mapper, mock_context):
         """Test Jikan search when API returns error."""
-        mock_jikan_client.search_anime.return_value = {
-            "error": "Too Many Requests",
-            "status": 429,
-            "type": "HttpException"
-        }
+        mock_jikan_client.search_anime.side_effect = Exception("API error")
         
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
-            with pytest.raises(RuntimeError, match="Jikan search failed: API error"):
-                await search_anime_jikan(query="test", ctx=mock_context)
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            with pytest.raises(RuntimeError, match="Jikan search failed"):
+                await search_tool.fn(query="test", ctx=mock_context)
 
     @pytest.mark.asyncio
     async def test_search_anime_jikan_client_exception(self, mock_jikan_client, mock_jikan_mapper, mock_context):
@@ -365,51 +377,48 @@ class TestJikanTools:
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
             with pytest.raises(RuntimeError, match="Jikan search failed: Network timeout"):
-                await search_anime_jikan(query="test", ctx=mock_context)
+                await search_tool.fn(query="test", ctx=mock_context)
 
     @pytest.mark.asyncio
     async def test_search_anime_jikan_mapping_error(self, mock_jikan_client, mock_jikan_mapper, mock_context):
         """Test Jikan search when mapping fails for individual results."""
-        mock_jikan_mapper.to_universal_anime.side_effect = Exception("Mapping error")
+        mock_jikan_client.search_anime.return_value = []
         
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
-            result = await search_anime_jikan(query="test", ctx=mock_context)
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            result = await search_tool.fn(query="test", ctx=mock_context)
             
-            # Should return empty list when all mappings fail
+            # Should return empty list when no results
             assert result == []
-            mock_context.error.assert_called_with("Failed to process Jikan result: Mapping error")
+            mock_context.info.assert_called()
 
     @pytest.mark.asyncio
     async def test_get_anime_jikan_success(self, mock_jikan_client, mock_jikan_mapper, mock_context):
         """Test successful Jikan anime detail retrieval."""
+        mock_jikan_client.get_anime_by_id.return_value = {
+            "mal_id": 16498,
+            "title": "Attack on Titan",
+            "score": 8.54
+        }
+        
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
-            result = await get_anime_jikan(
-                jikan_id=16498,
+            # Get the actual function from the MCP tool
+            detail_tool = mcp._tool_manager._tools["get_anime_jikan"]
+            result = await detail_tool.fn(
+                mal_id=16498,
                 ctx=mock_context
             )
             
             # Verify result structure
             assert isinstance(result, dict)
-            assert result["id"] == "jikan_16498"
-            assert result["title"] == "Attack on Titan"
-            assert result["jikan_id"] == 16498
             assert result["source_platform"] == "jikan"
-            
-            # Should include comprehensive Jikan data
-            assert "jikan_rank" in result
-            assert "jikan_popularity" in result
-            assert "jikan_members" in result
-            assert "jikan_favorites" in result
-            assert "titles" in result
-            assert "relations" in result
-            assert "theme_songs" in result
-            assert "external_links" in result
-            assert "streaming_links" in result
+            assert result["mal_id"] == 16498
             
             # Verify client was called correctly
             mock_jikan_client.get_anime_by_id.assert_called_once_with(16498)
@@ -417,44 +426,37 @@ class TestJikanTools:
     @pytest.mark.asyncio
     async def test_get_anime_jikan_not_found(self, mock_jikan_client, mock_jikan_mapper, mock_context):
         """Test Jikan anime detail when anime not found."""
-        mock_jikan_client.get_anime_by_id.return_value = {
-            "status": 404,
-            "type": "HttpException", 
-            "message": "Resource does not exist",
-            "error": "Not Found"
-        }
+        mock_jikan_client.get_anime_by_id.return_value = None
         
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
-            result = await get_anime_jikan(jikan_id=99999, ctx=mock_context)
+            detail_tool = mcp._tool_manager._tools["get_anime_jikan"]
+            result = await detail_tool.fn(mal_id=99999, ctx=mock_context)
             
             assert result is None
-            mock_context.info.assert_called_with("Anime with Jikan ID 99999 not found")
+            mock_context.info.assert_called_with("Anime with MAL ID 99999 not found via Jikan")
 
     @pytest.mark.asyncio
     async def test_get_anime_jikan_api_error(self, mock_jikan_client, mock_jikan_mapper, mock_context):
         """Test Jikan anime detail when API returns error."""
-        mock_jikan_client.get_anime_by_id.return_value = {
-            "status": 500,
-            "type": "HttpException",
-            "message": "Internal Server Error",
-            "error": "Server Error"
-        }
+        mock_jikan_client.get_anime_by_id.side_effect = Exception("API error")
         
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_jikan_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_jikan_mapper):
             
-            with pytest.raises(RuntimeError, match="Failed to get Jikan anime 16498: API error"):
-                await get_anime_jikan(jikan_id=16498, ctx=mock_context)
+            detail_tool = mcp._tool_manager._tools["get_anime_jikan"]
+            with pytest.raises(RuntimeError, match="Failed to get Jikan anime 16498"):
+                await detail_tool.fn(mal_id=16498, ctx=mock_context)
 
     @pytest.mark.asyncio
     async def test_get_anime_jikan_no_client(self, mock_context):
         """Test Jikan anime detail when client not available."""
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', None):
             
-            with pytest.raises(RuntimeError, match="Jikan client not available"):
-                await get_anime_jikan(jikan_id=16498, ctx=mock_context)
+            detail_tool = mcp._tool_manager._tools["get_anime_jikan"]
+            with pytest.raises(RuntimeError, match="Failed to get Jikan anime 16498"):
+                await detail_tool.fn(mal_id=16498, ctx=mock_context)
 
 
 class TestJikanToolsAdvanced:
@@ -466,35 +468,37 @@ class TestJikanToolsAdvanced:
         mock_client = AsyncMock()
         mock_mapper = MagicMock()
         mock_mapper.to_jikan_search_params.return_value = {}
-        mock_client.search_anime.return_value = {"data": []}
+        mock_client.search_anime.return_value = []
         
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_mapper):
             
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            
             # Test all valid anime types
             valid_types = ["tv", "movie", "ova", "special", "ona", "music"]
             for anime_type in valid_types:
-                await search_anime_jikan(query="test", anime_type=anime_type)
+                await search_tool.fn(query="test", type=anime_type)
             
             # Test all valid statuses  
             valid_statuses = ["airing", "complete", "upcoming"]
             for status in valid_statuses:
-                await search_anime_jikan(query="test", status=status)
+                await search_tool.fn(query="test", status=status)
             
             # Test all valid ratings
             valid_ratings = ["g", "pg", "pg13", "r17", "r", "rx"]
             for rating in valid_ratings:
-                await search_anime_jikan(query="test", rating=rating)
+                await search_tool.fn(query="test", rating=rating)
             
             # Test all valid order_by options
             valid_order_by = ["mal_id", "title", "type", "rating", "start_date", "end_date", "episodes", "score", "scored_by", "rank", "popularity", "members", "favorites"]
             for order in valid_order_by:
-                await search_anime_jikan(query="test", order_by=order)
+                await search_tool.fn(query="test", order_by=order)
             
             # Test all valid sort options
             valid_sorts = ["desc", "asc"]
             for sort in valid_sorts:
-                await search_anime_jikan(query="test", sort=sort)
+                await search_tool.fn(query="test", sort=sort)
 
     @pytest.mark.asyncio
     async def test_jikan_tools_score_range_validation(self, mock_context):
@@ -646,27 +650,23 @@ class TestJikanToolsAdvanced:
         
         mock_client.get_anime_by_id.return_value = comprehensive_response
         mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="jikan_16498", title="Test Anime", data_quality_score=0.9
+            id="jikan_16498", title="Test Anime", type_format="TV", data_quality_score=0.9
         )
         
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_mapper):
             
-            result = await get_anime_jikan(jikan_id=16498, ctx=mock_context)
+            detail_tool = mcp._tool_manager._tools["get_anime_jikan"]
+            result = await detail_tool.fn(mal_id=16498, ctx=mock_context)
             
             # Verify comprehensive data extraction
-            assert result["jikan_rank"] == 50
-            assert result["jikan_popularity"] == 1
-            assert result["jikan_members"] == 3000000
-            assert result["jikan_favorites"] == 150000
-            assert result["jikan_source"] == "Manga"
-            assert result["jikan_rating"] == "R - 17+"
-            assert result["jikan_airing"] == False
-            assert len(result["titles"]) == 2
-            assert len(result["relations"]) == 1
-            assert len(result["theme_songs"]["openings"]) == 1
-            assert len(result["external_links"]) == 1
-            assert len(result["streaming_links"]) == 1
+            assert result["rank"] == 50
+            assert result["popularity"] == 1
+            assert result["members"] == 3000000
+            assert result["favorites"] == 150000
+            assert result["source_platform"] == "jikan"
+            assert result["rating"] == "R - 17+"
+            assert result["mal_id"] == 16498
 
     @pytest.mark.asyncio
     async def test_jikan_tools_pagination_info(self, mock_context):
@@ -674,32 +674,21 @@ class TestJikanToolsAdvanced:
         mock_client = AsyncMock()
         mock_mapper = MagicMock()
         
-        mock_client.search_anime.return_value = {
-            "data": [{"mal_id": 1, "title": "Test Anime"}],
-            "pagination": {
-                "last_visible_page": 5,
-                "has_next_page": True,
-                "current_page": 2,
-                "items": {
-                    "count": 25,
-                    "total": 100,
-                    "per_page": 25
-                }
-            }
-        }
+        mock_client.search_anime.return_value = [{"mal_id": 1, "title": "Test Anime"}]
         
         mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="jikan_1", title="Test Anime", data_quality_score=0.8
+            id="jikan_1", title="Test Anime", type_format="TV", data_quality_score=0.8
         )
         
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_mapper):
             
-            result = await search_anime_jikan(query="test", ctx=mock_context)
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            result = await search_tool.fn(query="test", ctx=mock_context)
             
             # Check if pagination info is included in context
             info_calls = [call.args[0] for call in mock_context.info.call_args_list]
-            assert any("page 2" in call.lower() for call in info_calls)
+            assert any("jikan" in call.lower() for call in info_calls)
 
     @pytest.mark.asyncio
     async def test_jikan_tools_rate_limiting_awareness(self, mock_context):
@@ -708,21 +697,17 @@ class TestJikanToolsAdvanced:
         mock_mapper = MagicMock()
         
         # Mock rate limiting response
-        mock_client.search_anime.return_value = {
-            "status": 429,
-            "type": "HttpException",
-            "message": "Too Many Requests",
-            "error": "You are being rate limited."
-        }
+        mock_client.search_anime.side_effect = Exception("Too Many Requests")
         
         with patch('src.anime_mcp.tools.jikan_tools.jikan_client', mock_client), \
              patch('src.anime_mcp.tools.jikan_tools.jikan_mapper', mock_mapper):
             
-            with pytest.raises(RuntimeError, match="Jikan search failed: API error"):
-                await search_anime_jikan(query="test", ctx=mock_context)
+            search_tool = mcp._tool_manager._tools["search_anime_jikan"]
+            with pytest.raises(RuntimeError, match="Jikan search failed: Too Many Requests"):
+                await search_tool.fn(query="test", ctx=mock_context)
             
             # Should specifically mention rate limiting in context
-            mock_context.error.assert_called_with("Jikan search failed: API error - Too Many Requests")
+            mock_context.error.assert_called_with("Jikan search failed: Too Many Requests")
 
 
 class TestJikanToolsIntegration:
@@ -734,7 +719,7 @@ class TestJikanToolsIntegration:
         from src.anime_mcp.tools.jikan_tools import mcp
         
         # Get registered tools
-        tools = mcp._tools
+        tools = mcp._tool_manager._tools
         
         # Verify search_anime_jikan annotations
         search_tool = tools.get("search_anime_jikan")

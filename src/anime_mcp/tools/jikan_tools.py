@@ -42,6 +42,7 @@ async def search_anime_jikan(
     rating: Optional[Literal["g", "pg", "pg13", "r17", "r", "rx"]] = None,
     
     # Score and popularity filtering
+    score: Optional[int] = None,  # Exact score match (0-10)
     min_score: Optional[float] = None,
     max_score: Optional[float] = None,
     
@@ -60,6 +61,10 @@ async def search_anime_jikan(
     order_by: Optional[Literal["mal_id", "title", "type", "rating", "start_date", "end_date", "episodes", "score", "scored_by", "rank", "popularity", "members", "favorites"]] = None,
     sort: Optional[Literal["desc", "asc"]] = "desc",
     sfw: bool = True,
+    
+    # Jikan-specific parameters
+    letter: Optional[str] = None,  # Return entries starting with letter (A-Z)
+    unapproved: Optional[bool] = None,  # Include unapproved entries
     
     # Pagination
     limit: int = 25,
@@ -83,14 +88,17 @@ async def search_anime_jikan(
         type: Media type filter (tv, movie, ova, special, ona, music)
         status: Airing status (airing, complete, upcoming)
         rating: Age rating (g, pg, pg13, r17, r, rx)
+        score: Exact score match (0-10)
         min_score/max_score: Score range filtering (1-10 scale)
-        start_date/end_date: Date range filtering (YYYY-MM-DD)
+        start_date/end_date: Date range filtering (YYYY, YYYY-MM, YYYY-MM-DD)
         genres: Include specific genre IDs (MAL genre system)
         genres_exclude: Exclude specific genre IDs
         producers: Filter by producer/studio IDs
         order_by: Sort field (score, popularity, members, etc.)
         sort: Sort direction (desc, asc)
         sfw: Safe for work content only
+        letter: Return entries starting with letter (A-Z, conflicts with query)
+        unapproved: Include unapproved MAL entries (unique to Jikan)
         limit: Results per page (max: 25)
         page: Page number for pagination
         
@@ -118,6 +126,8 @@ async def search_anime_jikan(
             jikan_specific["status"] = status
         if rating:
             jikan_specific["rating"] = rating
+        if score is not None:
+            jikan_specific["score"] = score
         if min_score is not None:
             jikan_specific["min_score"] = min_score
         if max_score is not None:
@@ -136,9 +146,12 @@ async def search_anime_jikan(
             jikan_specific["order_by"] = order_by
         if sort:
             jikan_specific["sort"] = sort
+        if letter:
+            jikan_specific["letter"] = letter
+        if unapproved is not None:
+            jikan_specific["unapproved"] = unapproved
         
         jikan_specific["sfw"] = sfw
-        jikan_specific["page"] = page
         jikan_specific["limit"] = min(limit, 25)
         
         # Use mapper to convert parameters

@@ -174,6 +174,11 @@ class JikanMapper:
         if universal_params.max_score is not None:
             jikan_params["max_score"] = universal_params.max_score
         
+        # Exact score match (Jikan-specific)
+        score = jikan_specific.get("score") or universal_params.jikan_score
+        if score is not None:
+            jikan_params["score"] = score
+        
         # NOTE: Episode range filtering is NOT supported by Jikan API v4
         # Removed episodes_greater/episodes_lesser as per documentation verification
         
@@ -297,9 +302,9 @@ class JikanMapper:
         if letter and not jikan_params.get("q"):
             jikan_params["letter"] = letter
         
-        # Pagination (from jikan_specific dict only)
+        # Pagination (from jikan_specific dict only, but don't override universal offset conversion)
         page = jikan_specific.get("page")
-        if page is not None:
+        if page is not None and "page" not in jikan_params:
             jikan_params["page"] = page
         
         # Special filters (unique to Jikan)
