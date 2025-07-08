@@ -2,7 +2,7 @@
 """
 Weekly update script for anime database
 Run this via cron job every Sunday at 2 AM:
-0 2 * * 0 /path/to/anime-mcp-server/scripts/weekly_update.py
+0 2 * * 0 /path/to/anime-mcp-server/scripts/update_database_weekly.py
 """
 import asyncio
 import sys

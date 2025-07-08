@@ -60,7 +60,7 @@ class TestReactAgentWorkflowEngine:
     async def test_create_react_agent_workflow_init(self, mock_mcp_tools):
         """Test that ReactAgentWorkflowEngine initializes with create_react_agent."""
         # This test defines the expected interface for the new engine
-        with patch("langgraph.prebuilt.create_react_agent") as mock_create_agent:
+        with patch("src.langgraph.react_agent_workflow.create_react_agent") as mock_create_agent:
             mock_agent = Mock()
             mock_create_agent.return_value = mock_agent
 
@@ -78,7 +78,7 @@ class TestReactAgentWorkflowEngine:
         self, mock_mcp_tools, search_intent_mock
     ):
         """Test integration with structured output using with_structured_output()."""
-        with patch("langgraph.prebuilt.create_react_agent") as mock_create_agent:
+        with patch("src.langgraph.react_agent_workflow.create_react_agent") as mock_create_agent:
             mock_agent = Mock()
             mock_create_agent.return_value = mock_agent
 

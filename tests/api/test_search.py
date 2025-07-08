@@ -167,7 +167,6 @@ class TestImageSearchUnit:
 
         with patch("src.main.qdrant_client") as mock_client:
             mock_client.search_by_image = AsyncMock(return_value=sample_anime_results)
-            mock_client._supports_multi_vector = True
 
             result = await search_anime_by_image(image=image_file, limit=10)
 
@@ -188,7 +187,6 @@ class TestImageSearchUnit:
         image_file.read = AsyncMock(return_value=b"fake data")
 
         with patch("src.main.qdrant_client") as mock_client:
-            mock_client._supports_multi_vector = False
 
             with pytest.raises(HTTPException) as exc_info:
                 await search_anime_by_image(image=image_file, limit=10)
@@ -206,7 +204,6 @@ class TestImageSearchUnit:
         text_file.read = AsyncMock(return_value=b"not an image")
 
         with patch("src.main.qdrant_client") as mock_client:
-            mock_client._supports_multi_vector = True
 
             with pytest.raises(HTTPException) as exc_info:
                 await search_anime_by_image(image=text_file, limit=10)
@@ -220,7 +217,6 @@ class TestImageSearchUnit:
             mock_client.find_visually_similar_anime = AsyncMock(
                 return_value=sample_anime_results[1:]
             )
-            mock_client._supports_multi_vector = True
 
             result = await find_visually_similar_anime(anime_id="anime_001", limit=5)
 
@@ -321,7 +317,6 @@ class TestErrorHandlingUnit:
             mock_client.search_multimodal = AsyncMock(
                 side_effect=Exception("Client error")
             )
-            mock_client._supports_multi_vector = True
 
             # Test all endpoints raise 500 errors on client exceptions
             with pytest.raises(HTTPException) as exc_info:
@@ -378,7 +373,6 @@ class TestMissingCoverageEdgeCasesUnit:
         base64_data = base64.b64encode(fake_image_data).decode("utf-8")
 
         with patch("src.main.qdrant_client") as mock_client:
-            mock_client._supports_multi_vector = True
             mock_client.search_by_image = AsyncMock(return_value=sample_anime_results)
 
             result = await search_anime_by_image_base64(

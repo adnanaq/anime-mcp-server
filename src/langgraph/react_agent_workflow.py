@@ -7,7 +7,7 @@ JSON parsing and improving performance.
 
 import logging
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any, AsyncGenerator, Dict, Optional, List
 
 try:
     from langchain_openai import ChatOpenAI
@@ -27,6 +27,7 @@ from langgraph.prebuilt import create_react_agent
 
 from ..config import get_settings
 from .langchain_tools import create_anime_langchain_tools
+from .stateful_routing_memory import get_stateful_routing_engine, RoutingStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class ExecutionMode(Enum):
 
     STANDARD = "standard"           # Standard ReactAgent execution
     SUPER_STEP = "super_step"      # Google Pregel-inspired super-step execution
+    STATEFUL = "stateful"          # Stateful routing with memory and context learning
 
 
 class LLMProvider(Enum):
@@ -93,6 +95,11 @@ class ReactAgentWorkflowEngine:
         if execution_mode == ExecutionMode.SUPER_STEP:
             from .parallel_supersteps import SuperStepParallelExecutor
             self.super_step_executor = SuperStepParallelExecutor(mcp_tools, llm_provider)
+
+        # Initialize stateful routing engine if needed
+        self.stateful_routing_engine = None
+        if execution_mode == ExecutionMode.STATEFUL:
+            self.stateful_routing_engine = get_stateful_routing_engine()
 
         logger.info(
             f"Initialized ReactAgentWorkflowEngine with {len(self.tools)} tools "
@@ -251,6 +258,12 @@ When calling search tools, you MUST:
                 # Use super-step parallel execution for performance
                 logger.info("Using super-step parallel execution")
                 result = await self._execute_super_step_workflow(enhanced_message, thread_id or session_id)
+            elif self.execution_mode == ExecutionMode.STATEFUL and self.stateful_routing_engine:
+                # Use stateful routing with memory and context learning
+                logger.info("Using stateful routing execution with memory")
+                result = await self._execute_stateful_workflow(
+                    input_data, config, enhanced_message, session_id, thread_id
+                )
             else:
                 # Use standard ReactAgent execution
                 result = await self.agent.ainvoke(input_data, config=config)
@@ -516,6 +529,110 @@ When calling search tools, you MUST:
             "data": chunk,
             "timestamp": None,
         }
+
+    async def _execute_stateful_workflow(
+        self,
+        input_data: Dict[str, Any],
+        config: RunnableConfig,
+        enhanced_message: str,
+        session_id: str,
+        thread_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Execute workflow with stateful routing and memory learning."""
+        import time
+        from .workflow_state import WorkflowResult
+        from .intelligent_router import QueryIntent
+        
+        start_time = time.time()
+        user_id = thread_id or session_id  # Use thread_id as user identifier if available
+        
+        try:
+            # Step 1: Analyze query intent (simplified for integration)
+            intent = "search"  # Default intent - could be enhanced with actual intent detection
+            
+            # Step 2: Get optimal routing from stateful memory
+            routing_decision = await self.stateful_routing_engine.get_optimal_routing(
+                query=enhanced_message,
+                intent=intent,
+                session_id=session_id,
+                user_id=user_id,
+                context=input_data
+            )
+            
+            logger.info(f"Stateful routing decision: {routing_decision['strategy']}, "
+                       f"confidence: {routing_decision['confidence']:.2f}")
+            
+            # Step 3: Execute with standard ReactAgent (enhanced with routing context)
+            if routing_decision["memory_used"]:
+                # Add routing context to the input for informed execution
+                enhanced_input = input_data.copy()
+                enhanced_input["routing_context"] = {
+                    "strategy": routing_decision["strategy"],
+                    "confidence": routing_decision["confidence"],
+                    "reasoning": routing_decision["reasoning"],
+                    "agent_sequence": routing_decision["agent_sequence"]
+                }
+                result = await self.agent.ainvoke(enhanced_input, config=config)
+            else:
+                # Fallback to standard execution
+                result = await self.agent.ainvoke(input_data, config=config)
+            
+            # Step 4: Learn from execution for future optimization
+            execution_time_ms = int((time.time() - start_time) * 1000)
+            
+            # Create execution result for learning
+            workflow_result = {
+                "anime_results": self._extract_anime_results_from_response(result),
+                "execution_time_ms": execution_time_ms,
+                "platforms_queried": self._extract_platforms_from_response(result),
+                "intent_analysis": {"workflow_complexity": "moderate"}  # Could be enhanced
+            }
+            
+            # Learn from this execution
+            await self.stateful_routing_engine.learn_from_execution(
+                query=enhanced_message,
+                intent=intent,
+                agent_sequence=routing_decision.get("agent_sequence", []),
+                execution_result=workflow_result,
+                session_id=session_id,
+                user_id=user_id
+            )
+            
+            logger.info(f"Stateful execution completed in {execution_time_ms}ms, "
+                       f"learned from {len(workflow_result['anime_results'])} results")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in stateful workflow execution: {e}")
+            # Fallback to standard execution on error
+            return await self.agent.ainvoke(input_data, config=config)
+    
+    def _extract_anime_results_from_response(self, result: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract anime results from agent response for learning."""
+        # Simple extraction - could be enhanced to parse actual results
+        messages = result.get("messages", [])
+        if messages:
+            # Count successful responses (simplified)
+            last_message = str(messages[-1]) if messages else ""
+            if "anime" in last_message.lower() and len(last_message) > 100:
+                return [{"title": "sample_result"}]  # Placeholder for actual parsing
+        return []
+    
+    def _extract_platforms_from_response(self, result: Dict[str, Any]) -> List[str]:
+        """Extract platforms used from agent response for learning."""
+        # Simple extraction - could be enhanced to parse actual platform usage
+        messages = result.get("messages", [])
+        platforms = []
+        for msg in messages:
+            msg_str = str(msg).lower()
+            if "myanimelist" in msg_str:
+                platforms.append("myanimelist")
+            if "anilist" in msg_str:
+                platforms.append("anilist")
+            if "kitsu" in msg_str:
+                platforms.append("kitsu")
+        return list(set(platforms))  # Remove duplicates
 
     def _create_error_response(
         self,

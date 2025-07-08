@@ -491,11 +491,7 @@ async def search_anime_by_image(
     if not qdrant_client:
         raise RuntimeError("Qdrant client not initialized")
 
-    # Check if multi-vector support is enabled
-    if not getattr(qdrant_client, "_supports_multi_vector", False):
-        raise RuntimeError(
-            "Multi-vector image search not enabled. Enable in server configuration."
-        )
+    # Multi-vector support is always enabled
 
     # Validate limit
     limit = min(max(1, limit), 30)
@@ -532,11 +528,7 @@ async def find_visually_similar_anime(
     if not qdrant_client:
         raise RuntimeError("Qdrant client not initialized")
 
-    # Check if multi-vector support is enabled
-    if not getattr(qdrant_client, "_supports_multi_vector", False):
-        raise RuntimeError(
-            "Multi-vector visual similarity not enabled. Enable in server configuration."
-        )
+    # Multi-vector support is always enabled
 
     # Validate limit
     limit = min(max(1, limit), 20)
@@ -587,8 +579,8 @@ async def search_multimodal_anime(
     )
 
     try:
-        # Check if multi-vector support is available for enhanced search
-        if getattr(qdrant_client, "_supports_multi_vector", False) and image_data:
+        # Multi-vector support is always available for enhanced search
+        if image_data:
             results = await qdrant_client.search_multimodal(
                 query=query, image_data=image_data, limit=limit, text_weight=text_weight
             )
@@ -747,7 +739,7 @@ async def database_schema() -> str:
             "image_embedding_model": getattr(settings, "clip_model", "ViT-B/32"),
             "image_vector_size": getattr(settings, "image_vector_size", 512),
             "distance_metric": settings.qdrant_distance_metric,
-            "multi_vector_enabled": getattr(settings, "enable_multi_vector", False),
+            "multi_vector_enabled": True,  # Always enabled
         },
     }
     return f"Anime Database Schema: {schema}"
@@ -763,14 +755,22 @@ def initialize_qdrant_client():
         logger.info("MCP tools Qdrant client initialized")
 
 
-# Import and mount platform-specific tool servers  
+# Import and mount ALL platform-specific tool servers  
 # Using correct FastMCP mounting syntax (server first, then optional prefix)
-from .tools import jikan_tools, mal_tools
+from .tools import (
+    jikan_tools, mal_tools, anilist_tools, schedule_tools, 
+    kitsu_tools, semantic_tools, enrichment_tools
+)
 
-# Mount platform tool servers with the main MCP server using updated syntax
-# NEW syntax: mount(server, prefix=None) - server is first argument
-mcp.mount(jikan_tools.mcp)
-mcp.mount(mal_tools.mcp)
+# Mount ALL platform tool servers with the main MCP server
+# This enables intelligent routing to external platforms
+mcp.mount(jikan_tools.mcp)           # Jikan/MAL tools (3 tools)
+mcp.mount(mal_tools.mcp)             # Official MAL tools (3 tools)  
+mcp.mount(anilist_tools.mcp)         # AniList GraphQL tools (2 tools)
+mcp.mount(schedule_tools.mcp)        # AnimeSchedule tools (3 tools)
+mcp.mount(kitsu_tools.mcp)           # Kitsu JSON:API tools (3 tools) 
+mcp.mount(semantic_tools.mcp)        # Semantic search tools (3 tools)
+mcp.mount(enrichment_tools.mcp)      # Cross-platform enrichment (5 tools)
 
 
 async def initialize_mcp_server():

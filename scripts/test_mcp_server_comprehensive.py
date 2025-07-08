@@ -9,7 +9,7 @@ This script provides complete testing of the FastMCP anime server including:
 - Multi-modal search validation
 
 Usage:
-    python scripts/verify_mcp_server.py [--detailed] [--skip-image-tests]
+    python scripts/test_mcp_server_comprehensive.py [--detailed] [--skip-image-tests]
 
 Requirements:
     - MCP server dependencies installed
@@ -185,14 +185,14 @@ async def test_image_search_functionality(
                     lambda: qdrant_client.client.scroll(
                         collection_name=qdrant_client.collection_name,
                         limit=10,
-                        with_vectors=["image"],
+                        with_vectors=["picture"],
                         with_payload=True,
                     ),
                 )
 
                 test_anime_id = None
                 for point in sample_points:
-                    image_vector = point.vector.get("image", [])
+                    image_vector = point.vector.get("picture", [])
                     if image_vector and not all(v == 0.0 for v in image_vector):
                         test_anime_id = point.payload.get("anime_id")
                         test_anime_title = point.payload.get("title", "Unknown")
@@ -361,7 +361,7 @@ async def run_comprehensive_tests(
 
     # Server parameters
     server_params = StdioServerParameters(
-        command=sys.executable, args=["-m", "src.mcp.server"]
+        command=sys.executable, args=["-m", "src.anime_mcp.server"]
     )
 
     total_tests = 0

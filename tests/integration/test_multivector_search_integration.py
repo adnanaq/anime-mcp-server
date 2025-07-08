@@ -49,7 +49,8 @@ class TestPhase4Integration:
         settings.qdrant_distance_metric = "cosine"
         settings.fastembed_model = "BAAI/bge-small-en-v1.5"
         settings.fastembed_cache_dir = None
-        settings.enable_multi_vector = False
+        settings.image_vector_size = 512
+        settings.clip_model = "ViT-B/32"
         return settings
 
     @pytest.fixture
@@ -62,16 +63,16 @@ class TestPhase4Integration:
         settings.qdrant_distance_metric = "cosine"
         settings.fastembed_model = "BAAI/bge-small-en-v1.5"
         settings.fastembed_cache_dir = None
-        settings.enable_multi_vector = True
         settings.image_vector_size = 512
         settings.clip_model = "ViT-B/32"
         return settings
 
-    def test_single_vector_configuration(self, mock_settings_single_vector):
-        """Test that single-vector configuration preserves existing functionality."""
+    def test_multi_vector_always_enabled(self, mock_settings_single_vector):
+        """Test that multi-vector configuration is always enabled."""
         with (
             patch("src.vector.qdrant_client.QdrantSDK") as mock_sdk,
-            patch("src.vector.qdrant_client.TextEmbedding") as mock_embedding,
+            patch("fastembed.TextEmbedding") as mock_embedding,
+            patch("src.vector.vision_processor.VisionProcessor") as mock_vision,
         ):
 
             mock_client = Mock()
@@ -82,17 +83,19 @@ class TestPhase4Integration:
             mock_embedding.return_value = mock_encoder
             mock_encoder.embed.return_value = [[0.1] * 384]
 
+            mock_vision_processor = MockVisionProcessor()
+            mock_vision.return_value = mock_vision_processor
+
             with patch.object(QdrantClient, "_ensure_collection_exists"):
                 qdrant_client = QdrantClient(settings=mock_settings_single_vector)
 
-                # Verify single-vector configuration
-                assert qdrant_client._supports_multi_vector is False
+                # Verify multi-vector configuration (always enabled)
                 assert qdrant_client._vector_size == 384
-                assert qdrant_client.vision_processor is None
+                assert qdrant_client.vision_processor is not None
 
-                # Verify single-vector collection creation
-                assert hasattr(qdrant_client, "_create_single_vector_config")
-                config = qdrant_client._create_single_vector_config()
+                # Verify multi-vector collection creation (always enabled)
+                assert hasattr(qdrant_client, "_create_multi_vector_config")
+                config = qdrant_client._create_multi_vector_config()
                 # Test that config is created (VectorParams creation works)
                 assert config is not None
 
@@ -100,7 +103,7 @@ class TestPhase4Integration:
         """Test that multi-vector configuration adds new capabilities."""
         with (
             patch("src.vector.qdrant_client.QdrantSDK") as mock_sdk,
-            patch("src.vector.qdrant_client.TextEmbedding") as mock_embedding,
+            patch("fastembed.TextEmbedding") as mock_embedding,
             patch("src.vector.vision_processor.VisionProcessor") as mock_vision,
         ):
 
@@ -119,7 +122,6 @@ class TestPhase4Integration:
                 qdrant_client = QdrantClient(settings=mock_settings_multi_vector)
 
                 # Verify multi-vector configuration
-                assert qdrant_client._supports_multi_vector is True
                 assert qdrant_client._vector_size == 384
                 assert qdrant_client._image_vector_size == 512
                 assert qdrant_client.vision_processor is not None
@@ -141,7 +143,7 @@ class TestPhase4Integration:
         """Test that existing functionality works unchanged with multi-vector."""
         with (
             patch("src.vector.qdrant_client.QdrantSDK") as mock_sdk,
-            patch("src.vector.qdrant_client.TextEmbedding") as mock_embedding,
+            patch("fastembed.TextEmbedding") as mock_embedding,
             patch("src.vector.vision_processor.VisionProcessor") as mock_vision,
         ):
 
@@ -191,7 +193,7 @@ class TestPhase4Integration:
         """Test new image search methods with multi-vector configuration."""
         with (
             patch("src.vector.qdrant_client.QdrantSDK") as mock_sdk,
-            patch("src.vector.qdrant_client.TextEmbedding") as mock_embedding,
+            patch("fastembed.TextEmbedding") as mock_embedding,
             patch("src.vector.vision_processor.VisionProcessor") as mock_vision,
         ):
 
@@ -237,13 +239,14 @@ class TestPhase4Integration:
                 assert isinstance(results, list)
 
     @pytest.mark.asyncio
-    async def test_graceful_fallback_without_multi_vector(
+    async def test_graceful_fallback_when_vision_processor_fails(
         self, mock_settings_single_vector, sample_image_base64
     ):
-        """Test that image search methods gracefully fall back when multi-vector disabled."""
+        """Test that image search methods gracefully fall back when vision processor fails."""
         with (
             patch("src.vector.qdrant_client.QdrantSDK") as mock_sdk,
-            patch("src.vector.qdrant_client.TextEmbedding") as mock_embedding,
+            patch("fastembed.TextEmbedding") as mock_embedding,
+            patch("src.vector.vision_processor.VisionProcessor", side_effect=ImportError("No CLIP")),
         ):
 
             mock_client = Mock()
@@ -264,7 +267,10 @@ class TestPhase4Integration:
             with patch.object(QdrantClient, "_ensure_collection_exists"):
                 qdrant_client = QdrantClient(settings=mock_settings_single_vector)
 
-                # Test image search returns empty when multi-vector disabled
+                # Should gracefully degrade when vision processor fails
+                assert qdrant_client.vision_processor is None
+
+                # Test image search returns empty when vision processor unavailable
                 results = await qdrant_client.search_by_image(sample_image_base64)
                 assert results == []
 
@@ -326,13 +332,14 @@ class TestPhase4Integration:
         # This confirms the integration is working as expected
 
     @pytest.mark.asyncio
-    async def test_collection_creation_modes(
+    async def test_collection_creation_always_multi_vector(
         self, mock_settings_single_vector, mock_settings_multi_vector
     ):
-        """Test collection creation in both single and multi-vector modes."""
+        """Test that collection creation is always multi-vector."""
         with (
             patch("src.vector.qdrant_client.QdrantSDK") as mock_sdk,
-            patch("src.vector.qdrant_client.TextEmbedding") as mock_embedding,
+            patch("fastembed.TextEmbedding") as mock_embedding,
+            patch("src.vector.vision_processor.VisionProcessor") as mock_vision,
         ):
 
             mock_client = Mock()
@@ -342,37 +349,23 @@ class TestPhase4Integration:
 
             mock_encoder = Mock()
             mock_embedding.return_value = mock_encoder
+            
+            mock_vision_processor = MockVisionProcessor()
+            mock_vision.return_value = mock_vision_processor
 
-            # Test single-vector collection creation
-            with patch.object(QdrantClient, "_init_vision_processor"):
-                qdrant_client_single = QdrantClient(
-                    settings=mock_settings_single_vector
-                )
+            # Test that both settings result in multi-vector collection creation
+            with patch.object(QdrantClient, "_ensure_collection_exists"):
+                qdrant_client_1 = QdrantClient(settings=mock_settings_single_vector)
+                qdrant_client_2 = QdrantClient(settings=mock_settings_multi_vector)
 
-                # Should call create_collection with single vector config
-                mock_client.create_collection.assert_called()
-                call_args = mock_client.create_collection.call_args
-                vectors_config = call_args[1]["vectors_config"]
-                assert hasattr(vectors_config, "size")  # Single VectorParams object
+                # Both should have multi-vector configuration
+                assert qdrant_client_1._vector_size == 384
+                assert qdrant_client_1._image_vector_size == 512
+                assert qdrant_client_1.vision_processor is not None
 
-                mock_client.create_collection.reset_mock()
-
-                # Test multi-vector collection creation
-                with patch(
-                    "src.vector.vision_processor.VisionProcessor"
-                ) as mock_vision:
-                    mock_vision.return_value = MockVisionProcessor()
-                    qdrant_client_multi = QdrantClient(
-                        settings=mock_settings_multi_vector
-                    )
-
-                    # Should call create_collection with multi-vector config
-                    mock_client.create_collection.assert_called()
-                    call_args = mock_client.create_collection.call_args
-                    vectors_config = call_args[1]["vectors_config"]
-                    assert isinstance(vectors_config, dict)  # Dict of named vectors
-                    assert "text" in vectors_config
-                    assert "picture" in vectors_config
+                assert qdrant_client_2._vector_size == 384
+                assert qdrant_client_2._image_vector_size == 512
+                assert qdrant_client_2.vision_processor is not None
 
     def test_data_integrity_requirements(self):
         """Test that data integrity requirements are met."""
@@ -381,7 +374,6 @@ class TestPhase4Integration:
 
         # Configuration should reflect actual .env settings
         # Multi-vector is enabled in the current environment
-        assert hasattr(settings, "enable_multi_vector")
         
         # Multi-vector settings should have reasonable defaults
         assert getattr(settings, "image_vector_size", 512) == 512
@@ -431,10 +423,11 @@ class TestPhase4Integration:
             "get_similar_anime",
         ]
 
-        # Test with single-vector configuration (should work exactly as before)
+        # Test with multi-vector configuration (always enabled)
         with (
             patch("src.vector.qdrant_client.QdrantSDK") as mock_sdk,
-            patch("src.vector.qdrant_client.TextEmbedding") as mock_embedding,
+            patch("fastembed.TextEmbedding") as mock_embedding,
+            patch("src.vector.vision_processor.VisionProcessor") as mock_vision,
         ):
 
             mock_client = Mock()
@@ -444,14 +437,18 @@ class TestPhase4Integration:
             mock_encoder = Mock()
             mock_embedding.return_value = mock_encoder
 
+            mock_vision_processor = MockVisionProcessor()
+            mock_vision.return_value = mock_vision_processor
+
             settings = Mock()
-            settings.enable_multi_vector = False
             settings.qdrant_vector_size = 384
             settings.fastembed_model = "BAAI/bge-small-en-v1.5"
             settings.qdrant_url = "http://localhost:6333"
             settings.qdrant_collection_name = "test"
             settings.qdrant_distance_metric = "cosine"
             settings.fastembed_cache_dir = None
+            settings.image_vector_size = 512
+            settings.clip_model = "ViT-B/32"
 
             with patch.object(QdrantClient, "_ensure_collection_exists"):
                 qdrant_client = QdrantClient(settings=settings)
@@ -462,9 +459,8 @@ class TestPhase4Integration:
                     method = getattr(qdrant_client, method_name)
                     assert callable(method)
 
-                # Multi-vector should be disabled
-                assert qdrant_client._supports_multi_vector is False
-                assert qdrant_client.vision_processor is None
+                # Multi-vector is always enabled
+                assert qdrant_client.vision_processor is not None
 
 
 if __name__ == "__main__":

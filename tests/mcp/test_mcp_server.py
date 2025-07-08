@@ -439,7 +439,6 @@ class TestMCPImageTools:
 
         # Create mock client
         mock_client = MagicMock()
-        mock_client._supports_multi_vector = True
 
         # Mock search methods
         mock_client.search_by_image = AsyncMock(
@@ -523,7 +522,6 @@ class TestMCPImageTools:
     async def test_search_anime_by_image_no_multi_vector(self, setup_mock_client):
         """Test image search when multi-vector is not enabled."""
         mock_client = setup_mock_client
-        mock_client._supports_multi_vector = False
 
         image_data = "test_image_data"
 
@@ -579,7 +577,6 @@ class TestMCPImageTools:
     async def test_find_visually_similar_anime_no_multi_vector(self, setup_mock_client):
         """Test visual similarity when multi-vector is not enabled."""
         mock_client = setup_mock_client
-        mock_client._supports_multi_vector = False
 
         # Should raise runtime error
         with pytest.raises(
@@ -628,7 +625,6 @@ class TestMCPImageTools:
     async def test_search_multimodal_anime_no_multi_vector(self, setup_mock_client):
         """Test multimodal search fallback when multi-vector is not enabled."""
         mock_client = setup_mock_client
-        mock_client._supports_multi_vector = False
 
         query = "action anime"
         image_data = "test_image"
@@ -896,7 +892,6 @@ class TestMCPServerCompleteCoverage:
     @pytest.mark.asyncio
     async def test_search_anime_by_image_limit_edge_cases(self, mock_qdrant_client):
         """Test search_anime_by_image limit validation edge cases."""
-        mock_qdrant_client._supports_multi_vector = True
 
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test limit over maximum (should clamp to 30)
@@ -916,7 +911,6 @@ class TestMCPServerCompleteCoverage:
         self, mock_qdrant_client
     ):
         """Test find_visually_similar_anime limit validation edge cases."""
-        mock_qdrant_client._supports_multi_vector = True
 
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test limit over maximum (should clamp to 20)
@@ -936,7 +930,6 @@ class TestMCPServerCompleteCoverage:
         self, mock_qdrant_client
     ):
         """Test search_multimodal_anime parameter validation."""
-        mock_qdrant_client._supports_multi_vector = True
 
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test limit over maximum (should clamp to 25)
@@ -974,7 +967,6 @@ class TestMCPServerCompleteCoverage:
     @pytest.mark.asyncio
     async def test_search_multimodal_anime_text_only_fallback(self, mock_qdrant_client):
         """Test search_multimodal_anime fallback to text-only search."""
-        mock_qdrant_client._supports_multi_vector = True
 
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test with no image data - should use regular search
@@ -986,7 +978,6 @@ class TestMCPServerCompleteCoverage:
         self, mock_qdrant_client
     ):
         """Test search_multimodal_anime fallback when multi-vector disabled."""
-        mock_qdrant_client._supports_multi_vector = False
 
         with patch("src.mcp.server.qdrant_client", mock_qdrant_client):
             # Test with image data but multi-vector disabled - should fallback to text search

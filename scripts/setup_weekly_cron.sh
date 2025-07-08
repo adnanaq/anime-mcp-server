@@ -3,7 +3,7 @@
 
 # Get the absolute path to the project
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPT_PATH="$PROJECT_DIR/scripts/weekly_update.py"
+SCRIPT_PATH="$PROJECT_DIR/scripts/update_database_weekly.py"
 PYTHON_PATH="$PROJECT_DIR/venv/bin/python"
 
 echo "Setting up weekly anime database update cron job..."

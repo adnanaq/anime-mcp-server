@@ -54,7 +54,7 @@ anime-mcp-server/
 │   ├── test_mcp.py              # MCP server testing client
 │   ├── migrate_to_multivector.py # Collection migration script
 │   ├── add_image_embeddings.py  # Image processing pipeline
-│   └── verify_mcp_server.py     # MCP functionality verification
+│   └── test_mcp_server_comprehensive.py     # MCP functionality verification
 ├── data/
 │   ├── raw/                     # Original anime database JSON
 │   └── qdrant_storage/          # Qdrant vector database files
@@ -232,7 +232,7 @@ python -m src.anime_mcp.modern_server --mode sse --verbose
 **Testing:**
 ```bash
 # Test MCP functionality
-python scripts/verify_mcp_server.py
+python scripts/test_mcp_server_comprehensive.py
 ```
 
 ### Configuration Options
@@ -702,13 +702,13 @@ curl -X DELETE http://localhost:8000/api/workflow/conversation/session-id  # Del
 
 ```bash
 # Test MCP server (comprehensive verification)
-python scripts/verify_mcp_server.py
+python scripts/test_mcp_server_comprehensive.py
 
 # With detailed output and image testing
-python scripts/verify_mcp_server.py --detailed
+python scripts/test_mcp_server_comprehensive.py --detailed
 
 # Skip image tests (if CLIP not available)
-python scripts/verify_mcp_server.py --skip-image-tests
+python scripts/test_mcp_server_comprehensive.py --skip-image-tests
 
 # Expected output:
 # Starting comprehensive FastMCP Anime Server verification...
@@ -737,7 +737,7 @@ source venv/bin/activate
 python -m src.anime_mcp.modern_server
 
 # Use the automated test script (recommended approach)
-python scripts/verify_mcp_server.py
+python scripts/test_mcp_server_comprehensive.py
 ```
 
 **SSE mode (web/remote access):**
@@ -904,9 +904,9 @@ python scripts/migrate_to_multivector.py             # Migrate to multi-vector
 python scripts/add_image_embeddings.py --batch-size 100  # Process image embeddings
 
 # Testing & Verification
-python scripts/verify_mcp_server.py                 # Comprehensive MCP server testing
-python scripts/verify_mcp_server.py --detailed      # Detailed testing with sample data
-python scripts/verify_mcp_server.py --skip-image-tests  # Skip image tests if CLIP unavailable
+python scripts/test_mcp_server_comprehensive.py                 # Comprehensive MCP server testing
+python scripts/test_mcp_server_comprehensive.py --detailed      # Detailed testing with sample data
+python scripts/test_mcp_server_comprehensive.py --skip-image-tests  # Skip image tests if CLIP unavailable
 python run_tests.py                                 # Run full test suite
 
 # Data Pipeline

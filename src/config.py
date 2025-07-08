@@ -41,10 +41,7 @@ class Settings(BaseSettings):
         default=None, description="FastEmbed model cache directory"
     )
 
-    # Multi-Vector Configuration (Phase 4)
-    enable_multi_vector: bool = Field(
-        default=False, description="Enable multi-vector support (text + image)"
-    )
+    # Multi-Vector Configuration (always enabled)
     image_vector_size: int = Field(
         default=512, description="Image embedding dimensions (CLIP)"
     )

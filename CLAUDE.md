@@ -45,7 +45,7 @@ pytest -m integration -v                   # Integration tests only
 # MCP Servers
 python -m src.anime_mcp.modern_server      # Modern workflow server (stdio)
 python -m src.anime_mcp.server             # Core MCP server (stdio)
-python scripts/verify_mcp_server.py        # MCP verification
+python scripts/test_mcp_server_comprehensive.py        # MCP verification
 
 # Health Checks
 curl http://localhost:8000/health          # System health
@@ -137,7 +137,7 @@ python -m src.anime_mcp.server --mode streamable --port 8001  # Streamable HTTP
 
 - **Default choice**: `modern_server` for AI assistants, `core_server` for basic tools/testing
 - **Protocol guide**: `stdio` (local), `http` (testing), `sse` (web clients), `streamable` (advanced)
-- **Testing**: Always run `verify_mcp_server.py` after MCP changes
+- **Testing**: Always run `test_mcp_server_comprehensive.py` after MCP changes
 - **Tool count**: 31 total (8 core + 4 workflow + 14 platform + 5 enrichment)
 
 ## FILE STRUCTURE

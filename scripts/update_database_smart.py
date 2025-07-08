@@ -2,7 +2,7 @@
 """
 Smart weekly update script that checks if it's safe to update
 Run this via cron job every few hours to catch updates when they're stable:
-0 */4 * * * /path/to/anime-mcp-server/scripts/smart_weekly_update.py
+0 */4 * * * /path/to/anime-mcp-server/scripts/update_database_smart.py
 """
 import asyncio
 import sys

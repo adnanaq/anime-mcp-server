@@ -7,7 +7,7 @@ This verifies the MCP integration works with the fixed vector naming.
 
 Usage:
     # Start MCP server
-    python -m src.mcp.server --mode http --port 8001
+    python -m src.anime_mcp.server --mode http --port 8001
     
     # Then run this test
     python scripts/test_mcp_image_tools.py
