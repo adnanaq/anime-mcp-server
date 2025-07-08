@@ -422,7 +422,7 @@ Analyze this query and provide structured intent classification and routing reco
         if llm_analysis.needs_broadcast_schedule:
             suggested_tools.extend(["get_currently_airing", "get_schedule_data"])
         if llm_analysis.needs_seasonal_data:
-            suggested_tools.extend(["get_jikan_seasonal", "get_mal_seasonal_anime"])
+            suggested_tools.extend(["get_jikan_seasonal", "get_seasonal_anime_mal"])
         if not suggested_tools:  # Default search tools
             suggested_tools.extend(["search_anime_mal", "search_anime_anilist"])
 

@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 from src.anime_mcp.tools.mal_tools import (
     _search_anime_mal_impl,
     _get_anime_mal_impl,
-    get_mal_seasonal_anime,
+    _get_mal_seasonal_anime_impl,
     mal_client,
     mal_mapper
 )
@@ -413,7 +413,7 @@ class TestMALTools:
         with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
              patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
             
-            result = await get_mal_seasonal_anime(
+            result = await _get_mal_seasonal_anime_impl(
                 year=2023,
                 season="spring",
                 sort="anime_score",
@@ -421,22 +421,88 @@ class TestMALTools:
                 ctx=mock_context
             )
             
-            # Verify result structure
+            # Verify result structure - should return raw MAL data with source attribution
             assert isinstance(result, list)
             assert len(result) == 1
             
             anime = result[0]
+            # Raw MAL data should be included
+            assert anime["id"] == 12345  # Raw MAL ID from mock
+            assert anime["title"] == "Spring 2023 Anime"
+            assert anime["mean"] == 7.8
+            # Added by implementation
             assert anime["season"] == "spring"
             assert anime["season_year"] == 2023
             assert anime["source_platform"] == "mal"
+            assert "fetched_at" in anime
             
-            # Verify client call
-            mock_mal_client.get_seasonal_anime.assert_called_once_with({
-                "year": 2023,
-                "season": "spring",
-                "sort": "anime_score",
-                "limit": 50
-            })
+            # Verify client call includes offset and fields
+            mock_mal_client.get_seasonal_anime.assert_called_once()
+            call_args = mock_mal_client.get_seasonal_anime.call_args
+            # Arguments are passed as keyword arguments
+            assert call_args[1]["year"] == 2023
+            assert call_args[1]["season"] == "spring"
+            assert call_args[1]["sort"] == "anime_score"
+            assert call_args[1]["limit"] == 50
+            assert call_args[1]["offset"] == 0  # Default offset
+            assert "fields" in call_args[1]  # Default fields should be included
+
+    @pytest.mark.asyncio
+    async def test_get_mal_seasonal_anime_with_offset_and_fields(self, mock_mal_client, mock_mal_mapper):
+        """Test MAL seasonal anime with offset and custom fields."""
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_mal_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mal_mapper):
+            
+            result = await _get_mal_seasonal_anime_impl(
+                year=2023,
+                season="summer",
+                sort="anime_num_list_users",
+                limit=25,
+                offset=10,
+                fields=["id", "title", "mean", "popularity"]
+            )
+            
+            # Should return raw MAL data
+            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0]["id"] == 12345
+            assert result[0]["season"] == "summer"
+            assert result[0]["source_platform"] == "mal"
+            
+            # Verify client was called with all parameters
+            mock_mal_client.get_seasonal_anime.assert_called_once()
+            call_args = mock_mal_client.get_seasonal_anime.call_args
+            # Arguments are passed as keyword arguments
+            assert call_args[1]["year"] == 2023
+            assert call_args[1]["season"] == "summer"
+            assert call_args[1]["sort"] == "anime_num_list_users"
+            assert call_args[1]["limit"] == 25
+            assert call_args[1]["offset"] == 10
+            assert call_args[1]["fields"] == "id,title,mean,popularity"
+
+    @pytest.mark.asyncio
+    async def test_get_mal_seasonal_anime_fields_type_safety(self):
+        """Test type safety of fields parameter in seasonal anime."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        mock_client.get_seasonal_anime.return_value = [{"id": 123, "title": "Test"}]
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            # Test string fields
+            await _get_mal_seasonal_anime_impl(year=2023, season="spring", fields="id,title,mean")
+            
+            # Test list fields
+            await _get_mal_seasonal_anime_impl(year=2023, season="spring", fields=["id", "title", "mean"])
+            
+            # Test invalid type (int)
+            with pytest.raises(RuntimeError, match="Fields must be string or list of strings, got: int"):
+                await _get_mal_seasonal_anime_impl(year=2023, season="spring", fields=123)
+            
+            # Test invalid list (contains non-strings)
+            with pytest.raises(RuntimeError, match="All fields must be strings"):
+                await _get_mal_seasonal_anime_impl(year=2023, season="spring", fields=["id", 123, "title"])
 
     @pytest.mark.asyncio
     async def test_get_mal_seasonal_anime_limit_validation(self, mock_mal_client, mock_mal_mapper):

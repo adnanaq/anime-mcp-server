@@ -13,7 +13,7 @@ from langgraph.prebuilt import create_react_agent
 from langgraph_swarm import create_handoff_tool
 
 from ...anime_mcp.tools import (
-    search_anime_mal, get_anime_by_id_mal, get_mal_seasonal_anime,
+    search_anime_mal, get_anime_by_id_mal, get_seasonal_anime_mal,
     search_anime_anilist, get_anime_anilist,
     search_anime_jikan, get_anime_jikan, get_jikan_seasonal,
     search_anime_kitsu, get_anime_kitsu,
@@ -45,7 +45,7 @@ class SearchAgent:
         )
         
         # Platform-specific tool groups
-        self.mal_tools = [search_anime_mal, get_anime_by_id_mal, get_mal_seasonal_anime]
+        self.mal_tools = [search_anime_mal, get_anime_by_id_mal, get_seasonal_anime_mal]
         self.anilist_tools = [search_anime_anilist, get_anime_anilist]
         self.jikan_tools = [search_anime_jikan, get_anime_jikan, get_jikan_seasonal]
         self.kitsu_tools = [search_anime_kitsu, get_anime_kitsu]
@@ -170,7 +170,7 @@ Be helpful, precise, and always explain your reasoning for platform selection.""
         
         # Seasonal data requirements
         if intent.needs_seasonal_data:
-            selected_tools.extend([get_jikan_seasonal, get_mal_seasonal_anime])
+            selected_tools.extend([get_jikan_seasonal, get_seasonal_anime_mal])
         
         # Streaming platform focus
         if intent.needs_streaming_info:

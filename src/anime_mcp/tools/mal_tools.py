@@ -260,33 +260,33 @@ async def get_anime_by_id_mal_mcp(
     return await _get_anime_mal_impl(mal_id, fields, ctx)
 
 
-@mcp.tool(
-    name="get_mal_seasonal_anime",
-    description="Get seasonal anime from MyAnimeList with filtering",
-    annotations={
-        "title": "MAL Seasonal Anime",
-        "readOnlyHint": True,
-        "idempotentHint": True,
-    }
-)
-async def get_mal_seasonal_anime(
+async def _get_mal_seasonal_anime_impl(
     year: int,
     season: Literal["winter", "spring", "summer", "fall"],
     sort: Literal["anime_score", "anime_num_list_users"] = "anime_score",
     limit: int = 50,
+    offset: int = 0,
+    fields: Optional[Union[str, List[str]]] = None,
     ctx: Optional[Context] = None
 ) -> List[Dict[str, Any]]:
     """
-    Get seasonal anime from MyAnimeList with sorting options.
+    Get seasonal anime from MyAnimeList with sorting and pagination.
+    
+    MAL API v2 Reality:
+    - Takes year and season as path parameters
+    - Uses sort, limit, offset, and fields as query parameters
+    - Returns raw MAL data with node structure
     
     Args:
         year: Year for the season
         season: Season (winter, spring, summer, fall)
         sort: Sort criteria (anime_score or anime_num_list_users)
         limit: Maximum results (default: 50, max: 500)
+        offset: Pagination offset (default: 0)
+        fields: List of response fields to return (optional). Can be a comma-separated string or list of strings.
         
     Returns:
-        List of seasonal anime with MAL community data
+        List of seasonal anime with raw MAL data
     """
     if not mal_client:
         if ctx:
@@ -294,57 +294,73 @@ async def get_mal_seasonal_anime(
         raise RuntimeError("MAL client not available")
     
     if ctx:
-        await ctx.info(f"Fetching MAL seasonal anime for {season.title()} {year}")
+        await ctx.info(f"Fetching MAL seasonal anime for {season.title()} {year} (limit: {limit}, offset: {offset})")
     
     try:
+        # Build MAL API parameters
         params = {
             "year": year,
             "season": season,
             "sort": sort,
-            "limit": min(limit, 500)
+            "limit": min(limit, 500),
+            "offset": offset
         }
         
-        raw_results = await mal_client.get_seasonal_anime(params)
+        # Handle fields parameter with type safety
+        if fields:
+            if isinstance(fields, str):
+                if fields.strip():  # Only process non-empty strings
+                    params["fields"] = fields
+                # Empty string falls through to use default fields
+            elif isinstance(fields, list):
+                # Type-safe check that all elements are strings
+                if all(isinstance(field, str) for field in fields):
+                    params["fields"] = ",".join(fields)
+                else:
+                    raise TypeError(f"All fields must be strings, got: {[type(f).__name__ for f in fields]}")
+            else:
+                raise TypeError(f"Fields must be string or list of strings, got: {type(fields).__name__}")
         
+        # Use default fields if no fields specified or empty string
+        if not fields or (isinstance(fields, str) and not fields.strip()):
+            # All available MAL API fields for seasonal anime
+            default_fields = [
+                # Core response fields
+                "id", "title", "main_picture", "alternative_titles",
+                "start_date", "end_date", "synopsis", "mean", "rank", 
+                "popularity", "num_list_users", "num_scoring_users",
+                "nsfw", "created_at", "updated_at", "media_type",
+                "status", "genres", "my_list_status", "num_episodes",
+                "start_season", "broadcast", "source", "average_episode_duration",
+                "rating", "studios"
+            ]
+            params["fields"] = ",".join(default_fields)
+        
+        # Execute request
+        raw_results = await mal_client.get_seasonal_anime(
+            year=year,
+            season=season,
+            sort=sort,
+            limit=params["limit"],
+            offset=params["offset"],
+            fields=params.get("fields")
+        )
+        
+        # Add source attribution to each result
         results = []
         for raw_result in raw_results:
-            try:
-                universal_anime = mal_mapper.to_universal_anime(raw_result)
-                
+            if isinstance(raw_result, dict):
                 result = {
-                    "id": universal_anime.id,
-                    "title": universal_anime.title,
-                    "type": universal_anime.type_format,
-                    "episodes": universal_anime.episodes,
-                    "score": universal_anime.score,
-                    "year": universal_anime.year,
-                    "status": universal_anime.status,
-                    "genres": universal_anime.genres or [],
-                    "studios": universal_anime.studios or [],
-                    "synopsis": universal_anime.description,
-                    "image_url": universal_anime.image_url,
-                    
-                    # MAL seasonal data
-                    "mal_id": raw_result.get("id"),
-                    "mal_score": raw_result.get("mean"),
-                    "mal_popularity": raw_result.get("popularity"),
-                    "mal_num_list_users": raw_result.get("num_list_users"),
+                    **raw_result,  # Include all raw MAL data
+                    "source_platform": "mal",
                     "season": season,
                     "season_year": year,
-                    
-                    "source_platform": "mal",
-                    "data_quality_score": universal_anime.data_quality_score
+                    "fetched_at": datetime.now().isoformat()
                 }
-                
                 results.append(result)
-                
-            except Exception as e:
-                if ctx:
-                    await ctx.error(f"Failed to process seasonal result: {str(e)}")
-                continue
         
         if ctx:
-            await ctx.info(f"Found {len(results)} seasonal anime")
+            await ctx.info(f"Found {len(results)} seasonal anime from MAL")
             
         return results
         
@@ -353,3 +369,26 @@ async def get_mal_seasonal_anime(
         if ctx:
             await ctx.error(error_msg)
         raise RuntimeError(error_msg)
+
+
+# MCP tool wrapper
+@mcp.tool(
+    name="get_seasonal_anime_mal",
+    description="Get seasonal anime from MyAnimeList with sorting, pagination, and field selection",
+    annotations={
+        "title": "MAL Seasonal Anime",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+    }
+)
+async def get_seasonal_anime_mal_mcp(
+    year: int,
+    season: Literal["winter", "spring", "summer", "fall"],
+    sort: Literal["anime_score", "anime_num_list_users"] = "anime_score",
+    limit: int = 50,
+    offset: int = 0,
+    fields: Optional[Union[str, List[str]]] = None,
+    ctx: Optional[Context] = None
+) -> List[Dict[str, Any]]:
+    """MCP wrapper for get_seasonal_anime_mal."""
+    return await _get_mal_seasonal_anime_impl(year, season, sort, limit, offset, fields, ctx)
