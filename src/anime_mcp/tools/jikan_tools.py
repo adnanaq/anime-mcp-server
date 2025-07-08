@@ -11,7 +11,7 @@ from mcp.server.fastmcp import Context
 
 from ...integrations.clients.jikan_client import JikanClient
 from ...integrations.mappers.jikan_mapper import JikanMapper
-from ...models.universal_anime import UniversalSearchParams
+from ...models.universal_anime import UniversalSearchParams, AnimeStatus, AnimeFormat, AnimeRating
 from ...config import get_settings
 
 # Initialize components
@@ -37,7 +37,7 @@ async def search_anime_jikan(
     query: Optional[str] = None,
     
     # Content filtering
-    type: Optional[Literal["tv", "movie", "ova", "special", "ona", "music"]] = None,
+    type: Optional[Literal["tv", "movie", "ova", "special", "ona", "music", "cm", "pv", "tv_special"]] = None,
     status: Optional[Literal["airing", "complete", "upcoming"]] = None,
     rating: Optional[Literal["g", "pg", "pg13", "r17", "r", "rx"]] = None,
     
@@ -85,7 +85,7 @@ async def search_anime_jikan(
     
     Args:
         query: Search query for anime titles
-        type: Media type filter (tv, movie, ova, special, ona, music)
+        type: Media type filter (tv, movie, ova, special, ona, music, cm, pv, tv_special)
         status: Airing status (airing, complete, upcoming)
         rating: Age rating (g, pg, pg13, r17, r, rx)
         score: Exact score match (0-10)
@@ -109,50 +109,31 @@ async def search_anime_jikan(
         await ctx.info(f"Searching Jikan (MAL) with {limit} results per page")
     
     try:
-        # Create UniversalSearchParams for mapping
+        # Create UniversalSearchParams with direct string inputs (Union types handle both enum and string)
         universal_params = UniversalSearchParams(
             query=query,
             limit=min(limit, 25),  # Jikan max limit
-            offset=(page - 1) * limit if page > 1 else 0
+            offset=(page - 1) * limit if page > 1 else 0,
+            status=status,           # Pass LLM string directly ("airing", "complete", "upcoming")
+            type_format=type,        # Pass LLM string directly ("tv", "movie", "ova", etc.)
+            rating=rating,           # Pass LLM string directly ("g", "pg", "pg13", etc.)
+            min_score=min_score,
+            max_score=max_score,
+            start_date=start_date,
+            end_date=end_date,
+            genres=[str(g) for g in genres] if genres else None,
+            genres_exclude=[str(g) for g in genres_exclude] if genres_exclude else None,
+            producers=[str(p) for p in producers] if producers else None,
+            sort_by=order_by,
+            sort_order=sort,
+            include_adult=not sfw,
+            jikan_score=score,
+            jikan_letter=letter,
+            jikan_unapproved=unapproved
         )
         
-        # Build Jikan-specific parameters
+        # No jikan_specific parameters needed - all handled by universal_params now
         jikan_specific = {}
-        
-        # Map all Jikan parameters
-        if type:
-            jikan_specific["type"] = type
-        if status:
-            jikan_specific["status"] = status
-        if rating:
-            jikan_specific["rating"] = rating
-        if score is not None:
-            jikan_specific["score"] = score
-        if min_score is not None:
-            jikan_specific["min_score"] = min_score
-        if max_score is not None:
-            jikan_specific["max_score"] = max_score
-        if start_date:
-            jikan_specific["start_date"] = start_date
-        if end_date:
-            jikan_specific["end_date"] = end_date
-        if genres:
-            jikan_specific["genres"] = ",".join(map(str, genres))
-        if genres_exclude:
-            jikan_specific["genres_exclude"] = ",".join(map(str, genres_exclude))
-        if producers:
-            jikan_specific["producers"] = ",".join(map(str, producers))
-        if order_by:
-            jikan_specific["order_by"] = order_by
-        if sort:
-            jikan_specific["sort"] = sort
-        if letter:
-            jikan_specific["letter"] = letter
-        if unapproved is not None:
-            jikan_specific["unapproved"] = unapproved
-        
-        jikan_specific["sfw"] = sfw
-        jikan_specific["limit"] = min(limit, 25)
         
         # Use mapper to convert parameters
         jikan_params = jikan_mapper.to_jikan_search_params(universal_params, jikan_specific)

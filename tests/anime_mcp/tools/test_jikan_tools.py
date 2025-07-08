@@ -307,7 +307,7 @@ class TestJikanTools:
                 ctx=mock_context
             )
             
-            # Verify mapper was called with filters
+            # Verify mapper was called with universal parameters
             call_args = mock_jikan_mapper.to_jikan_search_params.call_args
             universal_params = call_args[0][0]
             jikan_specific = call_args[0][1]
@@ -315,10 +315,16 @@ class TestJikanTools:
             assert universal_params.query == "mecha anime"
             assert universal_params.limit == 20
             
+            # Verify universal parameters contain basic values
+            assert universal_params.sort_by == "score"
+            assert universal_params.sort_order == "desc"
+            assert universal_params.min_score == 7.0
+            assert universal_params.max_score == 10.0
+            
+            # Verify jikan_specific contains the string values
             assert jikan_specific["type"] == "tv"
             assert jikan_specific["status"] == "complete"
             assert jikan_specific["rating"] == "pg13"
-            assert jikan_specific["order_by"] == "score"
 
     @pytest.mark.asyncio
     async def test_search_anime_jikan_pagination(self, mock_jikan_client, mock_jikan_mapper):

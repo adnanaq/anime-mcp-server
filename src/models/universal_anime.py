@@ -234,9 +234,9 @@ class UniversalSearchParams(BaseModel):
     # CONTENT CLASSIFICATION FILTERS
     genres: Optional[List[str]] = Field(None, description="Genre filters (include)")
     genres_exclude: Optional[List[str]] = Field(None, description="Genre filters (exclude)")
-    status: Optional[AnimeStatus] = Field(None, description="Release status filter")
-    type_format: Optional[AnimeFormat] = Field(None, description="Media format filter")
-    rating: Optional[AnimeRating] = Field(None, description="Content rating filter")
+    status: Optional[Union[AnimeStatus, str]] = Field(None, description="Release status filter")
+    type_format: Optional[Union[AnimeFormat, str]] = Field(None, description="Media format filter")
+    rating: Optional[Union[AnimeRating, str]] = Field(None, description="Content rating filter")
     source: Optional[str] = Field(None, description="Source material filter (manga, novel, original, etc.)")
     
     # TEMPORAL FILTERS

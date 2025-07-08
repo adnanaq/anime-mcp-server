@@ -158,15 +158,25 @@ class JikanMapper:
         
         # Status mapping (prevents the "ongoing" chaos)
         if universal_params.status:
-            status_value = cls.UNIVERSAL_TO_STATUS.get(universal_params.status)
-            if status_value:
-                jikan_params["status"] = status_value
+            if isinstance(universal_params.status, AnimeStatus):
+                # Enum input - convert using existing mapping
+                status_value = cls.UNIVERSAL_TO_STATUS.get(universal_params.status)
+                if status_value:
+                    jikan_params["status"] = status_value
+            else:
+                # String input - pass directly (LLM provided correct Jikan value)
+                jikan_params["status"] = universal_params.status
         
         # Format mapping (only include if Jikan supports this format)
         if universal_params.type_format:
-            format_value = cls.UNIVERSAL_TO_FORMAT.get(universal_params.type_format)
-            if format_value:
-                jikan_params["type"] = format_value
+            if isinstance(universal_params.type_format, AnimeFormat):
+                # Enum input - convert using existing mapping
+                format_value = cls.UNIVERSAL_TO_FORMAT.get(universal_params.type_format)
+                if format_value:
+                    jikan_params["type_"] = format_value
+            else:
+                # String input - pass directly (LLM provided correct Jikan value)
+                jikan_params["type_"] = universal_params.type_format
         
         # Score filters (Jikan uses same 0-10 scale)
         if universal_params.min_score is not None:
@@ -214,9 +224,14 @@ class JikanMapper:
         
         # Content rating filter (NEW - from mapping document)
         if universal_params.rating:
-            rating_value = cls.UNIVERSAL_TO_RATING.get(universal_params.rating)
-            if rating_value:
-                jikan_params["rating"] = rating_value
+            if isinstance(universal_params.rating, AnimeRating):
+                # Enum input - convert using existing mapping
+                rating_value = cls.UNIVERSAL_TO_RATING.get(universal_params.rating)
+                if rating_value:
+                    jikan_params["rating"] = rating_value
+            else:
+                # String input - pass directly (LLM provided correct Jikan value)
+                jikan_params["rating"] = universal_params.rating
         
         # Producer filter (NEW - from mapping document)
         if universal_params.producers:
@@ -273,10 +288,6 @@ class JikanMapper:
                     jikan_params["sort"] = universal_params.sort_order
         
         # JIKAN-SPECIFIC PARAMETERS (only unique features, no duplicates)
-        # Anime type from jikan_specific dict only (legacy support)
-        anime_type = jikan_specific.get("anime_type")
-        if anime_type and "type" not in jikan_params:
-            jikan_params["type"] = anime_type.lower()  # Ensure lowercase
         
         # Safe For Work filter from jikan_specific dict only (but don't override universal include_adult)
         sfw = jikan_specific.get("sfw")

@@ -72,7 +72,7 @@ class MALMapper:
         # MAL API v2 does not support filtering by status, format, score, episodes, dates, or adult content
         # These are field parameters only - handle via fields parameter instead
         
-        # Handle response field requests using MAL's fields parameter
+        # Handle field parameters requests using MAL's fields parameter
         requested_fields = []
         
         # Core field parameters

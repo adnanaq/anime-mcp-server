@@ -243,7 +243,7 @@ class JikanClient(BaseClient):
         genres: Optional[List[int]] = None,
         status: Optional[str] = None,
         # Enhanced Jikan parameters
-        anime_type: Optional[str] = None,
+        type_: Optional[str] = None,
         score: Optional[float] = None,
         min_score: Optional[float] = None,
         max_score: Optional[float] = None,
@@ -271,7 +271,7 @@ class JikanClient(BaseClient):
             fields: Comma-separated list of field parameters
             genres: List of genre IDs to include
             status: Anime status filter (airing, complete, upcoming)
-            anime_type: Anime type filter (TV, Movie, OVA, ONA, Special)
+            type_: Anime type filter (TV, Movie, OVA, ONA, Special)
             score: Exact score filter
             min_score: Minimum score filter (0.0-10.0)
             max_score: Maximum score filter (0.0-10.0)
@@ -337,8 +337,8 @@ class JikanClient(BaseClient):
                 params["status"] = status
             
             # Enhanced Jikan parameters
-            if anime_type:
-                params["type"] = anime_type
+            if type_:
+                params["type"] = type_
             if score is not None:
                 params["score"] = score
             if min_score is not None:
@@ -545,7 +545,7 @@ class JikanClient(BaseClient):
 
     async def get_top_anime(
         self,
-        anime_type: Optional[str] = None,
+        type_: Optional[str] = None,
         filter_type: Optional[str] = None,
         rating: Optional[str] = None,
         page: Optional[int] = None,
@@ -554,7 +554,7 @@ class JikanClient(BaseClient):
         """Get top anime rankings.
 
         Args:
-            anime_type: Type filter (tv, movie, ova, special, ona, music)
+            type_: Type filter (tv, movie, ova, special, ona, music)
             filter_type: Filter type (airing, upcoming, bypopularity, favorite)
             rating: Rating filter (g, pg, pg13, r17, r, rx)
             page: Page number
@@ -566,8 +566,8 @@ class JikanClient(BaseClient):
         endpoint = "/top/anime"
         params = {}
 
-        if anime_type:
-            params["type"] = anime_type
+        if type_:
+            params["type"] = type_
         if filter_type:
             params["filter"] = filter_type
         if rating:
