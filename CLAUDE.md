@@ -3,33 +3,39 @@
 ## SESSION START PROTOCOL
 
 ### MANDATORY RULE LOADING (ALWAYS FIRST)
-- [ ] Read `Rules/memory.md` (memory management workflow)
-- [ ] Read `Rules/plan.md` (if planning) OR `Rules/implement.md` (if coding)
+
+- Read `Rules/memory.md` (memory management workflow)
+- Read `Rules/plan.md` (if planning) OR `Rules/implement.md` (if coding)
 
 ### MEMORY HIERARCHY (Load in sequence)
-- [ ] Read `docs/product_requirement_docs.md` (foundation)
-- [ ] Read `docs/architecture.md` (system design) 
-- [ ] Read `docs/technical.md` (implementation details)
-- [ ] Read `tasks/tasks_plan.md` (project progress)
-- [ ] Read `tasks/active_context.md` (current state)
+
+- Read `docs/product_requirement_docs.md` (foundation)
+- Read `docs/architecture.md` (system design)
+- Read `docs/technical.md` (implementation details)
+- Read `tasks/tasks_plan.md` (project progress)
+- Read `tasks/active_context.md` (current state)
 
 ### ENVIRONMENT SETUP
+
 ```bash
 source venv/bin/activate                    # Always activate venv first
 docker compose up -d qdrant                 # Start Qdrant vector DB
 ```
 
 ### EXECUTION MODES
+
 **PLAN MODE**: Strategy→Present→Document  
 **ACT MODE**: 6-Step Protocol (Analyze→Plan→Change→Test→Loop→Optimize)
 
 ### CRITICAL RULES
+
 - **File Size Limit**: Never exceed 500 lines per file
-- **Testing**: MANDATORY for any functionality 
+- **Testing**: MANDATORY for any functionality
 - **Code Preservation**: Don't modify working components without necessity
 - **Stop Rule**: "Stop only when you're done till successfully testing, not before"
 
 ### ESSENTIAL COMMANDS
+
 ```bash
 # Testing
 pytest tests/ -v                           # All tests
@@ -47,6 +53,7 @@ curl http://localhost:8000/stats           # Database stats
 ```
 
 ### TASK COMPLETION VALIDATION (After Every Task)
+
 - [ ] All affected code updated in src/
 - [ ] Documentation updated in docs/ and tasks/
 - [ ] Testing completed (for implementation tasks)
@@ -60,7 +67,6 @@ curl http://localhost:8000/stats           # Database stats
 **Project**: Anime MCP Server - FastAPI + Qdrant vector database providing semantic search over 38,000+ anime entries  
 **Purpose**: MCP tool integration for AI assistants with advanced search capabilities  
 **Key Tech**: FastAPI, Qdrant, LangGraph, CLIP, FastEmbed, Pydantic
-
 
 ## ARCHITECTURE OVERVIEW
 
@@ -237,7 +243,7 @@ src/
 - **Test Structure**: Mirror main app structure in `/tests`
 - **Mandatory Testing**: Any functionality MUST have tests (Rules/implement.md)
 - **Test Types**: Unit tests for components, integration for workflows
-- **Coverage Target**: >80% 
+- **Coverage Target**: >80%
 - **Test Before Complete**: Never finish implementation without testing
 - **Markers**: Use `pytest -m unit` or `pytest -m integration`
 
@@ -328,7 +334,7 @@ docker run --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
 # Quick verification
 curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"  # Search test
 
-# Comprehensive testing  
+# Comprehensive testing
 pytest tests/ --cov=src --cov-report=html  # Coverage report
 mypy src/                                   # Type checking
 ```

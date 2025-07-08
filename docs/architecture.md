@@ -666,7 +666,74 @@ AnimeDiscoverySwarm
 1. **Standard Conversation**: Simple query � agent � response
 2. **Smart Orchestration**: Complex query � multi-agent � enriched response  
 3. **Multimodal Workflow**: Text + image � combined analysis � results
-4. **Scheduled Discovery**: Real-time data � broadcast schedules � availability
+4. **Scheduled Discovery**: Real-time data → broadcast schedules → availability
+
+### 4.5 Advanced Routing Architecture (SEND API + SWARM ENHANCEMENT)
+
+**Current State**: Basic ReactAgent with 7 offline database tools, sequential execution  
+**Target State**: Multi-agent swarm system with Send API parallel execution and stateful routing
+
+```python
+# Advanced LangGraph Routing System Architecture
+AdvancedRoutingSystem
+   Send API Parallel Router
+      SendAPIRouter        # Dynamic parallel route generation
+      SuperStepOrchestrator # Google Pregel-inspired execution
+      ParallelExecutionEngine # Concurrent multi-agent coordination
+      TransactionalRollback # Super-step failure recovery
+   
+   Multi-Agent Swarm Architecture
+      Platform Agents (5)
+         MAL_Agent         # MyAnimeList specialization + handoff tools
+         AniList_Agent     # AniList GraphQL + handoff tools  
+         Jikan_Agent       # Jikan seasonal data + handoff tools
+         Offline_Agent     # Vector database + handoff tools
+         Kitsu_Agent       # Streaming platforms + handoff tools
+      
+      Enhancement Agents (3)
+         RatingCorrelation_Agent    # Cross-platform rating analysis
+         StreamingAvailability_Agent # Multi-platform streaming data
+         ReviewAggregation_Agent     # Community reviews and sentiment
+      
+      Orchestration Agents (2)
+         QueryAnalysis_Agent # Intent detection and complexity scoring
+         ResultMerger_Agent  # Intelligent result combination
+   
+   Stateful Routing Intelligence
+      ConversationContext  # User preference learning across sessions
+      RoutePatternMemory   # Successful agent sequence caching
+      AdaptiveRouting      # Runtime strategy adjustment
+      ContextAwareHandoffs # Intelligent agent-to-agent transfers
+```
+
+**Advanced Routing Decision Flow:**
+```mermaid
+flowchart TD
+    Query[User Query] --> Analyze[Send API Route Analysis]
+    Analyze --> Parallel{Parallel Route Strategy}
+    
+    Parallel -->|Fast| SuperStep1[Super-Step 1: Fast Parallel<br/>MAL + AniList + Offline]
+    Parallel -->|Comprehensive| SuperStep2[Super-Step 2: Comprehensive<br/>All Agents + Enhancement]
+    Parallel -->|Adaptive| Stateful[Stateful Route Selection<br/>Based on Context Memory]
+    
+    SuperStep1 --> Handoff1[Agent Handoffs<br/>Specialized Processing]
+    SuperStep2 --> Handoff2[Enhanced Agent Swarm<br/>Cross-Platform Correlation]
+    Stateful --> Handoff3[Context-Aware Handoffs<br/>User Preference Learning]
+    
+    Handoff1 --> Merge[Result Merger Agent]
+    Handoff2 --> Merge
+    Handoff3 --> Merge
+    
+    Merge --> Response[Enhanced Response]
+    Response --> Learn[Update Stateful Memory]
+    Learn --> Context[Store Conversation Context]
+```
+
+**Implementation Strategy (Advanced Patterns):**
+- **Phase 1**: Send API parallel router with 3-5 concurrent agents
+- **Phase 2**: Swarm agent architecture with handoff capabilities  
+- **Phase 3**: Super-step parallel execution with transactional rollback
+- **Phase 4**: Stateful routing memory and conversation context learning
 
 ## 5. Data Flow Architecture
 
