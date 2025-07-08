@@ -11,7 +11,8 @@ from unittest.mock import Mock, patch
 import pytest
 from PIL import Image
 
-from src.vector.vision_processor import MockVisionProcessor, VisionProcessor
+from src.vector.vision_processor import VisionProcessor
+from tests.vector.mock_vision_processor import MockVisionProcessor
 
 
 class TestVisionProcessor:
