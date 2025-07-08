@@ -6,6 +6,7 @@ MAL specializes in community data, ratings, and content filtering.
 """
 
 from typing import Dict, List, Literal, Optional, Any
+from datetime import datetime
 from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
@@ -204,56 +205,19 @@ async def get_anime_mal(
                 await ctx.info(f"Anime with MAL ID {mal_id} not found")
             return None
         
-        # Convert to standardized format
-        universal_anime = mal_mapper.to_universal_anime(raw_result)
-        
-        # Build detailed response
+        # Return raw MAL API response with source attribution
         result = {
-            "id": universal_anime.id,
-            "title": universal_anime.title,
-            "alternative_titles": raw_result.get("alternative_titles", {}),
-            "type": universal_anime.type_format,
-            "episodes": universal_anime.episodes,
-            "score": universal_anime.score,
-            "year": universal_anime.year,
-            "start_date": universal_anime.start_date,
-            "end_date": universal_anime.end_date,
-            "status": universal_anime.status,
-            "genres": universal_anime.genres or [],
-            "studios": universal_anime.studios or [],
-            "synopsis": universal_anime.description,
-            "image_url": universal_anime.image_url,
-            
-            # Detailed MAL data
+            **raw_result,  # Include all raw MAL data
+            "source_platform": "myanimelist",
             "mal_id": mal_id,
-            "mal_score": raw_result.get("mean"),
-            "mal_rank": raw_result.get("rank"),
-            "mal_popularity": raw_result.get("popularity"),
-            "mal_num_list_users": raw_result.get("num_list_users"),
-            "mal_num_scoring_users": raw_result.get("num_scoring_users"),
-            "mal_nsfw": raw_result.get("nsfw"),
-            "mal_rating": raw_result.get("rating"),
-            "mal_source": raw_result.get("source"),
-            "mal_broadcast": raw_result.get("broadcast", {}),
-            "mal_average_episode_duration": raw_result.get("average_episode_duration"),
-            "mal_start_season": raw_result.get("start_season", {}),
-            "mal_pictures": raw_result.get("pictures", []),
-            "mal_background": raw_result.get("background"),
-            "mal_created_at": raw_result.get("created_at"),
-            "mal_updated_at": raw_result.get("updated_at"),
+            "fetched_at": datetime.now().isoformat(),
             
-            # Related content
-            "related_anime": raw_result.get("related_anime", []) if include_related else [],
-            "related_manga": raw_result.get("related_manga", []) if include_related else [],
-            "recommendations": raw_result.get("recommendations", []),
-            
-            # Statistics
+            # Optional statistics
             "statistics": raw_result.get("statistics", {}) if include_statistics else {},
             
-            # Source attribution
-            "source_platform": "mal",
-            "data_quality_score": universal_anime.data_quality_score,
-            "last_updated": raw_result.get("updated_at")
+            # Optional related content
+            "related_anime": raw_result.get("related_anime", []) if include_related else [],
+            "related_manga": raw_result.get("related_manga", []) if include_related else [],
         }
         
         if ctx:

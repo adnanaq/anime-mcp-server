@@ -37,7 +37,7 @@ class ModernMCPClient:
         """
         self.transport = transport
         self.server_command = server_command
-        self.server_args = server_args or ["-m", "src.mcp.modern_server"]
+        self.server_args = server_args or ["-m", "src.anime_mcp.server"]
         self.host = host
         self.port = port
         self.url = url
@@ -47,7 +47,7 @@ class ModernMCPClient:
     async def connect(self) -> None:
         """Connect to MCP server using FastMCP Client."""
         if self.transport == "stdio":
-            logger.info(f"Connecting to MCP server via stdio: {self.server_command} {' '.join(self.server_args)}")
+            logger.info(f"Connecting to core MCP server via stdio: {self.server_command} {' '.join(self.server_args)}")
         else:
             connection_target = self.url or f"{self.host}:{self.port}"
             logger.info(f"Connecting to MCP server via {self.transport}: {connection_target}")
@@ -56,7 +56,7 @@ class ModernMCPClient:
             # Create FastMCP client - FastMCP automatically infers transport type
             if self.transport == "stdio":
                 # FastMCP can infer Python stdio transport from .py file path
-                script_path = "run_modern_server.py"
+                script_path = "run_core_server.py"  # Use core server that doesn't need LangGraph
                 self.client = Client(script_path)  # FastMCP auto-infers PythonStdioTransport
                 
             elif self.transport in ["http", "sse", "streamable"]:
@@ -89,7 +89,7 @@ class ModernMCPClient:
         """Get all available tools from MCP server.
 
         Returns:
-            Dictionary mapping tool names to tool objects
+            Dictionary mapping tool names to callable wrapper functions
 
         Raises:
             RuntimeError: If client is not connected
@@ -109,8 +109,10 @@ class ModernMCPClient:
                 # Use list_tools() method as per FastMCP Client API
                 tools_list = await session.list_tools()
                 
-                # Convert to dictionary format
-                tools_dict = {tool.name: tool for tool in tools_list}
+                # Create callable wrapper functions for each tool
+                tools_dict = {}
+                for tool in tools_list:
+                    tools_dict[tool.name] = self._create_tool_wrapper(tool)
                 
                 logger.info(f"Discovered {len(tools_dict)} tools: {list(tools_dict.keys())}")
 
@@ -121,6 +123,41 @@ class ModernMCPClient:
         except Exception as e:
             logger.error(f"Tool discovery failed: {e}")
             raise
+
+    def _create_tool_wrapper(self, tool):
+        """Create a callable wrapper function for an MCP tool.
+        
+        Args:
+            tool: MCP Tool object
+            
+        Returns:
+            Callable wrapper function that uses FastMCP Client call_tool API
+        """
+        async def tool_wrapper(**kwargs):
+            """Wrapper function that calls the MCP tool via FastMCP Client."""
+            if not self.client:
+                raise RuntimeError("Client not connected")
+                
+            # Use FastMCP Client call_tool API with proper argument format
+            async with self.client as session:
+                result = await session.call_tool(tool.name, kwargs)
+                
+            # Extract text content from FastMCP result
+            if isinstance(result, list) and len(result) > 0:
+                # Handle TextContent objects from FastMCP
+                if hasattr(result[0], 'text'):
+                    return result[0].text
+                elif hasattr(result[0], 'content'):
+                    return result[0].content
+                else:
+                    return result[0]
+            return result
+        
+        # Add metadata for debugging
+        tool_wrapper.__name__ = tool.name
+        tool_wrapper.__doc__ = tool.description if hasattr(tool, 'description') else f"MCP tool: {tool.name}"
+        
+        return tool_wrapper
 
     async def call_tool(self, tool_name: str, **kwargs) -> Any:
         """Call a specific tool with arguments.
@@ -212,7 +249,7 @@ def create_modern_mcp_client(
     return ModernMCPClient(
         transport=transport,
         server_command="python",
-        server_args=["-m", "src.mcp.modern_server"],
+        server_args=["-m", "src.anime_mcp.server"],  # Use core server for stability
         host=host,
         port=port,
         url=url

@@ -1,58 +1,68 @@
 # CLAUDE.md
 
-## ⚡ ESSENTIAL FLOW (Session Start)
+## SESSION START PROTOCOL
 
-1. **Read Rules**: `Rules/memory.md` → `Rules/plan.md` OR `Rules/implement.md`
-2. **Load Memory**: `docs/product_requirement_docs.md` → `docs/architecture.md` → `docs/technical.md` → `tasks/tasks_plan.md` → `tasks/active_context.md`
-3. **Check State**: `TodoRead` → Determine MODE (PLAN/ACT) → Get `src/` context if ACT
-4. **Environment**: `source venv/bin/activate` + `docker compose up -d qdrant`
-5. **Execute**: PLAN (Strategy→Present→Document) OR ACT (6-Step Protocol: Analyze→Plan→Change→Test→Loop→Optimize)
-6. **Validate**: Update `src/` + `docs/` + `tasks/` + `Rules/` + Complete testing before done
-7. **Critical**: Never exceed 500 lines/file, MANDATORY testing, preserve working code
-8. **Commands**: `pytest tests/ -v` (testing), `python -m src.anime_mcp.modern_server` (MCP), `python scripts/verify_mcp_server.py` (verify)
-9. **Debug**: DIAGNOSE→REASON→FIX→DOCUMENT in `Rules/error-documentation.md`
-10. **Complete**: TodoWrite progress + Memory files updated + Ready for next task
-
----
-
-_Full details below ↓_
-
-This file provides guidance to Claude Code when working with this anime MCP server codebase.
-
-## 🎯 CRITICAL CONTEXT (Read First)
-
-**Project**: Anime MCP Server - FastAPI + Qdrant vector database providing semantic search over 38,000+ anime entries
-**Purpose**: MCP tool integration for AI assistants with advanced search capabilities
-**Key Tech**: FastAPI, Qdrant, LangGraph, CLIP, FastEmbed, Pydantic
-
-### Essential Pre-Work Checklist (MANDATORY RULE COMPLIANCE)
-
-**Rule Loading (ALWAYS FIRST):**
-
-- [ ] Read `Rules/rules.md` (base improvement rules)
+### MANDATORY RULE LOADING (ALWAYS FIRST)
 - [ ] Read `Rules/memory.md` (memory management workflow)
 - [ ] Read `Rules/plan.md` (if planning) OR `Rules/implement.md` (if coding)
 
-**Memory Hierarchy (Follow rules/memory.mdc sequence):**
-
+### MEMORY HIERARCHY (Load in sequence)
 - [ ] Read `docs/product_requirement_docs.md` (foundation)
-- [ ] Read `docs/architecture.md` (system design)
+- [ ] Read `docs/architecture.md` (system design) 
 - [ ] Read `docs/technical.md` (implementation details)
 - [ ] Read `tasks/tasks_plan.md` (project progress)
 - [ ] Read `tasks/active_context.md` (current state)
 
-**Current State Assessment:**
+### ENVIRONMENT SETUP
+```bash
+source venv/bin/activate                    # Always activate venv first
+docker compose up -d qdrant                 # Start Qdrant vector DB
+```
 
-- [ ] Use `TodoRead` to check current tasks
-- [ ] Identify current MODE: PLAN (architect) vs ACT (code)
-- [ ] Get required code context from `src/` if needed
+### EXECUTION MODES
+**PLAN MODE**: Strategy→Present→Document  
+**ACT MODE**: 6-Step Protocol (Analyze→Plan→Change→Test→Loop→Optimize)
 
-**Development Environment:**
+### CRITICAL RULES
+- **File Size Limit**: Never exceed 500 lines per file
+- **Testing**: MANDATORY for any functionality 
+- **Code Preservation**: Don't modify working components without necessity
+- **Stop Rule**: "Stop only when you're done till successfully testing, not before"
 
-- [ ] Always use `source venv/bin/activate` before Python commands
-- [ ] Ensure Qdrant is running: `docker-compose up -d qdrant`
+### ESSENTIAL COMMANDS
+```bash
+# Testing
+pytest tests/ -v                           # All tests
+pytest -m unit -v                          # Unit tests only
+pytest -m integration -v                   # Integration tests only
 
-## 🏗️ ARCHITECTURE OVERVIEW
+# MCP Servers
+python -m src.anime_mcp.modern_server      # Modern workflow server (stdio)
+python -m src.anime_mcp.server             # Core MCP server (stdio)
+python scripts/verify_mcp_server.py        # MCP verification
+
+# Health Checks
+curl http://localhost:8000/health          # System health
+curl http://localhost:8000/stats           # Database stats
+```
+
+### TASK COMPLETION VALIDATION (After Every Task)
+- [ ] All affected code updated in src/
+- [ ] Documentation updated in docs/ and tasks/
+- [ ] Testing completed (for implementation tasks)
+- [ ] TodoWrite updated with progress
+- [ ] Memory files updated if significant changes made
+
+---
+
+## PROJECT CONTEXT
+
+**Project**: Anime MCP Server - FastAPI + Qdrant vector database providing semantic search over 38,000+ anime entries  
+**Purpose**: MCP tool integration for AI assistants with advanced search capabilities  
+**Key Tech**: FastAPI, Qdrant, LangGraph, CLIP, FastEmbed, Pydantic
+
+
+## ARCHITECTURE OVERVIEW
 
 ### Core Stack
 
@@ -81,42 +91,18 @@ FastAPI Server (src/main.py)
 3. **Query**: Natural language → LangGraph → Structured search
 4. **Results**: Ranked anime with quality scores
 
-## 🚀 QUICK START
-
-### Development Setup
+## SERVER STARTUP
 
 ```bash
-# Start services
-docker-compose up -d qdrant
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Start server
-python -m src.main
-# OR with auto-reload
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### Essential Commands
-
-```bash
-# Testing
-pytest tests/ -v                    # All tests
-pytest -m unit -v                   # Unit tests only
-pytest -m integration -v            # Integration tests only
+# Start FastAPI server
+python -m src.main                                 # Basic startup
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000  # With auto-reload
 
 # Data management
-curl -X POST http://localhost:8000/api/admin/update-full
-curl http://localhost:8000/stats
-
-# MCP server modes (choose based on use case)
-python -m src.anime_mcp.modern_server               # Modern workflow server (stdio mode)
-python -m src.anime_mcp.modern_server --mode sse --port 8001  # Modern server (SSE mode)
-python -m src.anime_mcp.server                     # Core MCP server (stdio mode)
-python -m src.anime_mcp.server --mode sse --port 8001       # Core server (SSE mode)
+curl -X POST http://localhost:8000/api/admin/update-full   # Update database
 ```
 
-## 🔗 MCP PROTOCOL INTEGRATION
+## MCP PROTOCOL INTEGRATION
 
 ### MCP Servers (Two Available)
 
@@ -132,20 +118,13 @@ python -m src.anime_mcp.server --mode sse --port 8001       # Core server (SSE m
 - **Transport modes**: stdio, sse
 - **Tools**: discover_anime, get_currently_airing_anime, find_similar_anime_workflow
 
-### Quick MCP Commands
+### MCP Transport Modes
 
 ```bash
-# Local development (stdio mode) - recommended for AI assistants
-python -m src.anime_mcp.modern_server           # Workflow tools + LangGraph
-python -m src.anime_mcp.server                 # Core tools + platform tools
-
 # Web/remote clients - core server only (modern server only supports sse)
 python -m src.anime_mcp.server --mode http --port 8001     # HTTP transport
 python -m src.anime_mcp.server --mode sse --port 8001      # Server-Sent Events
 python -m src.anime_mcp.server --mode streamable --port 8001  # Streamable HTTP
-
-# Test MCP functionality
-python scripts/verify_mcp_server.py            # Comprehensive testing
 ```
 
 ### MCP Development Notes
@@ -155,7 +134,7 @@ python scripts/verify_mcp_server.py            # Comprehensive testing
 - **Testing**: Always run `verify_mcp_server.py` after MCP changes
 - **Tool count**: 31 total (8 core + 4 workflow + 14 platform + 5 enrichment)
 
-## 📁 FILE STRUCTURE
+## FILE STRUCTURE
 
 ```
 src/
@@ -164,7 +143,7 @@ src/
 ├── api/                   # REST endpoints
 │   ├── search.py          # Search endpoints
 │   ├── admin.py           # Admin endpoints
-│   └── workflow.py        # LangGraph workflow endpoints
+│   └── query.py           # Universal query endpoint
 ├── langgraph/             # AI workflow orchestration
 │   ├── langchain_tools.py        # LangChain tool creation
 │   └── react_agent_workflow.py  # Main ReactAgent workflow
@@ -190,9 +169,9 @@ src/
     └── rate_limiting/            # Multi-tier rate limiting
 ```
 
-## 💻 DEVELOPMENT RULES
+## DEVELOPMENT RULES
 
-### 🔄 SYSTEMATIC CODE PROTOCOL (Implementation Tasks)
+### SYSTEMATIC CODE PROTOCOL (Implementation Tasks)
 
 **Step 1: ANALYZE CODE**
 
@@ -221,7 +200,7 @@ src/
 **Step 5: LOOP** - Implement all changes systematically
 **Step 6: OPTIMIZE** - After all changes tested and verified
 
-### 🎯 Task Execution Rules
+### Task Execution Rules
 
 **BEFORE Every Task:**
 
@@ -258,23 +237,11 @@ src/
 - **Test Structure**: Mirror main app structure in `/tests`
 - **Mandatory Testing**: Any functionality MUST have tests (Rules/implement.md)
 - **Test Types**: Unit tests for components, integration for workflows
-- **Coverage Target**: >80% (currently at 6% - major violation)
+- **Coverage Target**: >80% 
 - **Test Before Complete**: Never finish implementation without testing
 - **Markers**: Use `pytest -m unit` or `pytest -m integration`
 
-### 📋 Task Completion Validation (After Every Task)
-
-strictly follow steps defined in Rules/implement.md
-
-- [ ] All affected code updated in src/
-- [ ] Documentation updated in docs/ and tasks/
-- [ ] Testing completed (for implementation tasks)
-- [ ] TodoWrite updated with progress
-- [ ] Memory files updated if significant changes made
-- [ ] Rules/lessons-learned.md updated if new patterns discovered
-- [ ] Rules/error-documentation.md updated if errors resolved
-
-### 🐛 Debug Protocol (When Stuck)
+### Debug Protocol (When Stuck)
 
 **DIAGNOSE:**
 
@@ -292,7 +259,7 @@ strictly follow steps defined in Rules/implement.md
 6. Implement using SYSTEMATIC CODE PROTOCOL, defined in Rules/implement.md
 7. Document solution in Rules/error-documentation.md
 
-## 🎛️ ENVIRONMENT SETUP
+## ENVIRONMENT SETUP
 
 ### Required .env Variables
 
@@ -312,13 +279,13 @@ ENABLE_MULTI_VECTOR=true
 docker-compose up
 
 # Qdrant only
-docker-compose up -d qdrant
+docker compose up -d qdrant
 
 # Manual Qdrant
 docker run --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
 ```
 
-## 📊 KEY IMPLEMENTATION DETAILS
+## KEY IMPLEMENTATION DETAILS
 
 ### Vector Database
 
@@ -340,7 +307,7 @@ docker run --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
 - **Query Understanding**: Natural language → structured parameters
 - **Multi-step Discovery**: Result refinement and preference learning
 
-## 🚨 AI BEHAVIOR RULES
+## AI BEHAVIOR RULES
 
 ### Safety & Accuracy
 
@@ -355,20 +322,13 @@ docker run --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
 - Comment non-obvious code for mid-level developer understanding
 - Add `# Reason:` comments for complex logic explaining why, not what
 
-## 🔍 VERIFICATION COMMANDS
-
-### Health Checks
+## VERIFICATION & TESTING
 
 ```bash
-curl http://localhost:8000/health         # System health
-curl http://localhost:8000/stats          # Database stats
+# Quick verification
 curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"  # Search test
-python scripts/verify_mcp_server.py      # MCP server verification
-```
 
-### Test Coverage
-
-```bash
+# Comprehensive testing  
 pytest tests/ --cov=src --cov-report=html  # Coverage report
 mypy src/                                   # Type checking
 ```

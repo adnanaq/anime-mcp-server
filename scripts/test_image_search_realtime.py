@@ -8,7 +8,7 @@ comprehensive image search features work correctly.
 
 Usage:
     # Start services first
-    docker-compose up -d qdrant
+    docker compose up -d qdrant
     python -m src.main &
     
     # Then run this test
@@ -291,7 +291,7 @@ def main():
     # Test service health
     if not test_service_health():
         print("\n❌ Services not healthy. Please start them first:")
-        print("   docker-compose up -d qdrant")
+        print("   docker compose up -d qdrant")
         print("   python -m src.main")
         return False
     

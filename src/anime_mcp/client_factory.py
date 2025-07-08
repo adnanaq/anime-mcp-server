@@ -46,7 +46,7 @@ def create_mcp_client(
     return ModernMCPClient(
         transport=protocol,
         server_command="python",
-        server_args=["run_modern_server.py"],  # Use direct script entry point
+        server_args=["run_core_server.py"],  # Use core server script entry point
         host=host,
         port=port,
         url=url

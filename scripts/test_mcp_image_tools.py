@@ -333,7 +333,7 @@ def main():
         print("Check the logs above for details")
     
     print("\n📋 To test with real data:")
-    print("1. Start Qdrant: docker-compose up -d qdrant")
+    print("1. Start Qdrant: docker compose up -d qdrant")
     print("2. Load anime data: curl -X POST http://localhost:8000/api/admin/update-full")
     print("3. Wait for indexing to complete")
     print("4. Run this test again for real results")

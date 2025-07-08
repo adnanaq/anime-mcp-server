@@ -135,7 +135,8 @@ class ReactAgentWorkflowEngine:
 - Get detailed information about specific anime
 - Find similar anime based on content or visual similarity
 - Provide personalized recommendations with filtering
-- Search using images and multimodal queries
+- **IMAGE SEARCH**: Search anime using uploaded images via search_anime_by_image or search_multimodal_anime tools
+- **MULTIMODAL SEARCH**: Combine text queries with image data for enhanced search results
 
 ## AI-Powered Query Analysis:
 When users make requests, carefully analyze their natural language to extract:
@@ -152,13 +153,18 @@ When users make requests, carefully analyze their natural language to extract:
 - "recommend Studio Ghibli movies from the 90s" → studios: ["Studio Ghibli"], anime_types: ["Movie"], year_range: [1990, 1999]
 - "something dark and serious but uplifting" → mood_keywords: ["dark", "serious", "uplifting"], exclusions: ["comedy"]
 
-When calling the search_anime tool, you MUST:
-1. Include the original user query text in the 'query' parameter (REQUIRED)
-2. For simple genre queries (like "science fiction", "action", "romance"), use ONLY the query parameter and DO NOT extract genre filters
-3. Only extract structured parameters for complex queries with multiple requirements
-4. Use your understanding to make intelligent parameter choices that match the user's intent
+When calling search tools, you MUST:
+1. **For text queries**: Use search_anime tool with the original user query text in the 'query' parameter (REQUIRED)
+2. **For image queries**: When user provides an image or mentions "this image", use search_anime_by_image tool with the image_data
+3. **For multimodal queries**: When user provides both text and image, use search_multimodal_anime tool with both query and image_data
+4. For simple genre queries (like "science fiction", "action", "romance"), use ONLY the query parameter and DO NOT extract genre filters
+5. Only extract structured parameters for complex queries with multiple requirements
 
-**IMPORTANT**: The 'query' field is required and must contain the user's original search text. For simple searches, rely on semantic search rather than strict filtering."""
+**IMPORTANT**: 
+- Always check if image_data is available in the conversation context for image/multimodal searches
+- The 'query' field is required and must contain the user's original search text
+- For simple searches, rely on semantic search rather than strict filtering
+- When user asks to "search by image" or "find anime like this image", use search_anime_by_image tool"""
 
     async def process_conversation(
         self,
@@ -203,13 +209,17 @@ When calling the search_anime tool, you MUST:
                     f"{message}\n\nExplicit search parameters: {search_parameters}"
                 )
 
+            # Add multimodal context if image data provided  
+            if image_data:
+                # IMPORTANT: Enhance message to explicitly tell LLM about image data
+                enhanced_message += f"\n\n[SYSTEM: Image data is available with {len(image_data)} characters of base64 data. Use search_anime_by_image or search_multimodal_anime tools for image-based searches.]"
+
             input_data: Dict[str, Any] = {
                 "messages": [HumanMessage(content=enhanced_message)]
             }
 
-            # Add multimodal context if image data provided
+            # Store multimodal data in agent state for tool access
             if image_data:
-                # Store image data in agent state for multimodal tools
                 input_data["image_data"] = image_data
                 input_data["text_weight"] = text_weight
 

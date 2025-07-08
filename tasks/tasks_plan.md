@@ -283,21 +283,27 @@
 ### Phase 1: Universal Query System
 
 #### Task Group A: Universal Query Implementation
-- **Task #52**: 🔄 `/api/query` Universal Endpoint Implementation - IN PROGRESS
-  - **Status**: 🔄 IN PROGRESS - Renaming and enhancing existing workflow endpoint
-  - **Current**: Functionality exists via `/api/workflow/conversation`, `/api/workflow/multimodal`, `/api/workflow/smart-conversation`
-  - **Strategy**: Consolidate 3 workflow endpoints into single `/api/query` with auto-detection
-  - **File**: `src/api/workflow.py` (rename to `src/api/query.py`)
+- **Task #52**: 🔄 `/api/query` Universal Endpoint Implementation - PARTIAL COMPLETION
+  - **Status**: 🔄 IMPLEMENTATION COMPLETE, TESTING IN PROGRESS - Dependencies resolved, core functionality implemented
+  - **Implementation**: Renamed `src/api/workflow.py` → `src/api/query.py`
+  - **Achievement**: Consolidated 3 workflow endpoints into single `/api/query` with auto-detection
+  - **Files Implemented**: 
+    - `src/api/query.py` - Universal query endpoint with auto-detection
+    - `src/anime_mcp/modern_client.py` - Fixed MCP tool wrapper functions for LangGraph
+    - `requirements.txt` - Added missing langgraph-swarm dependency
   
-  **Phase 1 Implementation (Current Sprint)**:
-  - ✅ LangGraph ReactAgent with 8 MCP tools (ALREADY IMPLEMENTED)
-  - ✅ Text-only conversation processing (ALREADY IMPLEMENTED)
-  - ✅ Multimodal text+image processing (ALREADY IMPLEMENTED)
-  - ✅ Smart orchestration capabilities (ALREADY IMPLEMENTED)
-  - 🔄 Rename `/api/workflow/conversation` → `/api/query`
-  - 🔄 Create unified UniversalQueryRequest/Response models
-  - 🔄 Auto-detection for text vs multimodal queries
-  - 🔄 Correlation ID tracking integration
+  **Phase 1 Implementation (IMPLEMENTATION COMPLETE, TESTING IN PROGRESS)**:
+  - ✅ LangGraph ReactAgent with MCP tools integration
+  - ✅ LangGraph dependency issues resolved (langgraph-swram package)
+  - ✅ MCP tool integration fixed (callable wrapper functions)
+  - ✅ MAL/Jikan individual tools tested and validated
+  - ✅ Unified QueryRequest/ConversationResponse models
+  - ✅ Correlation ID tracking integration
+  - 🔄 Text-only conversation processing via `/api/query` - **NEEDS TESTING**
+  - 🔄 Multimodal text+image processing via `/api/query` - **NEEDS TESTING**
+  - 🔄 Auto-detection for text vs multimodal queries - **NEEDS TESTING**
+  - 🔄 Session management with conversation flow - **NEEDS TESTING**
+  - 🔄 Image search functionality through universal endpoint - **NEEDS TESTING**
 
   **Multimodal Enhancement Roadmap**:
   

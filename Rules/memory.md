@@ -78,6 +78,7 @@ There are **7 required files** that form the base of the memory file system:
 - Key technical decisions
 - Design patterns in use
 - Technical constraints
+- No Implementation code samples or snippets
 
 ---
 

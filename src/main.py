@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import admin, search, workflow
+from .api import admin, search, query
 from .api.external import (
     anidb,
     anilist,
@@ -106,7 +106,7 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(search.router, prefix="/api/search", tags=["search"])
-app.include_router(workflow.router, prefix="/api/workflow", tags=["workflow"])
+app.include_router(query.router, prefix="/api/query", tags=["query"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 # Include external service routes
@@ -133,7 +133,7 @@ async def root():
         "endpoints": {
             "search": "/api/search",
             "admin": "/api/admin",
-            "workflow": "/api/workflow",
+            "query": "/api/query",
             "external": {
                 "anilist": "/api/external/anilist",
                 "mal": "/api/external/mal",
@@ -151,7 +151,7 @@ async def root():
             "semantic_search": True,
             "image_search": True,
             "multimodal_search": True,
-            "conversational_workflows": True,
+            "universal_query_interface": True,
             "mcp_protocol": True,
         },
     }
