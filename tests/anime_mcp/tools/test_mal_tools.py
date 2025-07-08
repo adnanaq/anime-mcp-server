@@ -498,6 +498,29 @@ class TestMALToolsEdgeCases:
             assert mock_client.search_anime.call_count >= 7
 
     @pytest.mark.asyncio
+    async def test_mal_tools_fields_type_safety(self):
+        """Test type safety of fields parameter."""
+        mock_client = AsyncMock()
+        mock_mapper = MagicMock()
+        mock_mapper.to_mal_search_params.return_value = {"q": "test", "limit": 20, "offset": 0}
+        mock_client.search_anime.return_value = []
+        
+        with patch('src.anime_mcp.tools.mal_tools.mal_client', mock_client), \
+             patch('src.anime_mcp.tools.mal_tools.mal_mapper', mock_mapper):
+            
+            # Test invalid type (int)
+            with pytest.raises(RuntimeError, match="Fields must be string or list of strings, got: int"):
+                await _search_anime_mal_impl(query="test", fields=123)
+            
+            # Test invalid list (contains non-strings)
+            with pytest.raises(RuntimeError, match="All fields must be strings"):
+                await _search_anime_mal_impl(query="test", fields=["id", 123, "title"])
+            
+            # Test invalid type (dict)
+            with pytest.raises(RuntimeError, match="Fields must be string or list of strings, got: dict"):
+                await _search_anime_mal_impl(query="test", fields={"id": "title"})
+
+    @pytest.mark.asyncio
     async def test_mal_seasonal_parameter_validation(self):
         """Test parameter validation for seasonal MAL tools."""
         mock_client = AsyncMock()

@@ -78,11 +78,17 @@ async def _search_anime_mal_impl(
         
         # Add fields parameter - use provided fields or default comprehensive set from MAL mapper
         if fields:
-            # Handle both string and list inputs for flexibility
+            # Handle both string and list inputs for flexibility with type safety
             if isinstance(fields, str):
                 mal_params["fields"] = fields
+            elif isinstance(fields, list):
+                # Type-safe check that all elements are strings
+                if all(isinstance(field, str) for field in fields):
+                    mal_params["fields"] = ",".join(fields)
+                else:
+                    raise TypeError(f"All fields must be strings, got: {[type(f).__name__ for f in fields]}")
             else:
-                mal_params["fields"] = ",".join(fields)
+                raise TypeError(f"Fields must be string or list of strings, got: {type(fields).__name__}")
         else:
             # All available MAL API fields from mal_mapper.py (lines 78-156)
             default_fields = [
