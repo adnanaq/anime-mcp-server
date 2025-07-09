@@ -10,14 +10,13 @@ from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
 from ...integrations.clients.animeschedule_client import AnimeScheduleClient
-from ...integrations.mappers.animeschedule_mapper import AnimeScheduleMapper
-from ...models.universal_anime import UniversalSearchParams
+from ...models.structured_responses import BasicSearchResponse, BasicAnimeResult, AnimeType, AnimeStatus
 from ...config import get_settings
 
 # Initialize components
 settings = get_settings()
 animeschedule_client = AnimeScheduleClient()
-animeschedule_mapper = AnimeScheduleMapper()
+# Using direct API calls instead of AnimeScheduleMapper
 
 # Create FastMCP instance for tools
 mcp = FastMCP("AnimeSchedule Tools")

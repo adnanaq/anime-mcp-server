@@ -141,21 +141,12 @@ async def _search_anime_mal_impl(
         await ctx.info(f"Searching MAL for '{query}' with {limit} results")
     
     try:
-        # Create UniversalSearchParams for mapping
-        universal_params = UniversalSearchParams(
-            query=query,
-            limit=min(limit, 100),
-            offset=offset
-        )
-        
-        # Build MAL-specific parameters (only limit/offset)
-        mal_specific = {
+        # Build MAL API parameters directly (simplified - MAL API has limited parameters)
+        mal_params = {
+            "q": query,
             "limit": min(limit, 100),
             "offset": offset
         }
-        
-        # Use mapper to convert parameters
-        mal_params = mal_mapper.to_mal_search_params(universal_params, mal_specific)
         
         # Process fields parameter
         mal_params["fields"] = _process_fields_parameter(fields, MAL_DEFAULT_FIELDS)

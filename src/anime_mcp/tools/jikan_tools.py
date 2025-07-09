@@ -255,37 +255,59 @@ async def get_anime_jikan(
                 await ctx.info(f"Anime with MAL ID {mal_id} not found via Jikan")
             return None
         
-        # Convert base data
-        universal_anime = jikan_mapper.to_universal_anime(raw_result)
+        # Extract title and basic data
+        primary_title = raw_result.get("title") or raw_result.get("title_english") or "Unknown"
+        
+        # Extract aired dates
+        aired_data = raw_result.get("aired", {})
+        start_date = aired_data.get("from")
+        end_date = aired_data.get("to")
+        
+        # Map type to AnimeType
+        anime_type = None
+        jikan_type = raw_result.get("type")
+        if jikan_type:
+            if jikan_type.upper() == "TV":
+                anime_type = AnimeType.TV
+            elif jikan_type.upper() == "MOVIE":
+                anime_type = AnimeType.MOVIE
+            elif jikan_type.upper() == "OVA":
+                anime_type = AnimeType.OVA
+            elif jikan_type.upper() == "ONA":
+                anime_type = AnimeType.ONA
+            elif jikan_type.upper() == "SPECIAL":
+                anime_type = AnimeType.SPECIAL
+            elif jikan_type.upper() == "MUSIC":
+                anime_type = AnimeType.MUSIC
         
         # Build comprehensive response
         result = {
-            "id": universal_anime.id,
-            "title": universal_anime.title,
+            "id": str(mal_id),
+            "title": primary_title,
             "title_english": raw_result.get("title_english"),
             "title_japanese": raw_result.get("title_japanese"),
             "title_synonyms": raw_result.get("title_synonyms", []),
-            "synopsis": universal_anime.description,
+            "synopsis": raw_result.get("synopsis"),
             "background": raw_result.get("background"),
             
             # Basic information
-            "type": universal_anime.type_format,
-            "episodes": universal_anime.episodes,
-            "status": universal_anime.status,
+            "type": anime_type,
+            "episodes": raw_result.get("episodes"),
+            "status": raw_result.get("status"),
             "aired": {
-                "from": universal_anime.start_date,
-                "to": universal_anime.end_date,
-                "prop": raw_result.get("aired", {}).get("prop", {}),
-                "string": raw_result.get("aired", {}).get("string")
+                "from": start_date,
+                "to": end_date,
+                "prop": aired_data.get("prop", {}),
+                "string": aired_data.get("string")
             },
             "duration": raw_result.get("duration"),
             "rating": raw_result.get("rating"),
             "source": raw_result.get("source"),
             "season": raw_result.get("season"),
-            "year": universal_anime.year,
+            "year": raw_result.get("year"),
             
             # Community metrics
-            "score": universal_anime.score,
+            "score": raw_result.get("score"),
             "scored_by": raw_result.get("scored_by"),
             "rank": raw_result.get("rank"),
             "popularity": raw_result.get("popularity"),
@@ -383,8 +405,7 @@ async def get_anime_jikan(
             "reviews": [],
             
             # Source attribution
-            "source_platform": "jikan",
-            "data_quality_score": universal_anime.data_quality_score
+            "source_platform": "jikan"
         }
         
         # Fetch optional data based on parameters
@@ -522,20 +543,38 @@ async def get_jikan_seasonal(
         results = []
         for raw_result in raw_results:
             try:
-                universal_anime = jikan_mapper.to_universal_anime(raw_result)
+                # Extract title and basic data
+                primary_title = raw_result.get("title") or raw_result.get("title_english") or "Unknown"
+                
+                # Map type to AnimeType
+                anime_type = None
+                jikan_type = raw_result.get("type")
+                if jikan_type:
+                    if jikan_type.upper() == "TV":
+                        anime_type = AnimeType.TV
+                    elif jikan_type.upper() == "MOVIE":
+                        anime_type = AnimeType.MOVIE
+                    elif jikan_type.upper() == "OVA":
+                        anime_type = AnimeType.OVA
+                    elif jikan_type.upper() == "ONA":
+                        anime_type = AnimeType.ONA
+                    elif jikan_type.upper() == "SPECIAL":
+                        anime_type = AnimeType.SPECIAL
+                    elif jikan_type.upper() == "MUSIC":
+                        anime_type = AnimeType.MUSIC
                 
                 result = {
-                    "id": universal_anime.id,
-                    "title": universal_anime.title,
-                    "type": universal_anime.type_format,
-                    "episodes": universal_anime.episodes,
-                    "score": universal_anime.score,
-                    "year": universal_anime.year,
-                    "status": universal_anime.status,
+                    "id": str(raw_result.get("mal_id", "")),
+                    "title": primary_title,
+                    "type": anime_type,
+                    "episodes": raw_result.get("episodes"),
+                    "score": raw_result.get("score"),
+                    "year": raw_result.get("year"),
+                    "status": raw_result.get("status"),
                     "genres": [genre.get("name") for genre in raw_result.get("genres", [])],
                     "studios": [studio.get("name") for studio in raw_result.get("studios", [])],
-                    "synopsis": universal_anime.description,
-                    "image_url": universal_anime.image_url,
+                    "synopsis": raw_result.get("synopsis"),
+                    "image_url": raw_result.get("images", {}).get("jpg", {}).get("image_url"),
                     
                     # Jikan seasonal data
                     "mal_id": raw_result.get("mal_id"),
@@ -546,8 +585,7 @@ async def get_jikan_seasonal(
                     "season_year": year,
                     "continuing": raw_result.get("continuing", False),
                     
-                    "source_platform": "jikan",
-                    "data_quality_score": universal_anime.data_quality_score
+                    "source_platform": "jikan"
                 }
                 
                 results.append(result)

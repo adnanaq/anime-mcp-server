@@ -12,7 +12,7 @@ from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
 from ...langgraph.enrichment_tools import CrossPlatformEnrichment
-from ...models.universal_anime import UniversalSearchParams
+# No Universal parameter dependencies - uses CrossPlatformEnrichment system
 
 logger = logging.getLogger(__name__)
 
