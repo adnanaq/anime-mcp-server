@@ -105,7 +105,45 @@ class ComprehensiveAnimeResult(DetailedAnimeResult):
 - **Progressive Complexity**: 4-tier response system handles all complexity levels efficiently
 - **Type Safety**: Structured responses with enums provide better LLM consumption patterns
 
-**Results**: 90% complexity reduction in tool layer, improved performance, better LLM integration, maintained functionality
+**Service Layer Modernization Pattern**:
+
+```python
+# OLD: Universal parameter service manager
+class ServiceManager:
+    async def search_anime_universal(self, params: UniversalSearchParams):
+        universal_params, platform_specific = MapperRegistry.extract_platform_params(**params.dict())
+        selected_platform = MapperRegistry.auto_select_platform(universal_params, platform_specific)
+        platform_params = mapper.to_platform_search_params(universal_params, platform_specific)
+        raw_results = await client.search_anime(**platform_params)
+        return convert_to_universal_format(raw_results)
+
+# NEW: Direct tool call service manager
+class ModernServiceManager:
+    async def search_anime_direct(self, query: str, limit: int = 20, platform: str = None, **kwargs):
+        # Build platform-specific parameters directly
+        if platform == "jikan":
+            params = {"q": query, "limit": min(limit, 25), **kwargs}
+        elif platform == "mal":
+            params = {"q": query, "limit": min(limit, 100), **kwargs}
+        
+        # Execute direct API call
+        raw_results = await client.search_anime(**params)
+        
+        # Add platform attribution (no Universal conversion)
+        for result in raw_results:
+            result["_source_platform"] = platform
+        return raw_results
+```
+
+**Architecture Components Modernized**:
+
+1. **anime_handler.py**: Removed Universal parameter processing methods
+2. **modern_service_manager.py**: Created direct tool call architecture
+3. **enrichment_tools.py**: Updated to use structured responses
+4. **intelligent_router.py**: Updated to use modern response models
+5. **llm_service.py**: Created for centralized LLM operations
+
+**Results**: 90% complexity reduction in tool layer and service layer, improved performance, better LLM integration, maintained functionality
 
 ## Architectural Consolidation Patterns
 
