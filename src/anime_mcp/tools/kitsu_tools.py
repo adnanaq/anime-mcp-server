@@ -10,13 +10,13 @@ from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
 from ...integrations.clients.kitsu_client import KitsuClient
-from ...integrations.mappers.kitsu_mapper import KitsuMapper
+from ...models.structured_responses import BasicSearchResponse, BasicAnimeResult, AnimeType, AnimeStatus
 from ...config import get_settings
 
 # Initialize components
 settings = get_settings()
 kitsu_client = KitsuClient()
-kitsu_mapper = KitsuMapper()
+# Using direct API calls instead of KitsuMapper
 
 # Create FastMCP instance for tools
 mcp = FastMCP("Kitsu Tools")
@@ -169,36 +169,60 @@ async def search_anime_kitsu(
         # Execute search
         raw_results = await kitsu_client.search_anime(params)
         
-        # Convert to standardized format
+        # Convert to structured response format
         results = []
         for raw_result in raw_results:
             try:
-                universal_anime = kitsu_mapper.to_universal_anime(raw_result)
-                
                 # Extract Kitsu attributes
                 attributes = raw_result.get("attributes", {})
                 relationships = raw_result.get("relationships", {})
                 
+                # Extract titles
+                primary_title = attributes.get("canonicalTitle") or attributes.get("titles", {}).get("en") or "Unknown"
+                
+                # Extract date info
+                start_date = attributes.get("startDate")
+                year = None
+                if start_date and "-" in start_date:
+                    year = int(start_date.split("-")[0])
+                
+                # Map subtype to AnimeType
+                anime_type = None
+                subtype = attributes.get("subtype")
+                if subtype:
+                    if subtype.upper() == "TV":
+                        anime_type = AnimeType.TV
+                    elif subtype.upper() == "MOVIE":
+                        anime_type = AnimeType.MOVIE
+                    elif subtype.upper() == "OVA":
+                        anime_type = AnimeType.OVA
+                    elif subtype.upper() == "ONA":
+                        anime_type = AnimeType.ONA
+                    elif subtype.upper() == "SPECIAL":
+                        anime_type = AnimeType.SPECIAL
+                    elif subtype.upper() == "MUSIC":
+                        anime_type = AnimeType.MUSIC
+                
                 # Build comprehensive result
                 result = {
-                    "id": universal_anime.id,
-                    "title": universal_anime.title,
+                    "id": str(raw_result.get("id", "")),
+                    "title": primary_title,
                     "canonical_title": attributes.get("canonicalTitle"),
                     "abbreviated_titles": attributes.get("abbreviatedTitles", []),
-                    "type": universal_anime.type_format,
-                    "subtype": attributes.get("subtype"),
-                    "episodes": universal_anime.episodes,
+                    "type": anime_type,
+                    "subtype": subtype,
+                    "episodes": attributes.get("episodeCount"),
                     "episode_length": attributes.get("episodeLength"),
                     "total_length": attributes.get("totalLength"),
-                    "score": universal_anime.score,
-                    "year": universal_anime.year,
-                    "start_date": universal_anime.start_date,
-                    "end_date": universal_anime.end_date,
+                    "score": attributes.get("averageRating"),
+                    "year": year,
+                    "start_date": start_date,
+                    "end_date": attributes.get("endDate"),
                     "season": attributes.get("season"),
-                    "status": universal_anime.status,
-                    "genres": universal_anime.genres or [],
-                    "synopsis": universal_anime.description,
-                    "image_url": universal_anime.image_url,
+                    "status": attributes.get("status"),
+                    "genres": [],  # Kitsu uses categories
+                    "synopsis": attributes.get("description") or attributes.get("synopsis"),
+                    "image_url": attributes.get("posterImage", {}).get("large") or attributes.get("posterImage", {}).get("medium"),
                     
                     # Kitsu-specific data
                     "kitsu_id": raw_result.get("id"),
@@ -240,7 +264,6 @@ async def search_anime_kitsu(
                     
                     # Source attribution
                     "source_platform": "kitsu",
-                    "data_quality_score": universal_anime.data_quality_score,
                     "last_updated": attributes.get("updatedAt")
                 }
                 
@@ -334,38 +357,61 @@ async def get_anime_kitsu(
                 await ctx.info(f"Anime with Kitsu ID {kitsu_id} not found")
             return None
         
-        # Convert base data
-        universal_anime = kitsu_mapper.to_universal_anime(raw_result)
-        
         # Extract detailed Kitsu data
         attributes = raw_result.get("attributes", {})
         relationships = raw_result.get("relationships", {})
         
+        # Extract titles
+        primary_title = attributes.get("canonicalTitle") or attributes.get("titles", {}).get("en") or "Unknown"
+        
+        # Extract date info
+        start_date = attributes.get("startDate")
+        year = None
+        if start_date and "-" in start_date:
+            year = int(start_date.split("-")[0])
+        
+        # Map subtype to AnimeType
+        anime_type = None
+        subtype = attributes.get("subtype")
+        if subtype:
+            if subtype.upper() == "TV":
+                anime_type = AnimeType.TV
+            elif subtype.upper() == "MOVIE":
+                anime_type = AnimeType.MOVIE
+            elif subtype.upper() == "OVA":
+                anime_type = AnimeType.OVA
+            elif subtype.upper() == "ONA":
+                anime_type = AnimeType.ONA
+            elif subtype.upper() == "SPECIAL":
+                anime_type = AnimeType.SPECIAL
+            elif subtype.upper() == "MUSIC":
+                anime_type = AnimeType.MUSIC
+        
         # Build comprehensive response
         result = {
-            "id": universal_anime.id,
-            "title": universal_anime.title,
+            "id": str(kitsu_id),
+            "title": primary_title,
             "canonical_title": attributes.get("canonicalTitle"),
             "titles": attributes.get("titles", {}),
             "abbreviated_titles": attributes.get("abbreviatedTitles", []),
             "slug": attributes.get("slug"),
-            "synopsis": universal_anime.description,
+            "synopsis": attributes.get("description") or attributes.get("synopsis"),
             "description": attributes.get("description"),
             
             # Media information
-            "type": universal_anime.type_format,
-            "subtype": attributes.get("subtype"),
-            "episodes": universal_anime.episodes,
+            "type": anime_type,
+            "subtype": subtype,
+            "episodes": attributes.get("episodeCount"),
             "episode_length": attributes.get("episodeLength"),
             "total_length": attributes.get("totalLength"),
-            "status": universal_anime.status,
+            "status": attributes.get("status"),
             "tba": attributes.get("tba"),
             
             # Dates and seasons
-            "start_date": universal_anime.start_date,
-            "end_date": universal_anime.end_date,
+            "start_date": start_date,
+            "end_date": attributes.get("endDate"),
             "season": attributes.get("season"),
-            "year": universal_anime.year,
+            "year": year,
             
             # Content rating
             "age_rating": attributes.get("ageRating"),
@@ -418,7 +464,6 @@ async def get_anime_kitsu(
             
             # Source attribution
             "source_platform": "kitsu",
-            "data_quality_score": universal_anime.data_quality_score,
             "last_updated": attributes.get("updatedAt")
         }
         
@@ -568,8 +613,27 @@ async def search_streaming_platforms(
         results = []
         for raw_result in raw_results:
             try:
-                universal_anime = kitsu_mapper.to_universal_anime(raw_result)
                 attributes = raw_result.get("attributes", {})
+                
+                # Extract titles
+                primary_title = attributes.get("canonicalTitle") or attributes.get("titles", {}).get("en") or "Unknown"
+                
+                # Map subtype to AnimeType
+                anime_type = None
+                subtype = attributes.get("subtype")
+                if subtype:
+                    if subtype.upper() == "TV":
+                        anime_type = AnimeType.TV
+                    elif subtype.upper() == "MOVIE":
+                        anime_type = AnimeType.MOVIE
+                    elif subtype.upper() == "OVA":
+                        anime_type = AnimeType.OVA
+                    elif subtype.upper() == "ONA":
+                        anime_type = AnimeType.ONA
+                    elif subtype.upper() == "SPECIAL":
+                        anime_type = AnimeType.SPECIAL
+                    elif subtype.upper() == "MUSIC":
+                        anime_type = AnimeType.MUSIC
                 
                 # Extract streaming data
                 streaming_info = {
@@ -580,21 +644,20 @@ async def search_streaming_platforms(
                 }
                 
                 result = {
-                    "id": universal_anime.id,
-                    "title": universal_anime.title,
-                    "type": universal_anime.type_format,
-                    "episodes": universal_anime.episodes,
+                    "id": str(raw_result.get("id", "")),
+                    "title": primary_title,
+                    "type": anime_type,
+                    "episodes": attributes.get("episodeCount"),
                     "average_rating": attributes.get("averageRating"),
                     "popularity_rank": attributes.get("popularityRank"),
                     "age_rating": attributes.get("ageRating"),
-                    "status": universal_anime.status,
-                    "image_url": universal_anime.image_url,
+                    "status": attributes.get("status"),
+                    "image_url": attributes.get("posterImage", {}).get("large") or attributes.get("posterImage", {}).get("medium"),
                     
                     # Streaming-specific data
                     "streaming_availability": streaming_info,
                     
-                    "source_platform": "kitsu",
-                    "data_quality_score": universal_anime.data_quality_score
+                    "source_platform": "kitsu"
                 }
                 
                 results.append(result)

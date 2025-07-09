@@ -10,14 +10,13 @@ from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
 from ...integrations.clients.anilist_client import AniListClient
-from ...integrations.mappers.anilist_mapper import AniListMapper
-from ...models.universal_anime import UniversalSearchParams
+from ...models.structured_responses import BasicSearchResponse, BasicAnimeResult, AnimeType, AnimeStatus
 from ...config import get_settings
 
 # Initialize components
 settings = get_settings()
 anilist_client = AniListClient()
-anilist_mapper = AniListMapper()
+# Using direct API calls instead of AniListMapper
 
 # Create FastMCP instance for tools
 mcp = FastMCP("AniList Tools")
@@ -155,143 +154,161 @@ async def search_anime_anilist(
         await ctx.info(f"Searching AniList with comprehensive filtering")
     
     try:
-        # Create UniversalSearchParams for mapping
-        universal_params = UniversalSearchParams(
-            query=query,
-            limit=per_page,
-            offset=(page - 1) * per_page if page > 1 else 0
-        )
+        # Build AniList GraphQL parameters directly
+        anilist_params = {}
         
-        # Build AniList-specific parameters
-        anilist_specific = {}
+        # Basic search parameters
+        if query:
+            anilist_params["search"] = query
         
-        # Map all AniList-specific parameters
+        # Pagination
+        anilist_params["page"] = page
+        anilist_params["perPage"] = min(per_page, 50)
+        
+        # Map all AniList-specific parameters directly
         if is_adult is not None:
-            anilist_specific["is_adult"] = is_adult
+            anilist_params["isAdult"] = is_adult
         if country_of_origin:
-            anilist_specific["country_of_origin"] = country_of_origin
+            anilist_params["countryOfOrigin"] = country_of_origin
         if episodes is not None:
-            anilist_specific["episodes"] = episodes
+            anilist_params["episodes"] = episodes
         if episodes_greater is not None:
-            anilist_specific["episodes_greater"] = episodes_greater
+            anilist_params["episodes_greater"] = episodes_greater
         if episodes_lesser is not None:
-            anilist_specific["episodes_lesser"] = episodes_lesser
+            anilist_params["episodes_lesser"] = episodes_lesser
         if duration is not None:
-            anilist_specific["duration"] = duration
+            anilist_params["duration"] = duration
         if duration_greater is not None:
-            anilist_specific["duration_greater"] = duration_greater
+            anilist_params["duration_greater"] = duration_greater
         if duration_lesser is not None:
-            anilist_specific["duration_lesser"] = duration_lesser
+            anilist_params["duration_lesser"] = duration_lesser
         if average_score is not None:
-            anilist_specific["average_score"] = average_score
+            anilist_params["averageScore"] = average_score
         if average_score_greater is not None:
-            anilist_specific["average_score_greater"] = average_score_greater
+            anilist_params["averageScore_greater"] = average_score_greater
         if average_score_lesser is not None:
-            anilist_specific["average_score_lesser"] = average_score_lesser
+            anilist_params["averageScore_lesser"] = average_score_lesser
         if popularity is not None:
-            anilist_specific["popularity"] = popularity
+            anilist_params["popularity"] = popularity
         if popularity_greater is not None:
-            anilist_specific["popularity_greater"] = popularity_greater
+            anilist_params["popularity_greater"] = popularity_greater
         if popularity_lesser is not None:
-            anilist_specific["popularity_lesser"] = popularity_lesser
+            anilist_params["popularity_lesser"] = popularity_lesser
         if format:
-            anilist_specific["format"] = format
+            anilist_params["format"] = format
         if format_in:
-            anilist_specific["format_in"] = format_in
+            anilist_params["format_in"] = format_in
         if format_not_in:
-            anilist_specific["format_not_in"] = format_not_in
+            anilist_params["format_not_in"] = format_not_in
         if status:
-            anilist_specific["status"] = status
+            anilist_params["status"] = status
         if status_in:
-            anilist_specific["status_in"] = status_in
+            anilist_params["status_in"] = status_in
         if status_not_in:
-            anilist_specific["status_not_in"] = status_not_in
+            anilist_params["status_not_in"] = status_not_in
         if start_date_greater:
-            anilist_specific["start_date_greater"] = start_date_greater
+            anilist_params["startDate_greater"] = start_date_greater
         if start_date_lesser:
-            anilist_specific["start_date_lesser"] = start_date_lesser
+            anilist_params["startDate_lesser"] = start_date_lesser
         if end_date_greater:
-            anilist_specific["end_date_greater"] = end_date_greater
+            anilist_params["endDate_greater"] = end_date_greater
         if end_date_lesser:
-            anilist_specific["end_date_lesser"] = end_date_lesser
+            anilist_params["endDate_lesser"] = end_date_lesser
         if season:
-            anilist_specific["season"] = season
+            anilist_params["season"] = season
         if season_year:
-            anilist_specific["season_year"] = season_year
+            anilist_params["seasonYear"] = season_year
         if source:
-            anilist_specific["source"] = source
+            anilist_params["source"] = source
         if source_in:
-            anilist_specific["source_in"] = source_in
+            anilist_params["source_in"] = source_in
         if genre_in:
-            anilist_specific["genre_in"] = genre_in
+            anilist_params["genre_in"] = genre_in
         if genre_not_in:
-            anilist_specific["genre_not_in"] = genre_not_in
+            anilist_params["genre_not_in"] = genre_not_in
         if tag_in:
-            anilist_specific["tag_in"] = tag_in
+            anilist_params["tag_in"] = tag_in
         if tag_not_in:
-            anilist_specific["tag_not_in"] = tag_not_in
+            anilist_params["tag_not_in"] = tag_not_in
         if tag_category_in:
-            anilist_specific["tag_category_in"] = tag_category_in
+            anilist_params["tagCategory_in"] = tag_category_in
         if tag_category_not_in:
-            anilist_specific["tag_category_not_in"] = tag_category_not_in
+            anilist_params["tagCategory_not_in"] = tag_category_not_in
         if minimum_tag_rank is not None:
-            anilist_specific["minimum_tag_rank"] = minimum_tag_rank
+            anilist_params["minimumTagRank"] = minimum_tag_rank
         if studio_in:
-            anilist_specific["studio_in"] = studio_in
+            anilist_params["studios_in"] = studio_in
         if is_licensed is not None:
-            anilist_specific["is_licensed"] = is_licensed
+            anilist_params["isLicensed"] = is_licensed
         if licensed_by_in:
-            anilist_specific["licensed_by_in"] = licensed_by_in
+            anilist_params["licensedBy_in"] = licensed_by_in
         if id_in:
-            anilist_specific["id_in"] = id_in
+            anilist_params["id_in"] = id_in
         if id_not_in:
-            anilist_specific["id_not_in"] = id_not_in
+            anilist_params["id_not_in"] = id_not_in
         if id_mal_in:
-            anilist_specific["id_mal_in"] = id_mal_in
+            anilist_params["idMal_in"] = id_mal_in
         if id_mal_not_in:
-            anilist_specific["id_mal_not_in"] = id_mal_not_in
+            anilist_params["idMal_not_in"] = id_mal_not_in
         if sort:
-            anilist_specific["sort"] = sort
-        
-        # Add pagination
-        anilist_specific["page"] = page
-        anilist_specific["per_page"] = min(per_page, 50)
-        
-        # Use mapper to convert parameters
-        anilist_params = anilist_mapper.to_anilist_search_params(universal_params, anilist_specific)
+            anilist_params["sort"] = sort
         
         # Execute GraphQL query
         raw_results = await anilist_client.search_anime(anilist_params)
         
-        # Convert to standardized format
+        # Convert to structured response format
         results = []
         for raw_result in raw_results:
             try:
-                universal_anime = anilist_mapper.to_universal_anime(raw_result)
+                # Extract titles
+                title_data = raw_result.get("title", {})
+                primary_title = title_data.get("romaji") or title_data.get("english") or title_data.get("native") or "Unknown"
+                
+                # Extract date info
+                start_date = raw_result.get("startDate", {})
+                year = None
+                if start_date and start_date.get("year"):
+                    year = start_date.get("year")
+                
+                # Map format to AnimeType
+                anime_type = None
+                format_val = raw_result.get("format")
+                if format_val:
+                    if format_val == "TV":
+                        anime_type = AnimeType.TV
+                    elif format_val == "MOVIE":
+                        anime_type = AnimeType.MOVIE
+                    elif format_val == "OVA":
+                        anime_type = AnimeType.OVA
+                    elif format_val == "ONA":
+                        anime_type = AnimeType.ONA
+                    elif format_val == "SPECIAL":
+                        anime_type = AnimeType.SPECIAL
+                    elif format_val == "MUSIC":
+                        anime_type = AnimeType.MUSIC
                 
                 # Build comprehensive result
                 result = {
-                    "id": universal_anime.id,
-                    "title": universal_anime.title,
-                    "title_romaji": raw_result.get("title", {}).get("romaji"),
-                    "title_english": raw_result.get("title", {}).get("english"),
-                    "title_native": raw_result.get("title", {}).get("native"),
-                    "type": universal_anime.type_format,
-                    "format": raw_result.get("format"),
-                    "episodes": universal_anime.episodes,
+                    "id": str(raw_result.get("id", "")),
+                    "title": primary_title,
+                    "title_romaji": title_data.get("romaji"),
+                    "title_english": title_data.get("english"),
+                    "title_native": title_data.get("native"),
+                    "type": anime_type,
+                    "format": format_val,
+                    "episodes": raw_result.get("episodes"),
                     "duration": raw_result.get("duration"),
-                    "score": universal_anime.score,
-                    "year": universal_anime.year,
-                    "start_date": universal_anime.start_date,
-                    "end_date": universal_anime.end_date,
+                    "score": raw_result.get("averageScore"),
+                    "year": year,
+                    "start_date": f"{start_date.get('year', '')}-{start_date.get('month', ''):02d}-{start_date.get('day', ''):02d}" if start_date.get('year') else None,
                     "season": raw_result.get("season"),
                     "season_year": raw_result.get("seasonYear"),
-                    "status": universal_anime.status,
-                    "genres": universal_anime.genres or [],
+                    "status": raw_result.get("status"),
+                    "genres": raw_result.get("genres", []),
                     "tags": [tag.get("name") for tag in raw_result.get("tags", [])],
-                    "studios": universal_anime.studios or [],
-                    "synopsis": universal_anime.description,
-                    "image_url": universal_anime.image_url,
+                    "studios": [studio.get("name") for studio in raw_result.get("studios", {}).get("nodes", [])],
+                    "synopsis": raw_result.get("description"),
+                    "image_url": raw_result.get("coverImage", {}).get("large"),
                     
                     # AniList-specific data
                     "anilist_id": raw_result.get("id"),
@@ -311,8 +328,7 @@ async def search_anime_anilist(
                     "external_links": raw_result.get("externalLinks", []),
                     
                     # Source attribution
-                    "source_platform": "anilist",
-                    "data_quality_score": universal_anime.data_quality_score
+                    "source_platform": "anilist"
                 }
                 
                 results.append(result)
@@ -402,33 +418,58 @@ async def get_anime_anilist(
                 await ctx.info(f"Anime with AniList ID {anilist_id} not found")
             return None
         
-        # Convert to standardized format
-        universal_anime = anilist_mapper.to_universal_anime(raw_result)
+        # Extract titles
+        title_data = raw_result.get("title", {})
+        primary_title = title_data.get("romaji") or title_data.get("english") or title_data.get("native") or "Unknown"
+        
+        # Extract date info
+        start_date = raw_result.get("startDate", {})
+        end_date = raw_result.get("endDate", {})
+        year = None
+        if start_date and start_date.get("year"):
+            year = start_date.get("year")
+        
+        # Map format to AnimeType
+        anime_type = None
+        format_val = raw_result.get("format")
+        if format_val:
+            if format_val == "TV":
+                anime_type = AnimeType.TV
+            elif format_val == "MOVIE":
+                anime_type = AnimeType.MOVIE
+            elif format_val == "OVA":
+                anime_type = AnimeType.OVA
+            elif format_val == "ONA":
+                anime_type = AnimeType.ONA
+            elif format_val == "SPECIAL":
+                anime_type = AnimeType.SPECIAL
+            elif format_val == "MUSIC":
+                anime_type = AnimeType.MUSIC
         
         # Build comprehensive response
         result = {
-            "id": universal_anime.id,
-            "title": universal_anime.title,
-            "title_romaji": raw_result.get("title", {}).get("romaji"),
-            "title_english": raw_result.get("title", {}).get("english"),
-            "title_native": raw_result.get("title", {}).get("native"),
+            "id": str(anilist_id),
+            "title": primary_title,
+            "title_romaji": title_data.get("romaji"),
+            "title_english": title_data.get("english"),
+            "title_native": title_data.get("native"),
             "synonyms": raw_result.get("synonyms", []),
-            "type": universal_anime.type_format,
-            "format": raw_result.get("format"),
-            "episodes": universal_anime.episodes,
+            "type": anime_type,
+            "format": format_val,
+            "episodes": raw_result.get("episodes"),
             "duration": raw_result.get("duration"),
-            "score": universal_anime.score,
+            "score": raw_result.get("averageScore"),
             "mean_score": raw_result.get("meanScore"),
-            "year": universal_anime.year,
-            "start_date": universal_anime.start_date,
-            "end_date": universal_anime.end_date,
+            "year": year,
+            "start_date": f"{start_date.get('year', '')}-{start_date.get('month', ''):02d}-{start_date.get('day', ''):02d}" if start_date.get('year') else None,
+            "end_date": f"{end_date.get('year', '')}-{end_date.get('month', ''):02d}-{end_date.get('day', ''):02d}" if end_date.get('year') else None,
             "season": raw_result.get("season"),
             "season_year": raw_result.get("seasonYear"),
-            "status": universal_anime.status,
-            "genres": universal_anime.genres or [],
-            "studios": universal_anime.studios or [],
-            "synopsis": universal_anime.description,
-            "image_url": universal_anime.image_url,
+            "status": raw_result.get("status"),
+            "genres": raw_result.get("genres", []),
+            "studios": [studio.get("name") for studio in raw_result.get("studios", {}).get("nodes", [])],
+            "synopsis": raw_result.get("description"),
+            "image_url": raw_result.get("coverImage", {}).get("large"),
             "banner_image": raw_result.get("bannerImage"),
             
             # Comprehensive tag data
@@ -478,7 +519,6 @@ async def get_anime_anilist(
             
             # Source attribution
             "source_platform": "anilist",
-            "data_quality_score": universal_anime.data_quality_score,
             "last_updated": raw_result.get("updatedAt")
         }
         

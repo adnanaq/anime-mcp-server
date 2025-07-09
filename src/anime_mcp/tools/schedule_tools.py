@@ -537,7 +537,6 @@ async def get_currently_airing(
                     "anilist_id": raw_result.get("anilist_id"),
                     
                     "source_platform": "animeschedule",
-                    "data_quality_score": universal_anime.data_quality_score,
                     "last_updated": raw_result.get("updated_at")
                 }
                 
