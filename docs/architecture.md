@@ -12,6 +12,8 @@ The Anime MCP Server is a multi-protocol system providing semantic anime search 
 3. **External Integration**: Unified access to 9+ anime platforms
 4. **AI Workflow Integration**: LangGraph-based intelligent routing
 5. **Stateless Design**: Scalable, containerized architecture
+6. **Modern LLM Practices**: Tiered tool architecture with structured outputs (2025 modernization)
+7. **Intelligent Orchestration**: Preserve advanced LangGraph routing while simplifying tool complexity
 
 ## System Architecture Overview
 
@@ -208,7 +210,12 @@ flowchart TD
 - AnimeSchedule - Real-time broadcast data
 - Plus 4 additional platforms via web scraping
 
-**Data Flow:**
-- Platform APIs → Data Mappers → Universal Schema
+**Data Flow (Current - Under Modernization):**
+- Platform APIs → Data Mappers → Universal Schema (being simplified)
 - Rate limiting per platform (respects API constraints)
 - Error handling with fallback strategies
+
+**Data Flow (Modernized - 2025 Target):**
+- Platform APIs → Direct Tool Calls → Structured Responses
+- Tiered tool architecture for progressive complexity
+- LangGraph intelligent routing preserved and enhanced

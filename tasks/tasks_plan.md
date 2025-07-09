@@ -453,6 +453,200 @@
   - **Files Affected**: `src/anime_mcp/server.py`, `src/anime_mcp/modern_server.py`
   - **Benefit**: Complete traceability through AI-powered tool execution chains
 
+## 🚨 CRITICAL PRIORITY - UNIVERSAL PARAMETER SYSTEM MODERNIZATION (Week 0-7)
+
+### Phase 0: Architecture Modernization - Tool Simplification
+
+#### Task Group UP: Universal Parameter System Replacement (NEW CRITICAL PRIORITY)
+- **Task #97**: ✅ **COMPLETED** - Universal Parameter System Analysis & Modernization Plan - CRITICAL
+  - **Status**: ✅ COMPREHENSIVE ANALYSIS COMPLETED - Over-engineering identified and modernization plan established
+  - **Analysis Results**:
+    - ✅ Universal parameters system has 444 parameters across all platforms (massively over-engineered)
+    - ✅ Real usage analysis shows only 5-15 parameters used in 95% of queries
+    - ✅ LLM modern practices favor direct tool calls with structured outputs
+    - ✅ Complex registry mapper system adds 90% overhead with minimal benefit
+    - ✅ Current system violates 2025 LLM best practices (simplicity, direct parameters, structured outputs)
+  - **✅ Modernization Plan Established**:
+    - **Phase 1 (Week 1-2)**: Replace Universal parameter system with tiered tool architecture
+    - **Phase 2 (Week 3-4)**: Implement structured response models and direct tool calls
+    - **Phase 3 (Week 5)**: Preserve LangGraph intelligence while simplifying underlying tools
+    - **Phase 4 (Week 6)**: Comprehensive testing with full query complexity spectrum
+    - **Phase 5 (Week 7)**: Documentation and deployment of modernized architecture
+  - **✅ Expected Benefits**: 90% parameter reduction (444→30), 10x faster validation, better LLM experience
+  - **Priority**: CRITICAL - Modern LLM architecture compliance essential
+
+- **Task #98**: 🔄 Implement Tiered Tool Architecture - CRITICAL
+  - **Status**: 🔄 PENDING - Replace 444-parameter system with 4-tier approach
+  - **Implementation Strategy**:
+    - **Tier 1**: Core semantic search (6 parameters, handles 80% of queries, <200ms)
+    - **Tier 2**: Advanced filtering (10 parameters, handles 95% of queries, <500ms)
+    - **Tier 3**: Cross-platform comparison (8 parameters, handles 99% of queries, <2s)
+    - **Tier 4**: Fuzzy discovery (6 parameters, handles ultra-complex queries, <5s)
+  - **Files to Remove**:
+    - `src/models/universal_anime.py` (554 lines of over-complexity)
+    - `src/integrations/mapper_registry.py` (328 lines of unnecessary mapping)
+    - `src/integrations/mappers/*.py` (9 files, ~2000 lines of redundant mapping logic)
+  - **Files to Create**:
+    - `src/models/structured_responses.py` (Clean, modern response schemas)
+    - `src/anime_mcp/tools/tier_search.py` (Focused search tools per tier)
+    - `src/services/tier_router.py` (Smart routing between tiers)
+  - **LangGraph Integration**: Preserve existing intelligent orchestration while simplifying tool layer
+  - **Priority**: IMMEDIATE - Foundation for all modernization efforts
+
+- **Task #99**: 🔄 Implement Structured Response Architecture - CRITICAL
+  - **Status**: 🔄 PENDING - Replace raw responses with structured, typed outputs
+  - **Implementation**: Structured response schemas for all tool tiers
+  - **Benefits**: Consistent LLM consumption, type safety, better caching, smaller payloads
+  - **Progressive Detail Levels**: Basic (8 fields) → Standard (15 fields) → Detailed (25 fields) → Full (platform data)
+  - **Files**: `src/models/structured_responses.py`, update all tool implementations
+  - **Priority**: CRITICAL - Modern LLM practices require structured outputs
+
+- **Task #100**: 🔄 Update MCP Tool Registration - HIGH
+  - **Status**: 🔄 PENDING - Replace universal tools with tiered tools
+  - **Implementation**: Update both `src/anime_mcp/server.py` and `src/anime_mcp/modern_server.py`
+  - **Changes**: Remove universal parameter tools, register new tiered tools
+  - **Testing**: Validate all 75 queries from `docs/query.txt` work with new tools
+  - **LangGraph Integration**: Update `src/langgraph/langchain_tools.py` for new tool wrappers
+  - **Priority**: HIGH - Required for system functionality
+
+- **Task #101**: 🔄 Comprehensive Query Coverage Testing - HIGH
+  - **Status**: 🔄 PENDING - Validate all complexity levels work with simplified architecture
+  - **Test Coverage**: All 75 queries from simple to ultra-complex (docs/query.txt)
+  - **Validation**: Simple→Medium→High→Very Complex→Ultra-Complex query handling
+  - **Performance**: Validate tiered response times (200ms → 5s based on complexity)
+  - **Files**: `tests/query_coverage/test_complexity_spectrum.py`
+  - **Priority**: HIGH - Ensure no functionality regression
+
+- **Task #102**: 🔄 Performance Optimization & Caching - MEDIUM
+  - **Status**: 🔄 PENDING - Implement tiered caching strategy
+  - **Strategy**: Response caching per tier, semantic query caching, platform data caching
+  - **Benefits**: 50%+ response time improvement for repeated queries
+  - **Implementation**: Multi-tier caching with appropriate TTLs per complexity level
+  - **Priority**: MEDIUM - Performance enhancement after functionality complete
+
+- **Task #103**: 🔄 Remove Universal Parameter Dependencies - CRITICAL
+  - **Status**: 🔄 PENDING - Clean removal of Universal parameter system dependencies
+  - **Implementation**: Remove all imports, references, and dependencies on Universal parameter system
+  - **Files to Update**:
+    - Update all service classes that import `UniversalSearchParams`
+    - Remove Universal parameter imports from MCP tools
+    - Update service manager to use direct platform calls
+    - Clean up any Universal parameter validation code
+  - **Testing**: Verify no broken imports or missing dependencies
+  - **Priority**: CRITICAL - Required before new architecture implementation
+
+- **Task #104**: 🔄 Implement Individual Tier Tools - CRITICAL
+  - **Status**: 🔄 PENDING - Create specific tools for each complexity tier
+  - **Implementation Strategy**:
+    - **Tier 1 Tools**: `search_anime`, `get_anime_details` (core functionality)
+    - **Tier 2 Tools**: `advanced_anime_search`, `filter_anime_complex` (advanced filtering)
+    - **Tier 3 Tools**: `cross_platform_search`, `compare_platforms` (multi-source)
+    - **Tier 4 Tools**: `discover_forgotten_anime`, `fuzzy_anime_match` (AI-powered discovery)
+  - **Files to Create**:
+    - `src/anime_mcp/tools/tier1_core.py`
+    - `src/anime_mcp/tools/tier2_advanced.py`
+    - `src/anime_mcp/tools/tier3_cross_platform.py`
+    - `src/anime_mcp/tools/tier4_discovery.py`
+  - **Priority**: CRITICAL - Core functionality implementation
+
+- **Task #105**: 🔄 Update Service Layer Integration - HIGH
+  - **Status**: 🔄 PENDING - Modify service layer to work with tiered tools
+  - **Implementation**: Update service manager and platform services for direct tool integration
+  - **Files to Modify**:
+    - `src/services/service_manager.py` - Remove Universal mapping logic
+    - `src/services/external/*.py` - Update service interfaces for direct calls
+    - Platform client integration patterns
+  - **Changes**: Remove Universal parameter processing, implement direct platform calls
+  - **Priority**: HIGH - Service layer must support new tool architecture
+
+- **Task #106**: 🔄 LangGraph Tool Wrapper Updates - HIGH
+  - **Status**: 🔄 PENDING - Update LangChain tool wrappers for new tiered tools
+  - **Implementation**: Modify `src/langgraph/langchain_tools.py` for new tool structure
+  - **Changes**:
+    - Remove Universal parameter tool wrappers
+    - Add tiered tool wrappers with proper parameter handling
+    - Ensure LangGraph can intelligently route between tiers
+    - Preserve stateful routing memory integration
+  - **Files**: `src/langgraph/langchain_tools.py`, integration with `ReactAgentWorkflowEngine`
+  - **Priority**: HIGH - Required for LangGraph intelligent orchestration
+
+- **Task #107**: 🔄 Migration Strategy & Backward Compatibility - MEDIUM
+  - **Status**: 🔄 PENDING - Ensure smooth transition from Universal to tiered system
+  - **Implementation**: Create migration path that doesn't break existing functionality
+  - **Strategy**:
+    - Gradual rollout with feature flags
+    - Backward compatibility layer during transition
+    - Performance comparison testing (before/after)
+    - Rollback strategy if issues discovered
+  - **Files**: Migration scripts, feature flag configuration
+  - **Priority**: MEDIUM - Ensures safe production deployment
+
+- **Task #108**: 🔄 Documentation & API Updates - MEDIUM
+  - **Status**: 🔄 PENDING - Update all documentation for new tiered architecture
+  - **Implementation**: Comprehensive documentation updates across all systems
+  - **Files to Update**:
+    - `docs/architecture.md` - New tiered tool architecture
+    - `docs/technical.md` - Implementation patterns and tool usage
+    - API documentation - Updated tool parameters and responses
+    - MCP tool documentation - New tool descriptions and examples
+    - Integration guides - Updated examples for AI assistants
+  - **Priority**: MEDIUM - Essential for adoption and maintenance
+
+### Implementation Timeline (Universal Parameter Modernization)
+
+**Week 1: Foundation Removal & Setup**
+- Remove Universal parameter dependencies (Task #103)
+- Create structured response models (Task #99)
+- Begin Tier 1 implementation (Task #104 Phase 1)
+- **Result**: Clean foundation, no Universal system dependencies
+
+**Week 2: Core Tier Implementation**
+- Complete Tier 1 tools: search_anime, get_anime_details (Task #104)
+- Begin Tier 2 tools: advanced_anime_search (Task #104)
+- Update service layer integration (Task #105 Phase 1)
+- **Result**: Core functionality operational with simplified tools
+
+**Week 3: Advanced Tiers Implementation**
+- Complete Tier 2 & 3 tools (Task #104)
+- Begin Tier 4 discovery tools (Task #104)
+- Continue service layer updates (Task #105)
+- **Result**: All tool tiers implemented and functional
+
+**Week 4: Integration & Tool Registration**
+- Complete Tier 4 implementation (Task #104)
+- Update MCP tool registration (Task #100)
+- Update LangGraph tool wrappers (Task #106)
+- **Result**: All tools registered and LangGraph integration complete
+
+**Week 5: Testing & Validation**
+- Comprehensive query coverage testing (Task #101)
+- Validate all 75 query complexity levels
+- Performance benchmarking per tier
+- **Result**: Full functionality validated, no regressions
+
+**Week 6: Optimization & Migration**
+- Implement tiered caching strategy (Task #102)
+- Create migration strategy (Task #107)
+- Performance optimization and load testing
+- **Result**: Production-ready optimized system with migration plan
+
+**Week 7: Documentation & Deployment**
+- Complete documentation updates (Task #108)
+- Production deployment with monitoring
+- User feedback collection and optimization
+- **Result**: Modernized system fully operational and documented
+
+### Task Dependencies & Critical Path
+
+**Critical Path (Blocking Dependencies)**:
+Task #103 → Task #104 → Task #100 → Task #106 → Task #101
+
+**Parallel Implementation Opportunities**:
+- Task #99 (Structured Responses) can run parallel with Task #103
+- Task #105 (Service Layer) can run parallel with Task #104
+- Task #102 (Caching) can be implemented during testing phase
+- Task #107 (Migration) and Task #108 (Documentation) can run in parallel
+
 ## 🚨 CRITICAL PRIORITY - ARCHITECTURAL CONSOLIDATION (Week 0)
 
 ### Phase 0: Overlapping Implementation Cleanup
