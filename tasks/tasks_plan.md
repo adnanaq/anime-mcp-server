@@ -41,6 +41,31 @@
 
 ### URGENT PRODUCTION BUGS (Must Fix Immediately)
 
+#### ❌ Task Group 0X: Query API (/api/query) Cross-Platform Functionality Failure (CRITICAL - 2025-07-09)
+- **Task #100**: ❌ **CRITICAL** - Fix Query API Fake Cross-Platform Data Issue
+  - **Status**: ❌ URGENT - Query API endpoint returns identical data across platforms instead of real platform-specific data
+  - **Problem**: Query API shows Death Note rating as 8.62 for MAL/AniList/Anime-Planet (should be different values)
+  - **Root Cause**: Query API (/api/query) not actually calling different platform APIs - returning fake identical data
+  - **Impact**: Query API cross-platform functionality is completely fake/non-functional
+  - **Test Results**: Query API tested with "Compare Death Note's ratings across MAL, AniList, and Anime-Planet"
+  - **Expected**: Different ratings per platform (MAL: 8.63, AniList: 8.4, Anime-Planet: 4.1/5)
+  - **Fix Required**: Debug Query API tool selection logic and platform-specific API integration
+
+- **Task #101**: ❌ **HIGH** - Fix Query API Search Parameter Translation
+  - **Status**: ❌ URGENT - Query API endpoint returns no results for complex queries like "dark mystery anime 2000-2010"
+  - **Problem**: Query API → database parameter conversion failing for descriptive terms
+  - **Root Cause**: Query API genre mapping and search logic not handling complex descriptors
+  - **Impact**: Direct LLM outperforms Query API for complex searches
+  - **Fix Required**: Improve Query API query analysis and parameter extraction
+
+- **Task #102**: ❌ **HIGH** - Debug Query API Tool Selection Logic in LangGraph
+  - **Status**: ❌ URGENT - Query API LangGraph workflow not choosing appropriate platform-specific tools
+  - **Problem**: Query API cross-platform queries use generic search instead of platform-specific tools
+  - **Root Cause**: Query API tool selection logic in ReactAgent workflow
+  - **Fix Required**: Analyze and fix Query API LangGraph tool selection for cross-platform queries
+
+### URGENT PRODUCTION BUGS (Must Fix Immediately)
+
 #### ✅ Task Group 0A: Jikan API Filtering (COMPLETED - 2025-01-07)
 - **Task #81**: ✅ **COMPLETED** - Fixed Jikan Parameter Passing Bug
   - **Status**: ✅ RESOLVED - All Jikan filtering now fully functional
