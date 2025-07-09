@@ -55,10 +55,23 @@ class BasicSimilarInput(BaseModel):
 
 def register_basic_tools(mcp: FastMCP) -> None:
     """Register all Tier 1 basic tools with the MCP server."""
+    from ...config import get_settings
     
     # Initialize clients
+    settings = get_settings()
     jikan_client = JikanClient()
-    mal_client = MALClient()
+    
+    # MAL client requires credentials - initialize safely
+    mal_client = None
+    try:
+        if hasattr(settings, 'mal_client_id') and settings.mal_client_id:
+            mal_client = MALClient(
+                client_id=settings.mal_client_id,
+                client_secret=getattr(settings, 'mal_client_secret', None)
+            )
+    except Exception as e:
+        logger.warning(f"MAL client initialization failed: {e}")
+    
     anilist_client = AniListClient()
     kitsu_client = KitsuClient()
     
@@ -171,6 +184,8 @@ def register_basic_tools(mcp: FastMCP) -> None:
             if input.platform == "jikan":
                 raw_data = await jikan_client.get_anime_by_id(int(input.id))
             elif input.platform == "mal":
+                if not mal_client:
+                    raise ValueError("MAL client not available - missing credentials")
                 raw_data = await mal_client.get_anime_by_id(int(input.id))
             elif input.platform == "anilist":
                 raw_data = await anilist_client.get_anime_by_id(int(input.id))

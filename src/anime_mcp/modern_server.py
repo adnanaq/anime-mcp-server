@@ -14,7 +14,8 @@ from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
 from ..config import get_settings
-from ..langgraph.anime_swarm import AnimeDiscoverySwarm
+# Temporarily disabled until LangGraph agent imports are updated for tiered tools
+# from ..langgraph.anime_swarm import AnimeDiscoverySwarm
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -29,8 +30,8 @@ mcp = FastMCP(
     )
 )
 
-# Global workflow instance
-anime_swarm: Optional[AnimeDiscoverySwarm] = None
+# Global workflow instance - temporarily disabled during tiered tool integration
+anime_swarm: Optional[Any] = None  # AnimeDiscoverySwarm
 
 
 # High-Level Workflow Tools
@@ -256,81 +257,54 @@ async def search_by_streaming_platform(
         raise RuntimeError(error_msg)
 
 
-# Import and register all platform-specific tools
-def register_platform_tools():
-    """Register all platform-specific MCP tools."""
+# Import and register all tiered and platform tools
+def register_tiered_tools():
+    """Register all tiered MCP tools."""
     try:
         from ..anime_mcp.tools import (
-            # MAL tools
-            search_anime_mal, get_anime_by_id_mal, get_seasonal_anime_mal,
-            # AniList tools  
-            search_anime_anilist, get_anime_anilist,
-            # Jikan tools
-            search_anime_jikan, get_anime_jikan, get_jikan_seasonal,
-            # AnimeSchedule tools
-            search_anime_schedule, get_schedule_data, get_currently_airing,
-            # Kitsu tools
-            search_anime_kitsu, get_anime_kitsu, search_streaming_platforms,
-            # Semantic tools
-            anime_semantic_search, anime_similar, anime_vector_stats,
-            # Cross-platform enrichment tools
-            compare_anime_ratings_cross_platform, get_cross_platform_anime_data,
-            correlate_anime_across_platforms, get_streaming_availability_multi_platform,
-            detect_platform_discrepancies,
+            register_basic_tools,
+            register_standard_tools,
+            register_detailed_tools,
+            register_comprehensive_tools,
         )
         
-        # Register each tool with mcp server
-        platform_tools = {
-            # MAL tools
-            "search_anime_mal": search_anime_mal,
-            "get_anime_by_id_mal": get_anime_by_id_mal,
-            "get_seasonal_anime_mal": get_seasonal_anime_mal,
-            
-            # AniList tools  
-            "search_anime_anilist": search_anime_anilist,
-            "get_anime_anilist": get_anime_anilist,
-            
-            # Jikan tools
-            "search_anime_jikan": search_anime_jikan,
-            "get_anime_jikan": get_anime_jikan,
-            "get_jikan_seasonal": get_jikan_seasonal,
-            
-            # AnimeSchedule tools
-            "search_anime_schedule": search_anime_schedule,
-            "get_schedule_data": get_schedule_data,
-            "get_currently_airing": get_currently_airing,
-            
-            # Kitsu tools
-            "search_anime_kitsu": search_anime_kitsu,
-            "get_anime_kitsu": get_anime_kitsu,
-            "search_streaming_platforms": search_streaming_platforms,
-            
-            # Semantic tools
-            "anime_semantic_search": anime_semantic_search,
-            "anime_similar": anime_similar,
-            "anime_vector_stats": anime_vector_stats,
-            
-            # Cross-platform enrichment tools
-            "compare_anime_ratings_cross_platform": compare_anime_ratings_cross_platform,
-            "get_cross_platform_anime_data": get_cross_platform_anime_data,
-            "correlate_anime_across_platforms": correlate_anime_across_platforms,
-            "get_streaming_availability_multi_platform": get_streaming_availability_multi_platform,
-            "detect_platform_discrepancies": detect_platform_discrepancies,
-        }
+        # Register each tier
+        tool_count = 0
         
-        # Add tools to mcp server
-        for tool_name, tool_func in platform_tools.items():
-            # The tools already have @mcp.tool decorators, so they should register automatically
-            # This is a fallback to ensure they're available
-            if not hasattr(mcp, tool_name):
-                setattr(mcp, tool_name, tool_func)
+        # Tier 1: Basic tools (8 fields, 80% coverage)
+        register_basic_tools(mcp)
+        tool_count += 4  # search, get, similar, seasonal
+        logger.info("✅ Registered Tier 1 (Basic) tools")
         
-        logger.info(f"Registered {len(platform_tools)} platform-specific tools")
-        return len(platform_tools)
+        # Tier 2: Standard tools (15 fields, 95% coverage)  
+        register_standard_tools(mcp)
+        tool_count += 5  # search, get, similar, seasonal, genre_search
+        logger.info("✅ Registered Tier 2 (Standard) tools")
+        
+        # Tier 3: Detailed tools (25 fields, 99% coverage)
+        register_detailed_tools(mcp)
+        tool_count += 5  # search, get, similar, seasonal, analysis
+        logger.info("✅ Registered Tier 3 (Detailed) tools")
+        
+        # Tier 4: Comprehensive tools (40+ fields, 100% coverage)
+        register_comprehensive_tools(mcp)
+        tool_count += 4  # search, get, similar, analytics
+        logger.info("✅ Registered Tier 4 (Comprehensive) tools")
+        
+        logger.info(f"🎯 Registered {tool_count} tiered tools across 4 complexity levels")
+        return tool_count
         
     except ImportError as e:
-        logger.warning(f"Could not import platform tools: {e}")
+        logger.warning(f"Could not import tiered tools: {e}")
         return 0
+
+
+def register_platform_tools():
+    """Register legacy platform-specific MCP tools (if available)."""
+    # Note: Platform tools temporarily disabled due to missing register functions
+    # Will be re-enabled after platform tool modernization
+    logger.info("⚠️  Platform tools temporarily disabled - using tiered tools instead")
+    return 0
 
 
 # MCP Resources
@@ -354,6 +328,7 @@ async def server_capabilities() -> str:
         },
         "features": [
             "Multi-agent workflow orchestration",
+            "4-tier progressive complexity architecture",
             "Cross-platform data enrichment", 
             "Real-time broadcast schedules",
             "Streaming platform integration",
@@ -361,8 +336,14 @@ async def server_capabilities() -> str:
             "Conversation memory persistence",
             "Intelligent query routing"
         ],
+        "tiered_architecture": {
+            "tier_1_basic": "8 fields, 80% coverage, fastest performance",
+            "tier_2_standard": "15 fields, 95% coverage, enhanced filtering",
+            "tier_3_detailed": "25 fields, 99% coverage, cross-platform data",
+            "tier_4_comprehensive": "40+ fields, 100% coverage, complete analytics"
+        },
         "data_sources": 6,
-        "total_tools": 23,
+        "total_tools": "20+ (4 workflow + 18 tiered)",
         "anime_database_size": "38,000+ entries",
         "workflow_architecture": "LangGraph multi-agent swarm"
     }
@@ -422,20 +403,25 @@ async def initialize_server():
     logger.info("🚀 Initializing Modern Anime Discovery Server")
     
     try:
-        # Register platform-specific tools
-        tools_count = register_platform_tools()
-        logger.info(f"🔧 Registered {tools_count} platform-specific tools")
+        # Register tiered tools (modern architecture)
+        tiered_count = register_tiered_tools()
+        logger.info(f"🏗️  Registered {tiered_count} tiered tools")
+        
+        # Register platform-specific tools (legacy)
+        platform_count = register_platform_tools()
+        logger.info(f"🔧 Registered {platform_count} platform-specific tools")
         
         # Initialize multi-agent workflow system
-        logger.info("📡 Initializing LangGraph multi-agent workflows...")
-        anime_swarm = AnimeDiscoverySwarm()
-        logger.info("✅ Multi-agent workflow system ready")
+        logger.info("📡 LangGraph workflows temporarily disabled during tiered tool integration")
+        # anime_swarm = AnimeDiscoverySwarm()  # Temporarily disabled
+        logger.info("⚠️  Multi-agent workflow system will be re-enabled after LangGraph modernization")
         
         # Log final capabilities
-        logger.info(f"🎯 Platforms: 6 integrated")
+        total_tools = 4 + tiered_count + platform_count  # 4 workflow + tiered + platform
+        logger.info(f"🎯 Tool Architecture: 4-tier progressive complexity")
         logger.info(f"🤖 Agents: SearchAgent, ScheduleAgent")
-        logger.info(f"🔧 Total tools: {4 + tools_count} (4 workflow + {tools_count} platform)")
-        logger.info(f"🔗 Cross-platform enrichment: 5 tools")
+        logger.info(f"🔧 Total tools: {total_tools} (4 workflow + {tiered_count} tiered + {platform_count} platform)")
+        logger.info(f"📊 Coverage: 80%→95%→99%→100% across 4 tiers")
         
         logger.info("✅ Modern anime discovery server initialized")
         

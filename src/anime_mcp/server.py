@@ -773,6 +773,47 @@ mcp.mount(semantic_tools.mcp)        # Semantic search tools (3 tools)
 mcp.mount(enrichment_tools.mcp)      # Cross-platform enrichment (5 tools)
 
 
+def register_tiered_tools():
+    """Register all tiered MCP tools with progressive complexity."""
+    try:
+        from .tools import (
+            register_basic_tools,
+            register_standard_tools,
+            register_detailed_tools,
+            register_comprehensive_tools,
+        )
+        
+        # Register each tier
+        tool_count = 0
+        
+        # Tier 1: Basic tools (8 fields, 80% coverage)
+        register_basic_tools(mcp)
+        tool_count += 4  # search, get, similar, seasonal
+        logger.info("✅ Registered Tier 1 (Basic) tools")
+        
+        # Tier 2: Standard tools (15 fields, 95% coverage)  
+        register_standard_tools(mcp)
+        tool_count += 5  # search, get, similar, seasonal, genre_search
+        logger.info("✅ Registered Tier 2 (Standard) tools")
+        
+        # Tier 3: Detailed tools (25 fields, 99% coverage)
+        register_detailed_tools(mcp)
+        tool_count += 5  # search, get, similar, seasonal, analysis
+        logger.info("✅ Registered Tier 3 (Detailed) tools")
+        
+        # Tier 4: Comprehensive tools (40+ fields, 100% coverage)
+        register_comprehensive_tools(mcp)
+        tool_count += 4  # search, get, similar, analytics
+        logger.info("✅ Registered Tier 4 (Comprehensive) tools")
+        
+        logger.info(f"🎯 Registered {tool_count} tiered tools across 4 complexity levels")
+        return tool_count
+        
+    except ImportError as e:
+        logger.warning(f"Could not import tiered tools: {e}")
+        return 0
+
+
 async def initialize_mcp_server():
     """Initialize the MCP server with Qdrant client."""
     global qdrant_client
@@ -818,6 +859,10 @@ async def initialize_mcp_server():
     except Exception as test_error:
         logger.error(f"  - Test search failed: {test_error}")
 
+    # Register tiered tools
+    tiered_count = register_tiered_tools()
+    logger.info(f"🏗️  Registered {tiered_count} tiered tools with progressive complexity")
+    
     logger.info("Qdrant connection verified - MCP server ready")
 
 
