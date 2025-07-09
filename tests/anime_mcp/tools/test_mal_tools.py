@@ -4,14 +4,8 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, List
 
-from src.anime_mcp.tools.mal_tools import (
-    _search_anime_mal_impl,
-    _get_anime_mal_impl,
-    _get_seasonal_anime_mal_impl,
-    mal_client,
-    mal_mapper
-)
-from src.models.universal_anime import UniversalAnime, UniversalSearchParams
+from src.anime_mcp.tools.mal_tools import mal_client, mcp
+from src.models.structured_responses import BasicAnimeResult, AnimeType, AnimeStatus
 
 
 class TestMALTools:

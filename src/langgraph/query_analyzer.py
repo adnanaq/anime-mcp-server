@@ -81,7 +81,7 @@ class QueryAnalyzer:
         from .intelligent_router import IntelligentRouter
 
         self.router = IntelligentRouter()
-        self.llm_service = LLMService(settings)
+        self.llm_service = LLMService()
 
     async def analyze_query(
         self, query: str, context: Optional[Dict[str, Any]] = None

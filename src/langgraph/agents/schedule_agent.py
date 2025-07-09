@@ -7,15 +7,14 @@ and temporal anime data using AnimeSchedule and platform-specific tools.
 
 from typing import List, Dict, Any, Optional
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain_core.tools import BaseTool
+from langchain_core.tools import BaseTool, tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langgraph_swarm import create_handoff_tool
 
-from ...anime_mcp.tools import (
-    search_anime_schedule, get_schedule_data, get_currently_airing,
-    search_streaming_platforms, get_anime_kitsu
-)
+from ...integrations.clients.jikan_client import JikanClient
+from ...integrations.clients.kitsu_client import KitsuClient
+from ...integrations.clients.animeschedule_client import AnimeScheduleClient
 from ..workflow_state import AnimeSwarmState, QueryIntent
 from ...config import get_settings
 
@@ -40,37 +39,70 @@ class ScheduleAgent:
             api_key=settings.openai_api_key
         )
         
-        # Schedule and streaming focused tools
-        self.schedule_tools = [
-            search_anime_schedule,
-            get_schedule_data, 
-            get_currently_airing
-        ]
+        # Initialize clients
+        self.jikan_client = JikanClient()
+        self.kitsu_client = KitsuClient()
+        self.animeschedule_client = AnimeScheduleClient()
         
-        self.streaming_tools = [
-            search_streaming_platforms,
-            get_anime_kitsu
-        ]
+        # Create schedule and streaming tools
+        self.schedule_tools = self._create_schedule_tools()
+        self.seasonal_tools = self._create_seasonal_tools()
+        self.streaming_tools = self._create_streaming_tools()
         
         # Create agent with schedule specialization
         self.agent = self._create_schedule_agent()
     
+    def _create_schedule_tools(self):
+        """Create schedule-related LangChain tools."""
+        
+        @tool
+        async def get_currently_airing(limit: int = 20) -> Dict[str, Any]:
+            """Get currently airing anime with broadcast information."""
+            try:
+                results = await self.animeschedule_client.get_currently_airing(limit=limit)
+                return {"results": results, "tool": "schedule"}
+            except Exception as e:
+                return {"error": str(e), "tool": "schedule"}
+        
+        return [get_currently_airing]
+    
+    def _create_seasonal_tools(self):
+        """Create seasonal anime LangChain tools."""
+        
+        @tool
+        async def get_seasonal_anime(season: str, year: int, limit: int = 20) -> Dict[str, Any]:
+            """Get seasonal anime information."""
+            try:
+                results = await self.jikan_client.get_seasonal_anime(season, year)
+                return {"results": results.get("data", [])[:limit], "tool": "seasonal"}
+            except Exception as e:
+                return {"error": str(e), "tool": "seasonal"}
+        
+        return [get_seasonal_anime]
+    
+    def _create_streaming_tools(self):
+        """Create streaming platform LangChain tools."""
+        
+        @tool
+        async def search_streaming_platforms(query: str, limit: int = 20) -> Dict[str, Any]:
+            """Search for anime on streaming platforms."""
+            try:
+                results = await self.kitsu_client.search_anime(query=query, limit=limit)
+                return {"results": results, "tool": "streaming"}
+            except Exception as e:
+                return {"error": str(e), "tool": "streaming"}
+        
+        return [search_streaming_platforms]
+    
     def _create_schedule_agent(self) -> Any:
         """Create reactive schedule agent with temporal and streaming tools."""
         
-        # Combine schedule and streaming tools
-        available_tools = self.schedule_tools + self.streaming_tools
+        # Combine schedule, seasonal, and streaming tools
+        available_tools = self.schedule_tools + self.seasonal_tools + self.streaming_tools
         
         # Add handoff tools for agent coordination
         handoff_tools = [
-            create_handoff_tool(
-                agent_name="SearchAgent",
-                description="Transfer to SearchAgent for anime discovery and platform search"
-            ),
-            create_handoff_tool(
-                agent_name="EnrichmentAgent",
-                description="Transfer to EnrichmentAgent for combining schedule data with other platforms"
-            )
+            create_handoff_tool(agent_name="SearchAgent")
         ]
         
         all_tools = available_tools + handoff_tools
@@ -80,7 +112,7 @@ class ScheduleAgent:
         return create_react_agent(
             model=self.model,
             tools=all_tools,
-            state_modifier=system_prompt,
+            prompt=system_prompt,
             name="ScheduleAgent"
         )
     
@@ -100,6 +132,11 @@ class ScheduleAgent:
 - `search_anime_schedule`: Comprehensive scheduling with 25+ streaming platforms
 - `get_schedule_data`: Detailed schedule info by external IDs (MAL, AniList, etc.)
 - `get_currently_airing`: Real-time airing anime with broadcast times
+
+**Seasonal Tools (Tiered)**:
+- `get_seasonal_anime_basic`: Basic seasonal anime info (8 fields, fastest)
+- `get_seasonal_anime_standard`: Enhanced seasonal anime info (15 fields)
+- `get_seasonal_anime_detailed`: Comprehensive seasonal anime info (25 fields)
 
 **Streaming Platform Tools**:
 - `search_streaming_platforms`: Kitsu's specialized streaming platform search
@@ -132,6 +169,9 @@ class ScheduleAgent:
 
 **For "When does [anime] air?"**:
 → Use `get_schedule_data` with anime IDs from other platforms
+
+**For "What anime aired in [season] [year]?"**:
+→ Use `get_seasonal_anime_basic` for quick lists, `get_seasonal_anime_detailed` for comprehensive info
 
 **For enriching search results**:
 → Take anime IDs and enhance with scheduling/streaming data

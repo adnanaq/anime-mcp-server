@@ -70,7 +70,18 @@ def register_standard_tools(mcp: FastMCP) -> None:
     
     # Initialize clients
     jikan_client = JikanClient()
-    mal_client = MALClient()
+    
+    # MAL client requires credentials - initialize safely
+    mal_client = None
+    try:
+        if hasattr(settings, 'mal_client_id') and settings.mal_client_id:
+            mal_client = MALClient(
+                client_id=settings.mal_client_id,
+                client_secret=getattr(settings, 'mal_client_secret', None)
+            )
+    except Exception as e:
+        logger.warning(f"MAL client initialization failed: {e}")
+    
     anilist_client = AniListClient()
     kitsu_client = KitsuClient()
     

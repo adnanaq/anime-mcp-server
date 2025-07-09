@@ -14,8 +14,7 @@ from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
 from ..config import get_settings
-# Temporarily disabled until LangGraph agent imports are updated for tiered tools
-# from ..langgraph.anime_swarm import AnimeDiscoverySwarm
+from ..langgraph.anime_swarm import AnimeDiscoverySwarm
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -30,8 +29,8 @@ mcp = FastMCP(
     )
 )
 
-# Global workflow instance - temporarily disabled during tiered tool integration
-anime_swarm: Optional[Any] = None  # AnimeDiscoverySwarm
+# Global workflow instance 
+anime_swarm: Optional[AnimeDiscoverySwarm] = None
 
 
 # High-Level Workflow Tools
@@ -412,9 +411,9 @@ async def initialize_server():
         logger.info(f"🔧 Registered {platform_count} platform-specific tools")
         
         # Initialize multi-agent workflow system
-        logger.info("📡 LangGraph workflows temporarily disabled during tiered tool integration")
-        # anime_swarm = AnimeDiscoverySwarm()  # Temporarily disabled
-        logger.info("⚠️  Multi-agent workflow system will be re-enabled after LangGraph modernization")
+        logger.info("📡 Initializing LangGraph multi-agent workflow system")
+        anime_swarm = AnimeDiscoverySwarm()
+        logger.info("✅ Multi-agent workflow system initialized with manual swarm creation")
         
         # Log final capabilities
         total_tools = 4 + tiered_count + platform_count  # 4 workflow + tiered + platform

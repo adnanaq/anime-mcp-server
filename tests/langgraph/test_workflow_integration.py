@@ -10,7 +10,7 @@ from typing import Dict, Any, List
 import json
 
 # Mock LangGraph dependencies
-from src.models.universal_anime import UniversalAnime
+from src.models.structured_responses import BasicAnimeResult, AnimeType, AnimeStatus
 
 # Mock langgraph_swarm since it's not installed
 with patch('src.langgraph.anime_swarm.create_swarm'):

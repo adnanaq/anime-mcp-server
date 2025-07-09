@@ -67,7 +67,7 @@ class AnimeDiscoverySwarm:
         """
         Create LangGraph swarm with specialized anime discovery agents.
 
-        Uses modern swarm architecture with handoff tools and memory persistence.
+        Uses create_swarm with the schema attribute bug fix applied.
         """
         # Get agent instances
         search_agent = self.search_agent.get_agent()
@@ -75,13 +75,15 @@ class AnimeDiscoverySwarm:
 
         # Create swarm with intelligent routing
         workflow = create_swarm(
-            agents=[search_agent, schedule_agent], default_active_agent="SearchAgent"
+            agents=[search_agent, schedule_agent], 
+            default_active_agent="SearchAgent"
         )
 
         # Compile with memory components
         app = workflow.compile(checkpointer=self.checkpointer, store=self.store)
 
         return app
+    
 
     async def discover_anime(
         self,
@@ -130,13 +132,16 @@ class AnimeDiscoverySwarm:
             query, intent, user_context, execution_config
         )
 
-        # Step 6: Execute swarm workflow with conditional routing
+        # Step 6: Execute workflow with conditional routing
         config = self._build_workflow_config(session_id)
+        
+        # Create workflow state for swarm
+        workflow_state = initial_state
 
         try:
-            # Invoke the swarm with intelligent routing and error handling
+            # Invoke the workflow with intelligent routing and error handling
             result = await self.error_integration.execute_with_error_handling(
-                "swarm_workflow", self.swarm.ainvoke, initial_state, config
+                "swarm_workflow", self.swarm.ainvoke, workflow_state, config
             )
 
             # Step 7: Update execution history

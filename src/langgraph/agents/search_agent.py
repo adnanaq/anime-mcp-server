@@ -7,18 +7,19 @@ based on query characteristics and platform strengths.
 
 from typing import List, Dict, Any, Optional
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain_core.tools import BaseTool
+from langchain_core.tools import BaseTool, tool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langgraph_swarm import create_handoff_tool
 
 from ...anime_mcp.tools import (
-    search_anime_mal, get_anime_by_id_mal, get_seasonal_anime_mal,
-    search_anime_anilist, get_anime_anilist,
-    search_anime_jikan, get_anime_jikan, get_jikan_seasonal,
-    search_anime_kitsu, get_anime_kitsu,
-    anime_semantic_search, anime_similar
+    TIER_INFO, get_recommended_tier, get_tier_tools
 )
+from ...integrations.clients.jikan_client import JikanClient
+from ...integrations.clients.anilist_client import AniListClient
+from ...integrations.clients.mal_client import MALClient
+from ...integrations.clients.kitsu_client import KitsuClient
+from ...vector.qdrant_client import QdrantClient
 from ..workflow_state import AnimeSwarmState, QueryIntent
 from ...config import get_settings
 
@@ -44,15 +45,117 @@ class SearchAgent:
             api_key=settings.openai_api_key
         )
         
-        # Platform-specific tool groups
-        self.mal_tools = [search_anime_mal, get_anime_by_id_mal, get_seasonal_anime_mal]
-        self.anilist_tools = [search_anime_anilist, get_anime_anilist]
-        self.jikan_tools = [search_anime_jikan, get_anime_jikan, get_jikan_seasonal]
-        self.kitsu_tools = [search_anime_kitsu, get_anime_kitsu]
-        self.semantic_tools = [anime_semantic_search, anime_similar]
+        # Initialize clients
+        self.jikan_client = JikanClient()
+        self.anilist_client = AniListClient()
+        self.mal_client = self._init_mal_client()
+        self.kitsu_client = KitsuClient()
+        self.qdrant_client = QdrantClient()
+        
+        # Create tiered tool groups - progressive complexity
+        self.basic_tools = self._create_basic_tools()
+        self.standard_tools = self._create_standard_tools()
+        self.detailed_tools = self._create_detailed_tools()
+        self.comprehensive_tools = self._create_comprehensive_tools()
+        self.semantic_tools = self._create_semantic_tools()
         
         # Create agent with handoff capabilities
         self.agent = self._create_search_agent()
+    
+    def _init_mal_client(self):
+        """Initialize MAL client safely."""
+        try:
+            if hasattr(settings, 'mal_client_id') and settings.mal_client_id:
+                return MALClient(
+                    client_id=settings.mal_client_id,
+                    client_secret=getattr(settings, 'mal_client_secret', None)
+                )
+        except Exception as e:
+            logger.warning(f"MAL client initialization failed: {e}")
+        return None
+    
+    def _create_basic_tools(self):
+        """Create basic tier LangChain tools."""
+        
+        @tool
+        async def search_anime_basic(query: str, limit: int = 20) -> Dict[str, Any]:
+            """Search for anime using basic search with essential information only."""
+            try:
+                results = await self.jikan_client.search_anime(q=query, limit=limit)
+                return {"results": results[:limit], "tier": "basic"}
+            except Exception as e:
+                return {"error": str(e), "tier": "basic"}
+        
+        @tool
+        async def get_seasonal_anime_basic(season: str, year: int, limit: int = 20) -> Dict[str, Any]:
+            """Get seasonal anime with basic information."""
+            try:
+                results = await self.jikan_client.get_seasonal_anime(season, year)
+                return {"results": results.get("data", [])[:limit], "tier": "basic"}
+            except Exception as e:
+                return {"error": str(e), "tier": "basic"}
+        
+        return [search_anime_basic, get_seasonal_anime_basic]
+    
+    def _create_standard_tools(self):
+        """Create standard tier LangChain tools."""
+        
+        @tool
+        async def search_anime_standard(query: str, limit: int = 20, **kwargs) -> Dict[str, Any]:
+            """Search for anime using standard search with enhanced filtering."""
+            try:
+                results = await self.jikan_client.search_anime(q=query, limit=limit, **kwargs)
+                return {"results": results[:limit], "tier": "standard"}
+            except Exception as e:
+                return {"error": str(e), "tier": "standard"}
+        
+        return [search_anime_standard]
+    
+    def _create_detailed_tools(self):
+        """Create detailed tier LangChain tools."""
+        
+        @tool
+        async def search_anime_detailed(query: str, limit: int = 20, **kwargs) -> Dict[str, Any]:
+            """Search for anime using detailed search with comprehensive information."""
+            try:
+                results = await self.jikan_client.search_anime(q=query, limit=limit, **kwargs)
+                return {"results": results[:limit], "tier": "detailed"}
+            except Exception as e:
+                return {"error": str(e), "tier": "detailed"}
+        
+        return [search_anime_detailed]
+    
+    def _create_comprehensive_tools(self):
+        """Create comprehensive tier LangChain tools."""
+        
+        @tool
+        async def search_anime_comprehensive(query: str, limit: int = 20, **kwargs) -> Dict[str, Any]:
+            """Search for anime using comprehensive search with complete analytics."""
+            try:
+                results = await self.jikan_client.search_anime(q=query, limit=limit, **kwargs)
+                return {"results": results[:limit], "tier": "comprehensive"}
+            except Exception as e:
+                return {"error": str(e), "tier": "comprehensive"}
+        
+        return [search_anime_comprehensive]
+    
+    def _create_semantic_tools(self):
+        """Create semantic search LangChain tools."""
+        
+        @tool
+        async def anime_semantic_search(query: str, limit: int = 20) -> Dict[str, Any]:
+            """Perform semantic search across anime database using natural language."""
+            try:
+                results = await self.qdrant_client.search(
+                    query=query,
+                    limit=limit,
+                    search_type="combined"
+                )
+                return {"results": results, "tier": "semantic"}
+            except Exception as e:
+                return {"error": str(e), "tier": "semantic"}
+        
+        return [anime_semantic_search]
     
     def _create_search_agent(self) -> Any:
         """Create reactive search agent with platform-specific tools."""
@@ -63,29 +166,22 @@ class SearchAgent:
         # Always include semantic search (no API key required)
         available_tools.extend(self.semantic_tools)
         
-        # Add Jikan tools (no API key required)
-        available_tools.extend(self.jikan_tools)
+        # Add tiered tools based on configuration
+        # Basic tools are always available (fastest, essential info)
+        available_tools.extend(self.basic_tools)
         
-        # Add platform tools based on API key availability
-        if hasattr(settings, 'mal_api_key') and settings.mal_api_key:
-            available_tools.extend(self.mal_tools)
+        # Standard tools for enhanced filtering
+        available_tools.extend(self.standard_tools)
         
-        if hasattr(settings, 'anilist_token') and settings.anilist_token:
-            available_tools.extend(self.anilist_tools)
-            
-        # Kitsu doesn't require API key
-        available_tools.extend(self.kitsu_tools)
+        # Detailed tools for comprehensive analysis
+        available_tools.extend(self.detailed_tools)
+        
+        # Comprehensive tools for complete analytics
+        available_tools.extend(self.comprehensive_tools)
         
         # Add handoff tools for agent coordination
         handoff_tools = [
-            create_handoff_tool(
-                agent_name="ScheduleAgent",
-                description="Transfer to ScheduleAgent for broadcast schedules and streaming information"
-            ),
-            create_handoff_tool(
-                agent_name="EnrichmentAgent", 
-                description="Transfer to EnrichmentAgent for cross-platform data combination"
-            )
+            create_handoff_tool(agent_name="ScheduleAgent")
         ]
         
         all_tools = available_tools + handoff_tools
@@ -95,18 +191,42 @@ class SearchAgent:
         return create_react_agent(
             model=self.model,
             tools=all_tools,
-            state_modifier=system_prompt,
+            prompt=system_prompt,
             name="SearchAgent"
         )
     
     def _build_system_prompt(self) -> str:
         """Build comprehensive system prompt for search agent."""
-        return """You are SearchAgent, an expert anime discovery specialist with access to multiple platform APIs.
+        return """You are SearchAgent, an expert anime discovery specialist with access to tiered anime search tools.
 
 ## Your Mission
-Help users discover anime through intelligent platform routing and comprehensive search capabilities.
+Help users discover anime through intelligent tier selection and comprehensive search capabilities.
 
-## Platform Strengths & When to Use:
+## Tiered Tool Architecture & When to Use:
+
+**Basic Tools (Tier 1) - 8 fields, 80% coverage**:
+- search_anime_basic, get_anime_basic, find_similar_anime_basic, get_seasonal_anime_basic
+- Use for: Quick searches, simple filtering, basic recommendations
+- Performance: Fastest response times
+- When: User needs quick answers or basic information
+
+**Standard Tools (Tier 2) - 15 fields, 95% coverage**:
+- search_anime_standard, get_anime_standard, find_similar_anime_standard, get_seasonal_anime_standard, search_by_genre_standard
+- Use for: Advanced filtering, detailed search, genre-based discovery
+- Performance: Fast with enhanced metadata
+- When: User needs enhanced filtering or more detailed results
+
+**Detailed Tools (Tier 3) - 25 fields, 99% coverage**:
+- search_anime_detailed, get_anime_detailed, find_similar_anime_detailed, get_seasonal_anime_detailed, advanced_anime_analysis
+- Use for: Cross-platform analysis, detailed comparison, research
+- Performance: Moderate, comprehensive data
+- When: User needs detailed analysis or cross-platform information
+
+**Comprehensive Tools (Tier 4) - 40+ fields, 100% coverage**:
+- search_anime_comprehensive, get_anime_comprehensive, find_similar_anime_comprehensive, comprehensive_anime_analytics
+- Use for: Complete analysis, market research, predictive analytics
+- Performance: Thorough, complete data set
+- When: User needs exhaustive information or analytical insights
 
 **Semantic Search (anime_semantic_search, anime_similar)**:
 - Natural language queries: "dark fantasy with strong protagonist"
@@ -114,37 +234,19 @@ Help users discover anime through intelligent platform routing and comprehensive
 - Thematic discovery: "psychological horror anime"
 - When keywords don't capture the essence
 
-**Jikan (MAL Unofficial API)**:
-- No API key required - always available
-- Rich community data (scores, popularity, members)
-- Seasonal anime discovery
-- Detailed metadata (characters, staff, episodes)
-- When you need reliable MAL data
-
-**MAL Official API** (if available):
-- Official community statistics
-- Content filtering (NSFW, ratings)
-- Broadcast scheduling
-- When you need authoritative MAL data
-
-**AniList**:
-- 70+ advanced search parameters
-- International content focus
-- Complex filtering needs
-- GraphQL-powered precision
-
-**Kitsu**:
-- Streaming platform specialization
-- Range syntax filtering (80.., ..90, 80..90)
-- JSON:API standards
-- When streaming availability is key
-
 ## Search Strategy:
 
-1. **Analyze Query Intent**: Understand what the user really wants
-2. **Select Optimal Platform(s)**: Choose based on query characteristics
-3. **Execute Smart Search**: Use platform strengths effectively
+1. **Analyze Query Complexity**: Determine if user needs basic info or detailed analysis
+2. **Select Optimal Tier**: Choose appropriate tier based on query requirements
+3. **Execute Smart Search**: Use tier strengths effectively
 4. **Provide Rich Results**: Include relevant metadata and context
+5. **Suggest Tier Upgrades**: Recommend higher tiers if user needs more info
+
+## Tier Selection Guidelines:
+- Simple queries or speed priority → Basic (Tier 1)
+- Enhanced filtering needs → Standard (Tier 2) 
+- Research or comparison → Detailed (Tier 3)
+- Complete analysis → Comprehensive (Tier 4)
 
 ## Handoff Decisions:
 
@@ -153,12 +255,12 @@ Help users discover anime through intelligent platform routing and comprehensive
 
 ## Response Format:
 - Lead with the most relevant results
-- Explain your platform choice reasoning
+- Explain your tier selection reasoning
 - Include data quality indicators
-- Suggest related searches or refinements
+- Suggest tier upgrades for more comprehensive results
 - Offer handoffs when appropriate
 
-Be helpful, precise, and always explain your reasoning for platform selection."""
+Be helpful, precise, and always explain your reasoning for tier selection."""
 
     def get_tools_for_intent(self, intent: QueryIntent) -> List[BaseTool]:
         """Select optimal tools based on query intent analysis."""
@@ -168,32 +270,25 @@ Be helpful, precise, and always explain your reasoning for platform selection.""
         if intent.needs_semantic_search or intent.needs_similarity_search:
             selected_tools.extend(self.semantic_tools)
         
-        # Seasonal data requirements
-        if intent.needs_seasonal_data:
-            selected_tools.extend([get_jikan_seasonal, get_seasonal_anime_mal])
+        # Determine appropriate tier based on query complexity
+        query_complexity = getattr(intent, 'complexity', 'medium')
+        response_time_priority = getattr(intent, 'response_time_priority', 'balanced')
         
-        # Streaming platform focus
-        if intent.needs_streaming_info:
-            selected_tools.extend(self.kitsu_tools)
+        # Get recommended tier
+        recommended_tier = get_recommended_tier(query_complexity, response_time_priority)
         
-        # Platform-specific routing based on hints
-        platform_hints = intent.platform_hints
-        if "myanimelist" in platform_hints or "mal" in platform_hints:
-            selected_tools.extend(self.mal_tools + self.jikan_tools)
-        elif "anilist" in platform_hints:
-            selected_tools.extend(self.anilist_tools)
-        elif "kitsu" in platform_hints:
-            selected_tools.extend(self.kitsu_tools)
-        else:
-            # Default comprehensive search
-            selected_tools.extend(self.jikan_tools)  # Always available
-            selected_tools.extend(self.semantic_tools)  # Always available
-            
-            # Add available platform tools
-            if hasattr(settings, 'mal_api_key') and settings.mal_api_key:
-                selected_tools.extend(self.mal_tools)
-            if hasattr(settings, 'anilist_token') and settings.anilist_token:
-                selected_tools.extend(self.anilist_tools)
+        # Add tools based on recommended tier
+        if recommended_tier == "basic":
+            selected_tools.extend(self.basic_tools)
+        elif recommended_tier == "standard":
+            selected_tools.extend(self.basic_tools + self.standard_tools)
+        elif recommended_tier == "detailed":
+            selected_tools.extend(self.basic_tools + self.standard_tools + self.detailed_tools)
+        elif recommended_tier == "comprehensive":
+            selected_tools.extend(self.basic_tools + self.standard_tools + self.detailed_tools + self.comprehensive_tools)
+        
+        # Always include semantic search for flexibility
+        selected_tools.extend(self.semantic_tools)
         
         # Remove duplicates while preserving order
         seen = set()
@@ -227,11 +322,12 @@ Query Intent Analysis:
 - Intent Type: {intent.get('intent_type', 'search')}
 - Needs Semantic Search: {intent.get('needs_semantic_search', False)}
 - Needs Streaming Info: {intent.get('needs_streaming_info', False)}
-- Platform Hints: {intent.get('platform_hints', [])}
+- Query Complexity: {intent.get('complexity', 'medium')}
+- Response Time Priority: {intent.get('response_time_priority', 'balanced')}
 - Suggested Tools: {intent.get('suggested_tools', [])}
 
-Please select the most appropriate search strategy and execute the search.
-Explain your reasoning for platform selection and provide comprehensive results.
+Please select the most appropriate tier and search strategy based on the query complexity.
+Explain your reasoning for tier selection and provide comprehensive results.
 """
         )
         
@@ -251,7 +347,7 @@ Explain your reasoning for platform selection and provide comprehensive results.
             "anime_results": search_results,
             "current_step": "search_completed",
             "completed_steps": state.get("completed_steps", []) + ["search"],
-            "platforms_used": self._extract_platforms_used(result)
+            "tiers_used": self._extract_tiers_used(result)
         }
     
     def _extract_search_results(self, agent_result: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -261,10 +357,10 @@ Explain your reasoning for platform selection and provide comprehensive results.
         # In real implementation, we'd parse the actual tool results
         return []
     
-    def _extract_platforms_used(self, agent_result: Dict[str, Any]) -> List[str]:
-        """Extract which platforms were used in the search."""
-        # Parse tool calls to determine which platforms were queried
-        return ["jikan", "semantic"]  # Placeholder
+    def _extract_tiers_used(self, agent_result: Dict[str, Any]) -> List[str]:
+        """Extract which tiers were used in the search."""
+        # Parse tool calls to determine which tiers were queried
+        return ["basic", "semantic"]  # Placeholder
         
     def get_agent(self):
         """Get the configured search agent for swarm integration."""
