@@ -10,6 +10,7 @@ import asyncio
 import json
 import sys
 import os
+import re
 from typing import Dict, List, Any, Optional
 from dataclasses import asdict
 import logging
@@ -278,7 +279,7 @@ class IntentBasedTestSuite:
         return results
     
     async def _test_intent_category(self, expected_intent: QueryIntent, queries: List[str]) -> Dict[str, Any]:
-        """Test a specific intent category."""
+        """Test a specific intent category with corrected evaluation logic."""
         intent_results = {
             "expected_intent": expected_intent.value,
             "total_queries": len(queries),
@@ -303,13 +304,18 @@ class IntentBasedTestSuite:
                 # Test intelligent router
                 routing_decision = await self.router.route_query(query)
                 
-                # Test query analyzer
-                analysis_result = await self.analyzer.analyze_query(query)
+                # --- CORRECTED LOGIC ---
+                # The original script had flawed logic here. We now directly check the intent from the router's reasoning.
+                classified_intent = "unknown"
+                if routing_decision.reasoning:
+                    # Extracts intent from a string like "Classified query intent as 'search'"
+                    match = re.search(r"\'(.*?)\'", routing_decision.reasoning[0])
+                    if match:
+                        classified_intent = match.group(1)
                 
-                # Check intent accuracy
-                classified_intent = self._extract_classified_intent(routing_decision, analysis_result)
-                intent_correct = self._is_intent_correct(expected_intent, classified_intent, routing_decision)
-                
+                intent_correct = (expected_intent.value == classified_intent)
+                # --- END CORRECTION ---
+
                 if intent_correct:
                     intent_matches += 1
                 
@@ -320,7 +326,7 @@ class IntentBasedTestSuite:
                     "classified_intent": classified_intent,
                     "intent_correct": intent_correct,
                     "routing_decision": asdict(routing_decision),
-                    "analysis_result": analysis_result,
+                    "analysis_result": {}, # This was from a different component, removing for clarity
                     "success": True,
                     "error": None
                 }
@@ -385,66 +391,7 @@ class IntentBasedTestSuite:
         
         return intent_results
     
-    def _extract_classified_intent(self, routing_decision: RoutingDecision, analysis_result: Dict[str, Any]) -> str:
-        """Extract the classified intent from routing results."""
-        # Priority 1: Use analysis result intent if available
-        if analysis_result and "intent_type" in analysis_result:
-            return analysis_result["intent_type"]
-        
-        # Priority 2: Infer from primary tools
-        if routing_decision.primary_tools:
-            primary_tool = routing_decision.primary_tools[0]
-            
-            # Map tools to intents
-            tool_intent_mapping = {
-                "semantic": "similar",
-                "compare_anime_ratings_cross_platform": "comparison",
-                "get_cross_platform_anime_data": "enrichment",
-                "animeschedule": "schedule",
-                "kitsu": "streaming",
-                "anilist": "search",
-                "mal": "search",
-                "jikan": "search"
-            }
-            
-            for tool_key, intent in tool_intent_mapping.items():
-                if tool_key in primary_tool:
-                    return intent
-        
-        return "search"  # Default fallback
     
-    def _is_intent_correct(self, expected_intent: QueryIntent, classified_intent: str, routing_decision: RoutingDecision) -> bool:
-        """Check if the classified intent matches the expected intent."""
-        # Direct match
-        if expected_intent.value == classified_intent:
-            return True
-        
-        # Handle intent aliases and related intents
-        intent_aliases = {
-            QueryIntent.DISCOVERY: ["search", "similar", "enrichment"],
-            QueryIntent.ENRICHMENT: ["search", "comparison"],
-            QueryIntent.SEASONAL: ["search", "trending"],
-            QueryIntent.TRENDING: ["search", "seasonal"],
-        }
-        
-        if expected_intent in intent_aliases:
-            if classified_intent in intent_aliases[expected_intent]:
-                return True
-        
-        # Check routing decision characteristics
-        if expected_intent == QueryIntent.COMPARISON:
-            return any("compare" in tool or "cross_platform" in tool for tool in routing_decision.primary_tools)
-        
-        if expected_intent == QueryIntent.STREAMING:
-            return any("kitsu" in tool or "streaming" in tool for tool in routing_decision.primary_tools)
-        
-        if expected_intent == QueryIntent.SCHEDULE:
-            return any("schedule" in tool or "animeschedule" in tool for tool in routing_decision.primary_tools)
-        
-        if expected_intent == QueryIntent.SIMILAR:
-            return any("semantic" in tool or "similar" in tool for tool in routing_decision.primary_tools)
-        
-        return False
     
     def _calculate_intent_summary_stats(self, results: Dict[str, Any]):
         """Calculate overall intent-based summary statistics."""

@@ -14,6 +14,7 @@ import logging
 from typing import Dict, Any, List, Optional, Tuple, Set
 from dataclasses import dataclass
 from enum import Enum
+from ..services.llm_service import get_llm_service
 
 from ..models.structured_responses import (
     BasicAnimeResult,
@@ -247,7 +248,7 @@ class IntelligentRouter:
         logger.info(f"Routing query: '{query}'")
 
         # Step 1: Analyze query intent
-        intent = self._classify_intent(query)
+        intent = await self._classify_intent(query)
 
         # Step 2: Extract query features
         features = self._extract_query_features(query)
@@ -292,33 +293,118 @@ class IntelligentRouter:
 
         return decision
 
-    def _classify_intent(self, query: str) -> QueryIntent:
-        """Classify the user's intent from the query."""
-        query_lower = query.lower()
+    async def _classify_intent(self, query: str) -> QueryIntent:
+        """Classify the user's intent from the query using an LLM with a highly enhanced prompt."""
+        llm_service = get_llm_service()
+        if not llm_service.is_available():
+            logger.warning("LLM service not available, falling back to regex-based intent classification.")
+            # Fallback to the old method if LLM is not configured
+            query_lower = query.lower()
+            intent_scores = {}
+            for intent, patterns in self.intent_patterns.items():
+                score = 0
+                for pattern in patterns:
+                    if re.search(pattern, query_lower):
+                        score += 1
+                if score > 0:
+                    intent_scores[intent] = score
+            if intent_scores:
+                return max(intent_scores.items(), key=lambda x: x[1])[0]
+            if any(word in query_lower for word in ["compare", "across", "between", "vs"]):
+                return QueryIntent.COMPARISON
+            if any(word in query_lower for word in ["like", "similar", "recommend"]):
+                return QueryIntent.SIMILAR
+            return QueryIntent.SEARCH
 
-        # Score each intent based on pattern matches
-        intent_scores = {}
-        for intent, patterns in self.intent_patterns.items():
-            score = 0
-            for pattern in patterns:
-                if re.search(pattern, query_lower):
-                    score += 1
-            if score > 0:
-                intent_scores[intent] = score
+        intent_options = [intent.value for intent in QueryIntent]
 
-        # Return highest scoring intent, or default to SEARCH
-        if intent_scores:
-            return max(intent_scores.items(), key=lambda x: x[1])[0]
+        prompt = f'''
+You are a hyper-specialized query intent classifier for an anime discovery platform. Your single task is to categorize the user's query into ONE of the predefined intents. Respond with ONLY the single best intent name from the list.
 
-        # Check for cross-platform keywords
-        if any(word in query_lower for word in ["compare", "across", "between", "vs"]):
-            return QueryIntent.COMPARISON
+**Crucial Distinctions (Read Carefully):**
+- If the user asks for anime *about* a topic (e.g., "anime about samurai"), the intent is **search**.
+- If the user asks for a *recommendation* or help *finding something new* without a specific seed anime, the intent is **discovery**.
+- If the user asks for *all available data* or *comprehensive information* for a *specific, named anime*, the intent is **enrichment**.
+- If the query contains a specific season and year (e.g., "Winter 2024"), the intent is **seasonal**.
+- If the query asks what is *popular* or *trending* right now, the intent is **trending**.
 
-        # Check for similarity keywords
-        if any(word in query_lower for word in ["like", "similar", "recommend"]):
-            return QueryIntent.SIMILAR
+**Intent Definitions:**
+- **search**: Specific lookups for anime based on criteria (genres, themes, etc.).
+- **discovery**: Broad, open-ended recommendations.
+- **enrichment**: Comprehensive data gathering for a specific, named anime.
+- **similar**: Recommendations based on a specific, named anime.
+- **seasonal**: Queries tied to a specific calendar season or year.
+- **trending**: Queries about current popularity.
+- **schedule**: Queries about airing dates, broadcast times, or episode releases.
+- **streaming**: Queries about availability on specific streaming platforms.
+- **comparison**: Queries that explicitly ask to compare two or more anime or concepts.
 
-        return QueryIntent.SEARCH
+**User Query:**
+"{query}"
+
+---
+**High-Quality Examples (Covering Edge Cases):**
+
+Query: "Find anime about samurai warriors"
+Intent: search
+
+Query: "I want to find a new show to watch, maybe something with action"
+Intent: discovery
+
+Query: "Get comprehensive data for Death Note from all sources"
+Intent: enrichment
+
+Query: "Show me something like One Piece"
+Intent: similar
+
+Query: "What were the best anime of Winter 2023?"
+Intent: seasonal
+
+Query: "What's popular right now?"
+Intent: trending
+
+Query: "When is the next episode of Jujutsu Kaisen airing?"
+Intent: schedule
+
+Query: "is bleach on crunchyroll?"
+Intent: streaming
+
+Query: "compare ratings for bleach vs naruto"
+Intent: comparison
+
+Query: "Show me anime airing this season"
+Intent: schedule
+
+Query: "How do anime ratings vary by demographic?"
+Intent: comparison
+
+Query: "Show me this season's most popular anime"
+Intent: trending
+
+Query: "Gather all available data on Demon Slayer"
+Intent: enrichment
+---
+
+Based on the query and the detailed examples, what is the single best intent?
+'''
+
+        try:
+            raw_response = await llm_service.generate_content(prompt)
+            response_text = raw_response.strip().lower()
+
+            for intent_enum in QueryIntent:
+                if intent_enum.value == response_text:
+                    logger.info(f"LLM classified intent as '{response_text}' for query: '{query}'")
+                    return intent_enum
+
+            logger.warning(
+                f"LLM returned an invalid intent '{response_text}'. Defaulting to SEARCH."
+            )
+            return QueryIntent.SEARCH
+
+        except Exception as e:
+            logger.error(f"LLM intent classification failed: {e}. Defaulting to SEARCH.")
+            return QueryIntent.SEARCH
 
     def _extract_query_features(self, query: str) -> Dict[str, Any]:
         """Extract features from the query for routing decisions."""
