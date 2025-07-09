@@ -12,19 +12,20 @@ import logging
 from datetime import datetime
 
 from ..models.structured_responses import BasicAnimeResult, BasicSearchResponse
-from ..anime_mcp.tools import (
-    search_anime_mal,
-    get_anime_by_id_mal,
-    search_anime_anilist,
-    get_anime_anilist,
-    search_anime_schedule,
-    get_schedule_data,
-    search_anime_kitsu,
-    get_anime_kitsu,
-    search_anime_jikan,
-    get_anime_jikan,
-    anime_semantic_search,
-)
+# Temporarily disabled due to circular import - will be fixed in next phase
+# from ..anime_mcp.tools import (
+#     search_anime_mal,
+#     get_anime_by_id_mal,
+#     search_anime_anilist,
+#     get_anime_anilist,
+#     search_anime_schedule,
+#     get_schedule_data,
+#     search_anime_kitsu,
+#     get_anime_kitsu,
+#     search_anime_jikan,
+#     get_anime_jikan,
+#     anime_semantic_search,
+# )
 
 logger = logging.getLogger(__name__)
 
