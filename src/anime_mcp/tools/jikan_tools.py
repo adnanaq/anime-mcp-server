@@ -10,14 +10,13 @@ from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
 from ...integrations.clients.jikan_client import JikanClient
-from ...integrations.mappers.jikan_mapper import JikanMapper
-from ...models.universal_anime import UniversalSearchParams, AnimeStatus, AnimeFormat, AnimeRating
+from ...models.structured_responses import BasicSearchResponse, BasicAnimeResult, AnimeType, AnimeStatus, AnimeRating
 from ...config import get_settings
 
 # Initialize components
 settings = get_settings()
 jikan_client = JikanClient()
-jikan_mapper = JikanMapper()
+# Removed JikanMapper - using direct API calls instead
 
 # Create FastMCP instance for tools
 mcp = FastMCP("Jikan Tools")
@@ -71,7 +70,7 @@ async def search_anime_jikan(
     page: int = 1,
     
     ctx: Optional[Context] = None
-) -> List[Dict[str, Any]]:
+) -> List[BasicAnimeResult]:
     """
     Search anime using Jikan (MAL unofficial API) with comprehensive filtering.
     
@@ -109,47 +108,87 @@ async def search_anime_jikan(
         await ctx.info(f"Searching Jikan (MAL) with {limit} results per page")
     
     try:
-        # Create UniversalSearchParams with direct string inputs (Union types handle both enum and string)
-        universal_params = UniversalSearchParams(
-            query=query,
-            limit=min(limit, 25),  # Jikan max limit
-            offset=(page - 1) * limit if page > 1 else 0,
-            status=status,           # Pass LLM string directly ("airing", "complete", "upcoming")
-            type_format=type,        # Pass LLM string directly ("tv", "movie", "ova", etc.)
-            rating=rating,           # Pass LLM string directly ("g", "pg", "pg13", etc.)
-            min_score=min_score,
-            max_score=max_score,
-            start_date=start_date,
-            end_date=end_date,
-            genres=[str(g) for g in genres] if genres else None,
-            genres_exclude=[str(g) for g in genres_exclude] if genres_exclude else None,
-            producers=[str(p) for p in producers] if producers else None,
-            sort_by=order_by,
-            sort_order=sort,
-            include_adult=not sfw,
-            jikan_score=score,
-            jikan_letter=letter,
-            jikan_unapproved=unapproved
-        )
+        # Build Jikan API parameters directly (no Universal parameter conversion)
+        jikan_params = {}
         
-        # No jikan_specific parameters needed - all handled by universal_params now
-        jikan_specific = {}
+        # Basic search parameters
+        if query:
+            jikan_params["q"] = query
+        if limit:
+            jikan_params["limit"] = min(limit, 25)  # Jikan max limit
+        if page > 1:
+            jikan_params["page"] = page
+            
+        # Content filtering
+        if type:
+            jikan_params["type"] = type
+        if status:
+            jikan_params["status"] = status
+        if rating:
+            jikan_params["rating"] = rating
+            
+        # Score filtering
+        if score:
+            jikan_params["score"] = score
+        if min_score:
+            jikan_params["min_score"] = min_score
+        if max_score:
+            jikan_params["max_score"] = max_score
+            
+        # Date filtering
+        if start_date:
+            jikan_params["start_date"] = start_date
+        if end_date:
+            jikan_params["end_date"] = end_date
+            
+        # Genre filtering
+        if genres:
+            jikan_params["genres"] = ",".join(map(str, genres))
+        if genres_exclude:
+            jikan_params["genres_exclude"] = ",".join(map(str, genres_exclude))
+            
+        # Producer filtering
+        if producers:
+            jikan_params["producers"] = ",".join(map(str, producers))
+            
+        # Sorting and advanced options
+        if order_by:
+            jikan_params["order_by"] = order_by
+        if sort:
+            jikan_params["sort"] = sort
+        if sfw is not None:
+            jikan_params["sfw"] = sfw
+            
+        # Jikan-specific parameters
+        if letter:
+            jikan_params["letter"] = letter
+        if unapproved:
+            jikan_params["unapproved"] = unapproved
         
-        # Use mapper to convert parameters
-        jikan_params = jikan_mapper.to_jikan_search_params(universal_params, jikan_specific)
-        
-        # Execute search and return raw Jikan results directly
+        # Execute search with direct API parameters
         raw_results = await jikan_client.search_anime(**jikan_params)
         
-        # Add source attribution to each result
+        # Convert to structured response format
+        anime_results = []
         for result in raw_results:
             if isinstance(result, dict):
-                result["source_platform"] = "jikan"
+                # Convert raw Jikan data to BasicAnimeResult
+                anime_result = BasicAnimeResult(
+                    id=str(result.get("mal_id", "")),
+                    title=result.get("title", ""),
+                    score=result.get("score") if result.get("score") else None,
+                    year=result.get("year") if result.get("year") else None,
+                    type=AnimeType(result.get("type", "tv").lower()) if result.get("type") else None,
+                    genres=[genre.get("name", "") for genre in result.get("genres", [])],
+                    image_url=result.get("images", {}).get("jpg", {}).get("image_url"),
+                    synopsis=result.get("synopsis", "")[:300] if result.get("synopsis") else None
+                )
+                anime_results.append(anime_result)
 
         if ctx:
-            await ctx.info(f"Found {len(raw_results)} anime via Jikan")
+            await ctx.info(f"Found {len(anime_results)} anime via Jikan")
             
-        return raw_results
+        return anime_results
         
     except Exception as e:
         error_msg = f"Jikan search failed: {str(e)}"

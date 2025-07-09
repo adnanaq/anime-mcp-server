@@ -11,8 +11,7 @@ from fastmcp import FastMCP
 from mcp.server.fastmcp import Context
 
 from ...integrations.clients.mal_client import MALClient
-from ...integrations.mappers.mal_mapper import MALMapper
-from ...models.universal_anime import UniversalSearchParams
+from ...models.structured_responses import BasicSearchResponse, BasicAnimeResult, AnimeType, AnimeStatus
 from ...config import get_settings
 
 # Initialize components
@@ -21,7 +20,7 @@ mal_client = MALClient(
     client_id=settings.mal_client_id,
     client_secret=settings.mal_client_secret
 ) if hasattr(settings, 'mal_client_id') and settings.mal_client_id else None
-mal_mapper = MALMapper()
+# Removed MALMapper - using direct API calls instead
 
 # Create FastMCP instance for tools
 mcp = FastMCP("MAL Tools")
