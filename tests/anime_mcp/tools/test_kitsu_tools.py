@@ -8,10 +8,9 @@ from src.anime_mcp.tools.kitsu_tools import (
     search_anime_kitsu,
     get_anime_kitsu,
     search_streaming_platforms,
-    kitsu_client,
-    kitsu_mapper
+    kitsu_client
 )
-from src.models.universal_anime import UniversalAnime, UniversalSearchParams
+from src.models.structured_responses import BasicAnimeResult, AnimeType, AnimeStatus
 
 
 class TestKitsuTools:
@@ -247,37 +246,7 @@ class TestKitsuTools:
         
         return client
 
-    @pytest.fixture
-    def mock_kitsu_mapper(self):
-        """Create mock Kitsu mapper."""
-        mapper = MagicMock()
-        
-        # Mock to_kitsu_search_params
-        mapper.to_kitsu_search_params.return_value = {
-            "filter[text]": "attack on titan",
-            "page[limit]": 20,
-            "page[offset]": 0,
-            "filter[subtype]": "TV",
-            "filter[status]": "finished"
-        }
-        
-        # Mock to_universal_anime
-        mapper.to_universal_anime.return_value = UniversalAnime(
-            id="kitsu_1",
-            title="Attack on Titan",
-            type_format="TV",
-            episodes=25,
-            score=8.54,
-            year=2013,
-            status="FINISHED",
-            genres=["Action", "Drama"],
-            studios=["Wit Studio"],
-            description="Humanity fights against titans",
-            image_url="https://example.com/aot.jpg",
-            data_quality_score=0.88
-        )
-        
-        return mapper
+    
 
     @pytest.fixture
     def mock_context(self):
@@ -288,10 +257,9 @@ class TestKitsuTools:
         return context
 
     @pytest.mark.asyncio
-    async def test_search_anime_kitsu_success(self, mock_kitsu_client, mock_kitsu_mapper, mock_context):
+    async def test_search_anime_kitsu_success(self, mock_kitsu_client, mock_context):
         """Test successful Kitsu anime search."""
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
             result = await search_anime_kitsu(
                 query="attack on titan",
@@ -304,7 +272,7 @@ class TestKitsuTools:
             assert len(result) == 1
             
             anime = result[0]
-            assert anime["id"] == "kitsu_1"
+            assert anime["id"] == "1"
             assert anime["title"] == "Attack on Titan"
             assert anime["kitsu_id"] == "1"
             assert anime["kitsu_slug"] == "attack-on-titan"
@@ -316,57 +284,52 @@ class TestKitsuTools:
             
             # Verify client calls
             mock_kitsu_client.search_anime.assert_called_once()
-            mock_kitsu_mapper.to_kitsu_search_params.assert_called_once()
-            mock_kitsu_mapper.to_universal_anime.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_search_anime_kitsu_with_filters(self, mock_kitsu_client, mock_kitsu_mapper, mock_context):
+    async def test_search_anime_kitsu_with_filters(self, mock_kitsu_client, mock_context):
         """Test Kitsu search with comprehensive filters."""
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
-            result = await search_anime_kitsu(
+            await search_anime_kitsu(
                 query="mecha anime",
                 subtype="TV",
                 status="current",
                 age_rating="PG",
                 season="spring",
                 season_year=2023,
-                streaming_platforms=["crunchyroll", "funimation"],
-                include_nsfw=False,
-                sort_by="popularityRank",
+                streamers=["Crunchyroll", "Funimation"],
+                sort="popularityRank",
                 limit=15,
                 offset=30,
                 ctx=mock_context
             )
             
-            # Verify mapper was called with filters
-            call_args = mock_kitsu_mapper.to_kitsu_search_params.call_args
-            universal_params = call_args[0][0]
-            kitsu_specific = call_args[0][1]
+            # Verify client was called with filters
+            mock_kitsu_client.search_anime.assert_called_once()
+            call_args = mock_kitsu_client.search_anime.call_args[0][0]
             
-            assert universal_params.query == "mecha anime"
-            assert universal_params.limit == 15
-            assert universal_params.offset == 30
+            assert call_args["filter"]["text"] == "mecha anime"
+            assert call_args["page"]["limit"] == 15
+            assert call_args["page"]["offset"] == 30
             
-            assert kitsu_specific["subtype"] == "TV"
-            assert kitsu_specific["status"] == "current"
-            assert kitsu_specific["age_rating"] == "PG"
-            assert kitsu_specific["season"] == "spring"
-            assert kitsu_specific["season_year"] == 2023
+            assert call_args["filter"]["subtype"] == "TV"
+            assert call_args["filter"]["status"] == "current"
+            assert call_args["filter"]["ageRating"] == "PG"
+            assert call_args["filter"]["season"] == "spring"
+            assert call_args["filter"]["seasonYear"] == "2023"
+            assert call_args["filter"]["streamers"] == "Crunchyroll,Funimation"
+            assert call_args["sort"] == "popularityRank"
 
     @pytest.mark.asyncio
-    async def test_search_anime_kitsu_pagination(self, mock_kitsu_client, mock_kitsu_mapper):
+    async def test_search_anime_kitsu_pagination(self, mock_kitsu_client):
         """Test Kitsu search pagination limits."""
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
             # Test limit clamping (should clamp to 20)
             await search_anime_kitsu(query="test", limit=50)
             
-            call_args = mock_kitsu_mapper.to_kitsu_search_params.call_args
-            universal_params = call_args[0][0]
-            assert universal_params.limit == 20
+            call_args = mock_kitsu_client.search_anime.call_args[0][0]
+            assert call_args["page"]["limit"] == 20
 
     @pytest.mark.asyncio
     async def test_search_anime_kitsu_no_client(self, mock_context):
@@ -379,7 +342,7 @@ class TestKitsuTools:
             mock_context.error.assert_called_with("Kitsu client not configured")
 
     @pytest.mark.asyncio
-    async def test_search_anime_kitsu_api_error(self, mock_kitsu_client, mock_kitsu_mapper, mock_context):
+    async def test_search_anime_kitsu_api_error(self, mock_kitsu_client, mock_context):
         """Test Kitsu search when API returns error."""
         mock_kitsu_client.search_anime.return_value = {
             "errors": [
@@ -391,42 +354,41 @@ class TestKitsuTools:
             ]
         }
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
             with pytest.raises(RuntimeError, match="Kitsu search failed: API errors"):
                 await search_anime_kitsu(query="test", ctx=mock_context)
 
     @pytest.mark.asyncio
-    async def test_search_anime_kitsu_client_exception(self, mock_kitsu_client, mock_kitsu_mapper, mock_context):
+    async def test_search_anime_kitsu_client_exception(self, mock_kitsu_client, mock_context):
         """Test Kitsu search when client raises exception."""
         mock_kitsu_client.search_anime.side_effect = Exception("Connection timeout")
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
             with pytest.raises(RuntimeError, match="Kitsu search failed: Connection timeout"):
                 await search_anime_kitsu(query="test", ctx=mock_context)
 
     @pytest.mark.asyncio
-    async def test_search_anime_kitsu_mapping_error(self, mock_kitsu_client, mock_kitsu_mapper, mock_context):
+    async def test_search_anime_kitsu_mapping_error(self, mock_kitsu_client, mock_context):
         """Test Kitsu search when mapping fails for individual results."""
-        mock_kitsu_mapper.to_universal_anime.side_effect = Exception("Mapping error")
+        # Simulate a malformed raw result that causes an error during processing
+        mock_kitsu_client.search_anime.return_value = [
+            {"id": "1", "malformed_key": "This will cause an error"}
+        ]
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
             result = await search_anime_kitsu(query="test", ctx=mock_context)
             
             # Should return empty list when all mappings fail
             assert result == []
-            mock_context.error.assert_called_with("Failed to process Kitsu result: Mapping error")
+            mock_context.error.assert_called_with(f"Failed to process Kitsu result: 'attributes'")
 
     @pytest.mark.asyncio
-    async def test_get_anime_kitsu_success(self, mock_kitsu_client, mock_kitsu_mapper, mock_context):
+    async def test_get_anime_kitsu_success(self, mock_kitsu_client, mock_context):
         """Test successful Kitsu anime detail retrieval."""
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
             result = await get_anime_kitsu(
                 kitsu_id="1",
@@ -437,7 +399,7 @@ class TestKitsuTools:
             
             # Verify result structure
             assert isinstance(result, dict)
-            assert result["id"] == "kitsu_1"
+            assert result["id"] == "1"
             assert result["title"] == "Attack on Titan"
             assert result["kitsu_id"] == "1"
             assert result["source_platform"] == "kitsu"
@@ -446,21 +408,20 @@ class TestKitsuTools:
             assert "kitsu_slug" in result
             assert "kitsu_rating_rank" in result
             assert "kitsu_popularity_rank" in result
-            assert "kitsu_user_count" in result
-            assert "kitsu_favorites_count" in result
+            assert "user_count" in result
+            assert "favorites_count" in result
             assert "streaming_links" in result
             
             # Verify client was called with includes
             mock_kitsu_client.get_anime_by_id.assert_called_once()
             call_args = mock_kitsu_client.get_anime_by_id.call_args
-            assert "animeCharacters" in call_args[1]["include"]
-            assert "animeStaff" in call_args[1]["include"]
+            assert "characters" in call_args[1]["include"]
+            assert "staff" in call_args[1]["include"]
 
     @pytest.mark.asyncio
-    async def test_get_anime_kitsu_minimal_options(self, mock_kitsu_client, mock_kitsu_mapper):
+    async def test_get_anime_kitsu_minimal_options(self, mock_kitsu_client):
         """Test Kitsu anime detail with minimal options."""
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
             result = await get_anime_kitsu(
                 kitsu_id="1",
@@ -469,13 +430,13 @@ class TestKitsuTools:
             )
             
             # Should not include optional character/staff data
+            mock_kitsu_client.get_anime_by_id.assert_called_once()
             call_args = mock_kitsu_client.get_anime_by_id.call_args
-            include = call_args[1]["include"]
-            assert "animeCharacters" not in include
-            assert "animeStaff" not in include
+            assert "characters" not in call_args[1]["include"]
+            assert "staff" not in call_args[1]["include"]
 
     @pytest.mark.asyncio
-    async def test_get_anime_kitsu_not_found(self, mock_kitsu_client, mock_kitsu_mapper, mock_context):
+    async def test_get_anime_kitsu_not_found(self, mock_kitsu_client, mock_context):
         """Test Kitsu anime detail when anime not found."""
         mock_kitsu_client.get_anime_by_id.return_value = {
             "errors": [
@@ -487,8 +448,7 @@ class TestKitsuTools:
             ]
         }
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_kitsu_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_kitsu_client):
             
             result = await get_anime_kitsu(kitsu_id="99999", ctx=mock_context)
             
@@ -553,12 +513,9 @@ class TestKitsuToolsAdvanced:
     async def test_kitsu_tools_parameter_validation(self):
         """Test parameter validation for Kitsu tools."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
-        mock_mapper.to_kitsu_search_params.return_value = {}
         mock_client.search_anime.return_value = {"data": []}
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client):
             
             # Test all valid subtypes
             valid_subtypes = ["TV", "movie", "OVA", "ONA", "special", "music"]
@@ -582,14 +539,13 @@ class TestKitsuToolsAdvanced:
             
             # Test all valid sort options
             valid_sorts = ["popularityRank", "ratingRank", "-popularityRank", "-ratingRank", "startDate", "-startDate"]
-            for sort in valid_sorts:
-                await search_anime_kitsu(query="test", sort_by=sort)
+            for sort_option in valid_sorts:
+                await search_anime_kitsu(query="test", sort=sort_option)
 
     @pytest.mark.asyncio
     async def test_kitsu_tools_streaming_data_processing(self, mock_context):
         """Test streaming data processing and aggregation."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Mock response with comprehensive streaming data
         streaming_response = {
@@ -645,12 +601,8 @@ class TestKitsuToolsAdvanced:
         }
         
         mock_client.search_anime.return_value = streaming_response
-        mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="kitsu_1", title="Test Anime", data_quality_score=0.85
-        )
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client):
             
             result = await search_anime_kitsu(query="test", ctx=mock_context)
             
@@ -659,45 +611,40 @@ class TestKitsuToolsAdvanced:
             assert len(anime["streaming_links"]) == 2
             
             # Check Crunchyroll link
-            cr_link = next(link for link in anime["streaming_links"] if link["platform"] == "Crunchyroll")
+            cr_link = next(link for link in anime["streaming_links"] if "crunchyroll.com" in link["url"])
             assert cr_link["url"] == "https://crunchyroll.com/test"
-            assert "en" in cr_link["subtitles"]
+            assert "en" in cr_link["subs"]
             assert "en" in cr_link["dubs"]
             
             # Check Funimation link
-            funi_link = next(link for link in anime["streaming_links"] if link["platform"] == "Funimation")
+            funi_link = next(link for link in anime["streaming_links"] if "funimation.com" in link["url"])
             assert funi_link["url"] == "https://funimation.com/test"
 
     @pytest.mark.asyncio
     async def test_kitsu_tools_data_quality_scoring(self, mock_context):
         """Test data quality scoring for Kitsu results."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Mock results with different quality scores
-        mock_client.search_anime.return_value = {"data": [{"id": "1", "attributes": {}}]}
-        
-        mock_mapper.to_universal_anime.side_effect = [
-            UniversalAnime(id="kitsu_1", title="High Quality", data_quality_score=0.92),
-            UniversalAnime(id="kitsu_2", title="Low Quality", data_quality_score=0.65)
+        mock_client.search_anime.side_effect = [
+            {"data": [{"id": "1", "attributes": {"canonicalTitle": "High Quality", "averageRating": "90.0"}}]},
+            {"data": [{"id": "2", "attributes": {"canonicalTitle": "Low Quality", "averageRating": "50.0"}}]}
         ]
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client):
             
             # First call
             result = await search_anime_kitsu(query="test1", ctx=mock_context)
-            assert result[0]["data_quality_score"] == 0.92
+            assert result[0]["average_rating"] == "90.0"
             
             # Second call 
             result = await search_anime_kitsu(query="test2", ctx=mock_context)
-            assert result[0]["data_quality_score"] == 0.65
+            assert result[0]["average_rating"] == "50.0"
 
     @pytest.mark.asyncio
     async def test_kitsu_tools_comprehensive_include_handling(self, mock_context):
         """Test comprehensive include parameter handling."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Mock comprehensive response
         mock_client.get_anime_by_id.return_value = {
@@ -708,12 +655,7 @@ class TestKitsuToolsAdvanced:
             }
         }
         
-        mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="kitsu_1", title="Test Anime", data_quality_score=0.9
-        )
-        
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client):
             
             # Test with all includes
             await get_anime_kitsu(
@@ -728,9 +670,9 @@ class TestKitsuToolsAdvanced:
             
             # Verify all expected includes are present
             expected_includes = [
-                "genres", "categories", "productions", "productions.company",
-                "streamingLinks", "streamingLinks.streamer",
-                "animeCharacters", "animeStaff"
+                "characters", "characters.character",
+                "staff", "staff.person",
+                "streamingLinks"
             ]
             
             for expected in expected_includes:
@@ -740,7 +682,6 @@ class TestKitsuToolsAdvanced:
     async def test_kitsu_tools_error_response_parsing(self, mock_context):
         """Test parsing of different Kitsu error response formats."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         error_responses = [
             # Standard error format
@@ -766,8 +707,7 @@ class TestKitsuToolsAdvanced:
             }
         ]
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client):
             
             for error_response in error_responses:
                 mock_client.search_anime.return_value = error_response
@@ -808,11 +748,10 @@ class TestKitsuToolsIntegration:
     async def test_kitsu_search_to_streaming_workflow(self, mock_context):
         """Test workflow from anime search to streaming platform discovery."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Setup search result with streaming data
-        mock_client.search_anime.return_value = {
-            "data": [{
+        mock_client.search_anime.return_value = [
+            {
                 "id": "1", 
                 "type": "anime",
                 "attributes": {"canonicalTitle": "Test Anime"},
@@ -821,38 +760,19 @@ class TestKitsuToolsIntegration:
                         "data": [{"id": "1", "type": "streamingLinks"}]
                     }
                 }
-            }],
-            "included": [
-                {
-                    "id": "1",
-                    "type": "streamingLinks",
-                    "relationships": {
-                        "streamer": {"data": {"id": "1", "type": "streamers"}}
-                    }
-                },
-                {
-                    "id": "1",
-                    "type": "streamers",
-                    "attributes": {"name": "Crunchyroll"}
-                }
-            ]
-        }
+            }
+        ]
         
         # Setup platform search result
-        mock_client.search_streaming_platforms.return_value = {
-            "data": [{
+        mock_client.search_streaming_platforms.return_value = [
+            {
                 "id": "1",
                 "type": "streamers", 
                 "attributes": {"name": "Crunchyroll", "siteName": "Crunchyroll"}
-            }]
-        }
+            }
+        ]
         
-        mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="kitsu_1", title="Test Anime", data_quality_score=0.9
-        )
-        
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client):
             
             # Step 1: Search anime
             anime_results = await search_anime_kitsu(query="test", ctx=mock_context)
@@ -861,17 +781,16 @@ class TestKitsuToolsIntegration:
             
             # Step 2: Search for specific platform
             platform_results = await search_streaming_platforms(
-                platform_name="crunchyroll", 
+                platforms=["Crunchyroll"], 
                 ctx=mock_context
             )
             assert len(platform_results) == 1
-            assert platform_results[0]["name"] == "Crunchyroll"
+            assert platform_results[0]["title"] == "Crunchyroll"
 
     @pytest.mark.asyncio
     async def test_kitsu_tools_comprehensive_error_scenarios(self, mock_context):
         """Test comprehensive error scenarios for Kitsu tools."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         error_scenarios = [
             ("Rate limit", "Too Many Requests"),
@@ -880,8 +799,7 @@ class TestKitsuToolsIntegration:
             ("Timeout", "Request timeout")
         ]
         
-        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client), \
-             patch('src.anime_mcp.tools.kitsu_tools.kitsu_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.kitsu_tools.kitsu_client', mock_client):
             
             for error_type, error_msg in error_scenarios:
                 mock_client.search_anime.side_effect = Exception(error_msg)

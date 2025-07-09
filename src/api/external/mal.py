@@ -1,25 +1,22 @@
 """MAL API endpoints for external anime data."""
 
 import logging
-from typing import Any, Dict, List, Optional
 import uuid
 from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, Path, Query, Header, Request, Response
-from fastapi.exceptions import RequestValidationError
+from fastapi import APIRouter, Header, HTTPException, Path, Query, Request, Response
 from fastapi.responses import JSONResponse
-import json
 
 from ...config import get_settings
-from ...services.external.mal_service import MALService
 from ...integrations.error_handling import (
-    ErrorContext, 
-    ErrorSeverity, 
-    CircuitBreaker, 
-    GracefulDegradation,
+    CircuitBreaker,
+    ErrorContext,
+    ErrorSeverity,
     ExecutionTracer,
-    TraceContext
+    GracefulDegradation,
 )
+from ...services.external.mal_service import MALService
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +27,9 @@ router = APIRouter(prefix="/external/mal", tags=["External APIs", "MAL"])
 settings = get_settings()
 
 # Initialize comprehensive error handling infrastructure
-_circuit_breaker = CircuitBreaker(api_name="mal_api", failure_threshold=5, recovery_timeout=30)
+_circuit_breaker = CircuitBreaker(
+    api_name="mal_api", failure_threshold=5, recovery_timeout=30
+)
 _graceful_degradation = GracefulDegradation()
 _execution_tracer = ExecutionTracer()
 
@@ -42,70 +41,69 @@ _mal_service = MALService(
 
 async def _handle_endpoint_common_setup(
     request: Request,
-    x_correlation_id: Optional[str], 
-    response: Response, 
-    operation: str
+    x_correlation_id: Optional[str],
+    response: Response,
+    operation: str,
 ) -> str:
     """Handle common endpoint setup: correlation ID generation and circuit breaker check."""
     # Use middleware correlation ID first, then header, then generate
     correlation_id = (
-        getattr(request.state, 'correlation_id', None) or 
-        x_correlation_id or 
-        f"mal-{operation}-{uuid.uuid4().hex[:12]}"
+        getattr(request.state, "correlation_id", None)
+        or x_correlation_id
+        or f"mal-{operation}-{uuid.uuid4().hex[:12]}"
     )
     response.headers["X-Correlation-ID"] = correlation_id
-    
+
     # Check circuit breaker
     circuit_breaker_response = await _handle_circuit_breaker_check(correlation_id)
     if circuit_breaker_response:
         raise HTTPException(
             status_code=503,
             detail=circuit_breaker_response["detail"],
-            headers={"X-Correlation-ID": correlation_id}
+            headers={"X-Correlation-ID": correlation_id},
         )
-    
+
     return correlation_id
 
 
 async def _handle_endpoint_logging(
-    correlation_id: str, 
-    operation: str, 
-    context: Dict[str, Any], 
-    is_success: bool = False
+    correlation_id: str,
+    operation: str,
+    context: Dict[str, Any],
+    is_success: bool = False,
 ) -> None:
     """Handle endpoint logging for start and success."""
     if is_success:
-        message = f"MAL {operation} completed successfully"
+        f"MAL {operation} completed successfully"
         log_context = {"operation": f"mal_{operation}", "success": True, **context}
     else:
-        message = f"MAL {operation} request started"
+        f"MAL {operation} request started"
         log_context = {"operation": f"mal_{operation}", **context}
-    
+
+
 # correlation logging removed
-
-
 
 
 async def _create_error_response(
     error: Exception,
     correlation_id: str,
     operation: str = "mal_search",
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Create enhanced error response using comprehensive error handling infrastructure.
-    
+
     Args:
         error: The exception that occurred
         correlation_id: Correlation ID for tracking
         operation: Operation being performed
         context: Additional context for error handling
-        
+
     Returns:
         Enhanced error response with comprehensive error context
     """
     # Classify error severity based on error type and message
     severity = _classify_error_severity(error)
-    
+
     # Create enhanced ErrorContext
     error_context = ErrorContext(
         user_message=_get_user_friendly_message(error, severity),
@@ -113,16 +111,15 @@ async def _create_error_response(
         correlation_id=correlation_id,
         severity=severity,
         context=context or {},
-        timestamp=datetime.now(timezone.utc)
+        timestamp=datetime.now(timezone.utc),
     )
-    
-    
+
     # Add breadcrumb for debugging
     error_context.add_breadcrumb(
         f"API endpoint error in {operation}",
-        {"error_type": type(error).__name__, "correlation_id": correlation_id}
+        {"error_type": type(error).__name__, "correlation_id": correlation_id},
     )
-    
+
     # Return comprehensive error structure
     return {
         "error_context": {
@@ -132,19 +129,22 @@ async def _create_error_response(
             "severity": error_context.severity.value,
             "timestamp": error_context.timestamp.isoformat(),
             "breadcrumbs": error_context.breadcrumbs,
-            "operation": operation
+            "operation": operation,
         },
-        "detail": error_context.user_message  # For FastAPI compatibility
+        "detail": error_context.user_message,  # For FastAPI compatibility
     }
 
 
 def _classify_error_severity(error: Exception) -> ErrorSeverity:
     """Classify error severity based on error type and message."""
     error_msg = str(error).lower()
-    
+
     if "database corruption" in error_msg or "critical" in error_msg:
         return ErrorSeverity.CRITICAL
-    elif any(term in error_msg for term in ["connection", "network", "timeout", "unavailable"]):
+    elif any(
+        term in error_msg
+        for term in ["connection", "network", "timeout", "unavailable"]
+    ):
         return ErrorSeverity.ERROR
     elif any(term in error_msg for term in ["rate limit", "throttle", "quota"]):
         return ErrorSeverity.WARNING
@@ -157,7 +157,7 @@ def _classify_error_severity(error: Exception) -> ErrorSeverity:
 def _get_user_friendly_message(error: Exception, severity: ErrorSeverity) -> str:
     """Get user-friendly error message based on error type and severity."""
     error_msg = str(error).lower()
-    
+
     if "not found" in error_msg:
         return "The requested anime or resource was not found. Please check the ID and try again."
     elif "database" in error_msg or "connection" in error_msg:
@@ -174,19 +174,21 @@ def _get_user_friendly_message(error: Exception, severity: ErrorSeverity) -> str
         return "The anime search service is temporarily unavailable. Please try again later."
 
 
-async def _handle_circuit_breaker_check(correlation_id: str) -> Optional[Dict[str, Any]]:
+async def _handle_circuit_breaker_check(
+    correlation_id: str,
+) -> Optional[Dict[str, Any]]:
     """Check circuit breaker and return appropriate response if open."""
     if _circuit_breaker.is_open():
-        
+
         # Return circuit breaker response
         error_context = ErrorContext(
             user_message="The anime search service is temporarily experiencing issues and has been disabled to prevent further problems. Please try again in a few minutes.",
             debug_info="Circuit breaker is open due to repeated failures",
             correlation_id=correlation_id,
             severity=ErrorSeverity.WARNING,
-            context={"circuit_breaker_open": True}
+            context={"circuit_breaker_open": True},
         )
-        
+
         return {
             "error_context": {
                 "user_message": error_context.user_message,
@@ -195,11 +197,11 @@ async def _handle_circuit_breaker_check(correlation_id: str) -> Optional[Dict[st
                 "severity": error_context.severity.value,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "breadcrumbs": [],
-                "operation": "circuit_breaker_check"
+                "operation": "circuit_breaker_check",
             },
-            "detail": "Service temporarily unavailable - circuit breaker is open"
+            "detail": "Service temporarily unavailable - circuit breaker is open",
         }
-    
+
     return None
 
 
@@ -217,8 +219,9 @@ async def search_anime(
     ),
     # Enhanced Jikan parameters
     anime_type: Optional[str] = Query(
-        None, pattern="^(TV|Movie|OVA|ONA|Special)$", 
-        description="Anime type filter (TV, Movie, OVA, ONA, Special)"
+        None,
+        pattern="^(TV|Movie|OVA|ONA|Special)$",
+        description="Anime type filter (TV, Movie, OVA, ONA, Special)",
     ),
     score: Optional[float] = Query(
         None, ge=0.0, le=10.0, description="Exact score filter (0.0-10.0)"
@@ -230,8 +233,9 @@ async def search_anime(
         None, ge=0.0, le=10.0, description="Maximum score filter (0.0-10.0)"
     ),
     rating: Optional[str] = Query(
-        None, pattern="^(G|PG|PG-13|R|R\\+|Rx)$",
-        description="Content rating (G, PG, PG-13, R, R+, Rx)"
+        None,
+        pattern="^(G|PG|PG-13|R|R\\+|Rx)$",
+        description="Content rating (G, PG, PG-13, R, R+, Rx)",
     ),
     sfw: Optional[bool] = Query(
         None, description="Filter out adult content (Safe For Work)"
@@ -240,8 +244,9 @@ async def search_anime(
         None, description="Comma-separated genre IDs to exclude (e.g., '14,26')"
     ),
     order_by: Optional[str] = Query(
-        None, pattern="^(title|score|rank|popularity|members|favorites|start_date|end_date|episodes|type)$",
-        description="Order results by field (title, score, rank, popularity, etc.)"
+        None,
+        pattern="^(title|score|rank|popularity|members|favorites|start_date|end_date|episodes|type)$",
+        description="Order results by field (title, score, rank, popularity, etc.)",
     ),
     sort: Optional[str] = Query(
         None, pattern="^(asc|desc)$", description="Sort direction (asc, desc)"
@@ -253,19 +258,17 @@ async def search_anime(
         None, description="Comma-separated producer/studio IDs"
     ),
     start_date: Optional[str] = Query(
-        None, pattern="^\\d{4}(-\\d{2})?(-\\d{2})?$",
-        description="Start date filter (YYYY, YYYY-MM, or YYYY-MM-DD)"
+        None,
+        pattern="^\\d{4}(-\\d{2})?(-\\d{2})?$",
+        description="Start date filter (YYYY, YYYY-MM, or YYYY-MM-DD)",
     ),
     end_date: Optional[str] = Query(
-        None, pattern="^\\d{4}(-\\d{2})?(-\\d{2})?$",
-        description="End date filter (YYYY, YYYY-MM, or YYYY-MM-DD)"
+        None,
+        pattern="^\\d{4}(-\\d{2})?(-\\d{2})?$",
+        description="End date filter (YYYY, YYYY-MM, or YYYY-MM-DD)",
     ),
-    page: Optional[int] = Query(
-        None, ge=1, description="Page number for pagination"
-    ),
-    unapproved: Optional[bool] = Query(
-        None, description="Include unapproved entries"
-    ),
+    page: Optional[int] = Query(None, ge=1, description="Page number for pagination"),
+    unapproved: Optional[bool] = Query(None, description="Include unapproved entries"),
     # Correlation ID support
     x_correlation_id: Optional[str] = Header(
         None, alias="X-Correlation-ID", description="Correlation ID for request tracing"
@@ -303,33 +306,59 @@ async def search_anime(
     """
     try:
         # Handle common setup (correlation ID + circuit breaker)
-        correlation_id = await _handle_endpoint_common_setup(request, x_correlation_id, response, "api")
-        
+        correlation_id = await _handle_endpoint_common_setup(
+            request, x_correlation_id, response, "api"
+        )
+
         # Start execution tracing
         trace_id = await _execution_tracer.start_trace(
             operation="mal_api_search",
             context={
                 "correlation_id": correlation_id,
                 "query": q,
-                "enhanced_parameters_count": sum(1 for p in [anime_type, score, min_score, max_score, rating, sfw, genres_exclude, order_by, sort, letter, producers, start_date, end_date, page, unapproved] if p is not None),
-                "api_endpoint": "/external/mal/search"
-            }
+                "enhanced_parameters_count": sum(
+                    1
+                    for p in [
+                        anime_type,
+                        score,
+                        min_score,
+                        max_score,
+                        rating,
+                        sfw,
+                        genres_exclude,
+                        order_by,
+                        sort,
+                        letter,
+                        producers,
+                        start_date,
+                        end_date,
+                        page,
+                        unapproved,
+                    ]
+                    if p is not None
+                ),
+                "api_endpoint": "/external/mal/search",
+            },
         )
-        
+
         # Log request start
-        await _handle_endpoint_logging(correlation_id, "API search", {
-            "query": q,
-            "limit": limit,
-            "trace_id": trace_id,
-            "enhanced_parameters": {
-                "anime_type": anime_type,
-                "score_filters": bool(score or min_score or max_score),
-                "genre_filters": bool(genres or genres_exclude),
-                "date_filters": bool(start_date or end_date),
-                "sorting": bool(order_by or sort)
-            }
-        })
-        
+        await _handle_endpoint_logging(
+            correlation_id,
+            "API search",
+            {
+                "query": q,
+                "limit": limit,
+                "trace_id": trace_id,
+                "enhanced_parameters": {
+                    "anime_type": anime_type,
+                    "score_filters": bool(score or min_score or max_score),
+                    "genre_filters": bool(genres or genres_exclude),
+                    "date_filters": bool(start_date or end_date),
+                    "sorting": bool(order_by or sort),
+                },
+            },
+        )
+
         # Parse comma-separated lists
         genre_list = None
         if genres:
@@ -344,7 +373,9 @@ async def search_anime(
         genres_exclude_list = None
         if genres_exclude:
             try:
-                genres_exclude_list = [int(g.strip()) for g in genres_exclude.split(",") if g.strip()]
+                genres_exclude_list = [
+                    int(g.strip()) for g in genres_exclude.split(",") if g.strip()
+                ]
             except ValueError:
                 raise HTTPException(
                     status_code=422,
@@ -354,7 +385,9 @@ async def search_anime(
         producers_list = None
         if producers:
             try:
-                producers_list = [int(p.strip()) for p in producers.split(",") if p.strip()]
+                producers_list = [
+                    int(p.strip()) for p in producers.split(",") if p.strip()
+                ]
             except ValueError:
                 raise HTTPException(
                     status_code=422,
@@ -375,12 +408,14 @@ async def search_anime(
             correlation_id,
             {
                 "anime_type": anime_type,
-                "score_range": f"{min_score}-{max_score}" if min_score or max_score else None,
+                "score_range": (
+                    f"{min_score}-{max_score}" if min_score or max_score else None
+                ),
                 "rating": rating,
                 "order_by": order_by,
                 "genres_exclude": bool(genres_exclude_list),
                 "producers": bool(producers_list),
-            }
+            },
         )
 
         # Add trace step for service call
@@ -391,8 +426,31 @@ async def search_anime(
                 step_data={
                     "service": "mal_service",
                     "method": "search_anime",
-                    "parameters_count": len([p for p in [q, anime_type, score, min_score, max_score, rating, sfw, genres_exclude_list, order_by, sort, letter, producers_list, start_date, end_date, page, unapproved] if p is not None])
-                }
+                    "parameters_count": len(
+                        [
+                            p
+                            for p in [
+                                q,
+                                anime_type,
+                                score,
+                                min_score,
+                                max_score,
+                                rating,
+                                sfw,
+                                genres_exclude_list,
+                                order_by,
+                                sort,
+                                letter,
+                                producers_list,
+                                start_date,
+                                end_date,
+                                page,
+                                unapproved,
+                            ]
+                            if p is not None
+                        ]
+                    ),
+                },
             )
 
         # Call service with all parameters (with circuit breaker protection)
@@ -433,15 +491,18 @@ async def search_anime(
                 step_name="service_call_success",
                 step_data={
                     "results_count": len(results),
-                    "service_response_time_category": "normal" if len(results) > 0 else "empty"
-                }
+                    "service_response_time_category": (
+                        "normal" if len(results) > 0 else "empty"
+                    ),
+                },
             )
 
-        await _handle_endpoint_logging(correlation_id, "API search", {
-            "results_count": len(results),
-            "query": q,
-            "trace_id": trace_id
-        }, is_success=True)
+        await _handle_endpoint_logging(
+            correlation_id,
+            "API search",
+            {"results_count": len(results), "query": q, "trace_id": trace_id},
+            is_success=True,
+        )
 
         # Enhanced response with execution trace
         response_data = {
@@ -468,7 +529,7 @@ async def search_anime(
                 "end_date": end_date,
                 "page": page,
                 "unapproved": unapproved,
-            }
+            },
         }
 
         # Add execution trace info if available
@@ -476,73 +537,77 @@ async def search_anime(
             trace_info = await _execution_tracer.end_trace(
                 trace_id=trace_id,
                 status="success",
-                result={"results_count": len(results), "query": q}
+                result={"results_count": len(results), "query": q},
             )
             if trace_info:
                 response_data["trace_info"] = {
                     "trace_id": trace_id,
                     "duration_ms": trace_info.get("duration_ms", 0),
                     "steps": len(trace_info.get("steps", [])),
-                    "operation": "mal_search"
+                    "operation": "mal_search",
                 }
 
         # Add operation metadata (but keep correlation_id in headers only)
         response_data["operation_metadata"] = {
             "operation": "mal_search",
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         # Return JSONResponse to preserve headers set on response object
-        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
+        return JSONResponse(
+            content=response_data, headers={"X-Correlation-ID": correlation_id}
+        )
 
     except HTTPException as http_exc:
         # Handle different types of HTTP exceptions appropriately
         error_correlation_id = x_correlation_id or f"validation-{uuid.uuid4().hex[:8]}"
-        
+
         # End trace if active
-        if 'trace_id' in locals() and trace_id:
+        if "trace_id" in locals() and trace_id:
             await _execution_tracer.end_trace(
                 trace_id=trace_id,
-                status="validation_error" if http_exc.status_code == 422 else "service_error",
-                error=http_exc
+                status=(
+                    "validation_error"
+                    if http_exc.status_code == 422
+                    else "service_error"
+                ),
+                error=http_exc,
             )
-        
+
         # For 503 status codes (circuit breaker, service unavailable), re-raise as-is
         if http_exc.status_code == 503:
             response.headers["X-Correlation-ID"] = error_correlation_id
             raise http_exc
-        
+
         # For validation errors (422), use comprehensive error handling
         validation_error_response = await _create_error_response(
             error=http_exc,
             correlation_id=error_correlation_id,
             operation="mal_search_validation",
-            context={"validation_error": True, "status_code": http_exc.status_code}
+            context={"validation_error": True, "status_code": http_exc.status_code},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
-        
+
         # For validation errors, return 422 with comprehensive error context
         raise HTTPException(
             status_code=422,
             detail=validation_error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
-        
+
     except Exception as e:
         # Use comprehensive error handling infrastructure for service errors
         error_correlation_id = x_correlation_id or f"error-{uuid.uuid4().hex[:8]}"
-        
+
         # End trace if active
-        if 'trace_id' in locals() and trace_id:
+        if "trace_id" in locals() and trace_id:
             await _execution_tracer.end_trace(
-                trace_id=trace_id,
-                status="error",
-                error=e
+                trace_id=trace_id, status="error", error=e
             )
-        
+
         # Circuit breaker failure is automatically recorded by call_with_breaker()
-        
+
         # Try graceful degradation for specific error types
         if any(term in str(e).lower() for term in ["timeout", "connection", "network"]):
             try:
@@ -555,23 +620,22 @@ async def search_anime(
                         "results": [],
                         "total_results": 0,
                         "degraded": True,
-                        "fallback_reason": "Service temporarily unavailable"
+                        "fallback_reason": "Service temporarily unavailable",
                     },
                     context={
                         "operation": "mal_search",
                         "query": q,
-                        "correlation_id": error_correlation_id
-                    }
+                        "correlation_id": error_correlation_id,
+                    },
                 )
-                
-                
+
                 response.headers["X-Correlation-ID"] = error_correlation_id
                 return degraded_response
-                
+
             except Exception:
                 # If graceful degradation fails, continue to comprehensive error handling
                 pass
-        
+
         # Create comprehensive error response
         error_response = await _create_error_response(
             error=e,
@@ -580,18 +644,31 @@ async def search_anime(
             context={
                 "query": q,
                 "circuit_breaker_failures": _circuit_breaker.failure_count,
-                "service_error": True
-            }
+                "service_error": True,
+            },
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
-        
+
         # Return comprehensive error with proper status code
-        status_code = 503 if any(term in str(e).lower() for term in ["unavailable", "connection", "database", "timeout", "network"]) else 500
+        status_code = (
+            503
+            if any(
+                term in str(e).lower()
+                for term in [
+                    "unavailable",
+                    "connection",
+                    "database",
+                    "timeout",
+                    "network",
+                ]
+            )
+            else 500
+        )
         raise HTTPException(
             status_code=status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
 
 
@@ -618,75 +695,92 @@ async def get_anime_details(
     """
     try:
         # Handle common setup (correlation ID + circuit breaker)
-        correlation_id = await _handle_endpoint_common_setup(request, x_correlation_id, response, "details")
+        correlation_id = await _handle_endpoint_common_setup(
+            request, x_correlation_id, response, "details"
+        )
 
         # Log request start
-        await _handle_endpoint_logging(correlation_id, "anime details", {"anime_id": anime_id})
+        await _handle_endpoint_logging(
+            correlation_id, "anime details", {"anime_id": anime_id}
+        )
 
-        anime_data = await _mal_service.get_anime_details(anime_id, correlation_id=correlation_id)
+        anime_data = await _mal_service.get_anime_details(
+            anime_id, correlation_id=correlation_id
+        )
 
         if not anime_data:
             raise HTTPException(
                 status_code=404, detail=f"Anime with ID {anime_id} not found on MAL"
             )
 
-        await _handle_endpoint_logging(correlation_id, "anime details", {"anime_id": anime_id}, is_success=True)
+        await _handle_endpoint_logging(
+            correlation_id, "anime details", {"anime_id": anime_id}, is_success=True
+        )
 
-        response_data = {
-            "source": "mal", 
-            "anime_id": anime_id, 
-            "data": anime_data
-        }
-        
+        response_data = {"source": "mal", "anime_id": anime_id, "data": anime_data}
+
         # Add operation metadata (but keep correlation_id in headers only)
         response_data["operation_metadata"] = {
             "operation": "mal_anime_details",
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-        
-        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
+
+        return JSONResponse(
+            content=response_data, headers={"X-Correlation-ID": correlation_id}
+        )
 
     except HTTPException as http_exc:
-        error_correlation_id = x_correlation_id or f"details-error-{uuid.uuid4().hex[:8]}"
-        
+        error_correlation_id = (
+            x_correlation_id or f"details-error-{uuid.uuid4().hex[:8]}"
+        )
+
         # For 503 status codes (circuit breaker, service unavailable), re-raise as-is
         if http_exc.status_code == 503:
             response.headers["X-Correlation-ID"] = error_correlation_id
             raise http_exc
-        
+
         # For other HTTP errors, use comprehensive error handling
         error_response = await _create_error_response(
             error=http_exc,
             correlation_id=error_correlation_id,
             operation="mal_anime_details",
-            context={"anime_id": anime_id, "http_error": True}
+            context={"anime_id": anime_id, "http_error": True},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
         raise HTTPException(
             status_code=http_exc.status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
-        
+
     except Exception as e:
-        error_correlation_id = x_correlation_id or f"details-error-{uuid.uuid4().hex[:8]}"
-        
+        error_correlation_id = (
+            x_correlation_id or f"details-error-{uuid.uuid4().hex[:8]}"
+        )
+
         # Create comprehensive error response
         error_response = await _create_error_response(
             error=e,
             correlation_id=error_correlation_id,
             operation="mal_anime_details",
-            context={"anime_id": anime_id, "service_error": True}
+            context={"anime_id": anime_id, "service_error": True},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
-        
-        status_code = 503 if any(term in str(e).lower() for term in ["unavailable", "connection", "timeout"]) else 500
+
+        status_code = (
+            503
+            if any(
+                term in str(e).lower()
+                for term in ["unavailable", "connection", "timeout"]
+            )
+            else 500
+        )
         raise HTTPException(
             status_code=status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
 
 
@@ -719,76 +813,96 @@ async def get_seasonal_anime(
     """
     try:
         # Handle common setup (correlation ID + circuit breaker)
-        correlation_id = await _handle_endpoint_common_setup(request, x_correlation_id, response, "seasonal")
+        correlation_id = await _handle_endpoint_common_setup(
+            request, x_correlation_id, response, "seasonal"
+        )
 
         # Log request start
-        await _handle_endpoint_logging(correlation_id, "seasonal anime", {"year": year, "season": season})
+        await _handle_endpoint_logging(
+            correlation_id, "seasonal anime", {"year": year, "season": season}
+        )
 
-        results = await _mal_service.get_seasonal_anime(year, season, correlation_id=correlation_id)
+        results = await _mal_service.get_seasonal_anime(
+            year, season, correlation_id=correlation_id
+        )
 
-        await _handle_endpoint_logging(correlation_id, "seasonal anime", {
-            "year": year, 
-            "season": season, 
-            "results_count": len(results)
-        }, is_success=True)
+        await _handle_endpoint_logging(
+            correlation_id,
+            "seasonal anime",
+            {"year": year, "season": season, "results_count": len(results)},
+            is_success=True,
+        )
 
         response_data = {
             "source": "mal",
             "year": year,
             "season": season,
             "results": results,
-            "total_results": len(results)
+            "total_results": len(results),
         }
-        
+
         # Add operation metadata (but keep correlation_id in headers only)
         response_data["operation_metadata"] = {
             "operation": "mal_seasonal_anime",
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-        
-        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
+
+        return JSONResponse(
+            content=response_data, headers={"X-Correlation-ID": correlation_id}
+        )
 
     except HTTPException as http_exc:
-        error_correlation_id = x_correlation_id or f"seasonal-error-{uuid.uuid4().hex[:8]}"
-        
+        error_correlation_id = (
+            x_correlation_id or f"seasonal-error-{uuid.uuid4().hex[:8]}"
+        )
+
         # For 503 status codes (circuit breaker, service unavailable), re-raise as-is
         if http_exc.status_code == 503:
             response.headers["X-Correlation-ID"] = error_correlation_id
             raise http_exc
-        
+
         # For validation errors (422), use comprehensive error handling
         error_response = await _create_error_response(
             error=http_exc,
             correlation_id=error_correlation_id,
             operation="mal_seasonal_anime",
-            context={"year": year, "season": season, "validation_error": True}
+            context={"year": year, "season": season, "validation_error": True},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
         raise HTTPException(
             status_code=http_exc.status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
-        
+
     except Exception as e:
-        error_correlation_id = x_correlation_id or f"seasonal-error-{uuid.uuid4().hex[:8]}"
-        
+        error_correlation_id = (
+            x_correlation_id or f"seasonal-error-{uuid.uuid4().hex[:8]}"
+        )
+
         # Create comprehensive error response
         error_response = await _create_error_response(
             error=e,
             correlation_id=error_correlation_id,
             operation="mal_seasonal_anime",
-            context={"year": year, "season": season, "service_error": True}
+            context={"year": year, "season": season, "service_error": True},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
-        
-        status_code = 503 if any(term in str(e).lower() for term in ["unavailable", "connection", "timeout"]) else 500
+
+        status_code = (
+            503
+            if any(
+                term in str(e).lower()
+                for term in ["unavailable", "connection", "timeout"]
+            )
+            else 500
+        )
         raise HTTPException(
             status_code=status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
 
 
@@ -814,76 +928,87 @@ async def get_current_season_anime(
         # Generate or use provided correlation ID
         correlation_id = x_correlation_id or f"mal-current-{uuid.uuid4().hex[:12]}"
         response.headers["X-Correlation-ID"] = correlation_id
-        
+
         # Check circuit breaker first
         circuit_breaker_response = await _handle_circuit_breaker_check(correlation_id)
         if circuit_breaker_response:
             raise HTTPException(
                 status_code=503,
                 detail=circuit_breaker_response["detail"],
-                headers={"X-Correlation-ID": correlation_id}
+                headers={"X-Correlation-ID": correlation_id},
             )
 
-
         results = await _mal_service.get_current_season(correlation_id=correlation_id)
-
 
         response_data = {
             "source": "mal",
             "type": "current_season",
             "results": results,
-            "total_results": len(results)
+            "total_results": len(results),
         }
-        
+
         # Add operation metadata (but keep correlation_id in headers only)
         response_data["operation_metadata"] = {
             "operation": "mal_current_season",
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-        
-        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
+
+        return JSONResponse(
+            content=response_data, headers={"X-Correlation-ID": correlation_id}
+        )
 
     except HTTPException as http_exc:
-        error_correlation_id = x_correlation_id or f"current-error-{uuid.uuid4().hex[:8]}"
-        
+        error_correlation_id = (
+            x_correlation_id or f"current-error-{uuid.uuid4().hex[:8]}"
+        )
+
         # For 503 status codes (circuit breaker, service unavailable), re-raise as-is
         if http_exc.status_code == 503:
             response.headers["X-Correlation-ID"] = error_correlation_id
             raise http_exc
-        
+
         # For other HTTP errors, use comprehensive error handling
         error_response = await _create_error_response(
             error=http_exc,
             correlation_id=error_correlation_id,
             operation="mal_current_season",
-            context={"http_error": True}
+            context={"http_error": True},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
         raise HTTPException(
             status_code=http_exc.status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
-        
+
     except Exception as e:
-        error_correlation_id = x_correlation_id or f"current-error-{uuid.uuid4().hex[:8]}"
-        
+        error_correlation_id = (
+            x_correlation_id or f"current-error-{uuid.uuid4().hex[:8]}"
+        )
+
         # Create comprehensive error response
         error_response = await _create_error_response(
             error=e,
             correlation_id=error_correlation_id,
             operation="mal_current_season",
-            context={"service_error": True}
+            context={"service_error": True},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
-        
-        status_code = 503 if any(term in str(e).lower() for term in ["unavailable", "connection", "timeout"]) else 500
+
+        status_code = (
+            503
+            if any(
+                term in str(e).lower()
+                for term in ["unavailable", "connection", "timeout"]
+            )
+            else 500
+        )
         raise HTTPException(
             status_code=status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
 
 
@@ -911,18 +1036,19 @@ async def get_anime_statistics(
         # Generate or use provided correlation ID
         correlation_id = x_correlation_id or f"mal-stats-{uuid.uuid4().hex[:12]}"
         response.headers["X-Correlation-ID"] = correlation_id
-        
+
         # Check circuit breaker first
         circuit_breaker_response = await _handle_circuit_breaker_check(correlation_id)
         if circuit_breaker_response:
             raise HTTPException(
                 status_code=503,
                 detail=circuit_breaker_response["detail"],
-                headers={"X-Correlation-ID": correlation_id}
+                headers={"X-Correlation-ID": correlation_id},
             )
 
-
-        stats = await _mal_service.get_anime_statistics(anime_id, correlation_id=correlation_id)
+        stats = await _mal_service.get_anime_statistics(
+            anime_id, correlation_id=correlation_id
+        )
 
         if not stats:
             raise HTTPException(
@@ -930,62 +1056,66 @@ async def get_anime_statistics(
                 detail=f"Statistics for anime ID {anime_id} not found on MAL",
             )
 
+        response_data = {"source": "mal", "anime_id": anime_id, "statistics": stats}
 
-        response_data = {
-            "source": "mal", 
-            "anime_id": anime_id, 
-            "statistics": stats
-        }
-        
         # Add operation metadata (but keep correlation_id in headers only)
         response_data["operation_metadata"] = {
             "operation": "mal_statistics",
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
-        
-        return JSONResponse(content=response_data, headers={"X-Correlation-ID": correlation_id})
+
+        return JSONResponse(
+            content=response_data, headers={"X-Correlation-ID": correlation_id}
+        )
 
     except HTTPException as http_exc:
         error_correlation_id = x_correlation_id or f"stats-error-{uuid.uuid4().hex[:8]}"
-        
+
         # For 503 status codes (circuit breaker, service unavailable), re-raise as-is
         if http_exc.status_code == 503:
             response.headers["X-Correlation-ID"] = error_correlation_id
             raise http_exc
-        
+
         # For other HTTP errors, use comprehensive error handling
         error_response = await _create_error_response(
             error=http_exc,
             correlation_id=error_correlation_id,
             operation="mal_anime_statistics",
-            context={"anime_id": anime_id, "http_error": True}
+            context={"anime_id": anime_id, "http_error": True},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
         raise HTTPException(
             status_code=http_exc.status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
-        
+
     except Exception as e:
         error_correlation_id = x_correlation_id or f"stats-error-{uuid.uuid4().hex[:8]}"
-        
+
         # Create comprehensive error response
         error_response = await _create_error_response(
             error=e,
             correlation_id=error_correlation_id,
             operation="mal_anime_statistics",
-            context={"anime_id": anime_id, "service_error": True}
+            context={"anime_id": anime_id, "service_error": True},
         )
-        
+
         response.headers["X-Correlation-ID"] = error_correlation_id
-        
-        status_code = 503 if any(term in str(e).lower() for term in ["unavailable", "connection", "timeout"]) else 500
+
+        status_code = (
+            503
+            if any(
+                term in str(e).lower()
+                for term in ["unavailable", "connection", "timeout"]
+            )
+            else 500
+        )
         raise HTTPException(
             status_code=status_code,
             detail=error_response,
-            headers={"X-Correlation-ID": error_correlation_id}
+            headers={"X-Correlation-ID": error_correlation_id},
         )
 
 

@@ -5,17 +5,17 @@ Following modern MCP architecture patterns for separation of concerns.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from mcp.server.fastmcp import Context
 
 from ...config import Settings
-from ...vector.qdrant_client import QdrantClient
 from ...exceptions import (
     AnimeServerError,
     ClientNotInitializedError,
     DatabaseOperationError,
 )
+from ...vector.qdrant_client import QdrantClient
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +60,12 @@ class BaseAnimeHandler:
             ctx: Optional MCP context for reporting
         """
         error_msg = str(error)
-        
+
         if ctx:
             await ctx.error(f"{operation} failed: {error_msg}")
-        
+
         logger.error(f"{operation} error: {error_msg}")
-        
+
         # Re-raise as domain-specific error if not already
         if not isinstance(error, AnimeServerError):
             raise DatabaseOperationError(operation, error_msg) from error
@@ -125,7 +125,7 @@ class BaseAnimeHandler:
             MultiVectorNotAvailableError: If not available
         """
         from ...exceptions import MultiVectorNotAvailableError
-        
+
         if not self.qdrant_client or not getattr(
             self.qdrant_client, "_supports_multi_vector", False
         ):
@@ -156,7 +156,7 @@ class BaseAnimeHandler:
             "success": False,
             "error": {
                 "code": error.error_code,
-                "operation": getattr(error, 'operation', 'unknown'),
+                "operation": getattr(error, "operation", "unknown"),
                 "message": str(error),
             },
         }

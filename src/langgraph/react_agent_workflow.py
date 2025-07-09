@@ -7,7 +7,7 @@ JSON parsing and improving performance.
 
 import logging
 from enum import Enum
-from typing import Any, AsyncGenerator, Dict, Optional, List
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 try:
     from langchain_openai import ChatOpenAI
@@ -27,7 +27,7 @@ from langgraph.prebuilt import create_react_agent
 
 from ..config import get_settings
 from .langchain_tools import create_anime_langchain_tools
-from .stateful_routing_memory import get_stateful_routing_engine, RoutingStrategy
+from .stateful_routing_memory import get_stateful_routing_engine
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +35,9 @@ logger = logging.getLogger(__name__)
 class ExecutionMode(Enum):
     """Execution mode options for ReactAgent workflow."""
 
-    STANDARD = "standard"           # Standard ReactAgent execution
-    SUPER_STEP = "super_step"      # Google Pregel-inspired super-step execution
-    STATEFUL = "stateful"          # Stateful routing with memory and context learning
+    STANDARD = "standard"  # Standard ReactAgent execution
+    SUPER_STEP = "super_step"  # Google Pregel-inspired super-step execution
+    STATEFUL = "stateful"  # Stateful routing with memory and context learning
 
 
 class LLMProvider(Enum):
@@ -58,10 +58,10 @@ class ReactAgentWorkflowEngine:
     """
 
     def __init__(
-        self, 
-        mcp_tools: Dict[str, Any], 
+        self,
+        mcp_tools: Dict[str, Any],
         llm_provider: LLMProvider = LLMProvider.OPENAI,
-        execution_mode: ExecutionMode = ExecutionMode.STANDARD
+        execution_mode: ExecutionMode = ExecutionMode.STANDARD,
     ):
         """Initialize the ReactAgent-based workflow engine.
 
@@ -94,7 +94,10 @@ class ReactAgentWorkflowEngine:
         self.super_step_executor = None
         if execution_mode == ExecutionMode.SUPER_STEP:
             from .parallel_supersteps import SuperStepParallelExecutor
-            self.super_step_executor = SuperStepParallelExecutor(mcp_tools, llm_provider)
+
+            self.super_step_executor = SuperStepParallelExecutor(
+                mcp_tools, llm_provider
+            )
 
         # Initialize stateful routing engine if needed
         self.stateful_routing_engine = None
@@ -222,7 +225,7 @@ When calling search tools, you MUST:
             # Configure checkpointing with recursion limit
             config: RunnableConfig = {
                 "configurable": {"thread_id": thread_id or session_id},
-                "recursion_limit": 10  # Prevent infinite loops
+                "recursion_limit": 10,  # Prevent infinite loops
             }
 
             # Prepare input message with search parameters if provided
@@ -235,7 +238,7 @@ When calling search tools, you MUST:
                     f"{message}\n\nExplicit search parameters: {search_parameters}"
                 )
 
-            # Add multimodal context if image data provided  
+            # Add multimodal context if image data provided
             if image_data:
                 # IMPORTANT: Enhance message to explicitly tell LLM about image data
                 enhanced_message += f"\n\n[SYSTEM: Image data is available with {len(image_data)} characters of base64 data. Use search_anime_by_image or search_multimodal_anime tools for image-based searches.]"
@@ -254,11 +257,19 @@ When calling search tools, you MUST:
                 input_data["search_parameters"] = search_parameters
 
             # Execute with appropriate execution mode
-            if self.execution_mode == ExecutionMode.SUPER_STEP and self.super_step_executor:
+            if (
+                self.execution_mode == ExecutionMode.SUPER_STEP
+                and self.super_step_executor
+            ):
                 # Use super-step parallel execution for performance
                 logger.info("Using super-step parallel execution")
-                result = await self._execute_super_step_workflow(enhanced_message, thread_id or session_id)
-            elif self.execution_mode == ExecutionMode.STATEFUL and self.stateful_routing_engine:
+                result = await self._execute_super_step_workflow(
+                    enhanced_message, thread_id or session_id
+                )
+            elif (
+                self.execution_mode == ExecutionMode.STATEFUL
+                and self.stateful_routing_engine
+            ):
                 # Use stateful routing with memory and context learning
                 logger.info("Using stateful routing execution with memory")
                 result = await self._execute_stateful_workflow(
@@ -312,22 +323,26 @@ When calling search tools, you MUST:
             search_parameters=search_parameters,
         )
 
-    async def _execute_super_step_workflow(self, query: str, session_id: str) -> Dict[str, Any]:
+    async def _execute_super_step_workflow(
+        self, query: str, session_id: str
+    ) -> Dict[str, Any]:
         """Execute query using super-step parallel execution.
-        
+
         Args:
             query: User query to process
             session_id: Session ID for conversation memory
-            
+
         Returns:
             Super-step execution result in ReactAgent format
         """
         try:
             # Execute super-step workflow
-            super_step_result = await self.super_step_executor.execute_super_step_workflow(
-                query, session_id
+            super_step_result = (
+                await self.super_step_executor.execute_super_step_workflow(
+                    query, session_id
+                )
             )
-            
+
             # Convert super-step result to ReactAgent format
             if super_step_result["status"] == "success":
                 # Simulate ReactAgent message structure
@@ -336,16 +351,20 @@ When calling search tools, you MUST:
                         HumanMessage(content=query),
                         {
                             "content": f"Found anime results using super-step parallel execution.\n\n"
-                                     f"Performance: {super_step_result['performance_metrics']['total_execution_time']:.2f}s "
-                                     f"with {super_step_result['performance_metrics']['successful_agents']} agents.\n\n"
-                                     f"Results: {super_step_result['final_result']}",
+                            f"Performance: {super_step_result['performance_metrics']['total_execution_time']:.2f}s "
+                            f"with {super_step_result['performance_metrics']['successful_agents']} agents.\n\n"
+                            f"Results: {super_step_result['final_result']}",
                             "type": "ai",
                             "tool_calls": [],
                             "additional_kwargs": {
-                                "super_step_metrics": super_step_result["performance_metrics"],
-                                "execution_history": super_step_result["execution_history"]
-                            }
-                        }
+                                "super_step_metrics": super_step_result[
+                                    "performance_metrics"
+                                ],
+                                "execution_history": super_step_result[
+                                    "execution_history"
+                                ],
+                            },
+                        },
                     ]
                 }
             else:
@@ -359,12 +378,14 @@ When calling search tools, you MUST:
                             "tool_calls": [],
                             "additional_kwargs": {
                                 "super_step_error": super_step_result.get("error"),
-                                "execution_time": super_step_result.get("execution_time", 0)
-                            }
-                        }
+                                "execution_time": super_step_result.get(
+                                    "execution_time", 0
+                                ),
+                            },
+                        },
                     ]
                 }
-                
+
         except Exception as e:
             logger.error(f"Super-step execution failed: {e}")
             # Fallback to standard execution
@@ -419,7 +440,7 @@ When calling search tools, you MUST:
             # Configure checkpointing with recursion limit
             config: RunnableConfig = {
                 "configurable": {"thread_id": thread_id or session_id},
-                "recursion_limit": 10  # Prevent infinite loops
+                "recursion_limit": 10,  # Prevent infinite loops
             }
 
             # Prepare input
@@ -536,32 +557,34 @@ When calling search tools, you MUST:
         config: RunnableConfig,
         enhanced_message: str,
         session_id: str,
-        thread_id: Optional[str] = None
+        thread_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Execute workflow with stateful routing and memory learning."""
         import time
-        from .workflow_state import WorkflowResult
-        from .intelligent_router import QueryIntent
-        
+
         start_time = time.time()
-        user_id = thread_id or session_id  # Use thread_id as user identifier if available
-        
+        user_id = (
+            thread_id or session_id
+        )  # Use thread_id as user identifier if available
+
         try:
             # Step 1: Analyze query intent (simplified for integration)
             intent = "search"  # Default intent - could be enhanced with actual intent detection
-            
+
             # Step 2: Get optimal routing from stateful memory
             routing_decision = await self.stateful_routing_engine.get_optimal_routing(
                 query=enhanced_message,
                 intent=intent,
                 session_id=session_id,
                 user_id=user_id,
-                context=input_data
+                context=input_data,
             )
-            
-            logger.info(f"Stateful routing decision: {routing_decision['strategy']}, "
-                       f"confidence: {routing_decision['confidence']:.2f}")
-            
+
+            logger.info(
+                f"Stateful routing decision: {routing_decision['strategy']}, "
+                f"confidence: {routing_decision['confidence']:.2f}"
+            )
+
             # Step 3: Execute with standard ReactAgent (enhanced with routing context)
             if routing_decision["memory_used"]:
                 # Add routing context to the input for informed execution
@@ -570,24 +593,26 @@ When calling search tools, you MUST:
                     "strategy": routing_decision["strategy"],
                     "confidence": routing_decision["confidence"],
                     "reasoning": routing_decision["reasoning"],
-                    "agent_sequence": routing_decision["agent_sequence"]
+                    "agent_sequence": routing_decision["agent_sequence"],
                 }
                 result = await self.agent.ainvoke(enhanced_input, config=config)
             else:
                 # Fallback to standard execution
                 result = await self.agent.ainvoke(input_data, config=config)
-            
+
             # Step 4: Learn from execution for future optimization
             execution_time_ms = int((time.time() - start_time) * 1000)
-            
+
             # Create execution result for learning
             workflow_result = {
                 "anime_results": self._extract_anime_results_from_response(result),
                 "execution_time_ms": execution_time_ms,
                 "platforms_queried": self._extract_platforms_from_response(result),
-                "intent_analysis": {"workflow_complexity": "moderate"}  # Could be enhanced
+                "intent_analysis": {
+                    "workflow_complexity": "moderate"
+                },  # Could be enhanced
             }
-            
+
             # Learn from this execution
             await self.stateful_routing_engine.learn_from_execution(
                 query=enhanced_message,
@@ -595,20 +620,24 @@ When calling search tools, you MUST:
                 agent_sequence=routing_decision.get("agent_sequence", []),
                 execution_result=workflow_result,
                 session_id=session_id,
-                user_id=user_id
+                user_id=user_id,
             )
-            
-            logger.info(f"Stateful execution completed in {execution_time_ms}ms, "
-                       f"learned from {len(workflow_result['anime_results'])} results")
-            
+
+            logger.info(
+                f"Stateful execution completed in {execution_time_ms}ms, "
+                f"learned from {len(workflow_result['anime_results'])} results"
+            )
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Error in stateful workflow execution: {e}")
             # Fallback to standard execution on error
             return await self.agent.ainvoke(input_data, config=config)
-    
-    def _extract_anime_results_from_response(self, result: Dict[str, Any]) -> List[Dict[str, Any]]:
+
+    def _extract_anime_results_from_response(
+        self, result: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Extract anime results from agent response for learning."""
         # Simple extraction - could be enhanced to parse actual results
         messages = result.get("messages", [])
@@ -618,7 +647,7 @@ When calling search tools, you MUST:
             if "anime" in last_message.lower() and len(last_message) > 100:
                 return [{"title": "sample_result"}]  # Placeholder for actual parsing
         return []
-    
+
     def _extract_platforms_from_response(self, result: Dict[str, Any]) -> List[str]:
         """Extract platforms used from agent response for learning."""
         # Simple extraction - could be enhanced to parse actual platform usage
@@ -677,7 +706,9 @@ def create_react_agent_workflow_engine(
     Raises:
         RuntimeError: If API keys or dependencies missing
     """
-    logger.info(f"Creating ReactAgent workflow engine with {len(mcp_tools)} MCP tools in {execution_mode.value} mode")
+    logger.info(
+        f"Creating ReactAgent workflow engine with {len(mcp_tools)} MCP tools in {execution_mode.value} mode"
+    )
     logger.info(f"Creating ReactAgent with real {llm_provider.value} LLM")
     engine = ReactAgentWorkflowEngine(mcp_tools, llm_provider, execution_mode)
     logger.info("ReactAgent workflow engine created successfully")

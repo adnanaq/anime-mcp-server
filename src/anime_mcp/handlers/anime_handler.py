@@ -10,9 +10,8 @@ from typing import Any, Dict, List, Optional
 from mcp.server.fastmcp import Context
 
 from ...config import Settings
-from ...vector.qdrant_client import QdrantClient
-from ...models.structured_responses import BasicSearchResponse, BasicAnimeResult
 from ...exceptions import AnimeNotFoundError
+from ...vector.qdrant_client import QdrantClient
 from ..schemas import SearchAnimeInput
 from .base_handler import BaseAnimeHandler
 
@@ -49,11 +48,11 @@ class AnimeHandler(BaseAnimeHandler):
             DatabaseOperationError: If search operation fails
         """
         client = self.verify_client("search_anime")
-        
+
         # Validate and prepare parameters
         limit = self.validate_limit(params.limit, 50)
         query = params.query.strip() or "anime"  # Default fallback
-        
+
         await self.log_operation_start(
             "anime_search", f"'{query}' (limit: {limit})", ctx
         )
@@ -64,7 +63,7 @@ class AnimeHandler(BaseAnimeHandler):
 
             # Execute search with enhanced parameters
             results = await client.search(query=query, limit=limit, filters=filters)
-            
+
             await self.log_operation_success("anime_search", len(results), ctx)
             return results
 
@@ -88,7 +87,7 @@ class AnimeHandler(BaseAnimeHandler):
             DatabaseOperationError: If retrieval fails
         """
         client = self.verify_client("get_anime_details")
-        
+
         await self.log_operation_start("anime_details", f"ID: {anime_id}", ctx)
 
         try:
@@ -98,10 +97,10 @@ class AnimeHandler(BaseAnimeHandler):
 
             title = anime.get("title", "Unknown")
             await self.log_operation_success("anime_details", 1, ctx)
-            
+
             if ctx:
                 await ctx.info(f"Retrieved details for: {title}")
-                
+
             return anime
 
         except AnimeNotFoundError:
@@ -125,10 +124,10 @@ class AnimeHandler(BaseAnimeHandler):
             List of similar anime with similarity scores
         """
         client = self.verify_client("find_similar_anime")
-        
+
         # Validate limit
         limit = self.validate_limit(limit, 20)
-        
+
         await self.log_operation_start(
             "similar_anime", f"ID: {anime_id} (limit: {limit})", ctx
         )
@@ -141,9 +140,7 @@ class AnimeHandler(BaseAnimeHandler):
         except Exception as e:
             await self.handle_error(e, "find_similar_anime", ctx)
 
-    async def get_database_stats(
-        self, ctx: Optional[Context] = None
-    ) -> Dict[str, Any]:
+    async def get_database_stats(self, ctx: Optional[Context] = None) -> Dict[str, Any]:
         """Get statistics about the anime database.
 
         Args:
@@ -153,7 +150,7 @@ class AnimeHandler(BaseAnimeHandler):
             Database statistics and health information
         """
         client = self.verify_client("get_database_stats")
-        
+
         await self.log_operation_start("database_stats", "retrieving stats", ctx)
 
         try:
@@ -191,10 +188,10 @@ class AnimeHandler(BaseAnimeHandler):
         """
         client = self.verify_client("search_by_image")
         self.check_multi_vector_support("search_by_image")
-        
+
         # Validate limit
         limit = self.validate_limit(limit, 30)
-        
+
         await self.log_operation_start("image_search", f"limit: {limit}", ctx)
 
         try:
@@ -226,11 +223,11 @@ class AnimeHandler(BaseAnimeHandler):
             List of anime with combined similarity scores
         """
         client = self.verify_client("search_multimodal")
-        
+
         # Validate parameters
         limit = self.validate_limit(limit, 25)
         text_weight = max(0.0, min(1.0, text_weight))
-        
+
         await self.log_operation_start(
             "multimodal_search",
             f"'{query}' with image={image_data is not None} (weight: {text_weight})",
@@ -239,10 +236,7 @@ class AnimeHandler(BaseAnimeHandler):
 
         try:
             # Check if enhanced multimodal search is available
-            if (
-                getattr(client, "_supports_multi_vector", False)
-                and image_data
-            ):
+            if getattr(client, "_supports_multi_vector", False) and image_data:
                 results = await client.search_multimodal(
                     query=query,
                     image_data=image_data,
@@ -262,7 +256,7 @@ class AnimeHandler(BaseAnimeHandler):
 
         except Exception as e:
             await self.handle_error(e, "search_multimodal", ctx)
-    
+
     # Removed Universal parameter methods - replaced with direct tool calls
     # Modern approach: Tools call specific platform APIs directly without Universal parameter abstraction
     # This eliminates the 444-parameter Universal system and provides better LLM experience

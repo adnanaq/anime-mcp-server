@@ -6,12 +6,11 @@ comparison of ratings, metadata, and availability across MAL, AniList, AnimeSche
 Kitsu, and other platforms.
 """
 
-from typing import Dict, Any, List, Optional, Tuple
 import asyncio
 import logging
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from ..models.structured_responses import BasicAnimeResult, BasicSearchResponse
 # Temporarily disabled due to circular import - will be fixed in next phase
 # from ..anime_mcp.tools import (
 #     search_anime_mal,

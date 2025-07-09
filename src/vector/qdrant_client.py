@@ -77,7 +77,7 @@ class QdrantClient:
         try:
             # Import FastEmbed only when needed
             from fastembed import TextEmbedding
-            
+
             # Initialize FastEmbed with configured model
             cache_dir = getattr(self.settings, "fastembed_cache_dir", None)
             init_kwargs = {"model_name": self._fastembed_model}
@@ -140,7 +140,6 @@ class QdrantClient:
         except Exception as e:
             logger.error(f"Failed to ensure collection exists: {e}")
             raise
-
 
     # Distance mapping constant
     _DISTANCE_MAPPING = {
@@ -337,7 +336,9 @@ class QdrantClient:
                         # Add picture vector if picture data available
                         picture_data = doc.get("picture_data")
                         if picture_data:
-                            picture_embedding = self._create_image_embedding(picture_data)
+                            picture_embedding = self._create_image_embedding(
+                                picture_data
+                            )
                             if picture_embedding:
                                 vectors["picture"] = picture_embedding
                             else:
@@ -349,7 +350,9 @@ class QdrantClient:
                         # Add thumbnail vector if thumbnail data available
                         thumbnail_data = doc.get("thumbnail_data")
                         if thumbnail_data:
-                            thumbnail_embedding = self._create_image_embedding(thumbnail_data)
+                            thumbnail_embedding = self._create_image_embedding(
+                                thumbnail_data
+                            )
                             if thumbnail_embedding:
                                 vectors["thumbnail"] = thumbnail_embedding
                             else:
@@ -358,7 +361,9 @@ class QdrantClient:
                             # Use zero vector for missing thumbnail
                             vectors["thumbnail"] = [0.0] * self._image_vector_size
 
-                        point = PointStruct(id=point_id, vector=vectors, payload=payload)
+                        point = PointStruct(
+                            id=point_id, vector=vectors, payload=payload
+                        )
 
                         points.append(point)
 
@@ -731,19 +736,23 @@ class QdrantClient:
                     None,
                     lambda: self.client.search(
                         collection_name=self.collection_name,
-                        query_vector=NamedVector(name="picture", vector=image_embedding),
+                        query_vector=NamedVector(
+                            name="picture", vector=image_embedding
+                        ),
                         limit=limit * 2,  # Get more for fusion
                         with_payload=True,
                         with_vectors=False,
                     ),
                 )
 
-                # Search thumbnail vectors  
+                # Search thumbnail vectors
                 thumbnail_results = await loop.run_in_executor(
                     None,
                     lambda: self.client.search(
                         collection_name=self.collection_name,
-                        query_vector=NamedVector(name="thumbnail", vector=image_embedding),
+                        query_vector=NamedVector(
+                            name="thumbnail", vector=image_embedding
+                        ),
                         limit=limit * 2,  # Get more for fusion
                         with_payload=True,
                         with_vectors=False,
@@ -752,22 +761,24 @@ class QdrantClient:
 
                 # Combine results with weighted scoring (favor picture over thumbnail)
                 picture_scores = {
-                    hit.payload.get("anime_id", hit.id): hit.score 
+                    hit.payload.get("anime_id", hit.id): hit.score
                     for hit in picture_results
                 }
                 thumbnail_scores = {
-                    hit.payload.get("anime_id", hit.id): hit.score 
+                    hit.payload.get("anime_id", hit.id): hit.score
                     for hit in thumbnail_results
                 }
 
                 # Weighted combination: 70% picture, 30% thumbnail
                 combined_results = {}
-                all_anime_ids = set(picture_scores.keys()) | set(thumbnail_scores.keys())
-                
+                all_anime_ids = set(picture_scores.keys()) | set(
+                    thumbnail_scores.keys()
+                )
+
                 for anime_id in all_anime_ids:
                     picture_score = picture_scores.get(anime_id, 0.0)
                     thumbnail_score = thumbnail_scores.get(anime_id, 0.0)
-                    
+
                     # Combined score with higher weight on picture
                     if picture_score > 0 or thumbnail_score > 0:
                         combined_score = 0.7 * picture_score + 0.3 * thumbnail_score
@@ -775,9 +786,9 @@ class QdrantClient:
 
                 # Sort by combined score and get top results
                 sorted_anime_ids = sorted(
-                    combined_results.keys(), 
-                    key=lambda x: combined_results[x], 
-                    reverse=True
+                    combined_results.keys(),
+                    key=lambda x: combined_results[x],
+                    reverse=True,
                 )[:limit]
 
                 # Get full anime data for results
@@ -786,18 +797,24 @@ class QdrantClient:
                     # Find the anime data from either result set
                     anime_data = None
                     for hit in picture_results + thumbnail_results:
-                        if (hit.payload.get("anime_id", hit.id) == anime_id):
+                        if hit.payload.get("anime_id", hit.id) == anime_id:
                             anime_data = dict(hit.payload)
                             break
-                    
+
                     if anime_data:
-                        anime_data["visual_similarity_score"] = combined_results[anime_id]
+                        anime_data["visual_similarity_score"] = combined_results[
+                            anime_id
+                        ]
                         anime_data["picture_score"] = picture_scores.get(anime_id, 0.0)
-                        anime_data["thumbnail_score"] = thumbnail_scores.get(anime_id, 0.0)
+                        anime_data["thumbnail_score"] = thumbnail_scores.get(
+                            anime_id, 0.0
+                        )
                         anime_data["_id"] = anime_id
                         results.append(anime_data)
 
-                logger.info(f"Combined image search: {len(picture_results)} picture + {len(thumbnail_results)} thumbnail = {len(results)} final results")
+                logger.info(
+                    f"Combined image search: {len(picture_results)} picture + {len(thumbnail_results)} thumbnail = {len(results)} final results"
+                )
                 return results
 
             else:
@@ -806,7 +823,9 @@ class QdrantClient:
                     None,
                     lambda: self.client.search(
                         collection_name=self.collection_name,
-                        query_vector=NamedVector(name="picture", vector=image_embedding),
+                        query_vector=NamedVector(
+                            name="picture", vector=image_embedding
+                        ),
                         limit=limit,
                         with_payload=True,
                         with_vectors=False,
@@ -1008,4 +1027,3 @@ class QdrantClient:
             logger.error(f"Visual similarity search failed: {e}")
             # Fallback to text-based similarity
             return await self.find_similar(anime_id, limit)
-

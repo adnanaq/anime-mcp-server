@@ -6,7 +6,7 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import admin, search, query
+from .api import admin, query, search
 from .api.external import (
     anidb,
     anilist,

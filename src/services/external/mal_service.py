@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 class MALService(BaseExternalService):
     """MAL service wrapper for official MAL API v2 operations."""
 
-    def __init__(
-        self, client_id: str, client_secret: Optional[str] = None
-    ):
+    def __init__(self, client_id: str, client_secret: Optional[str] = None):
         """Initialize MAL service with shared dependencies.
 
         Args:
@@ -68,10 +66,12 @@ class MALService(BaseExternalService):
 
         try:
             logger.info(
-                "MAL search: query='%s', limit=%d, correlation_id=%s", 
-                query, limit, correlation_id
+                "MAL search: query='%s', limit=%d, correlation_id=%s",
+                query,
+                limit,
+                correlation_id,
             )
-            
+
             return await self.client.search_anime(
                 q=query,
                 limit=limit,
@@ -84,10 +84,10 @@ class MALService(BaseExternalService):
             raise
 
     async def get_anime_details(
-        self, 
-        anime_id: int, 
+        self,
+        anime_id: int,
         fields: Optional[str] = None,
-        correlation_id: Optional[str] = None
+        correlation_id: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Get detailed anime information by ID.
 
@@ -100,14 +100,18 @@ class MALService(BaseExternalService):
             Anime details or None if not found
         """
         try:
-            logger.info("MAL anime details: anime_id=%d, correlation_id=%s", anime_id, correlation_id)
+            logger.info(
+                "MAL anime details: anime_id=%d, correlation_id=%s",
+                anime_id,
+                correlation_id,
+            )
             return await self.client.get_anime_by_id(
-                anime_id=anime_id,
-                fields=fields,
-                correlation_id=correlation_id
+                anime_id=anime_id, fields=fields, correlation_id=correlation_id
             )
         except Exception as e:
-            logger.error("MAL anime details failed: %s, correlation_id=%s", e, correlation_id)
+            logger.error(
+                "MAL anime details failed: %s, correlation_id=%s", e, correlation_id
+            )
             raise
 
     async def get_user_anime_list(
@@ -135,7 +139,11 @@ class MALService(BaseExternalService):
             List of user's anime list entries
         """
         try:
-            logger.info("MAL user anime list: username=%s, correlation_id=%s", username, correlation_id)
+            logger.info(
+                "MAL user anime list: username=%s, correlation_id=%s",
+                username,
+                correlation_id,
+            )
             return await self.client.get_user_anime_list(
                 username=username,
                 status=status,
@@ -146,7 +154,9 @@ class MALService(BaseExternalService):
                 correlation_id=correlation_id,
             )
         except Exception as e:
-            logger.error("MAL user anime list failed: %s, correlation_id=%s", e, correlation_id)
+            logger.error(
+                "MAL user anime list failed: %s, correlation_id=%s", e, correlation_id
+            )
             raise
 
     async def get_anime_ranking(
@@ -170,7 +180,11 @@ class MALService(BaseExternalService):
             List of ranked anime
         """
         try:
-            logger.info("MAL anime ranking: type=%s, correlation_id=%s", ranking_type, correlation_id)
+            logger.info(
+                "MAL anime ranking: type=%s, correlation_id=%s",
+                ranking_type,
+                correlation_id,
+            )
             return await self.client.get_anime_ranking(
                 ranking_type=ranking_type,
                 limit=limit,
@@ -178,7 +192,9 @@ class MALService(BaseExternalService):
                 fields=fields,
             )
         except Exception as e:
-            logger.error("MAL anime ranking failed: %s, correlation_id=%s", e, correlation_id)
+            logger.error(
+                "MAL anime ranking failed: %s, correlation_id=%s", e, correlation_id
+            )
             raise
 
     async def get_seasonal_anime(
@@ -215,7 +231,12 @@ class MALService(BaseExternalService):
             )
 
         try:
-            logger.info("MAL seasonal: year=%d, season=%s, correlation_id=%s", year, season, correlation_id)
+            logger.info(
+                "MAL seasonal: year=%d, season=%s, correlation_id=%s",
+                year,
+                season,
+                correlation_id,
+            )
             return await self.client.get_seasonal_anime(
                 year=year,
                 season=season.lower(),
@@ -226,7 +247,9 @@ class MALService(BaseExternalService):
                 correlation_id=correlation_id,
             )
         except Exception as e:
-            logger.error("MAL seasonal failed: %s, correlation_id=%s", e, correlation_id)
+            logger.error(
+                "MAL seasonal failed: %s, correlation_id=%s", e, correlation_id
+            )
             raise
 
     async def health_check(self) -> Dict[str, Any]:
@@ -244,16 +267,16 @@ class MALService(BaseExternalService):
                     "error": "Client not initialized",
                     "circuit_breaker_open": self.circuit_breaker.is_open(),
                 }
-            
+
             # Check if required configuration is available
-            if not hasattr(self.client, 'client_id') or not self.client.client_id:
+            if not hasattr(self.client, "client_id") or not self.client.client_id:
                 return {
                     "service": self.service_name,
                     "status": "unhealthy",
                     "error": "MAL client_id not configured",
                     "circuit_breaker_open": self.circuit_breaker.is_open(),
                 }
-            
+
             # If circuit breaker is open, service is degraded
             if self.circuit_breaker.is_open():
                 return {
@@ -267,8 +290,8 @@ class MALService(BaseExternalService):
                 "service": self.service_name,
                 "status": "healthy",
                 "circuit_breaker_open": False,
-                "base_url": getattr(self.client, 'base_url', 'unknown'),
-                "auth_configured": bool(getattr(self.client, 'client_id', None)),
+                "base_url": getattr(self.client, "base_url", "unknown"),
+                "auth_configured": bool(getattr(self.client, "client_id", None)),
             }
 
         except Exception as e:

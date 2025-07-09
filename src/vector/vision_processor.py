@@ -9,7 +9,6 @@ import io
 import logging
 from typing import List, Optional
 
-import numpy as np
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -257,5 +256,3 @@ class VisionProcessor:
             "input_resolution": 224,  # CLIP standard input size
             "is_initialized": self.model is not None,
         }
-
-

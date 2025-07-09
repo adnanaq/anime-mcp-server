@@ -8,10 +8,9 @@ from src.anime_mcp.tools.schedule_tools import (
     search_anime_schedule,
     get_schedule_data,
     get_currently_airing,
-    animeschedule_client,
-    animeschedule_mapper
+    animeschedule_client
 )
-from src.models.universal_anime import UniversalAnime, UniversalSearchParams
+from src.models.structured_responses import BasicAnimeResult, AnimeType, AnimeStatus
 
 
 class TestScheduleTools:
@@ -150,38 +149,7 @@ class TestScheduleTools:
         
         return client
 
-    @pytest.fixture
-    def mock_schedule_mapper(self):
-        """Create mock AnimeSchedule mapper."""
-        mapper = MagicMock()
-        
-        # Mock to_animeschedule_search_params
-        mapper.to_animeschedule_search_params.return_value = {
-            "query": "attack on titan",
-            "limit": 20,
-            "offset": 0,
-            "status": "finished",
-            "season": "spring",
-            "year": 2013
-        }
-        
-        # Mock to_universal_anime
-        mapper.to_universal_anime.return_value = UniversalAnime(
-            id="schedule_attack_on_titan",
-            title="Attack on Titan",
-            type_format="TV",
-            episodes=25,
-            score=0.0,  # AnimeSchedule doesn't have scores
-            year=2013,
-            status="FINISHED",
-            genres=["Action", "Drama", "Military"],
-            studios=["Wit Studio"],
-            description="Humanity fights against titans",
-            image_url="https://animeschedule.net/images/attack-on-titan.jpg",
-            data_quality_score=0.82
-        )
-        
-        return mapper
+    
 
     @pytest.fixture
     def mock_context(self):
@@ -192,10 +160,9 @@ class TestScheduleTools:
         return context
 
     @pytest.mark.asyncio
-    async def test_search_anime_schedule_success(self, mock_schedule_client, mock_schedule_mapper, mock_context):
+    async def test_search_anime_schedule_success(self, mock_schedule_client, mock_context):
         """Test successful AnimeSchedule anime search."""
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_schedule_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_schedule_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_schedule_client):
             
             result = await search_anime_schedule(
                 query="attack on titan",
@@ -208,56 +175,42 @@ class TestScheduleTools:
             assert len(result) == 1
             
             anime = result[0]
-            assert anime["id"] == "schedule_attack_on_titan"
+            assert anime["id"] == "attack-on-titan"
             assert anime["title"] == "Attack on Titan"
-            assert anime["schedule_route"] == "attack-on-titan"
+            assert anime["animeschedule_id"] == "attack-on-titan"
             assert anime["source_platform"] == "animeschedule"
             
             # Verify schedule-specific data
             assert "broadcast_day" in anime
             assert "broadcast_time" in anime
             assert "broadcast_timezone" in anime
-            assert "streaming_sites" in anime
-            assert len(anime["streaming_sites"]) > 0
+            assert "streaming_platforms" in anime
+            assert len(anime["streaming_platforms"]) > 0
             
             # Verify client calls
             mock_schedule_client.search_anime.assert_called_once()
-            mock_schedule_mapper.to_animeschedule_search_params.assert_called_once()
-            mock_schedule_mapper.to_universal_anime.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_search_anime_schedule_with_filters(self, mock_schedule_client, mock_schedule_mapper, mock_context):
+    async def test_search_anime_schedule_with_filters(self, mock_schedule_client, mock_context):
         """Test AnimeSchedule search with filters."""
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_schedule_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_schedule_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_schedule_client):
             
-            result = await search_anime_schedule(
+            await search_anime_schedule(
                 query="mecha anime",
-                status="airing",
-                season="winter",
-                year=2024,
-                broadcast_day="saturday",
-                timezone="America/New_York",
-                streaming_platforms=["crunchyroll", "netflix"],
-                limit=15,
-                offset=30,
+                airing_statuses=["ongoing"],
+                seasons=["winter"],
+                years=[2024],
                 ctx=mock_context
             )
             
-            # Verify mapper was called with filters
-            call_args = mock_schedule_mapper.to_animeschedule_search_params.call_args
-            universal_params = call_args[0][0]
-            schedule_specific = call_args[0][1]
+            # Verify client was called with filters
+            mock_schedule_client.search_anime.assert_called_once()
+            call_args = mock_schedule_client.search_anime.call_args[0][0]
             
-            assert universal_params.query == "mecha anime"
-            assert universal_params.limit == 15
-            assert universal_params.offset == 30
-            
-            assert schedule_specific["status"] == "airing"
-            assert schedule_specific["season"] == "winter"
-            assert schedule_specific["year"] == 2024
-            assert schedule_specific["broadcast_day"] == "saturday"
-            assert schedule_specific["timezone"] == "America/New_York"
+            assert call_args["query"] == "mecha anime"
+            assert call_args["st"] == ["ongoing"]
+            assert call_args["seasons"] == ["winter"]
+            assert call_args["years"] == [2024]
 
     @pytest.mark.asyncio
     async def test_search_anime_schedule_no_client(self, mock_context):
@@ -270,87 +223,88 @@ class TestScheduleTools:
             mock_context.error.assert_called_with("AnimeSchedule client not configured")
 
     @pytest.mark.asyncio
-    async def test_search_anime_schedule_client_error(self, mock_schedule_client, mock_schedule_mapper, mock_context):
+    async def test_search_anime_schedule_client_error(self, mock_schedule_client, mock_context):
         """Test AnimeSchedule search when client raises error."""
         mock_schedule_client.search_anime.side_effect = Exception("API unavailable")
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_schedule_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_schedule_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_schedule_client):
             
             with pytest.raises(RuntimeError, match="AnimeSchedule search failed: API unavailable"):
                 await search_anime_schedule(query="test", ctx=mock_context)
 
     @pytest.mark.asyncio
-    async def test_search_anime_schedule_mapping_error(self, mock_schedule_client, mock_schedule_mapper, mock_context):
+    async def test_search_anime_schedule_mapping_error(self, mock_schedule_client, mock_context):
         """Test AnimeSchedule search when mapping fails for individual results."""
-        mock_schedule_mapper.to_universal_anime.side_effect = Exception("Mapping error")
+        # Simulate a malformed raw result that causes an error during processing
+        mock_schedule_client.search_anime.return_value = [
+            {"id": "1", "malformed_key": "This will cause an error"}
+        ]
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_schedule_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_schedule_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_schedule_client):
             
             result = await search_anime_schedule(query="test", ctx=mock_context)
             
             # Should return empty list when all mappings fail
             assert result == []
-            mock_context.error.assert_called_with("Failed to process AnimeSchedule result: Mapping error")
+            mock_context.error.assert_called_with(f"Failed to process AnimeSchedule result: 'title'")
 
     @pytest.mark.asyncio
-    async def test_get_schedule_data_success(self, mock_schedule_client, mock_schedule_mapper, mock_context):
+    async def test_get_schedule_data_success(self, mock_schedule_client, mock_context):
         """Test successful schedule data retrieval."""
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_schedule_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_schedule_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_schedule_client):
             
             result = await get_schedule_data(
+                mal_id=12345, # Use an ID for lookup
                 timezone="America/New_York",
-                include_next_week=True,
+                include_episode_history=True,
+                include_streaming_details=True,
                 ctx=mock_context
             )
             
             # Verify result structure
             assert isinstance(result, dict)
-            assert "current_time" in result
-            assert "current_week" in result
-            assert "next_week" in result
-            assert "timezone" in result
+            assert "broadcast_schedule" in result
+            assert "episode_info" in result
+            assert "airing_period" in result
+            assert "streaming_platforms" in result
+            assert "production" in result
+            assert "external_ids" in result
+            assert "episode_history" in result
+            assert "rankings" in result
             
             # Verify current week data
-            current_week = result["current_week"]
-            assert len(current_week) == 1
-            assert current_week[0]["title"] == "Current Anime 1"
-            assert current_week[0]["status"] == "airing"
-            
-            # Verify next week data  
-            next_week = result["next_week"]
-            assert len(next_week) == 1
-            assert next_week[0]["title"] == "Upcoming Anime 1"
-            assert next_week[0]["status"] == "upcoming"
+            assert result["title"] == "Current Anime 1"
+            assert result["broadcast_schedule"]["day"] == "Monday"
+            assert result["broadcast_schedule"]["time"] == "09:00"
             
             # Verify client was called correctly
-            mock_schedule_client.get_schedule_data.assert_called_once_with(
-                timezone="America/New_York",
-                include_next_week=True
-            )
+            mock_schedule_client.get_anime_schedule_by_id.assert_called_once_with({
+                "mal_id": 12345,
+                "include_episodes": True,
+                "include_streaming": True
+            })
 
     @pytest.mark.asyncio
-    async def test_get_schedule_data_current_week_only(self, mock_schedule_client, mock_schedule_mapper, mock_context):
+    async def test_get_schedule_data_current_week_only(self, mock_schedule_client, mock_context):
         """Test schedule data retrieval for current week only."""
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_schedule_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_schedule_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_schedule_client):
             
             result = await get_schedule_data(
-                timezone="UTC",
-                include_next_week=False,
+                mal_id=12345,
+                include_episode_history=False,
+                include_streaming_details=False,
                 ctx=mock_context
             )
             
             # Should only include current week
-            assert "current_week" in result
-            assert "next_week" in result  # Still included but might be empty based on include_next_week=False
+            assert "episode_history" not in result
+            assert "streaming_platforms" not in result
             
-            mock_schedule_client.get_schedule_data.assert_called_once_with(
-                timezone="UTC",
-                include_next_week=False
-            )
+            mock_schedule_client.get_anime_schedule_by_id.assert_called_once_with({
+                "mal_id": 12345,
+                "include_episodes": False,
+                "include_streaming": False
+            })
 
     @pytest.mark.asyncio
     async def test_get_schedule_data_no_client(self, mock_context):
@@ -363,12 +317,12 @@ class TestScheduleTools:
     @pytest.mark.asyncio
     async def test_get_schedule_data_client_error(self, mock_schedule_client, mock_context):
         """Test schedule data retrieval when client raises error."""
-        mock_schedule_client.get_schedule_data.side_effect = Exception("Schedule API error")
+        mock_schedule_client.get_anime_schedule_by_id.side_effect = Exception("Schedule API error")
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_schedule_client):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_schedule_client):
             
             with pytest.raises(RuntimeError, match="Failed to get schedule data: Schedule API error"):
-                await get_schedule_data(ctx=mock_context)
+                await get_schedule_data(mal_id=123, ctx=mock_context)
 
     @pytest.mark.asyncio
     async def test_get_currently_airing_success(self, mock_schedule_client, mock_context):
@@ -443,41 +397,90 @@ class TestScheduleToolsAdvanced:
     async def test_schedule_tools_parameter_validation(self):
         """Test parameter validation for AnimeSchedule tools."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
-        mock_mapper.to_animeschedule_search_params.return_value = {}
         mock_client.search_anime.return_value = []
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_client):
             
             # Test all valid statuses
-            valid_statuses = ["airing", "finished", "upcoming", "cancelled", "hiatus"]
+            valid_statuses = ["finished", "ongoing", "upcoming"]
             for status in valid_statuses:
-                await search_anime_schedule(query="test", status=status)
+                await search_anime_schedule(query="test", airing_statuses=[status])
             
             # Test all valid seasons
-            valid_seasons = ["spring", "summer", "fall", "winter"]
+            valid_seasons = ["Winter", "Spring", "Summer", "Fall"]
             for season in valid_seasons:
-                await search_anime_schedule(query="test", season=season)
-            
-            # Test all valid broadcast days
-            valid_days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-            for day in valid_days:
-                await search_anime_schedule(query="test", broadcast_day=day)
+                await search_anime_schedule(query="test", seasons=[season])
 
     @pytest.mark.asyncio
     async def test_schedule_tools_timezone_handling(self, mock_context):
         """Test timezone handling in schedule tools."""
         mock_client = AsyncMock()
-        mock_client.get_schedule_data.return_value = {
-            "currentTime": "2024-01-15T12:00:00Z",
-            "timezone": "America/New_York",
-            "currentWeek": [],
-            "nextWeek": []
+        mock_client.get_anime_schedule_by_id.return_value = {
+            "id": 1,
+            "title": "Test Anime",
+            "media_type": "TV",
+            "episodes": 12,
+            "score": 7.5,
+            "year": 2023,
+            "airing_status": "finished",
+            "genres": ["Action"],
+            "studios": ["Studio A"],
+            "synopsis": "Synopsis",
+            "image_url": "url",
+            "premiere_date": "2023-01-01",
+            "finale_date": "2023-03-25",
+            "broadcast_day": "Monday",
+            "broadcast_time": "12:00",
+            "broadcast_timezone": "Asia/Tokyo",
+            "next_episode_date": "2023-01-08",
+            "next_episode_number": 2,
+            "episodes_aired": 1,
+            "episode_duration": 24,
+            "streams": [],
+            "stream_regions": {},
+            "stream_urls": {},
+            "subscription_platforms": [],
+            "free_platforms": [],
+            "source": "original",
+            "production_status": "finished",
+            "mal_id": 123,
+            "anilist_id": 456,
+            "anidb_id": 789,
+            "kitsu_id": 1011,
+            "popularity_rank": 100,
+            "score_rank": 50,
+            "licensors": [],
+            "producers": [],
+            "updated_at": "2023-03-25T12:00:00Z"
         }
-        mock_client.get_currently_airing.return_value = []
+        mock_client.get_currently_airing.return_value = [
+            {
+                "id": 1,
+                "title": "Test Airing Anime",
+                "media_type": "TV",
+                "episodes": 12,
+                "episodes_aired": 1,
+                "image_url": "url",
+                "broadcast_day": "Monday",
+                "broadcast_time": "12:00",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2023-01-08",
+                "next_episode_number": 2,
+                "hours_until_next_episode": 168,
+                "streams": [],
+                "stream_regions": {},
+                "premium_required": False,
+                "score": 7.5,
+                "popularity_rank": 100,
+                "genres": ["Action"],
+                "studios": ["Studio A"],
+                "mal_id": 123,
+                "anilist_id": 456,
+                "updated_at": "2023-03-25T12:00:00Z"
+            }
+        ]
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_client):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_client):
             
             # Test various timezones
             timezones = [
@@ -491,182 +494,354 @@ class TestScheduleToolsAdvanced:
             
             for timezone in timezones:
                 # Test schedule data
-                await get_schedule_data(timezone=timezone, ctx=mock_context)
-                call_args = mock_client.get_schedule_data.call_args
-                assert call_args[1]["timezone"] == timezone
+                await get_schedule_data(mal_id=123, ctx=mock_context)
+                call_args = mock_client.get_anime_schedule_by_id.call_args
+                assert call_args[0][0]["mal_id"] == 123
                 
                 # Test currently airing
                 await get_currently_airing(timezone=timezone, ctx=mock_context)
                 call_args = mock_client.get_currently_airing.call_args
-                assert call_args[1]["timezone"] == timezone
+                assert call_args[0][0]["timezone"] == timezone
 
     @pytest.mark.asyncio
     async def test_schedule_tools_streaming_data_aggregation(self, mock_context):
         """Test streaming data aggregation and processing."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Mock response with comprehensive streaming data
         streaming_response = [
             {
                 "title": "Multi-Platform Anime",
                 "route": "multi-platform-anime",
-                "streamingSites": [
-                    {
-                        "site": "Crunchyroll",
-                        "url": "https://crunchyroll.com/multi-platform",
-                        "regions": ["US", "CA", "UK", "AU", "BR"]
-                    },
-                    {
-                        "site": "Funimation",
-                        "url": "https://funimation.com/multi-platform", 
-                        "regions": ["US", "CA"]
-                    },
-                    {
-                        "site": "Netflix",
-                        "url": "https://netflix.com/multi-platform",
-                        "regions": ["US", "JP", "DE", "FR"]
-                    },
-                    {
-                        "site": "Hulu",
-                        "url": "https://hulu.com/multi-platform",
-                        "regions": ["US"]
-                    }
+                "media_type": "TV",
+                "episodes": 12,
+                "score": 8.0,
+                "year": 2023,
+                "airing_status": "airing",
+                "genres": ["Action"],
+                "studios": ["Studio A"],
+                "synopsis": "Synopsis",
+                "image_url": "url",
+                "premiere_date": "2023-01-01",
+                "finale_date": "2023-03-25",
+                "broadcast_day": "Friday",
+                "broadcast_time": "15:30",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2023-01-08",
+                "next_episode_number": 2,
+                "episodes_aired": 1,
+                "episode_duration": 24,
+                "streams": [
+                    "Crunchyroll",
+                    "Funimation",
+                    "Netflix",
+                    "Hulu"
                 ],
-                "broadcastDay": "Friday",
-                "broadcastTime": "15:30",
-                "status": "airing"
+                "stream_regions": {
+                    "Crunchyroll": ["US", "CA", "UK", "AU", "BR"],
+                    "Funimation": ["US", "CA"],
+                    "Netflix": ["US", "JP", "DE", "FR"],
+                    "Hulu": ["US"]
+                },
+                "stream_urls": {
+                    "Crunchyroll": "https://crunchyroll.com/multi-platform",
+                    "Funimation": "https://funimation.com/multi-platform", 
+                    "Netflix": "https://netflix.com/multi-platform",
+                    "Hulu": "https://hulu.com/multi-platform"
+                },
+                "subscription_platforms": [],
+                "free_platforms": [],
+                "source": "original",
+                "production_status": "finished",
+                "mal_id": 123,
+                "anilist_id": 456,
+                "anidb_id": 789,
+                "kitsu_id": 1011,
+                "popularity_rank": 100,
+                "score_rank": 50,
+                "licensors": [],
+                "producers": [],
+                "updated_at": "2023-03-25T12:00:00Z"
             }
         ]
         
         mock_client.search_anime.return_value = streaming_response
-        mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="schedule_multi", title="Multi-Platform Anime", data_quality_score=0.9
-        )
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_client):
             
             result = await search_anime_schedule(query="test", ctx=mock_context)
             
             anime = result[0]
-            streaming_sites = anime["streaming_sites"]
+            streaming_platforms = anime["streaming_platforms"]["available_on"]
             
             # Verify all platforms are included
-            assert len(streaming_sites) == 4
-            platform_names = [site["site"] for site in streaming_sites]
+            assert len(streaming_platforms) == 4
+            platform_names = [site for site in streaming_platforms]
             assert "Crunchyroll" in platform_names
             assert "Funimation" in platform_names
             assert "Netflix" in platform_names
             assert "Hulu" in platform_names
             
             # Verify region data is preserved
-            cr_site = next(site for site in streaming_sites if site["site"] == "Crunchyroll")
-            assert "US" in cr_site["regions"]
-            assert "BR" in cr_site["regions"]  # Check international regions
+            cr_regions = anime["streaming_platforms"]["regional_availability"]["Crunchyroll"]
+            assert "US" in cr_regions
+            assert "BR" in cr_regions  # Check international regions
 
     @pytest.mark.asyncio
     async def test_schedule_tools_broadcast_time_processing(self, mock_context):
         """Test broadcast time and scheduling information processing."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Mock response with various broadcast times
         broadcast_response = [
             {
                 "title": "Morning Show",
                 "route": "morning-show",
-                "broadcastDay": "Monday",
-                "broadcastTime": "08:00",
-                "broadcastTimezone": "Asia/Tokyo",
-                "nextEpisodeDate": "2024-01-22T23:00:00Z",
-                "status": "airing"
+                "media_type": "TV",
+                "episodes": 12,
+                "score": 7.0,
+                "year": 2023,
+                "airing_status": "airing",
+                "genres": ["Slice of Life"],
+                "studios": ["Studio B"],
+                "synopsis": "Synopsis",
+                "image_url": "url",
+                "premiere_date": "2023-01-01",
+                "finale_date": "2023-03-25",
+                "broadcast_day": "Monday",
+                "broadcast_time": "08:00",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2024-01-22T23:00:00Z",
+                "next_episode_number": 2,
+                "episodes_aired": 1,
+                "episode_duration": 24,
+                "streams": [],
+                "stream_regions": {},
+                "stream_urls": {},
+                "subscription_platforms": [],
+                "free_platforms": [],
+                "source": "original",
+                "production_status": "finished",
+                "mal_id": 123,
+                "anilist_id": 456,
+                "anidb_id": 789,
+                "kitsu_id": 1011,
+                "popularity_rank": 100,
+                "score_rank": 50,
+                "licensors": [],
+                "producers": [],
+                "updated_at": "2023-03-25T12:00:00Z"
             },
             {
                 "title": "Late Night Show", 
                 "route": "late-night-show",
-                "broadcastDay": "Saturday",
-                "broadcastTime": "23:30",
-                "broadcastTimezone": "Asia/Tokyo",
-                "nextEpisodeDate": "2024-01-27T14:30:00Z",
-                "status": "airing"
+                "media_type": "TV",
+                "episodes": 12,
+                "score": 7.0,
+                "year": 2023,
+                "airing_status": "airing",
+                "genres": ["Slice of Life"],
+                "studios": ["Studio B"],
+                "synopsis": "Synopsis",
+                "image_url": "url",
+                "premiere_date": "2023-01-01",
+                "finale_date": "2023-03-25",
+                "broadcast_day": "Saturday",
+                "broadcast_time": "23:30",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2024-01-27T14:30:00Z",
+                "next_episode_number": 2,
+                "episodes_aired": 1,
+                "episode_duration": 24,
+                "streams": [],
+                "stream_regions": {},
+                "stream_urls": {},
+                "subscription_platforms": [],
+                "free_platforms": [],
+                "source": "original",
+                "production_status": "finished",
+                "mal_id": 123,
+                "anilist_id": 456,
+                "anidb_id": 789,
+                "kitsu_id": 1011,
+                "popularity_rank": 100,
+                "score_rank": 50,
+                "licensors": [],
+                "producers": [],
+                "updated_at": "2023-03-25T12:00:00Z"
             }
         ]
         
         mock_client.search_anime.return_value = broadcast_response
-        mock_mapper.to_universal_anime.side_effect = [
-            UniversalAnime(id="schedule_morning", title="Morning Show", data_quality_score=0.85),
-            UniversalAnime(id="schedule_late", title="Late Night Show", data_quality_score=0.87)
-        ]
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_client):
             
             result = await search_anime_schedule(query="test", ctx=mock_context)
             
             # Verify broadcast time processing
             morning = result[0]
-            assert morning["broadcast_day"] == "Monday"
             assert morning["broadcast_time"] == "08:00"
+            assert morning["broadcast_day"] == "Monday"
             assert morning["broadcast_timezone"] == "Asia/Tokyo"
             assert morning["next_episode_date"] == "2024-01-22T23:00:00Z"
             
             late_night = result[1] 
-            assert late_night["broadcast_day"] == "Saturday"
             assert late_night["broadcast_time"] == "23:30"
+            assert late_night["broadcast_day"] == "Saturday"
 
     @pytest.mark.asyncio
     async def test_schedule_tools_data_quality_scoring(self, mock_context):
         """Test data quality scoring for AnimeSchedule results."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Mock results with different completeness levels
-        mock_client.search_anime.return_value = [{"title": "Test Anime"}]
-        
-        # Different quality scores based on data completeness
-        quality_scores = [0.95, 0.75, 0.60]  # High, medium, low quality
-        mock_mapper.to_universal_anime.side_effect = [
-            UniversalAnime(id=f"schedule_{i}", title=f"Anime {i}", data_quality_score=score)
-            for i, score in enumerate(quality_scores)
+        mock_client.search_anime.side_effect = [
+            # High quality
+            {
+                "title": "Anime 0",
+                "id": 0,
+                "media_type": "TV",
+                "episodes": 12,
+                "score": 8.0,
+                "year": 2023,
+                "airing_status": "finished",
+                "genres": ["Action"],
+                "studios": ["Studio A"],
+                "synopsis": "Synopsis",
+                "image_url": "url",
+                "premiere_date": "2023-01-01",
+                "finale_date": "2023-03-25",
+                "broadcast_day": "Monday",
+                "broadcast_time": "12:00",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2023-01-08",
+                "next_episode_number": 2,
+                "episodes_aired": 1,
+                "episode_duration": 24,
+                "streams": [],
+                "stream_regions": {},
+                "stream_urls": {},
+                "subscription_platforms": [],
+                "free_platforms": [],
+                "source": "original",
+                "production_status": "finished",
+                "mal_id": 123,
+                "anilist_id": 456,
+                "anidb_id": 789,
+                "kitsu_id": 1011,
+                "popularity_rank": 100,
+                "score_rank": 50,
+                "licensors": [],
+                "producers": [],
+                "updated_at": "2023-03-25T12:00:00Z"
+            },
+            # Medium quality
+            {
+                "title": "Anime 1",
+                "id": 1,
+                "media_type": "TV",
+                "episodes": 12,
+                "score": 7.0,
+                "year": 2023,
+                "airing_status": "finished",
+                "genres": ["Action"],
+                "studios": ["Studio A"],
+                "synopsis": "Synopsis",
+                "image_url": "url",
+                "premiere_date": "2023-01-01",
+                "finale_date": "2023-03-25",
+                "broadcast_day": "Monday",
+                "broadcast_time": "12:00",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2023-01-08",
+                "next_episode_number": 2,
+                "episodes_aired": 1,
+                "episode_duration": 24,
+                "streams": [],
+                "stream_regions": {},
+                "stream_urls": {},
+                "subscription_platforms": [],
+                "free_platforms": [],
+                "source": "original",
+                "production_status": "finished",
+                "mal_id": 123,
+                "anilist_id": 456,
+                "anidb_id": 789,
+                "kitsu_id": 1011,
+                "popularity_rank": 100,
+                "score_rank": 50,
+                "licensors": [],
+                "producers": [],
+                "updated_at": "2023-03-25T12:00:00Z"
+            },
+            # Low quality
+            {
+                "title": "Anime 2",
+                "id": 2,
+                "media_type": "TV",
+                "episodes": 12,
+                "score": 6.0,
+                "year": 2023,
+                "airing_status": "finished",
+                "genres": ["Action"],
+                "studios": ["Studio A"],
+                "synopsis": "Synopsis",
+                "image_url": "url",
+                "premiere_date": "2023-01-01",
+                "finale_date": "2023-03-25",
+                "broadcast_day": "Monday",
+                "broadcast_time": "12:00",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2023-01-08",
+                "next_episode_number": 2,
+                "episodes_aired": 1,
+                "episode_duration": 24,
+                "streams": [],
+                "stream_regions": {},
+                "stream_urls": {},
+                "subscription_platforms": [],
+                "free_platforms": [],
+                "source": "original",
+                "production_status": "finished",
+                "mal_id": 123,
+                "anilist_id": 456,
+                "anidb_id": 789,
+                "kitsu_id": 1011,
+                "popularity_rank": 100,
+                "score_rank": 50,
+                "licensors": [],
+                "producers": [],
+                "updated_at": "2023-03-25T12:00:00Z"
+            }
         ]
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_client):
             
             # Test multiple calls to verify different quality scores
-            for i, expected_score in enumerate(quality_scores):
+            for i, expected_score in enumerate([8.0, 7.0, 6.0]):
                 result = await search_anime_schedule(query=f"test{i}", ctx=mock_context)
-                assert result[0]["data_quality_score"] == expected_score
+                assert result[0]["score"] == expected_score
 
     @pytest.mark.asyncio
     async def test_schedule_tools_empty_results_handling(self, mock_context):
         """Test handling of empty results from AnimeSchedule."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Empty results for all endpoints
         mock_client.search_anime.return_value = []
-        mock_client.get_schedule_data.return_value = {
-            "currentTime": "2024-01-15T12:00:00Z",
-            "currentWeek": [],
-            "nextWeek": [],
-            "timezone": "UTC"
-        }
+        mock_client.get_anime_schedule_by_id.return_value = None
         mock_client.get_currently_airing.return_value = []
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_client):
             
             # Test search
             result = await search_anime_schedule(query="nonexistent", ctx=mock_context)
             assert result == []
-            mock_context.info.assert_called_with("Found 0 anime on AnimeSchedule")
+            mock_context.info.assert_called_with("Found 0 anime with scheduling data")
             
             # Test schedule data
-            result = await get_schedule_data(ctx=mock_context)
-            assert len(result["current_week"]) == 0
-            assert len(result["next_week"]) == 0
+            result = await get_schedule_data(mal_id=123, ctx=mock_context)
+            assert result is None
             
             # Test currently airing
             result = await get_currently_airing(ctx=mock_context)
@@ -705,7 +880,6 @@ class TestScheduleToolsIntegration:
     async def test_schedule_tools_workflow_integration(self, mock_context):
         """Test integration workflow between different schedule tools."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         # Setup search result
         mock_client.search_anime.return_value = [
@@ -713,65 +887,135 @@ class TestScheduleToolsIntegration:
                 "title": "Popular Airing Anime",
                 "route": "popular-airing-anime",
                 "status": "airing",
-                "broadcastDay": "Wednesday"
+                "broadcastDay": "Wednesday",
+                "media_type": "TV",
+                "episodes": 12,
+                "score": 8.0,
+                "year": 2023,
+                "genres": ["Action"],
+                "studios": ["Studio A"],
+                "synopsis": "Synopsis",
+                "image_url": "url",
+                "premiere_date": "2023-01-01",
+                "finale_date": "2023-03-25",
+                "broadcast_time": "12:00",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2023-01-08",
+                "next_episode_number": 2,
+                "episodes_aired": 1,
+                "episode_duration": 24,
+                "streams": [],
+                "stream_regions": {},
+                "stream_urls": {},
+                "subscription_platforms": [],
+                "free_platforms": [],
+                "source": "original",
+                "production_status": "finished",
+                "mal_id": 123,
+                "anilist_id": 456,
+                "anidb_id": 789,
+                "kitsu_id": 1011,
+                "popularity_rank": 100,
+                "score_rank": 50,
+                "licensors": [],
+                "producers": [],
+                "updated_at": "2023-03-25T12:00:00Z"
             }
         ]
         
         # Setup schedule data result
-        mock_client.get_schedule_data.return_value = {
-            "currentTime": "2024-01-15T12:00:00Z",
-            "currentWeek": [
-                {
-                    "title": "Popular Airing Anime",
-                    "broadcastDay": "Wednesday",
-                    "status": "airing"
-                }
-            ],
-            "nextWeek": [],
-            "timezone": "UTC"
+        mock_client.get_anime_schedule_by_id.return_value = {
+            "title": "Popular Airing Anime",
+            "id": 123,
+            "media_type": "TV",
+            "episodes": 12,
+            "score": 8.0,
+            "year": 2023,
+            "airing_status": "airing",
+            "genres": ["Action"],
+            "studios": ["Studio A"],
+            "synopsis": "Synopsis",
+            "image_url": "url",
+            "premiere_date": "2023-01-01",
+            "finale_date": "2023-03-25",
+            "broadcast_day": "Wednesday",
+            "broadcast_time": "12:00",
+            "broadcast_timezone": "Asia/Tokyo",
+            "next_episode_date": "2023-01-08",
+            "next_episode_number": 2,
+            "episodes_aired": 1,
+            "episode_duration": 24,
+            "streams": [],
+            "stream_regions": {},
+            "stream_urls": {},
+            "subscription_platforms": [],
+            "free_platforms": [],
+            "source": "original",
+            "production_status": "finished",
+            "mal_id": 123,
+            "anilist_id": 456,
+            "anidb_id": 789,
+            "kitsu_id": 1011,
+            "popularity_rank": 100,
+            "score_rank": 50,
+            "licensors": [],
+            "producers": [],
+            "updated_at": "2023-03-25T12:00:00Z"
         }
         
         # Setup currently airing result
         mock_client.get_currently_airing.return_value = [
             {
                 "title": "Popular Airing Anime",
-                "status": "airing",
-                "timeUntilNextEpisode": "2 days"
+                "id": 123,
+                "media_type": "TV",
+                "episodes": 12,
+                "episodes_aired": 1,
+                "image_url": "url",
+                "broadcast_day": "Wednesday",
+                "broadcast_time": "12:00",
+                "broadcast_timezone": "Asia/Tokyo",
+                "next_episode_date": "2023-01-08",
+                "next_episode_number": 2,
+                "hours_until_next_episode": 48,
+                "streams": [],
+                "stream_regions": {},
+                "premium_required": False,
+                "score": 8.0,
+                "popularity_rank": 100,
+                "genres": ["Action"],
+                "studios": ["Studio A"],
+                "mal_id": 123,
+                "anilist_id": 456,
+                "updated_at": "2023-03-25T12:00:00Z"
             }
         ]
         
-        mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="schedule_popular", title="Popular Airing Anime", data_quality_score=0.9
-        )
-        
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_client):
             
             # Step 1: Search for anime
             search_results = await search_anime_schedule(
                 query="popular anime", 
-                status="airing",
+                airing_statuses=["airing"],
                 ctx=mock_context
             )
             assert len(search_results) == 1
             assert search_results[0]["title"] == "Popular Airing Anime"
             
             # Step 2: Get weekly schedule
-            schedule_data = await get_schedule_data(ctx=mock_context)
-            assert len(schedule_data["current_week"]) == 1
-            assert schedule_data["current_week"][0]["title"] == "Popular Airing Anime"
+            schedule_data = await get_schedule_data(mal_id=123, ctx=mock_context)
+            assert schedule_data["title"] == "Popular Airing Anime"
             
             # Step 3: Get currently airing details
             airing_data = await get_currently_airing(ctx=mock_context)
             assert len(airing_data) == 1
             assert airing_data[0]["title"] == "Popular Airing Anime"
-            assert airing_data[0]["time_until_next_episode"] == "2 days"
+            assert airing_data[0]["broadcast_info"]["countdown_hours"] == 48
 
     @pytest.mark.asyncio
     async def test_schedule_tools_comprehensive_error_scenarios(self, mock_context):
         """Test comprehensive error scenarios for AnimeSchedule tools."""
         mock_client = AsyncMock()
-        mock_mapper = MagicMock()
         
         error_scenarios = [
             ("Service unavailable", "AnimeSchedule API temporarily unavailable"),
@@ -780,8 +1024,7 @@ class TestScheduleToolsIntegration:
             ("Network timeout", "Request to AnimeSchedule timed out")
         ]
         
-        with patch('src.anime_mcp.tools.schedule_tools.schedule_client', mock_client), \
-             patch('src.anime_mcp.tools.schedule_tools.schedule_mapper', mock_mapper):
+        with patch('src.anime_mcp.tools.schedule_tools.animeschedule_client', mock_client):
             
             for error_type, error_msg in error_scenarios:
                 # Test search errors
@@ -791,10 +1034,10 @@ class TestScheduleToolsIntegration:
                     await search_anime_schedule(query="test", ctx=mock_context)
                 
                 # Test schedule data errors
-                mock_client.get_schedule_data.side_effect = Exception(error_msg)
+                mock_client.get_anime_schedule_by_id.side_effect = Exception(error_msg)
                 
                 with pytest.raises(RuntimeError, match=f"Failed to get schedule data: {error_msg}"):
-                    await get_schedule_data(ctx=mock_context)
+                    await get_schedule_data(mal_id=123, ctx=mock_context)
                 
                 # Test currently airing errors
                 mock_client.get_currently_airing.side_effect = Exception(error_msg)

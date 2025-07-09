@@ -30,7 +30,6 @@ class AnimeServerError(Exception):
         self.error_code = error_code
         self.details = details or {}
 
-
     def to_dict(self) -> Dict[str, Any]:
         """Convert exception to dictionary for API responses."""
         return {
@@ -449,25 +448,19 @@ def handle_exception_safely(func):
 # Universal search integration exceptions
 class AnimeServiceException(AnimeServerError):
     """Base exception for anime service operations."""
-    pass
 
 
 class PlatformNotAvailableException(AnimeServiceException):
     """Exception raised when a requested platform is not available."""
-    pass
 
 
 class AllSourcesFailedException(AnimeServiceException):
     """Exception raised when all data sources fail."""
-    pass
 
 
 class QdrantException(AnimeServiceException):
     """Base exception for Qdrant-related errors."""
-    pass
 
 
 class AnimeHandlerException(AnimeServiceException):
     """Exception for anime handler operations."""
-    pass
-

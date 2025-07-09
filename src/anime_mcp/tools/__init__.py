@@ -29,10 +29,9 @@ from .tier4_comprehensive_tools import register_comprehensive_tools
 __all__ = [
     # Tiered tools (new architecture)
     "register_basic_tools",
-    "register_standard_tools", 
+    "register_standard_tools",
     "register_detailed_tools",
     "register_comprehensive_tools",
-    
     # Platform-specific tools (legacy) - temporarily disabled
     # "register_jikan_tools",
     # "register_mal_tools",
@@ -42,6 +41,7 @@ __all__ = [
     # "register_semantic_tools",
     # "register_enrichment_tools",
 ]
+
 
 # Tool registration functions for each tier
 def register_all_tiered_tools(mcp):
@@ -62,7 +62,6 @@ def register_all_platform_tools(mcp):
     # register_schedule_tools(mcp)
     # register_semantic_tools(mcp)
     # register_enrichment_tools(mcp)
-    pass
 
 
 # Tier information for documentation and selection
@@ -76,10 +75,10 @@ TIER_INFO = {
         "performance": "Fastest",
         "tools": [
             "search_anime_basic",
-            "get_anime_basic", 
+            "get_anime_basic",
             "find_similar_anime_basic",
-            "get_seasonal_anime_basic"
-        ]
+            "get_seasonal_anime_basic",
+        ],
     },
     "standard": {
         "name": "Standard (Tier 2)",
@@ -91,10 +90,10 @@ TIER_INFO = {
         "tools": [
             "search_anime_standard",
             "get_anime_standard",
-            "find_similar_anime_standard", 
+            "find_similar_anime_standard",
             "get_seasonal_anime_standard",
-            "search_by_genre_standard"
-        ]
+            "search_by_genre_standard",
+        ],
     },
     "detailed": {
         "name": "Detailed (Tier 3)",
@@ -108,8 +107,8 @@ TIER_INFO = {
             "get_anime_detailed",
             "find_similar_anime_detailed",
             "get_seasonal_anime_detailed",
-            "advanced_anime_analysis"
-        ]
+            "advanced_anime_analysis",
+        ],
     },
     "comprehensive": {
         "name": "Comprehensive (Tier 4)",
@@ -122,20 +121,23 @@ TIER_INFO = {
             "search_anime_comprehensive",
             "get_anime_comprehensive",
             "find_similar_anime_comprehensive",
-            "comprehensive_anime_analytics"
-        ]
-    }
+            "comprehensive_anime_analytics",
+        ],
+    },
 }
 
+
 # Tool selection helper
-def get_recommended_tier(query_complexity: str = "medium", response_time_priority: str = "balanced") -> str:
+def get_recommended_tier(
+    query_complexity: str = "medium", response_time_priority: str = "balanced"
+) -> str:
     """
     Get recommended tier based on query complexity and response time priority.
-    
+
     Args:
         query_complexity: "simple", "medium", "complex", "analytical"
         response_time_priority: "speed", "balanced", "completeness"
-        
+
     Returns:
         Recommended tier: "basic", "standard", "detailed", or "comprehensive"
     """
@@ -146,7 +148,7 @@ def get_recommended_tier(query_complexity: str = "medium", response_time_priorit
             return "standard"
         else:
             return "detailed"
-    
+
     elif query_complexity == "medium":
         if response_time_priority == "speed":
             return "standard"
@@ -154,16 +156,16 @@ def get_recommended_tier(query_complexity: str = "medium", response_time_priorit
             return "detailed"
         else:
             return "comprehensive"
-    
+
     elif query_complexity == "complex":
         if response_time_priority == "speed":
             return "detailed"
         else:
             return "comprehensive"
-    
+
     elif query_complexity == "analytical":
         return "comprehensive"
-    
+
     # Default to standard for unknown inputs
     return "standard"
 

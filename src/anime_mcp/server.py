@@ -8,11 +8,12 @@ Provides anime search tools to AI assistants via Model Context Protocol.
 import argparse
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Literal
+from typing import Any, Dict, List, Optional
 
 from fastmcp import FastMCP
-from mcp.server.fastmcp import Context
 from pydantic import BaseModel, Field
+
+from mcp.server.fastmcp import Context
 
 from ..config import get_settings
 from ..vector.qdrant_client import QdrantClient
@@ -30,11 +31,11 @@ mcp = FastMCP(
     ),
     dependencies=[
         "qdrant-client>=1.11.0",
-        "fastembed>=0.3.0", 
+        "fastembed>=0.3.0",
         "pillow>=10.0.0",
         "torch>=2.0.0",
-        "transformers>=4.30.0"
-    ]
+        "transformers>=4.30.0",
+    ],
 )
 
 # Global Qdrant client - initialized in main()
@@ -44,108 +45,88 @@ qdrant_client: Optional[QdrantClient] = None
 # Pydantic Schema Models for Input Validation
 class SearchAnimeInput(BaseModel):
     """Input schema for anime search with comprehensive validation."""
-    
+
     query: str = Field(
         description="Natural language search query (e.g., 'romantic comedy school anime')",
         min_length=1,
-        max_length=500
+        max_length=500,
     )
     limit: int = Field(
-        default=10,
-        ge=1,
-        le=50,
-        description="Maximum number of results to return"
+        default=10, ge=1, le=50, description="Maximum number of results to return"
     )
     genres: Optional[List[str]] = Field(
         None,
-        description="List of anime genres to filter by (e.g., ['Action', 'Comedy'])"
+        description="List of anime genres to filter by (e.g., ['Action', 'Comedy'])",
     )
     year_range: Optional[List[int]] = Field(
         None,
         description="Year range as [start_year, end_year] (e.g., [2020, 2023])",
         min_length=2,
-        max_length=2
+        max_length=2,
     )
     anime_types: Optional[List[str]] = Field(
-        None,
-        description="List of anime types (e.g., ['TV', 'Movie', 'OVA'])"
+        None, description="List of anime types (e.g., ['TV', 'Movie', 'OVA'])"
     )
     studios: Optional[List[str]] = Field(
-        None,
-        description="List of animation studios (e.g., ['Mappa', 'Studio Ghibli'])"
+        None, description="List of animation studios (e.g., ['Mappa', 'Studio Ghibli'])"
     )
     exclusions: Optional[List[str]] = Field(
-        None,
-        description="List of genres/themes to exclude (e.g., ['Horror', 'Ecchi'])"
+        None, description="List of genres/themes to exclude (e.g., ['Horror', 'Ecchi'])"
     )
     mood_keywords: Optional[List[str]] = Field(
         None,
-        description="List of mood descriptors (e.g., ['dark', 'serious', 'funny'])"
+        description="List of mood descriptors (e.g., ['dark', 'serious', 'funny'])",
     )
 
 
 class AnimeDetailsInput(BaseModel):
     """Input schema for getting anime details."""
-    
-    anime_id: str = Field(
-        description="Unique anime identifier",
-        min_length=1
-    )
+
+    anime_id: str = Field(description="Unique anime identifier", min_length=1)
 
 
 class SimilarAnimeInput(BaseModel):
     """Input schema for finding similar anime."""
-    
+
     anime_id: str = Field(
-        description="Reference anime ID to find similar anime for",
-        min_length=1
+        description="Reference anime ID to find similar anime for", min_length=1
     )
     limit: int = Field(
-        default=10,
-        ge=1,
-        le=20,
-        description="Maximum number of similar anime to return"
+        default=10, ge=1, le=20, description="Maximum number of similar anime to return"
     )
 
 
 class ImageSearchInput(BaseModel):
     """Input schema for image-based anime search."""
-    
+
     image_data: str = Field(
         description="Base64 encoded image data (supports JPG, PNG, WebP formats)",
-        min_length=1
+        min_length=1,
     )
     limit: int = Field(
-        default=10,
-        ge=1,
-        le=30,
-        description="Maximum number of results to return"
+        default=10, ge=1, le=30, description="Maximum number of results to return"
     )
 
 
 class MultimodalSearchInput(BaseModel):
     """Input schema for multimodal anime search."""
-    
+
     query: str = Field(
         description="Text search query (e.g., 'mecha robots fighting')",
         min_length=1,
-        max_length=500
+        max_length=500,
     )
     image_data: Optional[str] = Field(
-        None,
-        description="Optional base64 encoded image for visual similarity"
+        None, description="Optional base64 encoded image for visual similarity"
     )
     limit: int = Field(
-        default=10,
-        ge=1,
-        le=25,
-        description="Maximum number of results to return"
+        default=10, ge=1, le=25, description="Maximum number of results to return"
     )
     text_weight: float = Field(
         default=0.7,
         ge=0.0,
         le=1.0,
-        description="Weight for text similarity (0.0-1.0), default 0.7 means 70% text, 30% image"
+        description="Weight for text similarity (0.0-1.0), default 0.7 means 70% text, 30% image",
     )
 
 
@@ -220,7 +201,7 @@ async def search_anime_advanced(
     ctx: Optional[Context] = None,
 ) -> List[Dict[str, Any]]:
     """Search for anime using semantic search with comprehensive validation.
-    
+
     Modern MCP implementation using Pydantic schema for input validation.
     """
     if not qdrant_client:
@@ -229,7 +210,7 @@ async def search_anime_advanced(
     # Extract validated parameters
     query = search_params.query
     limit = search_params.limit
-    
+
     # CRITICAL DEBUG: Parameter validation for advanced search
     logger.error(f"🔍 MCP ADVANCED SEARCH DEBUG:")
     logger.error(f"  - search_params object: {search_params}")
@@ -237,12 +218,12 @@ async def search_anime_advanced(
     logger.error(f"  - Query type: {type(query)}")
     logger.error(f"  - Query length: {len(query) if query else 'None'}")
     logger.error(f"  - Limit: {limit!r}")
-    
+
     # Fix empty query issue for advanced search too
     if not query or not query.strip():
         logger.error("  - FIXING: Empty query in advanced search, using default")
         query = "anime"  # Default fallback query
-    
+
     # Build filters from validated parameters
     filters = _build_search_filters(
         genres=search_params.genres,
@@ -258,7 +239,7 @@ async def search_anime_advanced(
         await ctx.info(f"Starting anime search for: '{query}' (limit: {limit})")
         if filters:
             await ctx.debug(f"Applied search filters: {filters}")
-    
+
     logger.info(f"Advanced search request: '{query}' (limit: {limit})")
     if filters:
         logger.debug(f"Applied filters: {filters}")
@@ -266,17 +247,17 @@ async def search_anime_advanced(
     try:
         # Use enhanced search with filters if available
         results = await qdrant_client.search(query=query, limit=limit, filters=filters)
-        
+
         if ctx:
             await ctx.info(f"Search completed: found {len(results)} results")
-            
+
         logger.info(f"Found {len(results)} results for query: '{query}'")
         return results
     except Exception as e:
         error_msg = f"Search failed: {str(e)}"
         if ctx:
             await ctx.error(f"Anime search error: {error_msg}")
-            
+
         logger.error(f"Search failed: {e}")
         logger.error(f"Failed with query: {query!r}, limit: {limit!r}")
         raise RuntimeError(error_msg)
@@ -331,7 +312,7 @@ async def search_anime(
         await ctx.info(f"Starting anime search for: '{query}' (limit: {limit})")
         if filters:
             await ctx.debug(f"Applied search filters: {filters}")
-    
+
     # CRITICAL DEBUG: Parameter validation and debugging
     logger.error(f"🔍 MCP SEARCH DEBUG - Parameter Analysis:")
     logger.error(f"  - Raw query: {query!r}")
@@ -341,12 +322,12 @@ async def search_anime(
     logger.error(f"  - Limit: {limit!r}")
     logger.error(f"  - Filters: {filters!r}")
     logger.error(f"  - Process ID: {__import__('os').getpid()}")
-    
+
     # Fix empty query issue
     if not query or not query.strip():
         logger.error("  - FIXING: Empty query detected, using default")
         query = "anime"  # Default fallback query
-    
+
     logger.info(f"Search request: '{query}' (limit: {limit})")
     if filters:
         logger.debug(f"Applied filters: {filters}")
@@ -354,24 +335,26 @@ async def search_anime(
     try:
         # Use enhanced search with filters if available
         results = await qdrant_client.search(query=query, limit=limit, filters=filters)
-        
+
         if ctx:
             await ctx.info(f"Search completed: found {len(results)} results")
-            
+
         logger.info(f"Found {len(results)} results for query: '{query}'")
         return results
     except Exception as e:
         error_msg = f"Search failed: {str(e)}"
         if ctx:
             await ctx.error(f"Anime search error: {error_msg}")
-            
+
         logger.error(f"Search failed: {e}")
         logger.error(f"Failed with query: {query!r}, limit: {limit!r}")
         raise RuntimeError(error_msg)
 
 
 @mcp.tool()
-async def get_anime_details(anime_id: str, ctx: Optional[Context] = None) -> Dict[str, Any]:
+async def get_anime_details(
+    anime_id: str, ctx: Optional[Context] = None
+) -> Dict[str, Any]:
     """Get detailed information about a specific anime by ID.
 
     Args:
@@ -385,7 +368,7 @@ async def get_anime_details(anime_id: str, ctx: Optional[Context] = None) -> Dic
 
     if ctx:
         await ctx.info(f"Fetching details for anime ID: {anime_id}")
-        
+
     logger.info(f"MCP details request for anime: {anime_id}")
 
     try:
@@ -396,10 +379,10 @@ async def get_anime_details(anime_id: str, ctx: Optional[Context] = None) -> Dic
                 await ctx.warning(error_msg)
             raise ValueError(error_msg)
 
-        title = anime.get('title', 'Unknown')
+        title = anime.get("title", "Unknown")
         if ctx:
             await ctx.info(f"Successfully retrieved details for: {title}")
-            
+
         logger.info(f"Retrieved details for anime: {title}")
         return anime
     except Exception as e:
@@ -411,7 +394,9 @@ async def get_anime_details(anime_id: str, ctx: Optional[Context] = None) -> Dic
 
 
 @mcp.tool()
-async def find_similar_anime(anime_id: str, limit: int = 10, ctx: Optional[Context] = None) -> List[Dict[str, Any]]:
+async def find_similar_anime(
+    anime_id: str, limit: int = 10, ctx: Optional[Context] = None
+) -> List[Dict[str, Any]]:
     """Find anime similar to a given anime by ID.
 
     Args:
@@ -602,43 +587,43 @@ async def search_multimodal_anime(
 # MCP Prompts for Anime Discovery
 @mcp.prompt()
 def anime_discovery_prompt(
-    genre: str = "any",
-    mood: str = "any", 
-    content_type: str = "any"
+    genre: str = "any", mood: str = "any", content_type: str = "any"
 ) -> str:
     """Create an optimized prompt for anime discovery based on preferences.
-    
+
     Args:
         genre: Preferred anime genre (e.g., "action", "romance", "slice of life")
         mood: Desired mood (e.g., "lighthearted", "dark", "emotional", "exciting")
         content_type: Type of content (e.g., "TV series", "movie", "OVA")
-    
+
     Returns:
         Optimized search prompt for anime discovery
     """
     prompt_parts = ["Find anime recommendations"]
-    
+
     if genre != "any":
         prompt_parts.append(f"in the {genre} genre")
-    
+
     if mood != "any":
         prompt_parts.append(f"with a {mood} mood/tone")
-        
+
     if content_type != "any":
         prompt_parts.append(f"specifically {content_type}")
-    
-    prompt_parts.append("that would be engaging and well-suited for the specified preferences")
-    
+
+    prompt_parts.append(
+        "that would be engaging and well-suited for the specified preferences"
+    )
+
     return " ".join(prompt_parts) + "."
 
 
 @mcp.prompt()
 def anime_comparison_prompt(anime_title: str) -> str:
     """Create a prompt for finding anime similar to a specific title.
-    
+
     Args:
         anime_title: Name of the reference anime
-        
+
     Returns:
         Prompt for finding similar anime
     """
@@ -652,11 +637,11 @@ def anime_comparison_prompt(anime_title: str) -> str:
 @mcp.prompt()
 def anime_analysis_prompt(anime_title: str, analysis_type: str = "overview") -> str:
     """Create a prompt for analyzing anime characteristics.
-    
+
     Args:
         anime_title: Name of the anime to analyze
         analysis_type: Type of analysis ("overview", "themes", "characters", "production")
-        
+
     Returns:
         Prompt for anime analysis
     """
@@ -664,23 +649,22 @@ def anime_analysis_prompt(anime_title: str, analysis_type: str = "overview") -> 
         "overview": f"Provide a comprehensive overview of '{anime_title}' including plot, characters, and overall appeal.",
         "themes": f"Analyze the major themes and deeper meanings in '{anime_title}'.",
         "characters": f"Analyze the main characters in '{anime_title}' and their development throughout the series.",
-        "production": f"Discuss the production quality, animation style, and technical aspects of '{anime_title}'."
+        "production": f"Discuss the production quality, animation style, and technical aspects of '{anime_title}'.",
     }
-    
+
     return analysis_prompts.get(
-        analysis_type, 
-        f"Analyze '{anime_title}' focusing on {analysis_type}"
+        analysis_type, f"Analyze '{anime_title}' focusing on {analysis_type}"
     )
 
 
 @mcp.prompt()
 def seasonal_anime_prompt(year: int, season: str) -> str:
     """Create a prompt for discovering seasonal anime.
-    
+
     Args:
         year: Year to search (e.g., 2024)
         season: Season to search ("spring", "summer", "fall", "winter")
-        
+
     Returns:
         Prompt for seasonal anime discovery
     """
@@ -755,22 +739,27 @@ def initialize_qdrant_client():
         logger.info("MCP tools Qdrant client initialized")
 
 
-# Import and mount ALL platform-specific tool servers  
+# Import and mount ALL platform-specific tool servers
 # Using correct FastMCP mounting syntax (server first, then optional prefix)
 from .tools import (
-    jikan_tools, mal_tools, anilist_tools, schedule_tools, 
-    kitsu_tools, semantic_tools, enrichment_tools
+    anilist_tools,
+    enrichment_tools,
+    jikan_tools,
+    kitsu_tools,
+    mal_tools,
+    schedule_tools,
+    semantic_tools,
 )
 
 # Mount ALL platform tool servers with the main MCP server
 # This enables intelligent routing to external platforms
-mcp.mount(jikan_tools.mcp)           # Jikan/MAL tools (3 tools)
-mcp.mount(mal_tools.mcp)             # Official MAL tools (3 tools)  
-mcp.mount(anilist_tools.mcp)         # AniList GraphQL tools (2 tools)
-mcp.mount(schedule_tools.mcp)        # AnimeSchedule tools (3 tools)
-mcp.mount(kitsu_tools.mcp)           # Kitsu JSON:API tools (3 tools) 
-mcp.mount(semantic_tools.mcp)        # Semantic search tools (3 tools)
-mcp.mount(enrichment_tools.mcp)      # Cross-platform enrichment (5 tools)
+mcp.mount(jikan_tools.mcp)  # Jikan/MAL tools (3 tools)
+mcp.mount(mal_tools.mcp)  # Official MAL tools (3 tools)
+mcp.mount(anilist_tools.mcp)  # AniList GraphQL tools (2 tools)
+mcp.mount(schedule_tools.mcp)  # AnimeSchedule tools (3 tools)
+mcp.mount(kitsu_tools.mcp)  # Kitsu JSON:API tools (3 tools)
+mcp.mount(semantic_tools.mcp)  # Semantic search tools (3 tools)
+mcp.mount(enrichment_tools.mcp)  # Cross-platform enrichment (5 tools)
 
 
 def register_tiered_tools():
@@ -778,37 +767,39 @@ def register_tiered_tools():
     try:
         from .tools import (
             register_basic_tools,
-            register_standard_tools,
-            register_detailed_tools,
             register_comprehensive_tools,
+            register_detailed_tools,
+            register_standard_tools,
         )
-        
+
         # Register each tier
         tool_count = 0
-        
+
         # Tier 1: Basic tools (8 fields, 80% coverage)
         register_basic_tools(mcp)
         tool_count += 4  # search, get, similar, seasonal
         logger.info("✅ Registered Tier 1 (Basic) tools")
-        
-        # Tier 2: Standard tools (15 fields, 95% coverage)  
+
+        # Tier 2: Standard tools (15 fields, 95% coverage)
         register_standard_tools(mcp)
         tool_count += 5  # search, get, similar, seasonal, genre_search
         logger.info("✅ Registered Tier 2 (Standard) tools")
-        
+
         # Tier 3: Detailed tools (25 fields, 99% coverage)
         register_detailed_tools(mcp)
         tool_count += 5  # search, get, similar, seasonal, analysis
         logger.info("✅ Registered Tier 3 (Detailed) tools")
-        
+
         # Tier 4: Comprehensive tools (40+ fields, 100% coverage)
         register_comprehensive_tools(mcp)
         tool_count += 4  # search, get, similar, analytics
         logger.info("✅ Registered Tier 4 (Comprehensive) tools")
-        
-        logger.info(f"🎯 Registered {tool_count} tiered tools across 4 complexity levels")
+
+        logger.info(
+            f"🎯 Registered {tool_count} tiered tools across 4 complexity levels"
+        )
         return tool_count
-        
+
     except ImportError as e:
         logger.warning(f"Could not import tiered tools: {e}")
         return 0
@@ -829,7 +820,7 @@ async def initialize_mcp_server():
 
     # Initialize Qdrant client
     qdrant_client = QdrantClient(settings=settings)
-    
+
     # DEBUG: Log client details after initialization
     logger.error(f"  - QdrantClient created: {qdrant_client}")
     logger.error(f"  - Client ID: {id(qdrant_client)}")
@@ -846,23 +837,31 @@ async def initialize_mcp_server():
         test_results = await qdrant_client.search(query="test", limit=1)
         logger.error(f"  - Test search results: {len(test_results)} items")
         if test_results:
-            logger.error(f"  - Sample result: {test_results[0].get('title', 'No title')}")
-        
+            logger.error(
+                f"  - Sample result: {test_results[0].get('title', 'No title')}"
+            )
+
         # CRITICAL TEST: Compare embeddings between processes
         test_embedding = qdrant_client._create_embedding("science fiction")
-        logger.error(f"  - 'science fiction' embedding (first 5 dims): {test_embedding[:5] if test_embedding else None}")
-        
+        logger.error(
+            f"  - 'science fiction' embedding (first 5 dims): {test_embedding[:5] if test_embedding else None}"
+        )
+
         # Test the exact failing query
         scifi_results = await qdrant_client.search(query="science fiction", limit=1)
-        logger.error(f"  - 'science fiction' search results: {len(scifi_results)} items")
-        
+        logger.error(
+            f"  - 'science fiction' search results: {len(scifi_results)} items"
+        )
+
     except Exception as test_error:
         logger.error(f"  - Test search failed: {test_error}")
 
     # Register tiered tools
     tiered_count = register_tiered_tools()
-    logger.info(f"🏗️  Registered {tiered_count} tiered tools with progressive complexity")
-    
+    logger.info(
+        f"🏗️  Registered {tiered_count} tiered tools with progressive complexity"
+    )
+
     logger.info("Qdrant connection verified - MCP server ready")
 
 

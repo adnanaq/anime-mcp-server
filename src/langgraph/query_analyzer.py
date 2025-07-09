@@ -6,16 +6,15 @@ using LLM-powered intent classification and parameter extraction.
 """
 
 import re
-from typing import Dict, List, Any, Optional, Literal
-from datetime import datetime, timedelta
-import asyncio
+from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.pydantic_v1 import BaseModel, Field
 
-from .workflow_state import QueryIntent
-from ..services.llm_service import LLMService
 from ..config import get_settings
+from ..services.llm_service import LLMService
+from .workflow_state import QueryIntent
 
 settings = get_settings()
 
@@ -352,7 +351,7 @@ Analyze this query and provide structured intent classification and routing reco
                 messages=messages, output_schema=QueryAnalysisOutput, model_type="fast"
             )
             return result
-        except Exception as e:
+        except Exception:
             # Fallback to pattern-based analysis
             return self._fallback_analysis(query, pattern_hints)
 

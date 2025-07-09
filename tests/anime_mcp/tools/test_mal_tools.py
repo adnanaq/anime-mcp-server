@@ -124,20 +124,16 @@ class TestMALTools:
             "nsfw": "white"
         }
         
-        # Mock to_universal_anime
-        mapper.to_universal_anime.return_value = UniversalAnime(
+        # Mock to_basic_anime_result
+        mapper.to_basic_anime_result.return_value = BasicAnimeResult(
             id="mal_16498",
             title="Attack on Titan",
-            type_format="TV",
-            episodes=25,
+            type=AnimeType.TV,
             score=8.54,
             year=2013,
-            status="FINISHED",
             genres=["Action", "Drama"],
-            studios=["Wit Studio"],
-            description="Humanity fights against titans",
-            image_url="https://example.com/aot.jpg",
-            data_quality_score=0.95
+            synopsis="Humanity fights against titans",
+            image_url="https://example.com/aot.jpg"
         )
         
         return mapper
@@ -175,7 +171,7 @@ class TestMALTools:
             # Verify client calls
             mock_mal_client.search_anime.assert_called_once()
             mock_mal_mapper.to_mal_search_params.assert_called_once()
-            # No mapper.to_universal_anime call - returns raw results
+            # No mapper.to_basic_anime_result call - returns raw results
             
             # Verify context calls
             mock_context.info.assert_called()
@@ -655,8 +651,8 @@ class TestMALToolsEdgeCases:
         """Test parameter validation for seasonal MAL tools."""
         mock_client = AsyncMock()
         mock_mapper = MagicMock()
-        mock_mapper.to_universal_anime.return_value = UniversalAnime(
-            id="test", title="Test", type_format="TV", status="FINISHED", data_quality_score=0.8
+        mock_mapper.to_basic_anime_result.return_value = BasicAnimeResult(
+            id="test", title="Test", type=AnimeType.TV, score=8.0
         )
         mock_client.get_seasonal_anime.return_value = []
         
@@ -678,9 +674,9 @@ class TestMALToolsEdgeCases:
         mock_mapper = MagicMock()
         
         # Mock different quality scores
-        mock_mapper.to_universal_anime.side_effect = [
-            UniversalAnime(id="high_quality", title="High Quality", type_format="TV", status="FINISHED", data_quality_score=0.95),
-            UniversalAnime(id="low_quality", title="Low Quality", type_format="TV", status="FINISHED", data_quality_score=0.65)
+        mock_mapper.to_basic_anime_result.side_effect = [
+            BasicAnimeResult(id="high_quality", title="High Quality", type=AnimeType.TV, score=9.5),
+            BasicAnimeResult(id="low_quality", title="Low Quality", type=AnimeType.TV, score=6.5)
         ]
         
         mock_client.search_anime.return_value = [

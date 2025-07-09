@@ -9,12 +9,12 @@ Implements dynamic workflow routing that adapts execution paths based on:
 """
 
 import logging
-from typing import Dict, Any, List, Optional, Callable, Awaitable
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
-from .intelligent_router import RoutingDecision, QueryIntent
 from ..config import get_settings
+from .intelligent_router import RoutingDecision
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

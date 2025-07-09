@@ -345,7 +345,9 @@ class ServiceRateLimiter:
 
         return True
 
-    def record_response(self, status_code: int, response_time: float, rate_limit_info=None):
+    def record_response(
+        self, status_code: int, response_time: float, rate_limit_info=None
+    ):
         """Record API response for adaptive rate limiting.
 
         Args:
@@ -370,11 +372,17 @@ class ServiceRateLimiter:
     def _handle_429_response(self, rate_limit_info=None):
         """Handle 429 Too Many Requests response with optional platform-specific data."""
         self.last_429_time = time.time()
-        
+
         # Use platform-specific retry-after if available
-        if rate_limit_info and hasattr(rate_limit_info, 'retry_after') and rate_limit_info.retry_after:
+        if (
+            rate_limit_info
+            and hasattr(rate_limit_info, "retry_after")
+            and rate_limit_info.retry_after
+        ):
             # Platform provided specific retry time
-            self.current_backoff = min(rate_limit_info.retry_after, self.config.max_backoff)
+            self.current_backoff = min(
+                rate_limit_info.retry_after, self.config.max_backoff
+            )
         else:
             # Standard exponential backoff
             self.current_backoff = min(
@@ -389,23 +397,32 @@ class ServiceRateLimiter:
         # Temporarily reduce rate limit with platform-aware adaptation
         if self.config.strategy == RateLimitStrategy.ADAPTIVE:
             # Check if we have platform-specific rate limit data
-            if (rate_limit_info and hasattr(rate_limit_info, 'remaining') and 
-                rate_limit_info.remaining is not None and rate_limit_info.limit):
+            if (
+                rate_limit_info
+                and hasattr(rate_limit_info, "remaining")
+                and rate_limit_info.remaining is not None
+                and rate_limit_info.limit
+            ):
                 # Adapt based on actual remaining capacity
-                usage_ratio = (rate_limit_info.limit - rate_limit_info.remaining) / rate_limit_info.limit
-                adaptation_factor = max(0.3, 1.0 - usage_ratio)  # More aggressive when heavily used
+                usage_ratio = (
+                    rate_limit_info.limit - rate_limit_info.remaining
+                ) / rate_limit_info.limit
+                adaptation_factor = max(
+                    0.3, 1.0 - usage_ratio
+                )  # More aggressive when heavily used
                 new_rate = self.primary_bucket.refill_rate * adaptation_factor
             else:
                 # Standard adaptation
                 new_rate = (
-                    self.primary_bucket.refill_rate * self.config.adaptive_decrease_factor
+                    self.primary_bucket.refill_rate
+                    * self.config.adaptive_decrease_factor
                 )
-            
+
             self.primary_bucket.refill_rate = max(new_rate, 0.1)  # Minimum 0.1 req/sec
 
         # Enhanced logging with platform data
-        if rate_limit_info and hasattr(rate_limit_info, 'custom_data'):
-            platform = rate_limit_info.custom_data.get('platform', self.service_name)
+        if rate_limit_info and hasattr(rate_limit_info, "custom_data"):
+            platform = rate_limit_info.custom_data.get("platform", self.service_name)
             logger.warning(
                 f"Rate limited by {platform}, backing off for {self.current_backoff}s. "
                 f"Remaining: {getattr(rate_limit_info, 'remaining', 'unknown')}, "
@@ -427,20 +444,26 @@ class ServiceRateLimiter:
             self.config.strategy == RateLimitStrategy.ADAPTIVE
             and time.time() - self.last_429_time > 300
         ):  # 5 minutes since last 429
-            
+
             # Check if we have platform rate limit data for smarter adaptation
-            if (rate_limit_info and hasattr(rate_limit_info, 'remaining') and 
-                rate_limit_info.remaining is not None and rate_limit_info.limit):
+            if (
+                rate_limit_info
+                and hasattr(rate_limit_info, "remaining")
+                and rate_limit_info.remaining is not None
+                and rate_limit_info.limit
+            ):
                 # Adapt based on current capacity utilization
-                utilization = (rate_limit_info.limit - rate_limit_info.remaining) / rate_limit_info.limit
-                
+                utilization = (
+                    rate_limit_info.limit - rate_limit_info.remaining
+                ) / rate_limit_info.limit
+
                 if utilization < 0.5:  # Low utilization, can increase more aggressively
                     increase_factor = self.config.adaptive_increase_factor * 1.2
                 elif utilization < 0.8:  # Moderate utilization, standard increase
                     increase_factor = self.config.adaptive_increase_factor
                 else:  # High utilization, conservative increase
                     increase_factor = self.config.adaptive_increase_factor * 0.8
-                
+
                 new_rate = min(
                     self.primary_bucket.refill_rate * increase_factor,
                     self.config.requests_per_second,
@@ -448,10 +471,11 @@ class ServiceRateLimiter:
             else:
                 # Standard adaptation without platform data
                 new_rate = min(
-                    self.primary_bucket.refill_rate * self.config.adaptive_increase_factor,
+                    self.primary_bucket.refill_rate
+                    * self.config.adaptive_increase_factor,
                     self.config.requests_per_second,
                 )
-            
+
             self.primary_bucket.refill_rate = new_rate
 
     def get_stats(self) -> Dict[str, Any]:
@@ -631,25 +655,25 @@ class RateLimitManager:
 
     def register_platform_adapter(self, service_name: str, adapter):
         """Register a platform-specific adapter for enhanced rate limiting.
-        
+
         Args:
             service_name: Name of the service
             adapter: Platform-specific rate limit adapter
         """
         self._platform_adapters[service_name] = adapter
-    
+
     def extract_platform_rate_info(self, service_name: str, response):
         """Extract platform-specific rate limit information.
-        
+
         Args:
             service_name: Name of the service
             response: HTTP response object
-            
+
         Returns:
             Platform-specific rate limit info or None
         """
         adapter = self._platform_adapters.get(service_name)
-        if adapter and hasattr(adapter, 'extract_rate_limit_info'):
+        if adapter and hasattr(adapter, "extract_rate_limit_info"):
             return adapter.extract_rate_limit_info(response)
         return None
 
@@ -668,8 +692,10 @@ class RateLimitManager:
             # Extract platform-specific rate limit info if adapter is available
             rate_limit_info = None
             if response:
-                rate_limit_info = self.extract_platform_rate_info(service_name, response)
-            
+                rate_limit_info = self.extract_platform_rate_info(
+                    service_name, response
+                )
+
             self.service_limiters[service_name].record_response(
                 status_code, response_time, rate_limit_info
             )

@@ -16,17 +16,17 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 # Import tiered response models
 from ..models.structured_responses import (
-    BasicAnimeResult,
-    StandardAnimeResult,
-    DetailedAnimeResult,
-    ComprehensiveAnimeResult,
-    BasicSearchResponse,
-    StandardSearchResponse,
-    DetailedSearchResponse,
-    ComprehensiveSearchResponse,
-    AnimeType,
+    AnimeRating,
     AnimeStatus,
-    AnimeRating
+    AnimeType,
+    BasicAnimeResult,
+    BasicSearchResponse,
+    ComprehensiveAnimeResult,
+    ComprehensiveSearchResponse,
+    DetailedAnimeResult,
+    DetailedSearchResponse,
+    StandardAnimeResult,
+    StandardSearchResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,76 +34,127 @@ logger = logging.getLogger(__name__)
 
 # Tiered Input Schemas
 
+
 class BasicSearchInput(BaseModel):
     """Input schema for basic anime search (Tier 1)."""
+
     query: str = Field(description="Search query for anime titles")
     limit: int = Field(default=20, ge=1, le=50, description="Maximum number of results")
-    year: Optional[int] = Field(None, ge=1900, le=2030, description="Release year filter")
+    year: Optional[int] = Field(
+        None, ge=1900, le=2030, description="Release year filter"
+    )
     type: Optional[AnimeType] = Field(None, description="Anime type filter")
     status: Optional[AnimeStatus] = Field(None, description="Anime status filter")
 
 
 class StandardSearchInput(BaseModel):
     """Input schema for standard anime search (Tier 2)."""
+
     query: str = Field(description="Search query for anime titles")
     limit: int = Field(default=20, ge=1, le=50, description="Maximum number of results")
-    year: Optional[int] = Field(None, ge=1900, le=2030, description="Release year filter")
+    year: Optional[int] = Field(
+        None, ge=1900, le=2030, description="Release year filter"
+    )
     type: Optional[AnimeType] = Field(None, description="Anime type filter")
     status: Optional[AnimeStatus] = Field(None, description="Anime status filter")
-    genres: Optional[List[str]] = Field(None, description="List of anime genres to filter by")
+    genres: Optional[List[str]] = Field(
+        None, description="List of anime genres to filter by"
+    )
     studios: Optional[List[str]] = Field(None, description="List of animation studios")
     rating: Optional[AnimeRating] = Field(None, description="Content rating filter")
-    min_score: Optional[float] = Field(None, ge=0, le=10, description="Minimum score filter")
-    max_score: Optional[float] = Field(None, ge=0, le=10, description="Maximum score filter")
+    min_score: Optional[float] = Field(
+        None, ge=0, le=10, description="Minimum score filter"
+    )
+    max_score: Optional[float] = Field(
+        None, ge=0, le=10, description="Maximum score filter"
+    )
 
 
 class DetailedSearchInput(BaseModel):
     """Input schema for detailed anime search (Tier 3)."""
+
     query: str = Field(description="Search query for anime titles")
     limit: int = Field(default=20, ge=1, le=50, description="Maximum number of results")
-    year: Optional[int] = Field(None, ge=1900, le=2030, description="Release year filter")
+    year: Optional[int] = Field(
+        None, ge=1900, le=2030, description="Release year filter"
+    )
     type: Optional[AnimeType] = Field(None, description="Anime type filter")
     status: Optional[AnimeStatus] = Field(None, description="Anime status filter")
-    genres: Optional[List[str]] = Field(None, description="List of anime genres to filter by")
+    genres: Optional[List[str]] = Field(
+        None, description="List of anime genres to filter by"
+    )
     studios: Optional[List[str]] = Field(None, description="List of animation studios")
     rating: Optional[AnimeRating] = Field(None, description="Content rating filter")
-    min_score: Optional[float] = Field(None, ge=0, le=10, description="Minimum score filter")
-    max_score: Optional[float] = Field(None, ge=0, le=10, description="Maximum score filter")
-    year_range: Optional[List[int]] = Field(None, description="Year range as [start_year, end_year]")
-    exclusions: Optional[List[str]] = Field(None, description="List of genres/themes to exclude")
-    mood_keywords: Optional[List[str]] = Field(None, description="List of mood descriptors")
-    cross_platform: bool = Field(default=True, description="Include cross-platform data")
+    min_score: Optional[float] = Field(
+        None, ge=0, le=10, description="Minimum score filter"
+    )
+    max_score: Optional[float] = Field(
+        None, ge=0, le=10, description="Maximum score filter"
+    )
+    year_range: Optional[List[int]] = Field(
+        None, description="Year range as [start_year, end_year]"
+    )
+    exclusions: Optional[List[str]] = Field(
+        None, description="List of genres/themes to exclude"
+    )
+    mood_keywords: Optional[List[str]] = Field(
+        None, description="List of mood descriptors"
+    )
+    cross_platform: bool = Field(
+        default=True, description="Include cross-platform data"
+    )
 
 
 class ComprehensiveSearchInput(BaseModel):
     """Input schema for comprehensive anime search (Tier 4)."""
+
     query: str = Field(description="Search query for anime titles")
     limit: int = Field(default=20, ge=1, le=50, description="Maximum number of results")
-    year: Optional[int] = Field(None, ge=1900, le=2030, description="Release year filter")
+    year: Optional[int] = Field(
+        None, ge=1900, le=2030, description="Release year filter"
+    )
     type: Optional[AnimeType] = Field(None, description="Anime type filter")
     status: Optional[AnimeStatus] = Field(None, description="Anime status filter")
-    genres: Optional[List[str]] = Field(None, description="List of anime genres to filter by")
+    genres: Optional[List[str]] = Field(
+        None, description="List of anime genres to filter by"
+    )
     studios: Optional[List[str]] = Field(None, description="List of animation studios")
     rating: Optional[AnimeRating] = Field(None, description="Content rating filter")
-    min_score: Optional[float] = Field(None, ge=0, le=10, description="Minimum score filter")
-    max_score: Optional[float] = Field(None, ge=0, le=10, description="Maximum score filter")
-    year_range: Optional[List[int]] = Field(None, description="Year range as [start_year, end_year]")
-    exclusions: Optional[List[str]] = Field(None, description="List of genres/themes to exclude")
-    mood_keywords: Optional[List[str]] = Field(None, description="List of mood descriptors")
-    cross_platform: bool = Field(default=True, description="Include cross-platform data")
-    include_analytics: bool = Field(default=True, description="Include analytics and predictions")
-    include_market_data: bool = Field(default=True, description="Include market analysis")
-
-
+    min_score: Optional[float] = Field(
+        None, ge=0, le=10, description="Minimum score filter"
+    )
+    max_score: Optional[float] = Field(
+        None, ge=0, le=10, description="Maximum score filter"
+    )
+    year_range: Optional[List[int]] = Field(
+        None, description="Year range as [start_year, end_year]"
+    )
+    exclusions: Optional[List[str]] = Field(
+        None, description="List of genres/themes to exclude"
+    )
+    mood_keywords: Optional[List[str]] = Field(
+        None, description="List of mood descriptors"
+    )
+    cross_platform: bool = Field(
+        default=True, description="Include cross-platform data"
+    )
+    include_analytics: bool = Field(
+        default=True, description="Include analytics and predictions"
+    )
+    include_market_data: bool = Field(
+        default=True, description="Include market analysis"
+    )
 
 
 class AnimeDetailsInput(BaseModel):
     """Input schema for anime details tools."""
+
     anime_id: str = Field(description="Unique anime identifier")
 
 
 class SimilarAnimeInput(BaseModel):
     """Input schema for similarity search tools."""
+
     anime_id: str = Field(description="Reference anime ID")
     limit: int = Field(default=10, description="Maximum number of results (1-20)")
 
@@ -134,29 +185,31 @@ def create_anime_langchain_tools(mcp_tools: Dict[str, Callable[..., Any]]) -> Li
         List of LangChain tools ready for use with ToolNode
     """
     tools = []
-    
+
     # Create tiered search tools
     _create_tiered_search_tools(mcp_tools, tools)
-    
+
     # Create tiered details tools
     _create_tiered_details_tools(mcp_tools, tools)
-    
+
     # Create tiered similarity tools
     _create_tiered_similarity_tools(mcp_tools, tools)
-    
+
     # Create tiered seasonal tools
     _create_tiered_seasonal_tools(mcp_tools, tools)
-    
-    
+
     logger.info(f"Created {len(tools)} LangChain tools from MCP functions")
     return tools
 
 
-def _create_tiered_search_tools(mcp_tools: Dict[str, Callable[..., Any]], tools: List[Any]):
+def _create_tiered_search_tools(
+    mcp_tools: Dict[str, Callable[..., Any]], tools: List[Any]
+):
     """Create tiered search tools."""
-    
+
     # Basic search tool
     if "search_anime_basic" in mcp_tools:
+
         @tool("search_anime_basic", args_schema=BasicSearchInput)
         async def search_anime_basic(
             query: str,
@@ -170,11 +223,12 @@ def _create_tiered_search_tools(mcp_tools: Dict[str, Callable[..., Any]], tools:
                 query=query, limit=limit, year=year, type=type, status=status
             )
             return await _execute_tool(mcp_tools["search_anime_basic"], validated_input)
-        
+
         tools.append(search_anime_basic)
-    
+
     # Standard search tool
     if "search_anime_standard" in mcp_tools:
+
         @tool("search_anime_standard", args_schema=StandardSearchInput)
         async def search_anime_standard(
             query: str,
@@ -190,16 +244,26 @@ def _create_tiered_search_tools(mcp_tools: Dict[str, Callable[..., Any]], tools:
         ) -> StandardSearchResponse:
             """Standard anime search with 15 fields and advanced filtering."""
             validated_input = StandardSearchInput(
-                query=query, limit=limit, year=year, type=type, status=status,
-                genres=genres, studios=studios, rating=rating, 
-                min_score=min_score, max_score=max_score
+                query=query,
+                limit=limit,
+                year=year,
+                type=type,
+                status=status,
+                genres=genres,
+                studios=studios,
+                rating=rating,
+                min_score=min_score,
+                max_score=max_score,
             )
-            return await _execute_tool(mcp_tools["search_anime_standard"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["search_anime_standard"], validated_input
+            )
+
         tools.append(search_anime_standard)
-    
+
     # Detailed search tool
     if "search_anime_detailed" in mcp_tools:
+
         @tool("search_anime_detailed", args_schema=DetailedSearchInput)
         async def search_anime_detailed(
             query: str,
@@ -219,18 +283,30 @@ def _create_tiered_search_tools(mcp_tools: Dict[str, Callable[..., Any]], tools:
         ) -> DetailedSearchResponse:
             """Detailed anime search with 25 fields and cross-platform data."""
             validated_input = DetailedSearchInput(
-                query=query, limit=limit, year=year, type=type, status=status,
-                genres=genres, studios=studios, rating=rating, 
-                min_score=min_score, max_score=max_score, year_range=year_range,
-                exclusions=exclusions, mood_keywords=mood_keywords, 
-                cross_platform=cross_platform
+                query=query,
+                limit=limit,
+                year=year,
+                type=type,
+                status=status,
+                genres=genres,
+                studios=studios,
+                rating=rating,
+                min_score=min_score,
+                max_score=max_score,
+                year_range=year_range,
+                exclusions=exclusions,
+                mood_keywords=mood_keywords,
+                cross_platform=cross_platform,
             )
-            return await _execute_tool(mcp_tools["search_anime_detailed"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["search_anime_detailed"], validated_input
+            )
+
         tools.append(search_anime_detailed)
-    
+
     # Comprehensive search tool
     if "search_anime_comprehensive" in mcp_tools:
+
         @tool("search_anime_comprehensive", args_schema=ComprehensiveSearchInput)
         async def search_anime_comprehensive(
             query: str,
@@ -252,134 +328,181 @@ def _create_tiered_search_tools(mcp_tools: Dict[str, Callable[..., Any]], tools:
         ) -> ComprehensiveSearchResponse:
             """Comprehensive anime search with 40+ fields and complete analytics."""
             validated_input = ComprehensiveSearchInput(
-                query=query, limit=limit, year=year, type=type, status=status,
-                genres=genres, studios=studios, rating=rating, 
-                min_score=min_score, max_score=max_score, year_range=year_range,
-                exclusions=exclusions, mood_keywords=mood_keywords, 
-                cross_platform=cross_platform, include_analytics=include_analytics,
-                include_market_data=include_market_data
+                query=query,
+                limit=limit,
+                year=year,
+                type=type,
+                status=status,
+                genres=genres,
+                studios=studios,
+                rating=rating,
+                min_score=min_score,
+                max_score=max_score,
+                year_range=year_range,
+                exclusions=exclusions,
+                mood_keywords=mood_keywords,
+                cross_platform=cross_platform,
+                include_analytics=include_analytics,
+                include_market_data=include_market_data,
             )
-            return await _execute_tool(mcp_tools["search_anime_comprehensive"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["search_anime_comprehensive"], validated_input
+            )
+
         tools.append(search_anime_comprehensive)
 
 
-def _create_tiered_details_tools(mcp_tools: Dict[str, Callable[..., Any]], tools: List[Any]):
+def _create_tiered_details_tools(
+    mcp_tools: Dict[str, Callable[..., Any]], tools: List[Any]
+):
     """Create tiered anime details tools."""
-    
+
     # Basic details tool
     if "get_anime_basic" in mcp_tools:
+
         @tool("get_anime_basic", args_schema=AnimeDetailsInput)
         async def get_anime_basic(anime_id: str) -> BasicAnimeResult:
             """Get basic anime details with 8 essential fields."""
             validated_input = AnimeDetailsInput(anime_id=anime_id)
             return await _execute_tool(mcp_tools["get_anime_basic"], validated_input)
-        
+
         tools.append(get_anime_basic)
-    
+
     # Standard details tool
     if "get_anime_standard" in mcp_tools:
+
         @tool("get_anime_standard", args_schema=AnimeDetailsInput)
         async def get_anime_standard(anime_id: str) -> StandardAnimeResult:
             """Get standard anime details with 15 fields."""
             validated_input = AnimeDetailsInput(anime_id=anime_id)
             return await _execute_tool(mcp_tools["get_anime_standard"], validated_input)
-        
+
         tools.append(get_anime_standard)
-    
+
     # Detailed details tool
     if "get_anime_detailed" in mcp_tools:
+
         @tool("get_anime_detailed", args_schema=AnimeDetailsInput)
         async def get_anime_detailed(anime_id: str) -> DetailedAnimeResult:
             """Get detailed anime details with 25 fields."""
             validated_input = AnimeDetailsInput(anime_id=anime_id)
             return await _execute_tool(mcp_tools["get_anime_detailed"], validated_input)
-        
+
         tools.append(get_anime_detailed)
-    
+
     # Comprehensive details tool
     if "get_anime_comprehensive" in mcp_tools:
+
         @tool("get_anime_comprehensive", args_schema=AnimeDetailsInput)
         async def get_anime_comprehensive(anime_id: str) -> ComprehensiveAnimeResult:
             """Get comprehensive anime details with 40+ fields."""
             validated_input = AnimeDetailsInput(anime_id=anime_id)
-            return await _execute_tool(mcp_tools["get_anime_comprehensive"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["get_anime_comprehensive"], validated_input
+            )
+
         tools.append(get_anime_comprehensive)
 
 
-def _create_tiered_similarity_tools(mcp_tools: Dict[str, Callable[..., Any]], tools: List[Any]):
+def _create_tiered_similarity_tools(
+    mcp_tools: Dict[str, Callable[..., Any]], tools: List[Any]
+):
     """Create tiered similarity tools."""
-    
+
     # Basic similarity tool
     if "find_similar_anime_basic" in mcp_tools:
+
         @tool("find_similar_anime_basic", args_schema=SimilarAnimeInput)
-        async def find_similar_anime_basic(anime_id: str, limit: int = 10) -> BasicSearchResponse:
+        async def find_similar_anime_basic(
+            anime_id: str, limit: int = 10
+        ) -> BasicSearchResponse:
             """Find similar anime with basic information."""
             validated_input = SimilarAnimeInput(anime_id=anime_id, limit=limit)
-            return await _execute_tool(mcp_tools["find_similar_anime_basic"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["find_similar_anime_basic"], validated_input
+            )
+
         tools.append(find_similar_anime_basic)
-    
+
     # Standard similarity tool
     if "find_similar_anime_standard" in mcp_tools:
+
         @tool("find_similar_anime_standard", args_schema=SimilarAnimeInput)
-        async def find_similar_anime_standard(anime_id: str, limit: int = 10) -> StandardSearchResponse:
+        async def find_similar_anime_standard(
+            anime_id: str, limit: int = 10
+        ) -> StandardSearchResponse:
             """Find similar anime with standard information."""
             validated_input = SimilarAnimeInput(anime_id=anime_id, limit=limit)
-            return await _execute_tool(mcp_tools["find_similar_anime_standard"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["find_similar_anime_standard"], validated_input
+            )
+
         tools.append(find_similar_anime_standard)
-    
+
     # Detailed similarity tool
     if "find_similar_anime_detailed" in mcp_tools:
+
         @tool("find_similar_anime_detailed", args_schema=SimilarAnimeInput)
-        async def find_similar_anime_detailed(anime_id: str, limit: int = 10) -> DetailedSearchResponse:
+        async def find_similar_anime_detailed(
+            anime_id: str, limit: int = 10
+        ) -> DetailedSearchResponse:
             """Find similar anime with detailed information."""
             validated_input = SimilarAnimeInput(anime_id=anime_id, limit=limit)
-            return await _execute_tool(mcp_tools["find_similar_anime_detailed"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["find_similar_anime_detailed"], validated_input
+            )
+
         tools.append(find_similar_anime_detailed)
-    
+
     # Comprehensive similarity tool
     if "find_similar_anime_comprehensive" in mcp_tools:
+
         @tool("find_similar_anime_comprehensive", args_schema=SimilarAnimeInput)
-        async def find_similar_anime_comprehensive(anime_id: str, limit: int = 10) -> ComprehensiveSearchResponse:
+        async def find_similar_anime_comprehensive(
+            anime_id: str, limit: int = 10
+        ) -> ComprehensiveSearchResponse:
             """Find similar anime with comprehensive information."""
             validated_input = SimilarAnimeInput(anime_id=anime_id, limit=limit)
-            return await _execute_tool(mcp_tools["find_similar_anime_comprehensive"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["find_similar_anime_comprehensive"], validated_input
+            )
+
         tools.append(find_similar_anime_comprehensive)
 
 
-def _create_tiered_seasonal_tools(mcp_tools: Dict[str, Callable[..., Any]], tools: List[Any]):
+def _create_tiered_seasonal_tools(
+    mcp_tools: Dict[str, Callable[..., Any]], tools: List[Any]
+):
     """Create tiered seasonal anime tools."""
-    
+
     # Basic seasonal tool
     if "get_seasonal_anime_basic" in mcp_tools:
+
         @tool("get_seasonal_anime_basic")
         async def get_seasonal_anime_basic() -> BasicSearchResponse:
             """Get currently airing anime with basic information."""
             return await _execute_tool(mcp_tools["get_seasonal_anime_basic"], {})
-        
+
         tools.append(get_seasonal_anime_basic)
-    
+
     # Standard seasonal tool
     if "get_seasonal_anime_standard" in mcp_tools:
+
         @tool("get_seasonal_anime_standard")
         async def get_seasonal_anime_standard() -> StandardSearchResponse:
             """Get currently airing anime with standard information."""
             return await _execute_tool(mcp_tools["get_seasonal_anime_standard"], {})
-        
+
         tools.append(get_seasonal_anime_standard)
-    
+
     # Detailed seasonal tool
     if "get_seasonal_anime_detailed" in mcp_tools:
+
         @tool("get_seasonal_anime_detailed")
         async def get_seasonal_anime_detailed() -> DetailedSearchResponse:
             """Get currently airing anime with detailed information."""
             return await _execute_tool(mcp_tools["get_seasonal_anime_detailed"], {})
-        
+
         tools.append(get_seasonal_anime_detailed)
 
 
@@ -388,6 +511,7 @@ def _create_legacy_tools(mcp_tools: Dict[str, Callable[..., Any]], tools: List[A
 
     # Legacy search anime tool
     if "search_anime" in mcp_tools:
+
         @tool("search_anime", args_schema=SearchAnimeInput)
         async def search_anime(
             query: str,
@@ -401,65 +525,84 @@ def _create_legacy_tools(mcp_tools: Dict[str, Callable[..., Any]], tools: List[A
         ) -> Any:
             """Search for anime using semantic search with natural language queries (legacy)."""
             validated_input = SearchAnimeInput(
-                query=query, limit=limit, genres=genres, year_range=year_range,
-                anime_types=anime_types, studios=studios, exclusions=exclusions,
+                query=query,
+                limit=limit,
+                genres=genres,
+                year_range=year_range,
+                anime_types=anime_types,
+                studios=studios,
+                exclusions=exclusions,
                 mood_keywords=mood_keywords,
             )
             return await _execute_tool(mcp_tools["search_anime"], validated_input)
-        
+
         tools.append(search_anime)
-    
+
     # Legacy get anime details tool
     if "get_anime_details" in mcp_tools:
+
         @tool("get_anime_details", args_schema=GetAnimeDetailsInput)
         async def get_anime_details(anime_id: str) -> Any:
             """Get detailed information about a specific anime by its ID (legacy)."""
             validated_input = GetAnimeDetailsInput(anime_id=anime_id)
             return await _execute_tool(mcp_tools["get_anime_details"], validated_input)
-        
+
         tools.append(get_anime_details)
-    
+
     # Legacy find similar anime tool
     if "find_similar_anime" in mcp_tools:
+
         @tool("find_similar_anime", args_schema=FindSimilarAnimeInput)
         async def find_similar_anime(anime_id: str, limit: int = 10) -> Any:
             """Find anime similar to a given anime based on content and metadata (legacy)."""
             validated_input = FindSimilarAnimeInput(anime_id=anime_id, limit=limit)
             return await _execute_tool(mcp_tools["find_similar_anime"], validated_input)
-        
+
         tools.append(find_similar_anime)
-    
+
     # Legacy get anime stats tool
     if "get_anime_stats" in mcp_tools:
+
         @tool("get_anime_stats")
         async def get_anime_stats() -> Any:
             """Get database statistics and health information (legacy)."""
             return await _execute_tool(mcp_tools["get_anime_stats"], {})
-        
+
         tools.append(get_anime_stats)
-    
+
     # Legacy search anime by image tool
     if "search_anime_by_image" in mcp_tools:
+
         @tool("search_anime_by_image", args_schema=SearchAnimeByImageInput)
         async def search_anime_by_image(image_data: str, limit: int = 10) -> Any:
             """Search for anime using image similarity with CLIP embeddings (legacy)."""
-            validated_input = SearchAnimeByImageInput(image_data=image_data, limit=limit)
-            return await _execute_tool(mcp_tools["search_anime_by_image"], validated_input)
-        
+            validated_input = SearchAnimeByImageInput(
+                image_data=image_data, limit=limit
+            )
+            return await _execute_tool(
+                mcp_tools["search_anime_by_image"], validated_input
+            )
+
         tools.append(search_anime_by_image)
-    
+
     # Legacy find visually similar anime tool
     if "find_visually_similar_anime" in mcp_tools:
+
         @tool("find_visually_similar_anime", args_schema=FindVisuallySimilarAnimeInput)
         async def find_visually_similar_anime(anime_id: str, limit: int = 10) -> Any:
             """Find anime with visually similar poster images (legacy)."""
-            validated_input = FindVisuallySimilarAnimeInput(anime_id=anime_id, limit=limit)
-            return await _execute_tool(mcp_tools["find_visually_similar_anime"], validated_input)
-        
+            validated_input = FindVisuallySimilarAnimeInput(
+                anime_id=anime_id, limit=limit
+            )
+            return await _execute_tool(
+                mcp_tools["find_visually_similar_anime"], validated_input
+            )
+
         tools.append(find_visually_similar_anime)
-    
+
     # Legacy search multimodal anime tool
     if "search_multimodal_anime" in mcp_tools:
+
         @tool("search_multimodal_anime", args_schema=SearchMultimodalAnimeInput)
         async def search_multimodal_anime(
             query: str,
@@ -471,12 +614,16 @@ def _create_legacy_tools(mcp_tools: Dict[str, Callable[..., Any]], tools: List[A
             validated_input = SearchMultimodalAnimeInput(
                 query=query, image_data=image_data, text_weight=text_weight, limit=limit
             )
-            return await _execute_tool(mcp_tools["search_multimodal_anime"], validated_input)
-        
+            return await _execute_tool(
+                mcp_tools["search_multimodal_anime"], validated_input
+            )
+
         tools.append(search_multimodal_anime)
 
 
-async def _execute_tool(tool_func: Callable[..., Any], validated_input: BaseModel) -> Any:
+async def _execute_tool(
+    tool_func: Callable[..., Any], validated_input: BaseModel
+) -> Any:
     """Execute a tool function with proper error handling."""
     try:
         validated_params = validated_input.model_dump()

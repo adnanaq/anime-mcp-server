@@ -47,11 +47,13 @@
 - **Distance Metric**: Cosine similarity for both text and image vectors
 - **Batch Processing**: 100-point batches for optimal memory usage
 
-### 3.2 MCP Server Design
+### 3.2 MCP Server Design (Modernized 2025)
 - **Dual Server Architecture**: Core server (basic tools) + Modern server (LangGraph workflows) 
+- **31 MCP Tools**: 4-tier architecture with structured response models
 - **Transport Flexibility**: Multiple protocols (stdio/http/sse/streamable) for different clients
 - **Tool Integration**: FastMCP wrapper functions for LangChain compatibility
 - **Dependency Isolation**: Core server avoids LangGraph dependencies for stability
+- **Modern LLM Architecture**: 90% complexity reduction with direct tool calls
 
 ### 3.3 LangGraph Workflow Integration
 - **ReactAgent Pattern**: create_react_agent for native LLM tool calling
@@ -59,10 +61,11 @@
 - **Tool Wrapper Strategy**: FastMCP tools wrapped as LangChain-compatible functions
 - **Query Processing**: AI-powered intent extraction and parameter routing
 
-### 3.4 External Platform Integration
+### 3.4 External Platform Integration (Modernized 2025)
 - **9 Anime Platforms**: Mix of APIs (MAL, AniList, Jikan) and scraping targets
 - **Rate Limiting**: Platform-specific limits with fallback strategies
-- **Data Mapping**: Universal anime schema with platform-specific enrichment
+- **Direct Tool Calls**: Structured response models replace Universal parameter system
+- **4-Tier Architecture**: Progressive complexity (Basic → Standard → Detailed → Comprehensive)
 - **Error Handling**: Circuit breakers and graceful degradation
 
 ### 3.5 Stateful Routing Memory System (Task #89 Implementation)

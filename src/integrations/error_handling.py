@@ -4,7 +4,6 @@ Provides three-layer error context preservation, circuit breaker patterns,
 and graceful degradation strategies for robust API integrations.
 """
 
-import asyncio
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -1498,5 +1497,3 @@ class CorrelationContext:
         await self.logger.log_with_correlation(
             self.correlation_id, level, message, combined_context
         )
-
-

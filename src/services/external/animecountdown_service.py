@@ -4,7 +4,9 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from ...integrations.error_handling import ErrorContext
-from ...integrations.scrapers.extractors.animecountdown_scraper import AnimeCountdownScraper
+from ...integrations.scrapers.extractors.animecountdown_scraper import (
+    AnimeCountdownScraper,
+)
 from .base_service import BaseExternalService
 
 logger = logging.getLogger(__name__)

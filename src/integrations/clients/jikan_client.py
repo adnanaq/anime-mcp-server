@@ -6,9 +6,9 @@ from typing import Any, Dict, List, Optional
 
 from src.exceptions import APIError
 
-from .base_client import BaseClient
 from ..rate_limiting import JikanRateLimitAdapter
 from ..rate_limiting.core import rate_limit_manager
+from .base_client import BaseClient
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class JikanClient(BaseClient):
             execution_tracer,
         )
         self.base_url = "https://api.jikan.moe/v4"
-        
+
         # Register platform-specific rate limiting adapter
         self._rate_limit_adapter = JikanRateLimitAdapter()
         rate_limit_manager.register_platform_adapter("jikan", self._rate_limit_adapter)
@@ -108,6 +108,7 @@ class JikanClient(BaseClient):
         # Auto-generate correlation ID if not provided
         if not correlation_id:
             import uuid
+
             correlation_id = f"jikan-anime-{uuid.uuid4().hex[:12]}"
 
         # Use correlation chaining if parent_correlation_id provided
@@ -137,7 +138,6 @@ class JikanClient(BaseClient):
                     "correlation_id": correlation_id,
                 },
             )
-
 
         try:
             # Check cache first if enabled
@@ -175,10 +175,14 @@ class JikanClient(BaseClient):
                 # Cache the result
                 if use_cache and self.cache_manager:
                     try:
-                        await self.cache_manager.set(cache_key, response["data"], ttl=3600)
+                        await self.cache_manager.set(
+                            cache_key, response["data"], ttl=3600
+                        )
                     except Exception as e:
-                        logger.warning(f"Cache set error for anime {anime_id}: {str(e)}")
-                
+                        logger.warning(
+                            f"Cache set error for anime {anime_id}: {str(e)}"
+                        )
+
                 return response["data"]
 
         except Exception as e:
@@ -201,6 +205,7 @@ class JikanClient(BaseClient):
             # Try graceful degradation if available
             if correlation_id and hasattr(self, "handle_enhanced_graceful_degradation"):
                 try:
+
                     async def primary_func():
                         raise e  # Re-raise the original error
 
@@ -227,13 +232,14 @@ class JikanClient(BaseClient):
         try:
             response = await self._make_request(endpoint)
             if response and "data" in response:
-                logger.info(f"Retrieved {len(response['data'])} seasonal anime for {year} {season}")
+                logger.info(
+                    f"Retrieved {len(response['data'])} seasonal anime for {year} {season}"
+                )
                 return response["data"]
         except Exception as e:
             logger.error(f"Jikan seasonal anime failed for {year} {season}: {e}")
 
         return []
-
 
     async def search_anime(
         self,
@@ -295,6 +301,7 @@ class JikanClient(BaseClient):
         # Auto-generate correlation ID if not provided
         if not correlation_id:
             import uuid
+
             correlation_id = f"jikan-search-{uuid.uuid4().hex[:12]}"
 
         # Start execution tracing if available
@@ -329,13 +336,13 @@ class JikanClient(BaseClient):
                 params["limit"] = limit
             if page is not None:
                 params["page"] = page
-                
+
             # Jikan-specific parameters
             if genres:
                 params["genres"] = ",".join(map(str, genres))
             if status:
                 params["status"] = status
-            
+
             # Enhanced Jikan parameters
             if type_:
                 params["type"] = type_
@@ -380,7 +387,9 @@ class JikanClient(BaseClient):
                             result={"result_count": len(result), "query": q},
                         )
 
-                    logger.info(f"Jikan search returned {len(result)} results for query: {q}")
+                    logger.info(
+                        f"Jikan search returned {len(result)} results for query: {q}"
+                    )
                     return result
             except APIError as e:
                 # Enhanced error handling for search
@@ -405,7 +414,6 @@ class JikanClient(BaseClient):
                     trace_id=trace_id, status="error", error=e
                 )
             raise
-
 
     async def create_jikan_error_context(
         self,
@@ -462,34 +470,36 @@ class JikanClient(BaseClient):
         return error_context
 
     # PLATFORM-SPECIFIC RATE LIMITING OVERRIDES
-    
+
     async def handle_rate_limit_response(self, response):
         """Handle rate limiting for Jikan API."""
         rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
         strategy = self._rate_limit_adapter.get_strategy()
         await strategy.handle_rate_limit_response(rate_info)
-    
+
     async def monitor_rate_limits(self, response):
         """Monitor rate limits for Jikan API."""
         rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
-        
+
         # Jikan-specific monitoring (no headers available)
         if rate_info.degraded:
-            logger.warning("Jikan API rate limiting detected - no precise timing available")
-    
+            logger.warning(
+                "Jikan API rate limiting detected - no precise timing available"
+            )
+
     async def calculate_backoff_delay(self, response, attempt: int = 0):
         """Calculate backoff delay for Jikan API."""
         if not response:
             # Generic calculation when no response available
             import random
-            base_delay = 2 ** attempt
+
+            base_delay = 2**attempt
             jitter = random.uniform(0.1, 0.3) * base_delay
             return base_delay + jitter
-        
+
         rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
         strategy = self._rate_limit_adapter.get_strategy()
         return await strategy.calculate_backoff_delay(rate_info, attempt)
-
 
     async def get_anime_statistics(
         self,
@@ -673,7 +683,9 @@ class JikanClient(BaseClient):
 
         return []
 
-    async def get_genres(self, filter_name: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def get_genres(
+        self, filter_name: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Get available anime genres."""
         endpoint = "/genres/anime"
         params = {}

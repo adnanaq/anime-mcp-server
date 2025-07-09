@@ -23,14 +23,13 @@ def get_qdrant_client() -> Optional[QdrantClient]:
 @router.post("/check-updates")
 async def check_for_updates(request: Request) -> Dict[str, Any]:
     """Check if anime database has updates available"""
-    correlation_id = getattr(request.state, 'correlation_id', None)
-    
+    correlation_id = getattr(request.state, "correlation_id", None)
+
     try:
         logger.info(
-            "Starting database update check",
-            extra={"correlation_id": correlation_id}
+            "Starting database update check", extra={"correlation_id": correlation_id}
         )
-        
+
         qdrant_client = get_qdrant_client()
         update_service = UpdateService(qdrant_client=qdrant_client)
         has_updates = await update_service.check_for_updates()
@@ -43,7 +42,7 @@ async def check_for_updates(request: Request) -> Dict[str, Any]:
                 "correlation_id": correlation_id,
                 "has_updates": has_updates,
                 "entry_count": metadata.get("entry_count"),
-            }
+            },
         )
 
         return {
@@ -60,7 +59,7 @@ async def check_for_updates(request: Request) -> Dict[str, Any]:
             extra={
                 "correlation_id": correlation_id,
                 "error_type": type(e).__name__,
-            }
+            },
         )
         raise HTTPException(status_code=500, detail=f"Update check failed: {str(e)}")
 

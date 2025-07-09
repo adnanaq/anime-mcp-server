@@ -1,15 +1,14 @@
 """Official MAL API v2 client implementation."""
 
-import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlencode
 
 from src.exceptions import APIError
 
-from .base_client import BaseClient
 from ..rate_limiting import MALRateLimitAdapter
 from ..rate_limiting.core import rate_limit_manager
+from .base_client import BaseClient
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +52,10 @@ class MALClient(BaseClient):
         self.client_secret = client_secret
         self.access_token = access_token
         self.refresh_token = refresh_token
-        
+
         if not client_id:
             raise ValueError("MAL API requires client_id")
-        
+
         # Register platform-specific rate limiting adapter
         self._rate_limit_adapter = MALRateLimitAdapter()
         rate_limit_manager.register_platform_adapter("mal", self._rate_limit_adapter)
@@ -112,6 +111,7 @@ class MALClient(BaseClient):
         # Auto-generate correlation ID if not provided
         if not correlation_id:
             import uuid
+
             correlation_id = f"mal-anime-{uuid.uuid4().hex[:12]}"
 
         # Use correlation chaining if parent_correlation_id provided
@@ -163,7 +163,7 @@ class MALClient(BaseClient):
 
             endpoint = f"/anime/{anime_id}"
             params = {}
-            
+
             if fields:
                 params["fields"] = fields
 
@@ -183,8 +183,10 @@ class MALClient(BaseClient):
                 try:
                     await self.cache_manager.set(cache_key, response, ttl=3600)
                 except Exception as e:
-                    logger.warning(f"Cache set error for MAL anime {anime_id}: {str(e)}")
-            
+                    logger.warning(
+                        f"Cache set error for MAL anime {anime_id}: {str(e)}"
+                    )
+
             return response
 
         except Exception as e:
@@ -207,6 +209,7 @@ class MALClient(BaseClient):
             # Try graceful degradation if available
             if correlation_id and hasattr(self, "handle_enhanced_graceful_degradation"):
                 try:
+
                     async def primary_func():
                         raise e  # Re-raise the original error
 
@@ -258,6 +261,7 @@ class MALClient(BaseClient):
         # Auto-generate correlation ID if not provided
         if not correlation_id:
             import uuid
+
             correlation_id = f"mal-search-{uuid.uuid4().hex[:12]}"
 
         # Start execution tracing if available
@@ -294,7 +298,7 @@ class MALClient(BaseClient):
 
             try:
                 response = await self._make_request(endpoint, params=params)
-                
+
                 # MAL API returns {"data": [...], "paging": {...}}
                 if response and "data" in response:
                     result = response["data"]
@@ -306,12 +310,16 @@ class MALClient(BaseClient):
                             result={"result_count": len(result), "query": q},
                         )
 
-                    logger.info(f"MAL search returned {len(result)} results for query: {q}")
+                    logger.info(
+                        f"MAL search returned {len(result)} results for query: {q}"
+                    )
                     return result
                 else:
-                    logger.warning(f"MAL search returned unexpected response format: {response}")
+                    logger.warning(
+                        f"MAL search returned unexpected response format: {response}"
+                    )
                     return []
-                    
+
             except APIError as e:
                 # Enhanced error handling for search
                 if correlation_id:
@@ -453,7 +461,9 @@ class MALClient(BaseClient):
         try:
             response = await self._make_request(endpoint, params=params)
             if response and "data" in response:
-                logger.info(f"Retrieved {len(response['data'])} seasonal anime for {year} {season}")
+                logger.info(
+                    f"Retrieved {len(response['data'])} seasonal anime for {year} {season}"
+                )
                 return response["data"]
         except Exception as e:
             logger.error(f"MAL seasonal anime failed for {year} {season}: {e}")
@@ -476,11 +486,14 @@ class MALClient(BaseClient):
             APIError: If token refresh fails
         """
         if not self.client_id or not self.client_secret or not self.refresh_token:
-            raise ValueError("OAuth2 credentials (client_id, client_secret, refresh_token) required for token refresh")
+            raise ValueError(
+                "OAuth2 credentials (client_id, client_secret, refresh_token) required for token refresh"
+            )
 
         # Auto-generate correlation ID if not provided
         if not correlation_id:
             import uuid
+
             correlation_id = f"mal-refresh-{uuid.uuid4().hex[:12]}"
 
         logger.info("Starting MAL OAuth2 token refresh")
@@ -565,16 +578,22 @@ class MALClient(BaseClient):
         # Determine severity and user message based on error
         if "401" in str(error) or "invalid_token" in str(error):
             severity = ErrorSeverity.ERROR
-            user_message = "MAL authentication failed. Please refresh your access token."
+            user_message = (
+                "MAL authentication failed. Please refresh your access token."
+            )
         elif "403" in str(error) or "forbidden" in str(error):
             severity = ErrorSeverity.WARNING
             user_message = "MAL API access denied. Please check your permissions or try again later."
         elif "429" in str(error) or "rate limit" in str(error):
             severity = ErrorSeverity.WARNING
-            user_message = "MAL API rate limit exceeded. Please wait before making more requests."
+            user_message = (
+                "MAL API rate limit exceeded. Please wait before making more requests."
+            )
         elif "500" in str(error) or "server" in str(error):
             severity = ErrorSeverity.ERROR
-            user_message = "MAL API server error. The service may be temporarily unavailable."
+            user_message = (
+                "MAL API server error. The service may be temporarily unavailable."
+            )
         else:
             severity = ErrorSeverity.ERROR
             user_message = "MAL API request failed. Please try again."
@@ -598,32 +617,33 @@ class MALClient(BaseClient):
         return error_context
 
     # PLATFORM-SPECIFIC RATE LIMITING OVERRIDES
-    
+
     async def handle_rate_limit_response(self, response):
         """Handle rate limiting for MAL API."""
         rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
         strategy = self._rate_limit_adapter.get_strategy()
         await strategy.handle_rate_limit_response(rate_info)
-    
+
     async def monitor_rate_limits(self, response):
         """Monitor rate limits for MAL API."""
         rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
-        
+
         # MAL-specific monitoring (status code based since no headers)
         if response.status == 403:
             logger.warning("MAL API DoS protection activated - requests may be blocked")
         elif rate_info.degraded:
             logger.warning(f"MAL API rate limiting detected: Status {response.status}")
-    
+
     async def calculate_backoff_delay(self, response, attempt: int = 0):
         """Calculate backoff delay for MAL API."""
         if not response:
             # Generic calculation when no response available
             import random
-            base_delay = 2 ** attempt
+
+            base_delay = 2**attempt
             jitter = random.uniform(0.1, 0.3) * base_delay
             return base_delay + jitter
-        
+
         rate_info = self._rate_limit_adapter.extract_rate_limit_info(response)
         strategy = self._rate_limit_adapter.get_strategy()
         return await strategy.calculate_backoff_delay(rate_info, attempt)

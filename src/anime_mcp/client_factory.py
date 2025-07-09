@@ -17,7 +17,7 @@ def create_mcp_client(
     host: str = "localhost",
     port: int = 8001,
     url: Optional[str] = None,
-    server_module: str = "src.mcp.modern_server"
+    server_module: str = "src.mcp.modern_server",
 ) -> ModernMCPClient:
     """Create modern MCP client with support for all protocols.
 
@@ -49,7 +49,7 @@ def create_mcp_client(
         server_args=["run_core_server.py"],  # Use core server script entry point
         host=host,
         port=port,
-        url=url
+        url=url,
     )
 
 
@@ -60,27 +60,21 @@ def create_stdio_client() -> ModernMCPClient:
 
 
 def create_http_client(
-    host: str = "localhost", 
-    port: int = 8001,
-    url: Optional[str] = None
+    host: str = "localhost", port: int = 8001, url: Optional[str] = None
 ) -> ModernMCPClient:
     """Create MCP client with HTTP transport."""
     return create_mcp_client(protocol="http", host=host, port=port, url=url)
 
 
 def create_sse_client(
-    host: str = "localhost", 
-    port: int = 8001,
-    url: Optional[str] = None
+    host: str = "localhost", port: int = 8001, url: Optional[str] = None
 ) -> ModernMCPClient:
     """Create MCP client with Server-Sent Events transport."""
     return create_mcp_client(protocol="sse", host=host, port=port, url=url)
 
 
 def create_streamable_client(
-    host: str = "localhost", 
-    port: int = 8001,
-    url: Optional[str] = None
+    host: str = "localhost", port: int = 8001, url: Optional[str] = None
 ) -> ModernMCPClient:
     """Create MCP client with streamable HTTP transport."""
     return create_mcp_client(protocol="streamable", host=host, port=port, url=url)

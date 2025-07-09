@@ -5,24 +5,23 @@ Implements multi-agent anime discovery system with intelligent routing,
 memory persistence, and cross-platform data enrichment.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-import asyncio
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.store.memory import InMemoryStore
 from langgraph_swarm import create_swarm
 
-from .workflow_state import AnimeSwarmState, WorkflowResult
-from .query_analyzer import QueryAnalyzer
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore
+
+from ..config import get_settings
+from .agents.schedule_agent import ScheduleAgent
+from .agents.search_agent import SearchAgent
 from .conditional_router import ConditionalRouter, ExecutionContext
 from .error_handling import SwarmErrorHandler
+from .query_analyzer import QueryAnalyzer
 from .swarm_error_integration import SwarmErrorIntegration
-from .agents.search_agent import SearchAgent
-from .agents.schedule_agent import ScheduleAgent
-from ..config import get_settings
+from .workflow_state import AnimeSwarmState, WorkflowResult
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -75,15 +74,13 @@ class AnimeDiscoverySwarm:
 
         # Create swarm with intelligent routing
         workflow = create_swarm(
-            agents=[search_agent, schedule_agent], 
-            default_active_agent="SearchAgent"
+            agents=[search_agent, schedule_agent], default_active_agent="SearchAgent"
         )
 
         # Compile with memory components
         app = workflow.compile(checkpointer=self.checkpointer, store=self.store)
 
         return app
-    
 
     async def discover_anime(
         self,
@@ -134,7 +131,7 @@ class AnimeDiscoverySwarm:
 
         # Step 6: Execute workflow with conditional routing
         config = self._build_workflow_config(session_id)
-        
+
         # Create workflow state for swarm
         workflow_state = initial_state
 

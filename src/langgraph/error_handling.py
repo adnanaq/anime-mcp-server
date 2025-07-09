@@ -6,16 +6,14 @@ LangGraph swarm-specific patterns for agent handoffs and tool chain resilience.
 """
 
 import logging
-from typing import Dict, Any, List, Optional, Callable, Union
 from dataclasses import dataclass
 from enum import Enum
-import asyncio
+from typing import Any, Callable, Dict, List, Optional
 
 from ..integrations.error_handling import (
-    ErrorContext as BaseErrorContext,
     CircuitBreaker,
 )
-from ..integrations.error_handling import ErrorSeverity
+from ..integrations.error_handling import ErrorContext as BaseErrorContext
 
 logger = logging.getLogger(__name__)
 

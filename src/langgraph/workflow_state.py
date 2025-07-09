@@ -5,9 +5,11 @@ Defines shared state structures for multi-agent anime discovery workflows
 using the modern LangGraph swarm architecture with memory persistence.
 """
 
-from typing import Annotated, List, Dict, Any, Optional, Literal
-from typing_extensions import TypedDict
+from typing import Annotated, Any, Dict, List, Literal, Optional
+
 from langchain_core.messages import AnyMessage
+from typing_extensions import TypedDict
+
 from langgraph.graph import add_messages
 
 

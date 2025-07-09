@@ -124,7 +124,7 @@ class AnimePlanetScraper(BaseScraper):
                 break
 
         data["synopsis"] = synopsis
-        
+
         # Fallback: extract synopsis from JSON-LD if not found in HTML
         if not synopsis:
             json_ld = self._extract_json_ld(soup)
@@ -358,7 +358,7 @@ class AnimePlanetScraper(BaseScraper):
         # Extract status with date logic
         status_data = self._extract_enhanced_status(soup)
         enhanced_data.update(status_data)
-        
+
         # Extract related anime from same franchise
         related_data = self._extract_related_anime(soup)
         enhanced_data.update(related_data)
@@ -369,7 +369,7 @@ class AnimePlanetScraper(BaseScraper):
         """Extract enhanced data from JSON-LD structured data."""
         data = {}
         json_ld = self._extract_json_ld(soup)
-        
+
         if not json_ld:
             return data
 
@@ -415,18 +415,18 @@ class AnimePlanetScraper(BaseScraper):
         # Extract episodes from JSON-LD
         if "numberOfEpisodes" in json_ld:
             data["episodes"] = int(json_ld["numberOfEpisodes"])
-        
+
         # Extract genres from JSON-LD
         if "genre" in json_ld and isinstance(json_ld["genre"], list):
             data["genres"] = json_ld["genre"]
-        
+
         # Extract Anime-Planet specialized properties
         if "url" in json_ld:
             data["canonical_url"] = json_ld["url"]
-        
+
         if "@type" in json_ld:
             data["schema_type"] = json_ld["@type"]
-        
+
         # Store full JSON-LD as structured metadata (already available as json_ld field)
         # Note: structured_metadata is essentially the same as json_ld field we already extract
         data["structured_metadata"] = json_ld
@@ -441,7 +441,11 @@ class AnimePlanetScraper(BaseScraper):
         if "director" in json_ld:
             directors = json_ld["director"]
             if isinstance(directors, list):
-                director_names = [d.get("name", "") for d in directors if isinstance(d, dict) and "name" in d]
+                director_names = [
+                    d.get("name", "")
+                    for d in directors
+                    if isinstance(d, dict) and "name" in d
+                ]
                 if director_names:
                     staff_data["directors"] = director_names
 
@@ -449,7 +453,11 @@ class AnimePlanetScraper(BaseScraper):
         if "musicBy" in json_ld:
             composers = json_ld["musicBy"]
             if isinstance(composers, list):
-                composer_names = [c.get("name", "") for c in composers if isinstance(c, dict) and "name" in c]
+                composer_names = [
+                    c.get("name", "")
+                    for c in composers
+                    if isinstance(c, dict) and "name" in c
+                ]
                 if composer_names:
                     staff_data["music_composers"] = composer_names
 
@@ -559,7 +567,7 @@ class AnimePlanetScraper(BaseScraper):
                     re.search(r"#(\d+)", rank_text),
                     re.search(r"(\d+)", rank_text),
                 ]
-                
+
                 for match in rank_matches:
                     if match:
                         try:
@@ -611,12 +619,16 @@ class AnimePlanetScraper(BaseScraper):
 
                 # Determine title type based on content or class
                 elem_class = " ".join(elem.get("class", []))
-                elem_text_lower = title_text.lower()
+                title_text.lower()
 
                 if "english" in elem_class or self._looks_english(title_text):
                     if not english_title:
                         english_title = title_text
-                elif "native" in elem_class or "japanese" in elem_class or self._looks_japanese(title_text):
+                elif (
+                    "native" in elem_class
+                    or "japanese" in elem_class
+                    or self._looks_japanese(title_text)
+                ):
                     if not native_title:
                         native_title = title_text
                 else:
@@ -630,10 +642,12 @@ class AnimePlanetScraper(BaseScraper):
             if elem:
                 title_text = self._clean_text(elem.text)
                 elem_class = " ".join(elem.get("class", []))
-                
+
                 if "english" in elem_class and not english_title:
                     english_title = title_text
-                elif ("native" in elem_class or "japanese" in elem_class) and not native_title:
+                elif (
+                    "native" in elem_class or "japanese" in elem_class
+                ) and not native_title:
                     native_title = title_text
 
         # Set extracted titles
@@ -659,10 +673,13 @@ class AnimePlanetScraper(BaseScraper):
         if not text:
             return False
         # Check for Japanese Unicode ranges
-        japanese_chars = sum(1 for c in text if 
-                           0x3040 <= ord(c) <= 0x309F or  # Hiragana
-                           0x30A0 <= ord(c) <= 0x30FF or  # Katakana
-                           0x4E00 <= ord(c) <= 0x9FAF)    # Kanji
+        japanese_chars = sum(
+            1
+            for c in text
+            if 0x3040 <= ord(c) <= 0x309F  # Hiragana
+            or 0x30A0 <= ord(c) <= 0x30FF  # Katakana
+            or 0x4E00 <= ord(c) <= 0x9FAF
+        )  # Kanji
         return japanese_chars > 0
 
     def _extract_studios(self, soup) -> Dict[str, Any]:
@@ -717,14 +734,14 @@ class AnimePlanetScraper(BaseScraper):
         if json_ld:
             start_date = json_ld.get("startDate")
             end_date = json_ld.get("endDate")
-            
+
             if start_date:
                 status_data["start_date"] = start_date
                 # Extract year from start date
                 year_match = re.search(r"(\d{4})", start_date)
                 if year_match:
                     status_data["year"] = int(year_match.group(1))
-                
+
                 # Determine season from start date
                 season = self._determine_season_from_date(start_date)
                 if season:
@@ -739,6 +756,7 @@ class AnimePlanetScraper(BaseScraper):
             elif start_date and not end_date:
                 # Check if start date is in the future
                 from datetime import datetime, timezone
+
                 try:
                     start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
                     now = datetime.now(timezone.utc)
@@ -757,12 +775,12 @@ class AnimePlanetScraper(BaseScraper):
         """Determine anime season from date string."""
         if not date_str:
             return None
-            
+
         # Extract month from date
         month_match = re.search(r"-(\d{2})-", date_str)
         if not month_match:
             return None
-            
+
         try:
             month = int(month_match.group(1))
             if month in [12, 1, 2]:
@@ -775,31 +793,36 @@ class AnimePlanetScraper(BaseScraper):
                 return "FALL"
         except ValueError:
             pass
-            
+
         return None
 
     def _extract_related_anime(self, soup) -> Dict[str, Any]:
         """Extract related anime from same franchise section."""
         related_data = {}
-        
+
         # Look for the same franchise relations section
         same_franchise_section = soup.find(id="tabs--relations--anime--same_franchise")
-        
+
         if not same_franchise_section:
             return related_data
-        
+
         related_anime = []
-        
+
         # Look for anime cards in the grid structure
         # Anime-Planet uses pure-u-* grid classes for the cards - direct children only
-        card_containers = [child for child in same_franchise_section.children 
-                          if hasattr(child, 'name') and child.name == 'div' 
-                          and child.get('class') and any('pure-u-' in cls for cls in child.get('class', []))]
-        
+        card_containers = [
+            child
+            for child in same_franchise_section.children
+            if hasattr(child, "name")
+            and child.name == "div"
+            and child.get("class")
+            and any("pure-u-" in cls for cls in child.get("class", []))
+        ]
+
         for container in card_containers:
             # Look for the anime link and title within each card
             anime_link = container.find("a", href=re.compile(r"/anime/"))
-            
+
             if anime_link:
                 # Extract title from h3.cardName or fallback to link text
                 title_elem = anime_link.find("h3", class_="cardName")
@@ -807,62 +830,64 @@ class AnimePlanetScraper(BaseScraper):
                     title = self._clean_text(title_elem.text)
                 else:
                     title = self._clean_text(anime_link.text)
-                
+
                 # Extract slug from href
                 href = anime_link.get("href", "")
                 slug_match = re.search(r"/anime/([^/?]+)", href)
                 slug = slug_match.group(1) if slug_match else None
-                
+
                 # Extract metadata from the card's text content
                 all_text = container.get_text(separator=" | ", strip=True)
-                
+
                 # Parse the structured text format: "Title | RelationType | StartDate | - | EndDate | MediaType: Episodes"
                 parts = [part.strip() for part in all_text.split(" | ")]
-                
+
                 relation_subtype = None
                 start_date = None
                 end_date = None
                 media_type = None
                 episode_count = None
-                
+
                 if len(parts) >= 6:
                     # Extract relation subtype (Recap, Omake, Side Story, etc.)
                     if len(parts) > 1 and parts[1] not in ["-", ""]:
                         relation_subtype = parts[1]
-                    
+
                     # Extract start date
                     if len(parts) > 2 and re.match(r"\d{4}-\d{2}-\d{2}", parts[2]):
                         start_date = parts[2]
-                    
+
                     # Extract end date (usually after a "-")
                     if len(parts) > 4 and re.match(r"\d{4}-\d{2}-\d{2}", parts[4]):
                         end_date = parts[4]
-                    
+
                     # Extract media type and episode count from last part
                     if len(parts) > 5:
                         type_ep_text = parts[5]
                         # Pattern: "TV Special: 1 ep" or "OVA: 3 ep" or "Movie"
-                        type_match = re.match(r"([^:]+)(?::\s*(\d+)\s*ep)?", type_ep_text)
+                        type_match = re.match(
+                            r"([^:]+)(?::\s*(\d+)\s*ep)?", type_ep_text
+                        )
                         if type_match:
                             media_type = type_match.group(1).strip()
                             if type_match.group(2):
                                 episode_count = int(type_match.group(2))
-                
+
                 # Extract year from start date if available
                 year = None
                 if start_date:
                     year_match = re.search(r"(\d{4})", start_date)
                     if year_match:
                         year = int(year_match.group(1))
-                
+
                 if title and slug:
                     related_item = {
                         "title": title,
                         "slug": slug,
                         "url": f"https://www.anime-planet.com{href}",
-                        "relation_type": "same_franchise"
+                        "relation_type": "same_franchise",
                     }
-                    
+
                     # Add parsed metadata
                     if relation_subtype:
                         related_item["relation_subtype"] = relation_subtype
@@ -876,11 +901,11 @@ class AnimePlanetScraper(BaseScraper):
                         related_item["start_date"] = start_date
                     if end_date:
                         related_item["end_date"] = end_date
-                    
+
                     related_anime.append(related_item)
-        
+
         if related_anime:
             related_data["related_anime"] = related_anime
             related_data["related_count"] = len(related_anime)
-        
+
         return related_data

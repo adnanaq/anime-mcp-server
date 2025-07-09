@@ -9,19 +9,13 @@ for anime discovery workflows. Handles complex routing decisions based on:
 - User preferences and context
 """
 
-import re
 import logging
-from typing import Dict, Any, List, Optional, Tuple, Set
+import re
 from dataclasses import dataclass
 from enum import Enum
-from ..services.llm_service import get_llm_service
+from typing import Any, Dict, List, Optional
 
-from ..models.structured_responses import (
-    BasicAnimeResult,
-    AnimeType,
-    AnimeStatus,
-    AnimeRating,
-)
+from ..services.llm_service import get_llm_service
 
 logger = logging.getLogger(__name__)
 
@@ -297,7 +291,9 @@ class IntelligentRouter:
         """Classify the user's intent from the query using an LLM with a highly enhanced prompt."""
         llm_service = get_llm_service()
         if not llm_service.is_available():
-            logger.warning("LLM service not available, falling back to regex-based intent classification.")
+            logger.warning(
+                "LLM service not available, falling back to regex-based intent classification."
+            )
             # Fallback to the old method if LLM is not configured
             query_lower = query.lower()
             intent_scores = {}
@@ -310,15 +306,17 @@ class IntelligentRouter:
                     intent_scores[intent] = score
             if intent_scores:
                 return max(intent_scores.items(), key=lambda x: x[1])[0]
-            if any(word in query_lower for word in ["compare", "across", "between", "vs"]):
+            if any(
+                word in query_lower for word in ["compare", "across", "between", "vs"]
+            ):
                 return QueryIntent.COMPARISON
             if any(word in query_lower for word in ["like", "similar", "recommend"]):
                 return QueryIntent.SIMILAR
             return QueryIntent.SEARCH
 
-        intent_options = [intent.value for intent in QueryIntent]
+        [intent.value for intent in QueryIntent]
 
-        prompt = f'''
+        prompt = f"""
 You are a hyper-specialized query intent classifier for an anime discovery platform. Your single task is to categorize the user's query into ONE of the predefined intents. Respond with ONLY the single best intent name from the list.
 
 **Crucial Distinctions (Read Carefully):**
@@ -386,7 +384,7 @@ Intent: enrichment
 ---
 
 Based on the query and the detailed examples, what is the single best intent?
-'''
+"""
 
         try:
             raw_response = await llm_service.generate_content(prompt)
@@ -394,7 +392,9 @@ Based on the query and the detailed examples, what is the single best intent?
 
             for intent_enum in QueryIntent:
                 if intent_enum.value == response_text:
-                    logger.info(f"LLM classified intent as '{response_text}' for query: '{query}'")
+                    logger.info(
+                        f"LLM classified intent as '{response_text}' for query: '{query}'"
+                    )
                     return intent_enum
 
             logger.warning(
@@ -403,7 +403,9 @@ Based on the query and the detailed examples, what is the single best intent?
             return QueryIntent.SEARCH
 
         except Exception as e:
-            logger.error(f"LLM intent classification failed: {e}. Defaulting to SEARCH.")
+            logger.error(
+                f"LLM intent classification failed: {e}. Defaulting to SEARCH."
+            )
             return QueryIntent.SEARCH
 
     def _extract_query_features(self, query: str) -> Dict[str, Any]:

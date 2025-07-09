@@ -5,13 +5,15 @@ Provides high-level MCP tools that use the cross-platform enrichment system
 to handle complex queries requiring data from multiple anime platforms.
 """
 
-from typing import Dict, Any, List, Optional
 import logging
+from typing import Any, Dict, List, Optional
 
 from fastmcp import FastMCP
+
 from mcp.server.fastmcp import Context
 
 from ...langgraph.enrichment_tools import CrossPlatformEnrichment
+
 # No Universal parameter dependencies - uses CrossPlatformEnrichment system
 
 logger = logging.getLogger(__name__)
