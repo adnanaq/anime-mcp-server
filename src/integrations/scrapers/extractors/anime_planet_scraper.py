@@ -278,7 +278,7 @@ class AnimePlanetScraper(BaseScraper):
         return results[:limit]
 
     def _parse_single_search_result(self, container) -> Optional[Dict[str, Any]]:
-        """Parse a single search result item."""
+        """Parse a single search result item with rich tooltip data."""
         try:
             # Extract title and link - Anime-Planet structure: <a><h3 class="cardName">Title</h3></a>
             title_link = container.find("a")
@@ -309,25 +309,162 @@ class AnimePlanetScraper(BaseScraper):
                 "domain": "anime-planet",
             }
 
-            # Extract additional info if available
-            type_elem = container.find("div", class_="type") or container.find(
-                "div", class_="anime-type"
-            )
-            if type_elem:
-                result["type"] = self._clean_text(type_elem.text)
+            # Extract rich tooltip data if available
+            tooltip_data = self._extract_tooltip_data(title_link)
+            if tooltip_data:
+                result.update(tooltip_data)
 
-            synopsis_elem = container.find("p", class_="synopsis") or container.find(
-                "p"
-            )
-            if synopsis_elem:
-                synopsis = self._clean_text(synopsis_elem.text)
-                if synopsis and len(synopsis) > 20:  # Only if substantial
-                    result["synopsis"] = (
-                        synopsis[:200] + "..." if len(synopsis) > 200 else synopsis
-                    )
+            # Extract data attributes from card container
+            card_attributes = self._extract_card_attributes(container)
+            if card_attributes:
+                result.update(card_attributes)
+
+            # Fallback: Extract basic info from card if tooltip data not available
+            if not tooltip_data:
+                # Extract additional info if available
+                type_elem = container.find("div", class_="type") or container.find(
+                    "div", class_="anime-type"
+                )
+                if type_elem:
+                    result["type"] = self._clean_text(type_elem.text)
+
+                synopsis_elem = container.find("p", class_="synopsis") or container.find(
+                    "p"
+                )
+                if synopsis_elem:
+                    synopsis = self._clean_text(synopsis_elem.text)
+                    if synopsis and len(synopsis) > 20:  # Only if substantial
+                        result["synopsis"] = (
+                            synopsis[:200] + "..." if len(synopsis) > 200 else synopsis
+                        )
 
             return result
 
+        except Exception:
+            return None
+
+    def _extract_tooltip_data(self, title_link) -> Optional[Dict[str, Any]]:
+        """Extract rich data from tooltip hover information."""
+        try:
+            import html
+            
+            # Find tooltip link (has tooltip class)
+            tooltip_link = title_link
+            if not tooltip_link or not tooltip_link.get("class"):
+                return None
+                
+            # Check if this is a tooltip link
+            classes = tooltip_link.get("class", [])
+            if not any("tooltip" in cls for cls in classes):
+                return None
+                
+            # Extract tooltip HTML from title attribute
+            title_html = tooltip_link.get("title", "")
+            if not title_html:
+                return None
+                
+            # Decode HTML entities
+            decoded_html = html.unescape(title_html)
+            
+            # Parse the tooltip HTML
+            tooltip_soup = self._parse_html(decoded_html)
+            
+            tooltip_data = {}
+            
+            # Extract title (should match main title, but might be more complete)
+            title_elem = tooltip_soup.find("h5", class_="theme-font")
+            if title_elem:
+                tooltip_data["tooltip_title"] = self._clean_text(title_elem.text)
+            
+            # Extract alternative title
+            alt_title_elem = tooltip_soup.find("h6", class_="tooltip-alt")
+            if alt_title_elem:
+                alt_title = self._clean_text(alt_title_elem.text)
+                # Remove "Alt title:" prefix if present
+                if alt_title.startswith("Alt title:"):
+                    alt_title = alt_title[10:].strip()
+                tooltip_data["alt_title"] = alt_title
+            
+            # Extract entry bar info (type, studio, year, rating)
+            entry_bar = tooltip_soup.find("ul", class_="entryBar")
+            if entry_bar:
+                li_elements = entry_bar.find_all("li")
+                for li in li_elements:
+                    li_classes = li.get("class", [])
+                    li_text = self._clean_text(li.text)
+                    
+                    if "type" in li_classes:
+                        # Extract type and episodes: "TV (12 eps)" -> type="TV", episodes=12
+                        type_match = re.match(r"([^(]+)(?:\s*\((\d+)\s*eps?\))?", li_text)
+                        if type_match:
+                            tooltip_data["type"] = type_match.group(1).strip()
+                            if type_match.group(2):
+                                tooltip_data["episodes"] = int(type_match.group(2))
+                    elif "iconYear" in li_classes:
+                        # Extract year
+                        year_match = re.search(r"(\d{4})", li_text)
+                        if year_match:
+                            tooltip_data["year"] = int(year_match.group(1))
+                    elif li.find("div", class_="ttRating"):
+                        # Extract rating
+                        rating_div = li.find("div", class_="ttRating")
+                        if rating_div:
+                            rating_text = self._clean_text(rating_div.text)
+                            try:
+                                tooltip_data["rating"] = float(rating_text)
+                            except ValueError:
+                                pass
+                    elif li_text and not any(cls in li_classes for cls in ["type", "iconYear"]) and li_text != "Add to list":
+                        # This is likely the studio (no specific class, just text)
+                        if li_text not in tooltip_data.get("studios", []):
+                            if "studios" not in tooltip_data:
+                                tooltip_data["studios"] = []
+                            tooltip_data["studios"].append(li_text)
+            
+            # Extract synopsis
+            synopsis_elem = tooltip_soup.find("p")
+            if synopsis_elem:
+                # Get text content, removing any embedded links
+                synopsis = synopsis_elem.get_text(strip=True)
+                if synopsis and len(synopsis) > 20:  # Only if substantial
+                    tooltip_data["synopsis"] = synopsis
+            
+            # Extract tags
+            tags_section = tooltip_soup.find("div", class_="tags")
+            if tags_section:
+                tag_items = tags_section.find_all("li")
+                if tag_items:
+                    tags = [self._clean_text(tag.text) for tag in tag_items if tag.text.strip()]
+                    if tags:
+                        tooltip_data["tags"] = tags
+            
+            return tooltip_data if tooltip_data else None
+            
+        except Exception:
+            return None
+
+    def _extract_card_attributes(self, container) -> Optional[Dict[str, Any]]:
+        """Extract data attributes from card container."""
+        try:
+            card_data = {}
+            
+            # Extract data attributes
+            if container.get("data-total-episodes"):
+                try:
+                    episodes = int(container.get("data-total-episodes"))
+                    if episodes > 0:  # Only add if meaningful
+                        card_data["total_episodes"] = episodes
+                except ValueError:
+                    pass
+            
+            if container.get("data-id"):
+                card_data["animeplanet_id"] = container.get("data-id")
+            
+            if container.get("data-type"):
+                card_data["content_type"] = container.get("data-type")
+            
+            return card_data if card_data else None
+            
         except Exception:
             return None
 

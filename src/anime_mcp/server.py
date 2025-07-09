@@ -743,6 +743,7 @@ def initialize_qdrant_client():
 # Using correct FastMCP mounting syntax (server first, then optional prefix)
 from .tools import (
     anilist_tools,
+    animeplanet_tools,
     enrichment_tools,
     jikan_tools,
     kitsu_tools,
@@ -760,6 +761,7 @@ mcp.mount(schedule_tools.mcp)  # AnimeSchedule tools (3 tools)
 mcp.mount(kitsu_tools.mcp)  # Kitsu JSON:API tools (3 tools)
 mcp.mount(semantic_tools.mcp)  # Semantic search tools (3 tools)
 mcp.mount(enrichment_tools.mcp)  # Cross-platform enrichment (5 tools)
+mcp.mount(animeplanet_tools.mcp)  # AnimePlanet scraper tools (2 tools)
 
 
 def register_tiered_tools():

@@ -176,19 +176,22 @@ def register_detailed_tools(mcp: FastMCP) -> None:
                 # Transform results from each platform
                 platform_results = []
                 if platform == "jikan":
+                    # Jikan returns a list directly
                     platform_results = [
                         _transform_jikan_to_detailed(item)
-                        for item in result.get("data", [])
+                        for item in result
                     ]
                 elif platform == "mal":
+                    # MAL returns a list directly
                     platform_results = [
                         _transform_mal_to_detailed(item)
-                        for item in result.get("data", [])
+                        for item in result
                     ]
                 elif platform == "anilist":
+                    # AniList returns a list directly
                     platform_results = [
                         _transform_anilist_to_detailed(item)
-                        for item in result.get("data", [])
+                        for item in result
                     ]
 
                 all_results.extend(platform_results)
@@ -595,7 +598,7 @@ def _build_anilist_search_params(input: DetailedSearchInput) -> Dict[str, Any]:
     params = {}
 
     if input.query:
-        params["search"] = input.query
+        params["query"] = input.query
     if input.limit:
         params["perPage"] = min(input.limit, 50)
     if input.year:

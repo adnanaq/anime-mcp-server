@@ -30,6 +30,7 @@ class AnimeStatus(str, Enum):
     NOT_YET_RELEASED = "not_yet_released"
     CANCELLED = "cancelled"
     HIATUS = "hiatus"
+    UNKNOWN = "unknown"
 
 
 class AnimeType(str, Enum):
@@ -41,6 +42,7 @@ class AnimeType(str, Enum):
     ONA = "ona"
     SPECIAL = "special"
     MUSIC = "music"
+    UNKNOWN = "unknown"
 
 
 class AnimeRating(str, Enum):
@@ -52,6 +54,8 @@ class AnimeRating(str, Enum):
     R = "r"
     R_PLUS = "r_plus"
     RX = "rx"
+    NC_17 = "nc_17"
+    UNKNOWN = "unknown"
 
 
 # =============================================================================

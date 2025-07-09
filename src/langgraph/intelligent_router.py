@@ -44,6 +44,10 @@ class PlatformSpecialization(str, Enum):
     NO_AUTH_REQUIRED = "no_auth"  # Jikan: unofficial MAL data, no API key
     SEMANTIC_SEARCH = "semantic_search"  # Vector DB: AI-powered similarity
     VISUAL_SIMILARITY = "visual_search"  # CLIP: image-based search
+    TECHNICAL_DATA = "technical_data"  # AniDB: technical details, episode info
+    WESTERN_COMMUNITY = "western_community"  # AnimePlanet: Western perspective
+    GERMAN_COMMUNITY = "german_community"  # AniSearch: German/European perspective
+    COUNTDOWN_DATA = "countdown_data"  # AnimeCountdown: release countdown timers
 
 
 @dataclass
@@ -122,6 +126,34 @@ class IntelligentRouter:
                 "response_speed": "fast",
                 "data_richness": "medium",
             },
+            "anidb": {
+                "specializations": [PlatformSpecialization.TECHNICAL_DATA],
+                "strengths": ["technical_details", "episode_info", "production_data", "comprehensive_metadata"],
+                "auth_required": True,
+                "response_speed": "slow",
+                "data_richness": "very_high",
+            },
+            "animeplanet": {
+                "specializations": [PlatformSpecialization.WESTERN_COMMUNITY],
+                "strengths": ["western_ratings", "community_tags", "recommendations", "reviews"],
+                "auth_required": False,
+                "response_speed": "medium",
+                "data_richness": "medium",
+            },
+            "anisearch": {
+                "specializations": [PlatformSpecialization.GERMAN_COMMUNITY],
+                "strengths": ["german_ratings", "european_perspective", "multilingual_data", "regional_info"],
+                "auth_required": False,
+                "response_speed": "medium",
+                "data_richness": "medium",
+            },
+            "animecountdown": {
+                "specializations": [PlatformSpecialization.COUNTDOWN_DATA],
+                "strengths": ["release_countdowns", "temporal_tracking", "upcoming_releases"],
+                "auth_required": False,
+                "response_speed": "fast",
+                "data_richness": "low",
+            },
         }
 
         # Query patterns for intent classification
@@ -179,44 +211,59 @@ class IntelligentRouter:
             ],
         }
 
-        # Tool routing rules
+        # Tool routing rules - Corrected for scraper vs API client usage patterns
         self.routing_rules = {
             QueryIntent.SEARCH: {
-                "primary": ["anilist", "mal", "jikan"],
+                "primary": ["anilist", "mal", "jikan"],  # API clients for bulk search
+                "secondary": [],  # Scrapers used for enrichment only
                 "strategy": "parallel",
                 "complexity": "simple",
             },
             QueryIntent.SIMILAR: {
-                "primary": ["semantic"],
-                "secondary": ["anilist", "mal"],
+                "primary": ["semantic"],  # Vector search for similarity
+                "secondary": ["anilist", "mal"],  # API clients for metadata
                 "strategy": "sequential",
                 "complexity": "medium",
             },
             QueryIntent.SCHEDULE: {
-                "primary": ["animeschedule"],
-                "secondary": ["anilist"],
+                "primary": ["animeschedule"],  # Specialized scheduling API
+                "secondary": ["anilist", "animecountdown"],  # Supporting data
                 "strategy": "parallel",
                 "complexity": "simple",
             },
             QueryIntent.STREAMING: {
-                "primary": ["kitsu", "animeschedule"],
+                "primary": ["kitsu", "animeschedule"],  # APIs with streaming data
+                "secondary": [],  # Scrapers don't provide streaming bulk data
                 "strategy": "parallel",
                 "complexity": "simple",
             },
             QueryIntent.COMPARISON: {
-                "primary": ["compare_anime_ratings_cross_platform"],
-                "secondary": ["correlate_anime_across_platforms"],
+                "primary": ["compare_anime_ratings_cross_platform"],  # Cross-platform tool
+                "secondary": ["correlate_anime_across_platforms"],  # Additional comparison tools
                 "strategy": "sequential",
                 "complexity": "complex",
             },
+            QueryIntent.ENRICHMENT: {
+                "primary": ["anilist", "mal", "jikan"],  # API clients for base data
+                "secondary": ["anidb", "animeplanet", "anisearch"],  # Scrapers for enrichment
+                "strategy": "sequential",  # First get base data, then enrich
+                "complexity": "medium",
+            },
+            QueryIntent.DISCOVERY: {
+                "primary": ["anilist", "mal", "jikan"],  # API clients for discovery
+                "secondary": ["semantic"],  # AI-powered recommendations
+                "strategy": "parallel",
+                "complexity": "simple",
+            },
             QueryIntent.SEASONAL: {
-                "primary": ["mal", "anilist"],
-                "secondary": ["animeschedule"],
+                "primary": ["mal", "anilist"],  # API clients with seasonal data
+                "secondary": ["animeschedule"],  # Schedule data
                 "strategy": "parallel",
                 "complexity": "medium",
             },
             QueryIntent.TRENDING: {
-                "primary": ["mal", "anilist"],
+                "primary": ["mal", "anilist"],  # API clients with trending data
+                "secondary": [],  # No additional sources needed
                 "strategy": "parallel",
                 "complexity": "simple",
             },
@@ -470,8 +517,11 @@ Based on the query and the detailed examples, what is the single best intent?
             features["has_temporal_filters"] = True
             features["temporal_references"] = temporal_refs
 
-        # Check for platform mentions
-        platforms = ["mal", "anilist", "kitsu", "crunchyroll", "netflix", "funimation"]
+        # Check for platform mentions - Enhanced with all supported platforms
+        platforms = [
+            "mal", "anilist", "kitsu", "anidb", "animeplanet", "anisearch", "animecountdown",
+            "crunchyroll", "netflix", "funimation", "hulu", "disney", "prime", "animeschedule"
+        ]
         mentioned_platforms = [p for p in platforms if p in query_lower]
         if mentioned_platforms:
             features["has_platform_mention"] = True
@@ -568,7 +618,7 @@ Based on the query and the detailed examples, what is the single best intent?
             mentioned = features["mentioned_platforms"]
             platform_tools = []
             for platform in mentioned:
-                if platform in ["mal", "anilist", "jikan", "kitsu", "animeschedule"]:
+                if platform in ["mal", "anilist", "jikan", "kitsu", "animeschedule", "anidb", "animeplanet", "anisearch", "animecountdown"]:
                     platform_tools.append(f"search_anime_{platform}")
             if platform_tools:
                 selected_tools["primary"] = platform_tools
@@ -633,13 +683,38 @@ Based on the query and the detailed examples, what is the single best intent?
         """Calculate priority scores for each platform."""
         priorities = {}
 
-        # Base priorities by intent
+        # Base priorities by intent - Corrected for proper scraper usage
         intent_priorities = {
-            QueryIntent.SEARCH: {"anilist": 0.9, "mal": 0.8, "jikan": 0.7},
-            QueryIntent.SIMILAR: {"semantic": 1.0, "anilist": 0.7, "mal": 0.6},
-            QueryIntent.SCHEDULE: {"animeschedule": 1.0, "anilist": 0.5},
-            QueryIntent.STREAMING: {"kitsu": 1.0, "animeschedule": 0.8},
-            QueryIntent.COMPARISON: {"mal": 0.9, "anilist": 0.9, "kitsu": 0.7},
+            QueryIntent.SEARCH: {
+                "anilist": 0.9, "mal": 0.8, "jikan": 0.7  # API clients only
+            },
+            QueryIntent.SIMILAR: {
+                "semantic": 1.0, "anilist": 0.7, "mal": 0.6  # Vector search + metadata
+            },
+            QueryIntent.SCHEDULE: {
+                "animeschedule": 1.0, "anilist": 0.5, "animecountdown": 0.4
+            },
+            QueryIntent.STREAMING: {
+                "kitsu": 1.0, "animeschedule": 0.8  # APIs with streaming data
+            },
+            QueryIntent.COMPARISON: {
+                "mal": 0.9, "anilist": 0.9, "kitsu": 0.7, "animeplanet": 0.5  # Cross-platform comparison
+            },
+            QueryIntent.ENRICHMENT: {
+                # Primary: API clients for base data
+                "anilist": 0.9, "mal": 0.8, "jikan": 0.7,
+                # Secondary: Scrapers for enrichment (lower priority)
+                "anidb": 0.6, "animeplanet": 0.4, "anisearch": 0.3
+            },
+            QueryIntent.DISCOVERY: {
+                "anilist": 0.9, "mal": 0.8, "jikan": 0.7, "semantic": 0.6
+            },
+            QueryIntent.SEASONAL: {
+                "mal": 0.9, "anilist": 0.8, "animeschedule": 0.6
+            },
+            QueryIntent.TRENDING: {
+                "mal": 0.9, "anilist": 0.8  # No additional sources needed
+            },
         }
 
         base_scores = intent_priorities.get(intent, {"anilist": 0.8, "mal": 0.7})

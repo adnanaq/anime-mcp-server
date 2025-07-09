@@ -44,7 +44,7 @@ def get_enrichment_system() -> CrossPlatformEnrichment:
 )
 async def compare_anime_ratings_cross_platform(
     anime_title: str,
-    platforms: List[str] = ["mal", "anilist", "kitsu"],
+    platforms: List[str] = ["mal", "anilist", "kitsu", "animeplanet"],
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """
@@ -55,7 +55,7 @@ async def compare_anime_ratings_cross_platform(
 
     Args:
         anime_title: Name of the anime to compare ratings for
-        platforms: List of platforms to compare (default: ["mal", "anilist", "kitsu"])
+        platforms: List of platforms to compare (default: ["mal", "anilist", "kitsu", "animeplanet"])
 
     Returns:
         Detailed rating comparison with statistics and platform-specific data
@@ -101,7 +101,7 @@ async def compare_anime_ratings_cross_platform(
 )
 async def get_cross_platform_anime_data(
     anime_title: str,
-    platforms: List[str] = ["mal", "anilist", "animeschedule", "kitsu"],
+    platforms: List[str] = ["mal", "anilist", "animeschedule", "kitsu", "animeplanet"],
     include_ratings: bool = True,
     include_streaming: bool = True,
     include_schedule: bool = True,
@@ -173,7 +173,7 @@ async def get_cross_platform_anime_data(
 )
 async def correlate_anime_across_platforms(
     anime_title: str,
-    platforms: List[str] = ["mal", "anilist", "kitsu", "jikan"],
+    platforms: List[str] = ["mal", "anilist", "kitsu", "jikan", "animeplanet"],
     ctx: Optional[Context] = None,
 ) -> Dict[str, Any]:
     """

@@ -151,7 +151,8 @@ def register_standard_tools(mcp: FastMCP) -> None:
 
             # Transform to StandardAnimeResult
             results = []
-            for raw_result in raw_results.get("data", []):
+            # raw_results is already a list, not a dict with 'data' key
+            for raw_result in raw_results:
                 standard_result = _transform_jikan_to_standard(raw_result)
                 results.append(standard_result)
 

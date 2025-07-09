@@ -114,7 +114,8 @@ def register_basic_tools(mcp: FastMCP) -> None:
 
             # Transform to BasicAnimeResult
             results = []
-            for raw_result in raw_results.get("data", []):
+            # raw_results is already a list, not a dict with 'data' key
+            for raw_result in raw_results:
                 # Extract basic information
                 anime_id = str(raw_result.get("mal_id", ""))
                 title = raw_result.get("title") or "Unknown"
