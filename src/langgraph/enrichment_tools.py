@@ -11,7 +11,7 @@ import asyncio
 import logging
 from datetime import datetime
 
-from ..models.universal_anime import UniversalAnime, UniversalSearchParams
+from ..models.structured_responses import BasicAnimeResult, BasicSearchResponse
 from ..anime_mcp.tools import (
     search_anime_mal,
     get_anime_by_id_mal,

@@ -15,11 +15,11 @@ from typing import Dict, Any, List, Optional, Tuple, Set
 from dataclasses import dataclass
 from enum import Enum
 
-from ..models.universal_anime import (
-    UniversalSearchParams,
+from ..models.structured_responses import (
+    BasicAnimeResult,
+    AnimeType,
     AnimeStatus,
-    AnimeFormat,
-    AnimeSeason,
+    AnimeRating,
 )
 
 logger = logging.getLogger(__name__)

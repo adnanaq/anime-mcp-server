@@ -11,8 +11,7 @@ from mcp.server.fastmcp import Context
 
 from ...config import Settings
 from ...vector.qdrant_client import QdrantClient
-from ...models.universal_anime import UniversalSearchParams
-from ...integrations.service_manager import ServiceManager
+from ...models.structured_responses import BasicSearchResponse, BasicAnimeResult
 from ...exceptions import AnimeNotFoundError
 from ..schemas import SearchAnimeInput
 from .base_handler import BaseAnimeHandler
@@ -31,7 +30,7 @@ class AnimeHandler(BaseAnimeHandler):
             settings: Application settings
         """
         super().__init__(qdrant_client, settings)
-        self.service_manager = ServiceManager(settings)
+        # Removed ServiceManager - using direct tool calls instead
 
     async def search_anime(
         self, params: SearchAnimeInput, ctx: Optional[Context] = None
@@ -264,86 +263,9 @@ class AnimeHandler(BaseAnimeHandler):
         except Exception as e:
             await self.handle_error(e, "search_multimodal", ctx)
     
-    async def search_anime_universal(
-        self, 
-        params: UniversalSearchParams, 
-        ctx: Context
-    ) -> List[Dict[str, Any]]:
-        """Execute universal anime search with intelligent platform routing.
-        
-        Args:
-            params: Universal search parameters
-            ctx: MCP context for logging
-            
-        Returns:
-            List of anime results in standardized format
-        """
-        try:
-            await ctx.info(f"Starting universal search with parameters: {params.dict(exclude_none=True)}")
-            
-            # Use service manager for intelligent routing and execution
-            response = await self.service_manager.search_anime_universal(params)
-            
-            # Convert UniversalSearchResult objects to dictionaries for MCP response
-            results = []
-            for result in response.results:
-                anime_dict = result.anime.dict()
-                anime_dict.update({
-                    "relevance_score": result.relevance_score,
-                    "source": result.source,
-                    "enrichment_sources": result.enrichment_sources
-                })
-                results.append(anime_dict)
-            
-            await ctx.info(
-                f"Universal search completed: {len(results)} results from "
-                f"{response.sources_used} in {response.processing_time_ms:.1f}ms"
-            )
-            
-            return results
-            
-        except Exception as e:
-            await self.handle_error(e, "search_anime_universal", ctx)
-            return []
-    
-    async def get_anime_by_id_universal(
-        self, 
-        anime_id: str, 
-        preferred_source: Optional[str] = None,
-        ctx: Context = None
-    ) -> Optional[Dict[str, Any]]:
-        """Get anime details by ID using universal system.
-        
-        Args:
-            anime_id: Anime identifier
-            preferred_source: Preferred data source platform
-            ctx: MCP context for logging
-            
-        Returns:
-            Anime details dictionary or None if not found
-        """
-        try:
-            if ctx:
-                await ctx.info(f"Getting anime details for ID: {anime_id}")
-            
-            # Use service manager for intelligent source routing
-            anime = await self.service_manager.get_anime_by_id_universal(
-                anime_id, preferred_source
-            )
-            
-            if anime:
-                if ctx:
-                    await ctx.info(f"Found anime: {anime.title}")
-                return anime.dict()
-            else:
-                if ctx:
-                    await ctx.info(f"Anime not found: {anime_id}")
-                return None
-                
-        except Exception as e:
-            if ctx:
-                await self.handle_error(e, "get_anime_by_id_universal", ctx)
-            return None
+    # Removed Universal parameter methods - replaced with direct tool calls
+    # Modern approach: Tools call specific platform APIs directly without Universal parameter abstraction
+    # This eliminates the 444-parameter Universal system and provides better LLM experience
 
     def _build_search_filters(
         self, params: SearchAnimeInput
