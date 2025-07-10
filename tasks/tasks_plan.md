@@ -39,30 +39,65 @@
 
 ## 🚨 IMMEDIATE CRITICAL FIXES (Week 0 - Emergency)
 
-### URGENT PRODUCTION BUGS (Must Fix Immediately)
+### URGENT DEAD CODE CLEANUP (Must Fix Immediately)
 
-#### ❌ Task Group 0X: Query API (/api/query) Cross-Platform Functionality Failure (CRITICAL - 2025-07-09)
-- **Task #100**: ❌ **CRITICAL** - Fix Query API Fake Cross-Platform Data Issue
-  - **Status**: ❌ URGENT - Query API endpoint returns identical data across platforms instead of real platform-specific data
-  - **Problem**: Query API shows Death Note rating as 8.62 for MAL/AniList/Anime-Planet (should be different values)
-  - **Root Cause**: Query API (/api/query) not actually calling different platform APIs - returning fake identical data
-  - **Impact**: Query API cross-platform functionality is completely fake/non-functional
-  - **Test Results**: Query API tested with "Compare Death Note's ratings across MAL, AniList, and Anime-Planet"
-  - **Expected**: Different ratings per platform (MAL: 8.63, AniList: 8.4, Anime-Planet: 4.1/5)
-  - **Fix Required**: Debug Query API tool selection logic and platform-specific API integration
+#### ✅ Task Group 0X: Query API Architecture Migration (COMPLETED - 2025-07-10)
+- **Task #100**: ✅ **COMPLETED** - Query API Migration to AnimeSwarm Architecture
+  - **Status**: ✅ COMPLETED - Query API successfully migrated from ReactAgent to AnimeSwarm
+  - **Implementation**: Updated `src/api/query.py` to use AnimeDiscoverySwarm directly
+  - **Benefits**: Cleaner architecture, proper session persistence, intelligent routing
+  - **Testing**: Session management verified working, natural language processing functional
+  - **Architecture**: query.py → AnimeSwarm → SearchAgent → QdrantClient (direct)
 
-- **Task #101**: ❌ **HIGH** - Fix Query API Search Parameter Translation
-  - **Status**: ❌ URGENT - Query API endpoint returns no results for complex queries like "dark mystery anime 2000-2010"
-  - **Problem**: Query API → database parameter conversion failing for descriptive terms
-  - **Root Cause**: Query API genre mapping and search logic not handling complex descriptors
-  - **Impact**: Direct LLM outperforms Query API for complex searches
-  - **Fix Required**: Improve Query API query analysis and parameter extraction
+#### ❌ Task Group 0Y: Dead Code Cleanup (CRITICAL - 2025-07-10)
+- **Task #109**: ❌ **CRITICAL** - Remove Legacy ReactAgent Infrastructure
+  - **Status**: ❌ URGENT - Dead code identified, cleanup required
+  - **Dead Files**: 
+    - `src/langgraph/react_agent_workflow.py` - Superseded by AnimeSwarm
+    - `src/langgraph/langchain_tools.py` - Legacy MCP→LangChain wrappers
+    - `src/anime_mcp/modern_client.py` - May be unused (uses core server, not modern_server)
+  - **Impact**: Code maintenance overhead, architectural confusion
+  - **Priority**: CRITICAL - Remove dead code to prevent confusion
 
-- **Task #102**: ❌ **HIGH** - Debug Query API Tool Selection Logic in LangGraph
-  - **Status**: ❌ URGENT - Query API LangGraph workflow not choosing appropriate platform-specific tools
-  - **Problem**: Query API cross-platform queries use generic search instead of platform-specific tools
-  - **Root Cause**: Query API tool selection logic in ReactAgent workflow
-  - **Fix Required**: Analyze and fix Query API LangGraph tool selection for cross-platform queries
+- **Task #110**: ❌ **CRITICAL** - Remove Legacy server.py and Associated Tools  
+  - **Status**: ❌ URGENT - 39 tools superseded by modern_server.py workflows
+  - **Dead Components**:
+    - `src/anime_mcp/server.py` - 8 core + 31 platform tools (dead)
+    - `src/anime_mcp/tools/tier1_basic_tools.py` through `tier4_comprehensive_tools.py` - Complexity management obsolete
+    - All platform tool mounting logic in server.py
+  - **Root Cause**: SearchAgent uses QdrantClient directly, making MCP tool wrappers unnecessary
+  - **Priority**: CRITICAL - Major architecture simplification opportunity
+
+- **Task #111**: ❌ **HIGH** - Fix Docker Configuration Issues
+  - **Status**: ❌ URGENT - Docker compose using wrong MCP server paths and wrong server
+  - **Problems**: 
+    - Line 63: `"src.mcp.server"` should be `"src.anime_mcp.server"`
+    - Using `server.py` instead of `modern_server.py`
+    - Wrong command structure
+  - **Impact**: Docker MCP deployment broken
+  - **Fix Required**: Update docker-compose.yml to use modern_server.py with correct paths
+
+- **Task #112**: ❌ **MEDIUM** - Fix Dead Variable References in schedule_tools.py
+  - **Status**: ❌ IDENTIFIED - 10+ references to non-existent `universal_anime.*` variables
+  - **Problem**: Incomplete refactoring from Universal parameter system removal
+  - **Root Cause**: Comment says "Removed UniversalAnime import" but actual variable references left behind
+  - **Impact**: Runtime errors if those code paths are executed
+  - **Fix Required**: Replace all `universal_anime.*` references with structured response fields
+
+#### ❌ Task Group 0Z: Image Search Implementation (HIGH - 2025-07-10)
+- **Task #113**: ❌ **HIGH** - Complete Image Search Integration in SearchAgent
+  - **Status**: ❌ PENDING - Image search infrastructure exists but not connected to SearchAgent
+  - **Current State**: 
+    - ✅ QdrantClient has full image search capabilities (search_by_image, search_multimodal, find_visually_similar_anime)
+    - ✅ CLIP embeddings and vision processing working
+    - ❌ SearchAgent missing image search tools integration
+    - ❌ Query analysis not detecting image_data in user_context
+  - **Implementation Required**:
+    - Add 3 image tools to SearchAgent._create_semantic_tools()
+    - Update query_analyzer.py to detect image_data in user_context  
+    - Update intelligent router for multimodal intent classification
+    - Test query.py → swarm → SearchAgent → QdrantClient image flow
+  - **Priority**: HIGH - Complete the missing image search capability
 
 ### URGENT PRODUCTION BUGS (Must Fix Immediately)
 
