@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from ..config import get_settings
 from ..services.llm_service import LLMService
@@ -210,95 +210,6 @@ class QueryAnalyzer:
 
         return requirements
 
-    def _analyze_patterns(self, query: str) -> Dict[str, Any]:
-        """Quick pattern-based analysis for immediate routing hints."""
-        query_lower = query.lower()
-
-        hints = {
-            "has_semantic_keywords": any(
-                re.search(pattern, query_lower) for pattern in self.semantic_patterns
-            ),
-            "has_streaming_keywords": any(
-                re.search(pattern, query_lower) for pattern in self.streaming_patterns
-            ),
-            "has_schedule_keywords": any(
-                re.search(pattern, query_lower) for pattern in self.schedule_patterns
-            ),
-            "has_seasonal_keywords": any(
-                re.search(pattern, query_lower) for pattern in self.seasonal_patterns
-            ),
-            "mentioned_platforms": self._extract_platforms(query_lower),
-            "has_anime_title": self._detect_anime_title(query),
-            "temporal_indicators": self._extract_temporal_context(query_lower),
-        }
-
-        return hints
-
-    def _extract_platforms(self, query: str) -> List[str]:
-        """Extract mentioned streaming platforms from query."""
-        platforms = []
-        platform_keywords = {
-            "crunchyroll": "crunchyroll",
-            "netflix": "netflix",
-            "funimation": "funimation",
-            "hulu": "hulu",
-            "disney": "disney+",
-            "amazon": "amazon prime",
-            "mal": "myanimelist",
-            "anilist": "anilist",
-        }
-
-        for keyword, platform in platform_keywords.items():
-            if keyword in query:
-                platforms.append(platform)
-
-        return platforms
-
-    def _detect_anime_title(self, query: str) -> bool:
-        """Detect if query contains anime title references."""
-        # Look for quoted titles, capitalized words, or common anime patterns
-        title_patterns = [
-            r'"[^"]+"',  # Quoted titles
-            r"[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*",  # Capitalized title-like phrases
-            r"(?:attack\s+on\s+titan|demon\s+slayer|one\s+piece|naruto|bleach)",  # Common titles
-        ]
-
-        return any(
-            re.search(pattern, query, re.IGNORECASE) for pattern in title_patterns
-        )
-
-    def _extract_temporal_context(self, query: str) -> Optional[Dict[str, Any]]:
-        """Extract time-related context from query."""
-        temporal = {}
-
-        # Current time context
-        if any(word in query for word in ["today", "tonight", "now", "current"]):
-            temporal["relative_time"] = "current"
-        elif any(word in query for word in ["this week", "upcoming"]):
-            temporal["relative_time"] = "this_week"
-        elif any(word in query for word in ["next week"]):
-            temporal["relative_time"] = "next_week"
-
-        # Season detection
-        season_match = re.search(r"(winter|spring|summer|fall)\s+(\d{4})", query)
-        if season_match:
-            temporal["season"] = season_match.group(1)
-            temporal["year"] = int(season_match.group(2))
-        elif "this season" in query:
-            # Determine current season
-            month = datetime.now().month
-            year = datetime.now().year
-            if month in [12, 1, 2]:
-                temporal["season"] = "winter"
-            elif month in [3, 4, 5]:
-                temporal["season"] = "spring"
-            elif month in [6, 7, 8]:
-                temporal["season"] = "summer"
-            else:
-                temporal["season"] = "fall"
-            temporal["year"] = year
-
-        return temporal if temporal else None
 
     async def _llm_analyze_query(
         self,
