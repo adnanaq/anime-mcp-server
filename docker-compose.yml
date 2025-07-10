@@ -60,7 +60,7 @@ services:
       [
         "python",
         "-m",
-        "src.mcp.server",
+        "src.anime_mcp.modern_server",
         "--mode",
         "http",
         "--host",

@@ -291,6 +291,8 @@ class ConditionalRouter:
         """Check if a routing rule condition is met."""
         try:
             if rule.condition == RoutingCondition.QUERY_COMPLEXITY:
+                if context.routing_decision is None:
+                    return False
                 return context.routing_decision.estimated_complexity == rule.threshold
 
             elif rule.condition == RoutingCondition.PLATFORM_AVAILABILITY:
@@ -310,6 +312,8 @@ class ConditionalRouter:
 
             elif rule.condition == RoutingCondition.TOOL_SUCCESS_RATE:
                 # Calculate average success rate of primary tools
+                if context.routing_decision is None:
+                    return False
                 primary_tools = context.routing_decision.primary_tools
                 success_rates = []
                 for tool in primary_tools:
@@ -363,6 +367,10 @@ class ConditionalRouter:
 
         # Fallback based on routing decision characteristics
         routing_decision = context.routing_decision
+        
+        if routing_decision is None:
+            logger.warning("No routing decision available, using simple search")
+            return ExecutionPath.SIMPLE_SEARCH
 
         # Check for specific intent patterns
         if routing_decision.enrichment_recommended:
@@ -398,11 +406,14 @@ class ConditionalRouter:
         path_config = self.execution_paths[selected_path]
 
         # Merge with routing decision tools if compatible
-        routing_tools = context.routing_decision.primary_tools
-        path_tools = path_config["tools"]
-
-        # Use path tools but consider routing decision preferences
-        final_tools = path_tools.copy()
+        if context.routing_decision is not None:
+            routing_tools = context.routing_decision.primary_tools
+            path_tools = path_config["tools"]
+            # Use path tools but consider routing decision preferences
+            final_tools = path_tools.copy()
+        else:
+            final_tools = path_config["tools"].copy()
+            routing_tools = []
 
         # Add high-priority tools from routing decision if not in path
         for tool in routing_tools[:2]:  # Only add top 2 routing tools
@@ -416,11 +427,11 @@ class ConditionalRouter:
             "execution_strategy": path_config["strategy"],
             "timeout_ms": path_config["timeout_ms"],
             "description": path_config["description"],
-            "fallback_tools": context.routing_decision.fallback_tools,
+            "fallback_tools": context.routing_decision.fallback_tools if context.routing_decision else [],
             "max_retries": 2,
             "error_handling": "graceful_degradation",
             "routing_metadata": {
-                "original_routing_confidence": context.routing_decision.confidence,
+                "original_routing_confidence": context.routing_decision.confidence if context.routing_decision else 0.5,
                 "applicable_rules": len(
                     [
                         r
@@ -429,7 +440,7 @@ class ConditionalRouter:
                     ]
                 ),
                 "platform_health_score": self._calculate_platform_health_score(),
-                "complexity": context.routing_decision.estimated_complexity,
+                "complexity": context.routing_decision.estimated_complexity if context.routing_decision else "medium",
             },
         }
 

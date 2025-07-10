@@ -12,8 +12,8 @@ from pathlib import Path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-# Now import and run the core server
-from src.anime_mcp.server import main
+# Now import and run the modern server (core server superseded)
+from src.anime_mcp.modern_server import main
 
 if __name__ == "__main__":
     main()

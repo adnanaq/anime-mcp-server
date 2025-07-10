@@ -5,6 +5,7 @@ Specialized agent that routes queries to optimal platform-specific MCP tools
 based on query characteristics and platform strengths.
 """
 
+import logging
 from typing import Any, Dict, List
 
 from langchain_core.messages import HumanMessage
@@ -14,7 +15,7 @@ from langgraph_swarm import create_handoff_tool
 
 from langgraph.prebuilt import create_react_agent
 
-from ...anime_mcp.tools import get_recommended_tier
+# Removed get_recommended_tier import to avoid circular dependency
 from ...config import get_settings
 from ...integrations.clients.anilist_client import AniListClient
 from ...integrations.clients.jikan_client import JikanClient
@@ -24,6 +25,7 @@ from ...vector.qdrant_client import QdrantClient
 from ..workflow_state import AnimeSwarmState, QueryIntent
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 class SearchAgent:
@@ -152,7 +154,10 @@ class SearchAgent:
         return [search_anime_comprehensive]
 
     def _create_semantic_tools(self):
-        """Create semantic search LangChain tools."""
+        """Create semantic search LangChain tools including image search capabilities."""
+        
+        # Store current image data for tools to access
+        self.current_image_data = None
 
         @tool
         async def anime_semantic_search(query: str, limit: int = 20) -> Dict[str, Any]:
@@ -165,7 +170,48 @@ class SearchAgent:
             except Exception as e:
                 return {"error": str(e), "tier": "semantic"}
 
-        return [anime_semantic_search]
+        @tool
+        async def search_anime_by_image(query: str = "image search", limit: int = 20) -> Dict[str, Any]:
+            """Search for anime using image similarity with CLIP embeddings. Uses image data from context."""
+            try:
+                if not self.current_image_data:
+                    return {"error": "No image data available in context", "tier": "image_search"}
+                    
+                results = await self.qdrant_client.search_by_image(
+                    image_data=self.current_image_data, limit=limit
+                )
+                return {"results": results, "tier": "image_search"}
+            except Exception as e:
+                return {"error": str(e), "tier": "image_search"}
+
+        @tool
+        async def search_multimodal_anime(
+            query: str, text_weight: float = 0.7, limit: int = 20
+        ) -> Dict[str, Any]:
+            """Search for anime using both text query and image with adjustable weights. Uses image data from context."""
+            try:
+                if not self.current_image_data:
+                    return {"error": "No image data available in context", "tier": "multimodal_search"}
+                    
+                results = await self.qdrant_client.search_multimodal(
+                    query=query, image_data=self.current_image_data, text_weight=text_weight, limit=limit
+                )
+                return {"results": results, "tier": "multimodal_search"}
+            except Exception as e:
+                return {"error": str(e), "tier": "multimodal_search"}
+
+        @tool
+        async def find_visually_similar_anime(anime_id: str, limit: int = 20) -> Dict[str, Any]:
+            """Find anime visually similar to a given anime ID using image embeddings."""
+            try:
+                results = await self.qdrant_client.find_visually_similar_anime(
+                    anime_id=anime_id, limit=limit
+                )
+                return {"results": results, "tier": "visual_similarity"}
+            except Exception as e:
+                return {"error": str(e), "tier": "visual_similarity"}
+
+        return [anime_semantic_search, search_anime_by_image, search_multimodal_anime, find_visually_similar_anime]
 
     def _create_search_agent(self) -> Any:
         """Create reactive search agent with platform-specific tools."""
@@ -233,11 +279,12 @@ Help users discover anime through intelligent tier selection and comprehensive s
 - Performance: Thorough, complete data set
 - When: User needs exhaustive information or analytical insights
 
-**Semantic Search (anime_semantic_search, anime_similar)**:
-- Natural language queries: "dark fantasy with strong protagonist"
-- Finding similar anime: "anime like Attack on Titan"
-- Thematic discovery: "psychological horror anime"
-- When keywords don't capture the essence
+**Semantic & Image Search Tools**:
+- **anime_semantic_search**: Natural language queries ("dark fantasy with strong protagonist")
+- **search_anime_by_image**: Search using image similarity with CLIP embeddings
+- **search_multimodal_anime**: Combined text + image search with adjustable weights
+- **find_visually_similar_anime**: Find visually similar anime by anime ID
+- Use when: Keywords don't capture essence, user provides images, or needs visual similarity
 
 ## Search Strategy:
 
@@ -275,12 +322,16 @@ Be helpful, precise, and always explain your reasoning for tier selection."""
         if intent.needs_semantic_search or intent.needs_similarity_search:
             selected_tools.extend(self.semantic_tools)
 
+        # Image search for image-based queries
+        if intent.needs_image_search or intent.has_image_data:
+            selected_tools.extend(self.semantic_tools)
+
         # Determine appropriate tier based on query complexity
         query_complexity = getattr(intent, "complexity", "medium")
         response_time_priority = getattr(intent, "response_time_priority", "balanced")
 
-        # Get recommended tier
-        recommended_tier = get_recommended_tier(
+        # Get recommended tier (inline implementation to avoid circular imports)
+        recommended_tier = self._get_recommended_tier(
             query_complexity, response_time_priority
         )
 
@@ -327,23 +378,33 @@ Be helpful, precise, and always explain your reasoning for tier selection."""
         query = state.get("user_query", "")
         intent = state.get("query_intent", {})
 
-        # Build search context message
-        search_message = HumanMessage(
-            content=f"""
+        # Build search context message with image data if available
+        user_context = state.get("user_context", {})
+        image_data = user_context.get("image_data")
+        
+        # Set current image data for tools to access
+        self.current_image_data = image_data
+        
+        search_content = f"""
 Search for anime based on this query: "{query}"
 
 Query Intent Analysis:
 - Intent Type: {intent.get('intent_type', 'search')}
 - Needs Semantic Search: {intent.get('needs_semantic_search', False)}
+- Needs Image Search: {intent.get('needs_image_search', False)}
+- Has Image Data: {intent.get('has_image_data', False)}
 - Needs Streaming Info: {intent.get('needs_streaming_info', False)}
 - Query Complexity: {intent.get('complexity', 'medium')}
 - Response Time Priority: {intent.get('response_time_priority', 'balanced')}
 - Suggested Tools: {intent.get('suggested_tools', [])}
-
-Please select the most appropriate tier and search strategy based on the query complexity.
-Explain your reasoning for tier selection and provide comprehensive results.
 """
-        )
+
+        if image_data:
+            search_content += f"\n[SYSTEM: Image data is available with {len(image_data)} characters of base64 data. Use search_anime_by_image or search_multimodal_anime tools for image-based searches.]"
+
+        search_content += "\nPlease select the most appropriate tier and search strategy based on the query complexity and available data.\nExplain your reasoning for tier selection and provide comprehensive results."
+
+        search_message = HumanMessage(content=search_content)
 
         # Add search message to conversation
         updated_messages = state["messages"] + [search_message]
@@ -375,6 +436,47 @@ Explain your reasoning for tier selection and provide comprehensive results.
         """Extract which tiers were used in the search."""
         # Parse tool calls to determine which tiers were queried
         return ["basic", "semantic"]  # Placeholder
+
+    def _get_recommended_tier(
+        self, query_complexity: str = "medium", response_time_priority: str = "balanced"
+    ) -> str:
+        """
+        Get recommended tier based on query complexity and response time priority.
+
+        Args:
+            query_complexity: "simple", "medium", "complex", "analytical"
+            response_time_priority: "speed", "balanced", "completeness"
+
+        Returns:
+            Recommended tier: "basic", "standard", "detailed", or "comprehensive"
+        """
+        if query_complexity == "simple":
+            if response_time_priority == "speed":
+                return "basic"
+            elif response_time_priority == "balanced":
+                return "standard"
+            else:
+                return "detailed"
+
+        elif query_complexity == "medium":
+            if response_time_priority == "speed":
+                return "standard"
+            elif response_time_priority == "balanced":
+                return "detailed"
+            else:
+                return "comprehensive"
+
+        elif query_complexity == "complex":
+            if response_time_priority == "speed":
+                return "detailed"
+            else:
+                return "comprehensive"
+
+        elif query_complexity == "analytical":
+            return "comprehensive"
+
+        # Default to standard for unknown inputs
+        return "standard"
 
     def get_agent(self):
         """Get the configured search agent for swarm integration."""

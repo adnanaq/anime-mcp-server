@@ -272,7 +272,7 @@ async def search_anime_schedule(
                     "producers": raw_result.get("producers", []),
                     # Source attribution
                     "source_platform": "animeschedule",
-                    "data_quality_score": universal_anime.data_quality_score,
+                    "data_quality_score": raw_result.get("data_quality_score", 0.8),
                     "last_updated": raw_result.get("updated_at"),
                 }
 
@@ -400,19 +400,19 @@ async def get_schedule_data(
             },
             # Episode information
             "episode_info": {
-                "total_episodes": universal_anime.episodes,
+                "total_episodes": raw_result.get("episodes", raw_result.get("episode_count")),
                 "episodes_aired": raw_result.get("episodes_aired"),
                 "episode_duration": raw_result.get("episode_duration"),
                 "average_duration": raw_result.get("average_episode_duration"),
             },
             # Airing period
             "airing_period": {
-                "start_date": universal_anime.start_date,
-                "end_date": universal_anime.end_date,
+                "start_date": raw_result.get("start_date", raw_result.get("aired_from")),
+                "end_date": raw_result.get("end_date", raw_result.get("aired_to")),
                 "premiere_date": raw_result.get("premiere_date"),
                 "finale_date": raw_result.get("finale_date"),
                 "season": raw_result.get("season"),
-                "year": universal_anime.year,
+                "year": raw_result.get("year"),
             },
             # Comprehensive streaming data
             "streaming_platforms": {
@@ -428,7 +428,7 @@ async def get_schedule_data(
             },
             # Production and licensing
             "production": {
-                "studios": universal_anime.studios or [],
+                "studios": raw_result.get("studios", []),
                 "producers": raw_result.get("producers", []),
                 "licensors": raw_result.get("licensors", []),
                 "source_material": raw_result.get("source"),
@@ -455,7 +455,7 @@ async def get_schedule_data(
             },
             # Metadata
             "source_platform": "animeschedule",
-            "data_quality_score": universal_anime.data_quality_score,
+            "data_quality_score": raw_result.get("data_quality_score", 0.8),
             "last_updated": raw_result.get("updated_at"),
             "data_freshness": raw_result.get("data_freshness", "unknown"),
         }
@@ -580,10 +580,10 @@ async def get_currently_airing(
                         "premium_required": raw_result.get("premium_required", False),
                     },
                     # Additional data
-                    "score": universal_anime.score,
+                    "score": raw_result.get("score"),
                     "popularity_rank": raw_result.get("popularity_rank"),
-                    "genres": universal_anime.genres or [],
-                    "studios": universal_anime.studios or [],
+                    "genres": raw_result.get("genres", []),
+                    "studios": raw_result.get("studios", []),
                     # External IDs for cross-platform lookup
                     "mal_id": raw_result.get("mal_id"),
                     "anilist_id": raw_result.get("anilist_id"),

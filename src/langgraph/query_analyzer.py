@@ -46,9 +46,17 @@ class QueryAnalyzer:
             preferred_platforms=context.get("preferred_platforms") if context else None,
         )
 
+        # Detect image data in context for multimodal search
+        has_image_data = bool(context and context.get("image_data"))
+        needs_image_search = has_image_data or any(
+            keyword in query.lower() 
+            for keyword in ["image", "picture", "poster", "visual", "this anime", "looks like"]
+        )
+
         # Convert routing decision to query intent format compatible with existing workflow
         return {
             "intent_type": (
+                "image_search" if has_image_data else
                 routing_decision.primary_tools[0]
                 if routing_decision.primary_tools
                 else "search"
@@ -60,6 +68,8 @@ class QueryAnalyzer:
             "needs_similarity_search": any(
                 "similar" in tool for tool in routing_decision.primary_tools
             ),
+            "needs_image_search": needs_image_search,
+            "has_image_data": has_image_data,
             "needs_seasonal_data": any(
                 "seasonal" in tool for tool in routing_decision.primary_tools
             ),
@@ -98,6 +108,9 @@ class QueryAnalyzer:
             "search_anime_jikan",
             "search_anime_kitsu",
             "anime_semantic_search",
+            "search_anime_by_image",
+            "search_multimodal_anime",
+            "find_visually_similar_anime",
         ]
 
         schedule_tools = [
@@ -148,6 +161,12 @@ class QueryAnalyzer:
             for tool in routing_decision.primary_tools
         ):
             requirements.append("similarity_scores")
+
+        if any(
+            "image" in tool or "visual" in tool or "multimodal" in tool
+            for tool in routing_decision.primary_tools
+        ):
+            requirements.append("image_processing")
 
         if routing_decision.enrichment_recommended:
             requirements.append("cross_platform_enrichment")
