@@ -392,6 +392,105 @@ class Settings(BaseSettings):
             raise ValueError(f"JinaCLIP input resolution must be one of: {valid_resolutions}")
         return v
 
+    # Domain-Specific Fine-Tuning Configuration (Task #118)
+    enable_fine_tuning: bool = Field(
+        default=False, description="Enable domain-specific fine-tuning for anime content"
+    )
+    fine_tuning_data_path: str = Field(
+        default="data/anime_fine_tuning_data.json", description="Path to fine-tuning dataset"
+    )
+    fine_tuning_model_dir: str = Field(
+        default="models/anime_finetuned", description="Directory to save fine-tuned models"
+    )
+    fine_tuning_use_lora: bool = Field(
+        default=True, description="Use LoRA (Low-Rank Adaptation) for parameter-efficient fine-tuning"
+    )
+    fine_tuning_lora_r: int = Field(
+        default=8, ge=1, le=64, description="LoRA rank parameter"
+    )
+    fine_tuning_lora_alpha: int = Field(
+        default=32, ge=1, le=128, description="LoRA alpha parameter"
+    )
+    fine_tuning_lora_dropout: float = Field(
+        default=0.1, ge=0.0, le=0.5, description="LoRA dropout rate"
+    )
+    fine_tuning_batch_size: int = Field(
+        default=16, ge=1, le=128, description="Fine-tuning batch size"
+    )
+    fine_tuning_learning_rate: float = Field(
+        default=1e-4, ge=1e-6, le=1e-2, description="Fine-tuning learning rate"
+    )
+    fine_tuning_num_epochs: int = Field(
+        default=3, ge=1, le=20, description="Number of fine-tuning epochs"
+    )
+    fine_tuning_warmup_steps: int = Field(
+        default=100, ge=0, le=1000, description="Number of warmup steps"
+    )
+    
+    # Character Recognition Fine-Tuning
+    character_recognition_enabled: bool = Field(
+        default=True, description="Enable character recognition fine-tuning"
+    )
+    character_recognition_weight: float = Field(
+        default=0.4, ge=0.0, le=1.0, description="Weight for character recognition task in multi-task training"
+    )
+    character_min_confidence: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Minimum confidence threshold for character predictions"
+    )
+    
+    # Art Style Classification Fine-Tuning
+    art_style_classification_enabled: bool = Field(
+        default=True, description="Enable art style classification fine-tuning"
+    )
+    art_style_classification_weight: float = Field(
+        default=0.3, ge=0.0, le=1.0, description="Weight for art style classification task in multi-task training"
+    )
+    art_style_min_confidence: float = Field(
+        default=0.3, ge=0.0, le=1.0, description="Minimum confidence threshold for art style predictions"
+    )
+    
+    # Genre Enhancement Fine-Tuning
+    genre_enhancement_enabled: bool = Field(
+        default=True, description="Enable genre understanding enhancement fine-tuning"
+    )
+    genre_enhancement_weight: float = Field(
+        default=0.3, ge=0.0, le=1.0, description="Weight for genre enhancement task in multi-task training"
+    )
+    genre_min_confidence: float = Field(
+        default=0.4, ge=0.0, le=1.0, description="Minimum confidence threshold for genre predictions"
+    )
+    
+    # Fine-Tuning Data Configuration
+    fine_tuning_train_split: float = Field(
+        default=0.8, ge=0.5, le=0.95, description="Training data split ratio"
+    )
+    fine_tuning_validation_split: float = Field(
+        default=0.1, ge=0.05, le=0.3, description="Validation data split ratio"
+    )
+    fine_tuning_test_split: float = Field(
+        default=0.1, ge=0.05, le=0.3, description="Test data split ratio"
+    )
+    fine_tuning_augment_data: bool = Field(
+        default=True, description="Enable data augmentation for fine-tuning"
+    )
+    fine_tuning_max_samples: Optional[int] = Field(
+        default=None, description="Maximum number of samples to use for fine-tuning (None for all)"
+    )
+    
+    # Fine-Tuning Performance Configuration
+    fine_tuning_checkpoint_steps: int = Field(
+        default=500, ge=100, le=5000, description="Steps between model checkpoints"
+    )
+    fine_tuning_eval_steps: int = Field(
+        default=250, ge=50, le=2000, description="Steps between evaluation runs"
+    )
+    fine_tuning_save_best_model: bool = Field(
+        default=True, description="Save the best performing model during training"
+    )
+    fine_tuning_early_stopping_patience: int = Field(
+        default=3, ge=1, le=10, description="Early stopping patience (epochs without improvement)"
+    )
+
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
