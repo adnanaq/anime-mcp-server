@@ -48,6 +48,105 @@ class Settings(BaseSettings):
     clip_model: str = Field(
         default="ViT-B/32", description="CLIP model for image embeddings"
     )
+    
+    # Modern Embedding Configuration
+    # Text Embedding Model Selection
+    text_embedding_provider: str = Field(
+        default="huggingface", description="Text embedding provider: fastembed, huggingface, sentence-transformers"
+    )
+    text_embedding_model: str = Field(
+        default="BAAI/bge-m3", description="Modern text embedding model name"
+    )
+    
+    # Image Embedding Model Selection  
+    image_embedding_provider: str = Field(
+        default="jinaclip", description="Image embedding provider: clip, siglip, jinaclip"
+    )
+    image_embedding_model: str = Field(
+        default="jinaai/jina-clip-v2", description="Modern image embedding model name"
+    )
+    
+    # Model-Specific Configuration
+    siglip_input_resolution: int = Field(
+        default=384, description="SigLIP input image resolution"
+    )
+    
+    jinaclip_input_resolution: int = Field(
+        default=512, description="JinaCLIP input image resolution"
+    )
+    jinaclip_text_max_length: int = Field(
+        default=77, description="JinaCLIP maximum text sequence length"
+    )
+    
+    # BGE Configuration
+    bge_model_version: str = Field(
+        default="m3", description="BGE model version: v1.5, m3, reranker"
+    )
+    bge_model_size: str = Field(
+        default="base", description="BGE model size: small, base, large"
+    )
+    bge_max_length: int = Field(
+        default=8192, description="BGE maximum input sequence length"
+    )
+    
+    model_cache_dir: Optional[str] = Field(
+        default=None, description="Custom cache directory for embedding models"
+    )
+    model_warm_up: bool = Field(
+        default=False, description="Pre-load and warm up models during initialization"
+    )
+    
+
+    # Qdrant Performance Optimization Configuration
+    # Vector Quantization (40x speedup potential, 60% storage reduction)
+    qdrant_enable_quantization: bool = Field(
+        default=False, description="Enable vector quantization for performance optimization"
+    )
+    qdrant_quantization_type: str = Field(
+        default="scalar", description="Quantization type: binary, scalar, product"
+    )
+    qdrant_quantization_always_ram: Optional[bool] = Field(
+        default=None, description="Keep quantized vectors in RAM for better performance"
+    )
+    
+    # GPU Acceleration Configuration (10x indexing performance)
+    qdrant_enable_gpu: bool = Field(
+        default=False, description="Enable GPU acceleration for indexing (requires CUDA)"
+    )
+    qdrant_gpu_device: Optional[int] = Field(
+        default=None, description="GPU device ID for acceleration (0, 1, etc.)"
+    )
+    
+    # HNSW Performance Tuning (optimized for anime search patterns)
+    qdrant_hnsw_ef_construct: Optional[int] = Field(
+        default=None, description="HNSW ef_construct parameter (higher = better accuracy, slower indexing)"
+    )
+    qdrant_hnsw_m: Optional[int] = Field(
+        default=None, description="HNSW M parameter (higher = better accuracy, more memory)"
+    )
+    qdrant_hnsw_max_indexing_threads: Optional[int] = Field(
+        default=None, description="Maximum threads for HNSW indexing"
+    )
+    
+    # Payload Indexing Configuration (faster filtering)
+    qdrant_enable_payload_indexing: bool = Field(
+        default=True, description="Enable automatic payload field indexing for faster filtering"
+    )
+    qdrant_indexed_payload_fields: List[str] = Field(
+        default=["type", "year", "status", "genres", "studios"], 
+        description="Payload fields to index for filtering optimization"
+    )
+    
+    # Storage and Memory Optimization
+    qdrant_enable_wal: Optional[bool] = Field(
+        default=None, description="Enable Write-Ahead Logging (None = Qdrant default)"
+    )
+    qdrant_memory_mapping_threshold: Optional[int] = Field(
+        default=None, description="Memory mapping threshold in KB (None = Qdrant default)"
+    )
+    qdrant_storage_compression_ratio: Optional[float] = Field(
+        default=None, description="Storage compression ratio (None = Qdrant default)"
+    )
 
     # Data Processing Configuration
     batch_size: int = Field(
@@ -212,6 +311,85 @@ class Settings(BaseSettings):
             warnings.warn(
                 f"FastEmbed model '{v}' not in validated list. Ensure it's compatible."
             )
+        return v
+
+    @field_validator("qdrant_quantization_type")
+    @classmethod
+    def validate_quantization_type(cls, v):
+        """Validate Qdrant quantization type."""
+        valid_types = ["binary", "scalar", "product"]
+        if v.lower() not in valid_types:
+            raise ValueError(f"Quantization type must be one of: {valid_types}")
+        return v.lower()
+
+    @field_validator("qdrant_hnsw_ef_construct")
+    @classmethod
+    def validate_hnsw_ef_construct(cls, v):
+        """Validate HNSW ef_construct parameter."""
+        if v is not None and (v < 4 or v > 2000):
+            raise ValueError("HNSW ef_construct must be between 4 and 2000")
+        return v
+
+    @field_validator("qdrant_hnsw_m")
+    @classmethod
+    def validate_hnsw_m(cls, v):
+        """Validate HNSW M parameter."""
+        if v is not None and (v < 2 or v > 100):
+            raise ValueError("HNSW M must be between 2 and 100")
+        return v
+
+    @field_validator("text_embedding_provider")
+    @classmethod
+    def validate_text_embedding_provider(cls, v):
+        """Validate text embedding provider."""
+        valid_providers = ["fastembed", "huggingface", "sentence-transformers"]
+        if v.lower() not in valid_providers:
+            raise ValueError(f"Text embedding provider must be one of: {valid_providers}")
+        return v.lower()
+
+    @field_validator("image_embedding_provider")
+    @classmethod
+    def validate_image_embedding_provider(cls, v):
+        """Validate image embedding provider."""
+        valid_providers = ["clip", "siglip", "jinaclip"]
+        if v.lower() not in valid_providers:
+            raise ValueError(f"Image embedding provider must be one of: {valid_providers}")
+        return v.lower()
+
+    @field_validator("bge_model_version")
+    @classmethod
+    def validate_bge_model_version(cls, v):
+        """Validate BGE model version."""
+        valid_versions = ["v1.5", "m3", "reranker"]
+        if v.lower() not in valid_versions:
+            raise ValueError(f"BGE model version must be one of: {valid_versions}")
+        return v.lower()
+
+    @field_validator("bge_model_size")
+    @classmethod
+    def validate_bge_model_size(cls, v):
+        """Validate BGE model size."""
+        valid_sizes = ["small", "base", "large"]
+        if v.lower() not in valid_sizes:
+            raise ValueError(f"BGE model size must be one of: {valid_sizes}")
+        return v.lower()
+
+    @field_validator("siglip_input_resolution")
+    @classmethod
+    def validate_siglip_input_resolution(cls, v):
+        """Validate SigLIP input resolution."""
+        valid_resolutions = [224, 256, 384, 512]
+        if v not in valid_resolutions:
+            raise ValueError(f"SigLIP input resolution must be one of: {valid_resolutions}")
+        return v
+
+    @field_validator("jinaclip_input_resolution")
+    @classmethod
+    def validate_jinaclip_input_resolution(cls, v):
+        """Validate JinaCLIP input resolution."""
+        valid_resolutions = [224, 256, 384, 512]
+        if v not in valid_resolutions:
+            raise ValueError(f"JinaCLIP input resolution must be one of: {valid_resolutions}")
         return v
 
     model_config = ConfigDict(

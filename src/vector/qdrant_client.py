@@ -21,6 +21,16 @@ from qdrant_client.models import (
     PointStruct,
     Range,
     VectorParams,
+    # Qdrant optimization models
+    BinaryQuantization,
+    ScalarQuantization,
+    ProductQuantization,
+    QuantizationConfig,
+    HnswConfig,
+    OptimizersConfig,
+    WalConfig,
+    CollectionParams,
+    PayloadSchemaType,
 )
 
 from ..config import Settings
@@ -54,70 +64,52 @@ class QdrantClient:
         self.url = url or settings.qdrant_url
         self.collection_name = collection_name or settings.qdrant_collection_name
         self.client = QdrantSDK(url=self.url)
-        self.encoder = None
         self._vector_size = settings.qdrant_vector_size
         self._distance_metric = settings.qdrant_distance_metric
-        self._fastembed_model = settings.fastembed_model
-
-        # Multi-vector support (always enabled)
         self._image_vector_size = getattr(settings, "image_vector_size", 512)
+        
+        # Embedding processors
+        self.text_processor = None
         self.vision_processor = None
 
-        # Initialize FastEmbed encoder
-        self._init_encoder()
-
-        # Initialize vision processor (always enabled for multi-vector)
-        self._init_vision_processor()
+        # Initialize processors
+        self._init_processors()
 
         # Create collection if it doesn't exist
         self._ensure_collection_exists()
 
-    def _init_encoder(self):
-        """Initialize FastEmbed encoder for semantic embeddings."""
+    def _init_processors(self):
+        """Initialize embedding processors."""
         try:
-            # Import FastEmbed only when needed
-            from fastembed import TextEmbedding
-
-            # Initialize FastEmbed with configured model
-            cache_dir = getattr(self.settings, "fastembed_cache_dir", None)
-            init_kwargs = {"model_name": self._fastembed_model}
-            if cache_dir:
-                init_kwargs["cache_dir"] = cache_dir
-
-            self.encoder = TextEmbedding(**init_kwargs)
-            logger.info(
-                f"Initialized FastEmbed encoder ({self._fastembed_model}) with vector size: {self._vector_size}"
-            )
-        except Exception as e:
-            logger.error(
-                f"Failed to initialize FastEmbed encoder with model {self._fastembed_model}: {e}"
-            )
-            raise
-
-    def _init_vision_processor(self):
-        """Initialize vision processor for image embeddings (lazy loading)."""
-        try:
-            # Import vision processor only when needed
+            # Import processors
+            from .text_processor import TextProcessor
             from .vision_processor import VisionProcessor
-
-            self.vision_processor = VisionProcessor(
-                model_name=getattr(self.settings, "clip_model", "ViT-B/32"),
-                cache_dir=getattr(self.settings, "fastembed_cache_dir", None),
-            )
+            
+            # Initialize text processor
+            self.text_processor = TextProcessor(self.settings)
+            
+            # Initialize vision processor
+            self.vision_processor = VisionProcessor(self.settings)
+            
+            # Update vector sizes based on modern models
+            text_info = self.text_processor.get_model_info()
+            vision_info = self.vision_processor.get_model_info()
+            
+            self._vector_size = text_info.get("embedding_size", 384)
+            self._image_vector_size = vision_info.get("embedding_size", 512)
+            
             logger.info(
-                f"Initialized vision processor with image vector size: {self._image_vector_size}"
+                f"Initialized processors - Text: {text_info['model_name']} ({self._vector_size}), "
+                f"Vision: {vision_info['model_name']} ({self._image_vector_size})"
             )
-        except ImportError:
-            logger.warning(
-                "Vision processor not available. Install CLIP dependencies for image search."
-            )
-            self.vision_processor = None
+            
         except Exception as e:
-            logger.error(f"Failed to initialize vision processor: {e}")
-            self.vision_processor = None
+            logger.error(f"Failed to initialize processors: {e}")
+            raise
+    
 
     def _ensure_collection_exists(self):
-        """Create anime collection if it doesn't exist."""
+        """Create anime collection with optimization features if it doesn't exist."""
         try:
             # Check if collection exists
             collections = self.client.get_collections().collections
@@ -126,14 +118,33 @@ class QdrantClient:
             )
 
             if not collection_exists:
-                # Create multi-vector collection
-                logger.info(f"Creating multi-vector collection: {self.collection_name}")
+                # Create optimized multi-vector collection
+                logger.info(f"Creating optimized multi-vector collection: {self.collection_name}")
                 vectors_config = self._create_multi_vector_config()
 
+                # Task #116: Add quantization configuration
+                quantization_config = self._create_quantization_config()
+                
+                # Task #116: Add optimizers configuration
+                optimizers_config = self._create_optimizers_config()
+                
+                # Task #116: Add WAL configuration
+                wal_config = self._create_wal_config()
+
+                # Create collection with full optimization
                 self.client.create_collection(
-                    collection_name=self.collection_name, vectors_config=vectors_config
+                    collection_name=self.collection_name, 
+                    vectors_config=vectors_config,
+                    quantization_config=quantization_config,
+                    optimizers_config=optimizers_config,
+                    wal_config=wal_config
                 )
-                logger.info(f"Created collection: {self.collection_name}")
+                
+                # Configure payload indexing for faster filtering
+                if getattr(self.settings, "qdrant_enable_payload_indexing", True):
+                    self._setup_payload_indexing()
+                
+                logger.info(f"Created optimized collection: {self.collection_name}")
             else:
                 logger.info(f"Collection {self.collection_name} already exists")
 
@@ -149,14 +160,134 @@ class QdrantClient:
     }
 
     def _create_multi_vector_config(self) -> Dict[str, VectorParams]:
-        """Create multi-vector configuration for text + picture + thumbnail vectors."""
+        """Create multi-vector configuration for text + picture + thumbnail vectors with optimization."""
         distance = self._DISTANCE_MAPPING.get(self._distance_metric, Distance.COSINE)
+        
+        # Add HNSW optimization configuration
+        hnsw_config = None
+        if (hasattr(self.settings, "qdrant_hnsw_ef_construct") and self.settings.qdrant_hnsw_ef_construct) or \
+           (hasattr(self.settings, "qdrant_hnsw_m") and self.settings.qdrant_hnsw_m) or \
+           (hasattr(self.settings, "qdrant_hnsw_max_indexing_threads") and self.settings.qdrant_hnsw_max_indexing_threads):
+            
+            hnsw_params = {}
+            if hasattr(self.settings, "qdrant_hnsw_ef_construct") and self.settings.qdrant_hnsw_ef_construct:
+                hnsw_params["ef_construct"] = self.settings.qdrant_hnsw_ef_construct
+            if hasattr(self.settings, "qdrant_hnsw_m") and self.settings.qdrant_hnsw_m:
+                hnsw_params["m"] = self.settings.qdrant_hnsw_m
+            if hasattr(self.settings, "qdrant_hnsw_max_indexing_threads") and self.settings.qdrant_hnsw_max_indexing_threads:
+                hnsw_params["max_indexing_threads"] = self.settings.qdrant_hnsw_max_indexing_threads
+            
+            if hnsw_params:
+                hnsw_config = HnswConfig(**hnsw_params)
+                logger.info(f"Applying HNSW optimization: {hnsw_params}")
 
-        return {
-            "text": VectorParams(size=self._vector_size, distance=distance),
-            "picture": VectorParams(size=self._image_vector_size, distance=distance),
-            "thumbnail": VectorParams(size=self._image_vector_size, distance=distance),
+        # Create vector parameters with optional HNSW optimization
+        vector_params = {
+            "text": VectorParams(
+                size=self._vector_size, 
+                distance=distance,
+                hnsw_config=hnsw_config
+            ),
+            "picture": VectorParams(
+                size=self._image_vector_size, 
+                distance=distance,
+                hnsw_config=hnsw_config
+            ),
+            "thumbnail": VectorParams(
+                size=self._image_vector_size, 
+                distance=distance,
+                hnsw_config=hnsw_config
+            ),
         }
+        
+        return vector_params
+    
+    def _create_quantization_config(self) -> Optional[QuantizationConfig]:
+        """Create quantization configuration for performance optimization."""
+        if not getattr(self.settings, "qdrant_enable_quantization", False):
+            return None
+            
+        quantization_type = getattr(self.settings, "qdrant_quantization_type", "scalar")
+        always_ram = getattr(self.settings, "qdrant_quantization_always_ram", None)
+        
+        try:
+            if quantization_type == "binary":
+                quantization = BinaryQuantization(always_ram=always_ram)
+                logger.info("Enabling binary quantization for 40x speedup potential")
+            elif quantization_type == "scalar":
+                quantization = ScalarQuantization(
+                    type="int8",  # 8-bit quantization for good balance
+                    always_ram=always_ram
+                )
+                logger.info("Enabling scalar quantization for memory optimization")
+            elif quantization_type == "product":
+                quantization = ProductQuantization(
+                    compression=16,  # Good compression ratio for anime vectors
+                    always_ram=always_ram
+                )
+                logger.info("Enabling product quantization for storage optimization")
+            else:
+                logger.warning(f"Unknown quantization type: {quantization_type}")
+                return None
+                
+            return QuantizationConfig(quantization)
+        except Exception as e:
+            logger.error(f"Failed to create quantization config: {e}")
+            return None
+
+    def _create_optimizers_config(self) -> Optional[OptimizersConfig]:
+        """Create optimizers configuration for indexing performance."""
+        try:
+            optimizer_params = {}
+            
+            # Task #116: Configure memory mapping threshold
+            memory_threshold = getattr(self.settings, "qdrant_memory_mapping_threshold", None)
+            if memory_threshold:
+                optimizer_params["memmap_threshold"] = memory_threshold
+                
+            # Configure indexing threads if specified
+            indexing_threads = getattr(self.settings, "qdrant_hnsw_max_indexing_threads", None)
+            if indexing_threads:
+                optimizer_params["indexing_threshold"] = 0  # Start indexing immediately
+                
+            if optimizer_params:
+                logger.info(f"Applying optimizer configuration: {optimizer_params}")
+                return OptimizersConfig(**optimizer_params)
+            return None
+        except Exception as e:
+            logger.error(f"Failed to create optimizers config: {e}")
+            return None
+
+    def _create_wal_config(self) -> Optional[WalConfig]:
+        """Create Write-Ahead Logging configuration."""
+        enable_wal = getattr(self.settings, "qdrant_enable_wal", None)
+        if enable_wal is not None:
+            try:
+                config = WalConfig(wal_capacity_mb=32, wal_segments_ahead=0)
+                logger.info(f"WAL configuration: enabled={enable_wal}")
+                return config
+            except Exception as e:
+                logger.error(f"Failed to create WAL config: {e}")
+        return None
+
+    def _setup_payload_indexing(self):
+        """Setup payload field indexing for faster filtering."""
+        indexed_fields = getattr(self.settings, "qdrant_indexed_payload_fields", [])
+        if not indexed_fields:
+            return
+            
+        try:
+            for field in indexed_fields:
+                # Create index for each field to optimize filtering
+                self.client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name=field,
+                    field_schema=PayloadSchemaType.KEYWORD  # Most anime fields are keywords/strings
+                )
+                logger.info(f"Created payload index for field: {field}")
+        except Exception as e:
+            logger.warning(f"Failed to setup payload indexing: {e}")
+            # Don't fail collection creation if indexing fails
 
     async def health_check(self) -> bool:
         """Check if Qdrant is healthy and reachable."""
@@ -206,7 +337,7 @@ class QdrantClient:
             return {"error": str(e)}
 
     def _create_image_embedding(self, image_data: str) -> Optional[List[float]]:
-        """Create image embedding vector using CLIP model.
+        """Create image embedding vector using modern vision processor.
 
         Args:
             image_data: Base64 encoded image data
@@ -215,15 +346,11 @@ class QdrantClient:
             Image embedding vector or None if processing fails
         """
         try:
-            if not self.vision_processor:
-                logger.error("Vision processor not available")
-                return None
-
             if not image_data or not image_data.strip():
                 logger.warning("Empty image data provided for embedding")
                 return [0.0] * self._image_vector_size
 
-            # Use vision processor to generate image embeddings
+            # Use modern vision processor
             embedding = self.vision_processor.encode_image(image_data)
 
             if embedding is None:
@@ -249,21 +376,19 @@ class QdrantClient:
             return [0.0] * self._image_vector_size
 
     def _create_embedding(self, text: str) -> List[float]:
-        """Create semantic embedding vector from text using FastEmbed."""
+        """Create semantic embedding vector from text using modern text processor."""
         try:
             if not text or not text.strip():
                 logger.warning("Empty text provided for embedding")
                 # Return zero vector for empty text
                 return [0.0] * self._vector_size
 
-            # Use FastEmbed to generate semantic embeddings
-            embeddings = list(self.encoder.embed([text.strip()]))
-            if not embeddings:
+            # Use modern text processor
+            embedding = self.text_processor.encode_text(text.strip())
+            
+            if embedding is None:
                 logger.warning(f"No embedding generated for text: {text[:100]}...")
                 return [0.0] * self._vector_size
-
-            # FastEmbed returns numpy arrays, convert to list
-            embedding = embeddings[0].tolist()
 
             # Ensure correct dimensions
             if len(embedding) != self._vector_size:
@@ -708,14 +833,14 @@ class QdrantClient:
             return False
 
     async def search_by_image(
-        self, image_data: str, limit: int = 10, use_combined_vectors: bool = True
+        self, image_data: str, limit: int = 10, use_hybrid_search: bool = True
     ) -> List[Dict[str, Any]]:
-        """Search for anime by image similarity using comprehensive visual search.
+        """Search for anime by image similarity using optimized hybrid search.
 
         Args:
             image_data: Base64 encoded image data
             limit: Maximum number of results
-            use_combined_vectors: If True, combines picture and thumbnail vectors for better accuracy
+            use_hybrid_search: If True, uses modern hybrid search API for efficiency
 
         Returns:
             List of anime with visual similarity scores
@@ -729,118 +854,115 @@ class QdrantClient:
 
             loop = asyncio.get_event_loop()
 
-            if use_combined_vectors:
-                # Comprehensive search: combine picture and thumbnail results
-                # Search picture vectors (main/cover images)
-                picture_results = await loop.run_in_executor(
-                    None,
-                    lambda: self.client.search(
-                        collection_name=self.collection_name,
-                        query_vector=NamedVector(
-                            name="picture", vector=image_embedding
+            if use_hybrid_search:
+                # Task #116: Use modern hybrid search API (single request vs multiple)
+                try:
+                    # Use batch search for multiple vectors in single request
+                    search_requests = [
+                        {
+                            "vector": NamedVector(name="picture", vector=image_embedding),
+                            "limit": limit,
+                            "with_payload": True,
+                            "with_vectors": False,
+                        },
+                        {
+                            "vector": NamedVector(name="thumbnail", vector=image_embedding),
+                            "limit": limit,
+                            "with_payload": True,
+                            "with_vectors": False,
+                        }
+                    ]
+                    
+                    # Execute hybrid search
+                    hybrid_results = await loop.run_in_executor(
+                        None,
+                        lambda: self.client.search_batch(
+                            collection_name=self.collection_name,
+                            requests=search_requests
                         ),
-                        limit=limit * 2,  # Get more for fusion
-                        with_payload=True,
-                        with_vectors=False,
-                    ),
-                )
+                    )
 
-                # Search thumbnail vectors
-                thumbnail_results = await loop.run_in_executor(
-                    None,
-                    lambda: self.client.search(
-                        collection_name=self.collection_name,
-                        query_vector=NamedVector(
-                            name="thumbnail", vector=image_embedding
-                        ),
-                        limit=limit * 2,  # Get more for fusion
-                        with_payload=True,
-                        with_vectors=False,
-                    ),
-                )
+                    # Process hybrid results
+                    picture_results = hybrid_results[0] if len(hybrid_results) > 0 else []
+                    thumbnail_results = hybrid_results[1] if len(hybrid_results) > 1 else []
 
-                # Combine results with weighted scoring (favor picture over thumbnail)
-                picture_scores = {
-                    hit.payload.get("anime_id", hit.id): hit.score
-                    for hit in picture_results
-                }
-                thumbnail_scores = {
-                    hit.payload.get("anime_id", hit.id): hit.score
-                    for hit in thumbnail_results
-                }
+                    # Combine results with weighted scoring (favor picture over thumbnail)
+                    picture_scores = {
+                        hit.payload.get("anime_id", hit.id): hit.score
+                        for hit in picture_results
+                    }
+                    thumbnail_scores = {
+                        hit.payload.get("anime_id", hit.id): hit.score
+                        for hit in thumbnail_results
+                    }
 
-                # Weighted combination: 70% picture, 30% thumbnail
-                combined_results = {}
-                all_anime_ids = set(picture_scores.keys()) | set(
-                    thumbnail_scores.keys()
-                )
+                    # Weighted combination: 70% picture, 30% thumbnail
+                    combined_results = {}
+                    all_anime_ids = set(picture_scores.keys()) | set(thumbnail_scores.keys())
 
-                for anime_id in all_anime_ids:
-                    picture_score = picture_scores.get(anime_id, 0.0)
-                    thumbnail_score = thumbnail_scores.get(anime_id, 0.0)
+                    for anime_id in all_anime_ids:
+                        picture_score = picture_scores.get(anime_id, 0.0)
+                        thumbnail_score = thumbnail_scores.get(anime_id, 0.0)
 
-                    # Combined score with higher weight on picture
-                    if picture_score > 0 or thumbnail_score > 0:
-                        combined_score = 0.7 * picture_score + 0.3 * thumbnail_score
-                        combined_results[anime_id] = combined_score
+                        # Combined score with higher weight on picture
+                        if picture_score > 0 or thumbnail_score > 0:
+                            combined_score = 0.7 * picture_score + 0.3 * thumbnail_score
+                            combined_results[anime_id] = combined_score
 
-                # Sort by combined score and get top results
-                sorted_anime_ids = sorted(
-                    combined_results.keys(),
-                    key=lambda x: combined_results[x],
-                    reverse=True,
-                )[:limit]
+                    # Sort by combined score and get top results
+                    sorted_anime_ids = sorted(
+                        combined_results.keys(),
+                        key=lambda x: combined_results[x],
+                        reverse=True,
+                    )[:limit]
 
-                # Get full anime data for results
-                results = []
-                for anime_id in sorted_anime_ids:
-                    # Find the anime data from either result set
-                    anime_data = None
-                    for hit in picture_results + thumbnail_results:
-                        if hit.payload.get("anime_id", hit.id) == anime_id:
-                            anime_data = dict(hit.payload)
-                            break
+                    # Get full anime data for results
+                    results = []
+                    for anime_id in sorted_anime_ids:
+                        # Find the anime data from either result set
+                        anime_data = None
+                        for hit in picture_results + thumbnail_results:
+                            if hit.payload.get("anime_id", hit.id) == anime_id:
+                                anime_data = dict(hit.payload)
+                                break
 
-                    if anime_data:
-                        anime_data["visual_similarity_score"] = combined_results[
-                            anime_id
-                        ]
-                        anime_data["picture_score"] = picture_scores.get(anime_id, 0.0)
-                        anime_data["thumbnail_score"] = thumbnail_scores.get(
-                            anime_id, 0.0
-                        )
-                        anime_data["_id"] = anime_id
-                        results.append(anime_data)
+                        if anime_data:
+                            anime_data["visual_similarity_score"] = combined_results[anime_id]
+                            anime_data["picture_score"] = picture_scores.get(anime_id, 0.0)
+                            anime_data["thumbnail_score"] = thumbnail_scores.get(anime_id, 0.0)
+                            anime_data["_id"] = anime_id
+                            results.append(anime_data)
 
-                logger.info(
-                    f"Combined image search: {len(picture_results)} picture + {len(thumbnail_results)} thumbnail = {len(results)} final results"
-                )
-                return results
+                    logger.info(
+                        f"Hybrid image search: {len(picture_results)} picture + {len(thumbnail_results)} thumbnail = {len(results)} final results"
+                    )
+                    return results
 
-            else:
-                # Simple search using only picture vector
-                search_result = await loop.run_in_executor(
-                    None,
-                    lambda: self.client.search(
-                        collection_name=self.collection_name,
-                        query_vector=NamedVector(
-                            name="picture", vector=image_embedding
-                        ),
-                        limit=limit,
-                        with_payload=True,
-                        with_vectors=False,
-                    ),
-                )
+                except Exception as hybrid_error:
+                    logger.warning(f"Hybrid search failed, falling back to individual searches: {hybrid_error}")
+                    # Fall back to individual searches if hybrid search not available
 
-                # Format results
-                results = []
-                for hit in search_result:
-                    result = dict(hit.payload)
-                    result["visual_similarity_score"] = hit.score
-                    result["_id"] = hit.id
-                    results.append(result)
+            # Fallback: Individual searches (legacy mode or hybrid search unavailable)
+            picture_results = await loop.run_in_executor(
+                None,
+                lambda: self.client.search(
+                    collection_name=self.collection_name,
+                    query_vector=NamedVector(name="picture", vector=image_embedding),
+                    limit=limit,
+                    with_payload=True,
+                    with_vectors=False,
+                ),
+            )
 
-                return results
+            # Format results
+            results = []
+            for hit in picture_results:
+                result = dict(hit.payload)
+                result["visual_similarity_score"] = hit.score
+                result["_id"] = hit.id
+                results.append(result)
+
+            return results
 
         except Exception as e:
             logger.error(f"Image search failed: {e}")

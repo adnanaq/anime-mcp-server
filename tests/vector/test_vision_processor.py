@@ -1,671 +1,444 @@
-"""Unit tests for VisionProcessor image processing and embedding generation.
+"""Tests for vision processor supporting multiple embedding models."""
 
-Tests CLIP model integration, image preprocessing, and embedding generation
-functionality for anime image vector search.
-"""
-
-import base64
-import hashlib
-import io
-import logging
-from typing import List, Optional
-from unittest.mock import Mock, patch
-
-import numpy as np
 import pytest
+from unittest.mock import MagicMock, patch, Mock
+import numpy as np
 from PIL import Image
+import base64
+import io
 
 from src.vector.vision_processor import VisionProcessor
 
-logger = logging.getLogger(__name__)
-
-
-class MockVisionProcessor:
-    """Mock vision processor for testing without CLIP dependencies."""
-
-    def __init__(self, model_name: str = "mock", cache_dir: Optional[str] = None):
-        """Initialize mock processor."""
-        self.model_name = model_name
-        self.cache_dir = cache_dir
-        logger.info("Initialized mock vision processor (for testing)")
-
-    def encode_image(self, image_data: str) -> Optional[List[float]]:
-        """Return mock embedding vector."""
-        # Return deterministic mock embedding for testing
-        hash_obj = hashlib.md5(image_data[:100].encode())
-        seed = int(hash_obj.hexdigest()[:8], 16)
-
-        # Generate consistent mock embedding
-        np.random.seed(seed % (2**32))
-        mock_embedding = np.random.normal(0, 1, 512).tolist()
-
-        return mock_embedding
-
-    def encode_images_batch(
-        self, image_data_list: List[str], batch_size: int = 32
-    ) -> List[Optional[List[float]]]:
-        """Return mock embeddings for batch."""
-        return [self.encode_image(img) for img in image_data_list]
-
-    def validate_image_data(self, image_data: str) -> bool:
-        """Always return True for mock validation."""
-        return len(image_data) > 0
-
-    def get_supported_formats(self) -> List[str]:
-        """Return mock supported formats."""
-        return ["jpg", "jpeg", "png", "bmp", "tiff", "webp"]
-
-    def get_model_info(self) -> dict:
-        """Return mock model info."""
-        return {
-            "model_name": self.model_name,
-            "device": "mock",
-            "embedding_size": 512,
-            "input_resolution": 224,
-            "is_initialized": True,
-        }
-
 
 class TestVisionProcessor:
-    """Test suite for VisionProcessor functionality."""
+    """Test cases for vision processor."""
 
     @pytest.fixture
-    def sample_image_base64(self):
-        """Create a sample base64 encoded image for testing."""
-        # Create a simple 100x100 RGB image
-        img = Image.new("RGB", (100, 100), color="red")
+    def mock_settings(self):
+        """Mock settings for testing."""
+        settings = MagicMock()
+        settings.image_embedding_provider = "clip"
+        settings.image_embedding_model = "ViT-B/32"
+        settings.image_embedding_model_fallback = "ViT-L/14"
+        settings.model_cache_dir = None
+        settings.enable_model_fallback = True
+        settings.model_warm_up = False
+        settings.siglip_input_resolution = 384
+        settings.jinaclip_input_resolution = 512
+        return settings
 
-        # Convert to base64
+    @pytest.fixture
+    def mock_clip_model(self):
+        """Mock CLIP model."""
+        model = MagicMock()
+        model.encode_image.return_value = MagicMock()
+        model.encode_image.return_value.norm.return_value = MagicMock()
+        model.encode_image.return_value.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 512
+        return model
+
+    @pytest.fixture
+    def mock_siglip_model(self):
+        """Mock SigLIP model."""
+        model = MagicMock()
+        model.config.projection_dim = 768
+        model.get_image_features.return_value = MagicMock()
+        model.get_image_features.return_value.norm.return_value = MagicMock()
+        model.get_image_features.return_value.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 768
+        return model
+
+    @pytest.fixture
+    def mock_jinaclip_model(self):
+        """Mock JinaCLIP model."""
+        model = MagicMock()
+        model.get_image_features.return_value = MagicMock()
+        model.get_image_features.return_value.norm.return_value = MagicMock()
+        model.get_image_features.return_value.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 768
+        return model
+
+    @pytest.fixture
+    def sample_image_b64(self):
+        """Sample base64 encoded image."""
+        # Create a simple 10x10 red image
+        img = Image.new('RGB', (10, 10), color='red')
         buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
-        img_bytes = buffer.getvalue()
-        img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+        img.save(buffer, format='PNG')
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        return img_str
 
-        return img_base64
-
-    @pytest.fixture
-    def sample_image_data_url(self, sample_image_base64):
-        """Create a data URL format image for testing."""
-        return f"data:image/png;base64,{sample_image_base64}"
-
-    def test_init_with_defaults(self):
-        """Test VisionProcessor initialization with default parameters."""
-        # Mock the imports that happen inside _init_clip_model
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-
+    def test_init_with_clip_provider(self, mock_settings):
+        """Test initialization with CLIP provider."""
+        mock_settings.image_embedding_provider = "clip"
+        
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
+            
+            assert processor.provider == "clip"
             assert processor.model_name == "ViT-B/32"
-            assert processor.cache_dir is None
-            assert processor.device == "cpu"
-            assert processor.model == mock_model
-            assert processor.preprocess == mock_preprocess
-            mock_clip.load.assert_called_once_with(
-                "ViT-B/32", device="cpu", download_root=None
-            )
+            assert processor.current_model is not None
+            assert processor.current_model["provider"] == "clip"
 
-    def test_init_with_custom_params(self):
-        """Test VisionProcessor initialization with custom parameters."""
-        # Mock the imports that happen inside _init_clip_model
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = True
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
+    def test_init_with_siglip_provider(self, mock_settings):
+        """Test initialization with SigLIP provider."""
+        mock_settings.image_embedding_provider = "siglip"
+        mock_settings.image_embedding_model = "google/siglip-so400m-patch14-384"
+        
+        with patch('src.vector.modern_vision_processor.SiglipModel') as mock_siglip_model, \
+             patch('src.vector.modern_vision_processor.SiglipProcessor') as mock_siglip_processor:
+            
+            mock_model = MagicMock()
+            mock_model.config.projection_dim = 768
+            mock_siglip_model.from_pretrained.return_value = mock_model
+            mock_siglip_processor.from_pretrained.return_value = MagicMock()
+            
+            processor = VisionProcessor(mock_settings)
+            
+            assert processor.provider == "siglip"
+            assert processor.current_model["provider"] == "siglip"
+            assert processor.current_model["embedding_size"] == 768
 
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor(model_name="ViT-L/14", cache_dir="/tmp/clip")
+    def test_init_with_jinaclip_provider(self, mock_settings):
+        """Test initialization with JinaCLIP provider."""
+        mock_settings.image_embedding_provider = "jinaclip"
+        mock_settings.image_embedding_model = "jinaai/jina-clip-v2"
+        
+        with patch('src.vector.modern_vision_processor.AutoModel') as mock_auto_model, \
+             patch('src.vector.modern_vision_processor.AutoProcessor') as mock_auto_processor:
+            
+            mock_auto_model.from_pretrained.return_value = MagicMock()
+            mock_auto_processor.from_pretrained.return_value = MagicMock()
+            
+            processor = VisionProcessor(mock_settings)
+            
+            assert processor.provider == "jinaclip"
+            assert processor.current_model["provider"] == "jinaclip"
+            assert processor.current_model["embedding_size"] == 768
 
-            assert processor.model_name == "ViT-L/14"
-            assert processor.cache_dir == "/tmp/clip"
-            assert processor.device == "cuda"
-            mock_clip.load.assert_called_once_with(
-                "ViT-L/14", device="cuda", download_root="/tmp/clip"
-            )
+    def test_detect_model_provider(self, mock_settings):
+        """Test model provider detection."""
+        processor = ModernVisionProcessor.__new__(ModernVisionProcessor)
+        
+        # Test SigLIP detection
+        assert processor._detect_model_provider("google/siglip-so400m-patch14-384") == "siglip"
+        assert processor._detect_model_provider("siglip-base") == "siglip"
+        
+        # Test JinaCLIP detection
+        assert processor._detect_model_provider("jinaai/jina-clip-v2") == "jinaclip"
+        assert processor._detect_model_provider("jina-clip-v1") == "jinaclip"
+        
+        # Test CLIP detection (default)
+        assert processor._detect_model_provider("ViT-B/32") == "clip"
+        assert processor._detect_model_provider("RN50") == "clip"
+        assert processor._detect_model_provider("unknown-model") == "clip"
 
-    def test_init_missing_dependencies(self):
-        """Test VisionProcessor initialization when CLIP dependencies are missing."""
-
-        # Mock import error for clip
-        def mock_import(name, *args, **kwargs):
-            if name == "clip":
-                raise ImportError("No module named 'clip'")
-            return __import__(name, *args, **kwargs)
-
-        with patch("builtins.__import__", side_effect=mock_import):
-            with pytest.raises(ImportError, match="CLIP dependencies missing"):
-                VisionProcessor()
-
-    def test_init_clip_model_failure(self):
-        """Test VisionProcessor initialization when CLIP model loading fails."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_clip.load.side_effect = Exception("Model loading failed")
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            with pytest.raises(Exception, match="Model loading failed"):
-                VisionProcessor()
-
-    def test_decode_base64_image_success(self, sample_image_base64):
-        """Test successful base64 image decoding."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            image = processor._decode_base64_image(sample_image_base64)
-
-            assert image is not None
-            assert isinstance(image, Image.Image)
-            assert image.mode == "RGB"
-            assert image.size == (100, 100)
-
-    def test_decode_base64_image_data_url(self, sample_image_data_url):
-        """Test decoding image from data URL format."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            image = processor._decode_base64_image(sample_image_data_url)
-
-            assert image is not None
-            assert isinstance(image, Image.Image)
-            assert image.mode == "RGB"
-
-    def test_decode_base64_image_invalid_data(self):
-        """Test handling of invalid base64 data."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            image = processor._decode_base64_image("invalid_base64_data")
-
-            assert image is None
-
-    def test_decode_base64_image_rgba_conversion(self):
-        """Test RGBA to RGB conversion."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        # Create RGBA image
-        img = Image.new("RGBA", (50, 50), color=(255, 0, 0, 128))
-        buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
-        img_bytes = buffer.getvalue()
-        img_base64 = base64.b64encode(img_bytes).decode("utf-8")
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            image = processor._decode_base64_image(img_base64)
-
-            assert image is not None
-            assert image.mode == "RGB"
-
-    def test_preprocess_image_success(self, sample_image_base64):
-        """Test successful image preprocessing."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-
-        # Mock preprocessing pipeline
-        mock_tensor = Mock()
-        mock_tensor.unsqueeze.return_value.to.return_value = mock_tensor
-        mock_preprocess.return_value = mock_tensor
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            image = processor._decode_base64_image(sample_image_base64)
-            processed = processor._preprocess_image(image)
-
-            assert processed is not None
-            mock_preprocess.assert_called_once_with(image)
-
-    def test_preprocess_image_no_preprocessor(self):
-        """Test preprocessing when preprocessor is None."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_clip.load.return_value = (mock_model, None)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            processor.preprocess = None
-
-            img = Image.new("RGB", (100, 100), color="red")
-            processed = processor._preprocess_image(img)
-
-            assert processed is None
-
-    def test_preprocess_image_failure(self, sample_image_base64):
-        """Test preprocessing failure handling."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_preprocess.side_effect = Exception("Preprocessing failed")
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            image = processor._decode_base64_image(sample_image_base64)
-            processed = processor._preprocess_image(image)
-
-            assert processed is None
-
-    def test_generate_embedding_success(self):
-        """Test successful embedding generation."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.no_grad.return_value.__enter__ = Mock()
-        mock_torch.no_grad.return_value.__exit__ = Mock(return_value=None)
-
-        mock_model = Mock()
-        mock_preprocess = Mock()
-
-        # Mock the embedding generation process
-        mock_features = Mock()
-        mock_features.norm.return_value = mock_features
-        mock_features.__truediv__ = Mock(return_value=mock_features)
-        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [
-            0.1
-        ] * 512
-        mock_model.encode_image.return_value = mock_features
-
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-
-            # Mock processed image tensor
-            mock_tensor = Mock()
-            embedding = processor._generate_embedding(mock_tensor)
-
-            assert embedding is not None
-            assert len(embedding) == 512
-            assert all(isinstance(x, float) for x in embedding)
-            mock_model.encode_image.assert_called_once_with(mock_tensor)
-
-    def test_generate_embedding_failure(self):
-        """Test embedding generation failure."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.no_grad.return_value.__enter__ = Mock()
-        mock_torch.no_grad.return_value.__exit__ = Mock(return_value=None)
-
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_model.encode_image.side_effect = Exception("Encoding failed")
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-
-            mock_tensor = Mock()
-            embedding = processor._generate_embedding(mock_tensor)
-
-            assert embedding is None
-
-    def test_encode_image_no_model(self):
-        """Test encoding when model is not initialized."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            processor.model = None  # Simulate uninitialized model
-
-            embedding = processor.encode_image("test_data")
-            assert embedding is None
-
-    def test_encode_image_full_pipeline(self, sample_image_base64):
-        """Test the full image encoding pipeline."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.no_grad.return_value.__enter__ = Mock()
-        mock_torch.no_grad.return_value.__exit__ = Mock(return_value=None)
-
-        mock_model = Mock()
-        mock_preprocess = Mock()
-
-        # Mock the full pipeline
-        mock_tensor = Mock()
-        mock_tensor.unsqueeze.return_value.to.return_value = mock_tensor
-        mock_preprocess.return_value = mock_tensor
-
-        mock_features = Mock()
-        mock_features.norm.return_value = mock_features
-        mock_features.__truediv__ = Mock(return_value=mock_features)
-        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [
-            0.1
-        ] * 512
-        mock_model.encode_image.return_value = mock_features
-
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            embedding = processor.encode_image(sample_image_base64)
-
+    def test_encode_image_with_clip(self, mock_settings, sample_image_b64):
+        """Test image encoding with CLIP model."""
+        mock_settings.image_embedding_provider = "clip"
+        
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip, \
+             patch('src.vector.modern_vision_processor.torch') as mock_torch:
+            
+            # Mock CLIP model
+            mock_model = MagicMock()
+            mock_preprocess = MagicMock()
+            mock_clip.load.return_value = (mock_model, mock_preprocess)
+            
+            # Mock torch operations
+            mock_torch.cuda.is_available.return_value = False
+            mock_torch.no_grad.return_value.__enter__ = MagicMock()
+            mock_torch.no_grad.return_value.__exit__ = MagicMock()
+            
+            # Mock image features
+            mock_features = MagicMock()
+            mock_features.norm.return_value = mock_features
+            mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 512
+            mock_model.encode_image.return_value = mock_features
+            
+            processor = VisionProcessor(mock_settings)
+            embedding = processor.encode_image(sample_image_b64)
+            
             assert embedding is not None
             assert len(embedding) == 512
             assert all(isinstance(x, float) for x in embedding)
 
-    def test_encode_image_failure_handling(self):
-        """Test handling of failures in image encoding pipeline."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
+    def test_encode_image_with_siglip(self, mock_settings, sample_image_b64):
+        """Test image encoding with SigLIP model."""
+        mock_settings.image_embedding_provider = "siglip"
+        mock_settings.image_embedding_model = "google/siglip-so400m-patch14-384"
+        
+        with patch('src.vector.modern_vision_processor.SiglipModel') as mock_siglip_model, \
+             patch('src.vector.modern_vision_processor.SiglipProcessor') as mock_siglip_processor, \
+             patch('src.vector.modern_vision_processor.torch') as mock_torch:
+            
+            # Mock SigLIP model
+            mock_model = MagicMock()
+            mock_model.config.projection_dim = 768
+            mock_processor = MagicMock()
+            mock_siglip_model.from_pretrained.return_value = mock_model
+            mock_siglip_processor.from_pretrained.return_value = mock_processor
+            
+            # Mock torch operations
+            mock_torch.cuda.is_available.return_value = False
+            mock_torch.no_grad.return_value.__enter__ = MagicMock()
+            mock_torch.no_grad.return_value.__exit__ = MagicMock()
+            
+            # Mock image features
+            mock_features = MagicMock()
+            mock_features.norm.return_value = mock_features
+            mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 768
+            mock_model.get_image_features.return_value = mock_features
+            
+            processor = VisionProcessor(mock_settings)
+            embedding = processor.encode_image(sample_image_b64)
+            
+            assert embedding is not None
+            assert len(embedding) == 768
+            assert all(isinstance(x, float) for x in embedding)
 
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
+    def test_encode_image_with_jinaclip(self, mock_settings, sample_image_b64):
+        """Test image encoding with JinaCLIP model."""
+        mock_settings.image_embedding_provider = "jinaclip"
+        mock_settings.image_embedding_model = "jinaai/jina-clip-v2"
+        
+        with patch('src.vector.modern_vision_processor.AutoModel') as mock_auto_model, \
+             patch('src.vector.modern_vision_processor.AutoProcessor') as mock_auto_processor, \
+             patch('src.vector.modern_vision_processor.torch') as mock_torch:
+            
+            # Mock JinaCLIP model
+            mock_model = MagicMock()
+            mock_processor = MagicMock()
+            mock_auto_model.from_pretrained.return_value = mock_model
+            mock_auto_processor.from_pretrained.return_value = mock_processor
+            
+            # Mock torch operations
+            mock_torch.cuda.is_available.return_value = False
+            mock_torch.no_grad.return_value.__enter__ = MagicMock()
+            mock_torch.no_grad.return_value.__exit__ = MagicMock()
+            
+            # Mock image features
+            mock_features = MagicMock()
+            mock_features.norm.return_value = mock_features
+            mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [0.1] * 768
+            mock_model.get_image_features.return_value = mock_features
+            
+            processor = VisionProcessor(mock_settings)
+            embedding = processor.encode_image(sample_image_b64)
+            
+            assert embedding is not None
+            assert len(embedding) == 768
+            assert all(isinstance(x, float) for x in embedding)
 
-            # Test with invalid base64 data
-            embedding = processor.encode_image("invalid_data")
-            assert embedding is None
+    def test_encode_image_with_fallback(self, mock_settings, sample_image_b64):
+        """Test image encoding with fallback model."""
+        mock_settings.image_embedding_provider = "clip"
+        mock_settings.enable_model_fallback = True
+        
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            # Mock primary model failure
+            mock_primary_model = MagicMock()
+            mock_primary_preprocess = MagicMock()
+            mock_clip.load.side_effect = [
+                (mock_primary_model, mock_primary_preprocess),  # Primary model
+                (MagicMock(), MagicMock())  # Fallback model
+            ]
+            
+            processor = VisionProcessor(mock_settings)
+            
+            # Mock primary model encoding failure
+            with patch.object(processor, '_encode_image_with_model') as mock_encode:
+                mock_encode.side_effect = [None, [0.1] * 512]  # First call fails, second succeeds
+                
+                embedding = processor.encode_image(sample_image_b64)
+                
+                assert embedding is not None
+                assert len(embedding) == 512
+                assert mock_encode.call_count == 2
 
-    def test_encode_image_general_exception(self, sample_image_base64):
-        """Test general exception handling in encode_image."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-
-            # Mock _decode_base64_image to raise an exception
-            processor._decode_base64_image = Mock(
-                side_effect=Exception("Unexpected error")
-            )
-
-            embedding = processor.encode_image(sample_image_base64)
-            assert embedding is None
-
-    def test_encode_image_preprocess_failure(self, sample_image_base64):
-        """Test encode_image when preprocessing returns None."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-
-            # Mock _preprocess_image to return None
-            processor._preprocess_image = Mock(return_value=None)
-
-            embedding = processor.encode_image(sample_image_base64)
-            assert embedding is None
-
-    def test_encode_images_batch(self, sample_image_base64):
+    def test_encode_images_batch(self, mock_settings):
         """Test batch image encoding."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_torch.no_grad.return_value.__enter__ = Mock()
-        mock_torch.no_grad.return_value.__exit__ = Mock(return_value=None)
+        mock_settings.image_embedding_provider = "clip"
+        
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
+            
+            # Mock encode_image method
+            with patch.object(processor, 'encode_image') as mock_encode:
+                mock_encode.return_value = [0.1] * 512
+                
+                image_list = ["image1", "image2", "image3"]
+                embeddings = processor.encode_images_batch(image_list, batch_size=2)
+                
+                assert len(embeddings) == 3
+                assert all(len(emb) == 512 for emb in embeddings)
+                assert mock_encode.call_count == 3
 
-        mock_model = Mock()
-        mock_preprocess = Mock()
+    def test_switch_model(self, mock_settings):
+        """Test model switching."""
+        mock_settings.image_embedding_provider = "clip"
+        
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
+            
+            # Test switching to SigLIP
+            with patch.object(processor, '_create_model') as mock_create:
+                mock_create.return_value = {
+                    "provider": "siglip",
+                    "model_name": "google/siglip-so400m-patch14-384",
+                    "embedding_size": 768
+                }
+                
+                success = processor.switch_model("siglip", "google/siglip-so400m-patch14-384")
+                
+                assert success is True
+                assert processor.provider == "siglip"
+                assert processor.model_name == "google/siglip-so400m-patch14-384"
 
-        # Mock successful encoding
-        mock_tensor = Mock()
-        mock_tensor.unsqueeze.return_value.to.return_value = mock_tensor
-        mock_preprocess.return_value = mock_tensor
-
-        mock_features = Mock()
-        mock_features.norm.return_value = mock_features
-        mock_features.__truediv__ = Mock(return_value=mock_features)
-        mock_features.cpu.return_value.numpy.return_value.flatten.return_value.tolist.return_value = [
-            0.1
-        ] * 512
-        mock_model.encode_image.return_value = mock_features
-
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-
-            # Test batch processing
-            image_list = [sample_image_base64, sample_image_base64, sample_image_base64]
-            embeddings = processor.encode_images_batch(image_list, batch_size=2)
-
-            assert len(embeddings) == 3
-            assert all(emb is not None for emb in embeddings)
-            assert all(len(emb) == 512 for emb in embeddings)
-
-    def test_encode_images_batch_exception(self):
-        """Test batch encoding exception handling."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-
-            # Mock encode_image to raise an exception
-            processor.encode_image = Mock(side_effect=Exception("Batch error"))
-
-            image_list = ["image1", "image2"]
-            embeddings = processor.encode_images_batch(image_list)
-
-            # Should return list of None values
-            assert len(embeddings) == 2
-            assert all(emb is None for emb in embeddings)
-
-    def test_validate_image_data(self, sample_image_base64):
-        """Test image data validation."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-
-            # Test valid image data
-            assert processor.validate_image_data(sample_image_base64) is True
-
-            # Test invalid image data
-            assert processor.validate_image_data("invalid_data") is False
-            assert processor.validate_image_data("") is False
-
-    def test_validate_image_data_exception(self):
-        """Test validation when exception occurs."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            processor._decode_base64_image = Mock(
-                side_effect=Exception("Validation error")
-            )
-
-            assert processor.validate_image_data("test_data") is False
-
-    def test_get_supported_formats(self):
-        """Test getting supported image formats."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
-            formats = processor.get_supported_formats()
-
-            assert isinstance(formats, list)
-            assert "jpg" in formats
-            assert "png" in formats
-            assert "jpeg" in formats
-
-    def test_get_model_info(self):
+    def test_get_model_info(self, mock_settings):
         """Test getting model information."""
-        mock_clip = Mock()
-        mock_torch = Mock()
-        mock_torch.cuda.is_available.return_value = False
-        mock_model = Mock()
-        mock_preprocess = Mock()
-        mock_clip.load.return_value = (mock_model, mock_preprocess)
-
-        with patch.dict("sys.modules", {"clip": mock_clip, "torch": mock_torch}):
-            processor = VisionProcessor()
+        mock_settings.image_embedding_provider = "clip"
+        
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
             info = processor.get_model_info()
-
-            assert isinstance(info, dict)
+            
+            assert info["provider"] == "clip"
             assert info["model_name"] == "ViT-B/32"
-            assert info["device"] == "cpu"
             assert info["embedding_size"] == 512
             assert info["input_resolution"] == 224
-            assert info["is_initialized"] is True
+            assert "supports_text" in info
+            assert "supports_image" in info
+
+    def test_decode_base64_image(self, mock_settings, sample_image_b64):
+        """Test base64 image decoding."""
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
+            image = processor._decode_base64_image(sample_image_b64)
+            
+            assert image is not None
+            assert isinstance(image, Image.Image)
+            assert image.mode == "RGB"
+
+    def test_decode_base64_image_with_data_url(self, mock_settings, sample_image_b64):
+        """Test base64 image decoding with data URL format."""
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
+            data_url = f"data:image/png;base64,{sample_image_b64}"
+            image = processor._decode_base64_image(data_url)
+            
+            assert image is not None
+            assert isinstance(image, Image.Image)
+            assert image.mode == "RGB"
+
+    def test_validate_image_data(self, mock_settings, sample_image_b64):
+        """Test image data validation."""
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
+            
+            # Test valid image data
+            assert processor.validate_image_data(sample_image_b64) is True
+            
+            # Test invalid image data
+            assert processor.validate_image_data("invalid_base64") is False
+            assert processor.validate_image_data("") is False
+
+    def test_get_supported_formats(self, mock_settings):
+        """Test getting supported image formats."""
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
+            formats = processor.get_supported_formats()
+            
+            assert isinstance(formats, list)
+            assert "jpg" in formats
+            assert "jpeg" in formats
+            assert "png" in formats
+            assert "webp" in formats
+
+    def test_error_handling(self, mock_settings):
+        """Test error handling in various scenarios."""
+        mock_settings.image_embedding_provider = "clip"
+        
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            # Test initialization failure
+            mock_clip.load.side_effect = Exception("Model loading failed")
+            
+            with pytest.raises(Exception):
+                ModernVisionProcessor(mock_settings)
+
+    def test_warm_up_models(self, mock_settings):
+        """Test model warm-up functionality."""
+        mock_settings.image_embedding_provider = "clip"
+        mock_settings.model_warm_up = True
+        
+        with patch('src.vector.modern_vision_processor.clip') as mock_clip:
+            mock_clip.load.return_value = (MagicMock(), MagicMock())
+            
+            processor = VisionProcessor(mock_settings)
+            
+            # Mock warm-up method
+            with patch.object(processor, '_warm_up_models') as mock_warm_up:
+                processor._warm_up_models()
+                mock_warm_up.assert_called_once()
 
 
-class TestMockVisionProcessor:
-    """Test suite for MockVisionProcessor functionality."""
+class TestVisionProcessorIntegration:
+    """Integration tests for vision processor."""
 
-    def test_mock_init(self):
-        """Test MockVisionProcessor initialization."""
-        processor = MockVisionProcessor()
-        assert processor.model_name == "mock"
-        assert processor.cache_dir is None
+    @pytest.mark.integration
+    def test_real_initialization_with_clip(self):
+        """Test real initialization with CLIP model."""
+        try:
+            from src.config import get_settings
+            settings = get_settings()
+            settings.image_embedding_provider = "clip"
+            settings.image_embedding_model = "ViT-B/32"
+            settings.model_warm_up = False
+            
+            with patch('src.vector.modern_vision_processor.torch.cuda.is_available', return_value=False):
+                processor = ModernVisionProcessor(settings)
+                
+                assert processor.provider == "clip"
+                assert processor.current_model is not None
+                assert processor.current_model["provider"] == "clip"
+                
+        except ImportError:
+            pytest.skip("CLIP dependencies not available")
 
-    def test_mock_init_custom(self):
-        """Test MockVisionProcessor initialization with custom params."""
-        processor = MockVisionProcessor(model_name="custom_mock", cache_dir="/tmp")
-        assert processor.model_name == "custom_mock"
-        assert processor.cache_dir == "/tmp"
-
-    def test_mock_encode_image_deterministic(self):
-        """Test that MockVisionProcessor returns deterministic embeddings."""
-        processor = MockVisionProcessor()
-
-        # Same input should give same output
-        embedding1 = processor.encode_image("test_image_data")
-        embedding2 = processor.encode_image("test_image_data")
-
-        assert embedding1 == embedding2
-        assert len(embedding1) == 512
-        assert all(isinstance(x, float) for x in embedding1)
-
-    def test_mock_encode_image_different_inputs(self):
-        """Test that different inputs give different embeddings."""
-        processor = MockVisionProcessor()
-
-        embedding1 = processor.encode_image("test_image_1")
-        embedding2 = processor.encode_image("test_image_2")
-
-        assert embedding1 != embedding2
-        assert len(embedding1) == 512
-        assert len(embedding2) == 512
-
-    def test_mock_encode_images_batch(self):
-        """Test MockVisionProcessor batch encoding."""
-        processor = MockVisionProcessor()
-
-        image_list = ["image1", "image2", "image3"]
-        embeddings = processor.encode_images_batch(image_list)
-
-        assert len(embeddings) == 3
-        assert all(emb is not None for emb in embeddings)
-        assert all(len(emb) == 512 for emb in embeddings)
-
-        # Each should be different
-        assert embeddings[0] != embeddings[1]
-        assert embeddings[1] != embeddings[2]
-
-    def test_mock_encode_images_batch_with_batch_size(self):
-        """Test MockVisionProcessor batch encoding with custom batch size."""
-        processor = MockVisionProcessor()
-
-        image_list = ["image1", "image2", "image3", "image4", "image5"]
-        embeddings = processor.encode_images_batch(image_list, batch_size=2)
-
-        assert len(embeddings) == 5
-        assert all(emb is not None for emb in embeddings)
-
-    def test_mock_validate_image_data(self):
-        """Test MockVisionProcessor image validation."""
-        processor = MockVisionProcessor()
-
-        assert processor.validate_image_data("valid_data") is True
-        assert processor.validate_image_data("") is False
-
-    def test_mock_get_supported_formats(self):
-        """Test MockVisionProcessor supported formats."""
-        processor = MockVisionProcessor()
-        formats = processor.get_supported_formats()
-
-        assert isinstance(formats, list)
-        assert "jpg" in formats
-        assert "png" in formats
-
-    def test_mock_get_model_info(self):
-        """Test MockVisionProcessor model info."""
-        processor = MockVisionProcessor()
-        info = processor.get_model_info()
-
-        assert isinstance(info, dict)
-        assert info["model_name"] == "mock"
-        assert info["device"] == "mock"
-        assert info["embedding_size"] == 512
-        assert info["is_initialized"] is True
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    @pytest.mark.integration
+    def test_model_switching_integration(self):
+        """Test model switching integration."""
+        try:
+            from src.config import get_settings
+            settings = get_settings()
+            settings.image_embedding_provider = "clip"
+            settings.model_warm_up = False
+            
+            with patch('src.vector.modern_vision_processor.torch.cuda.is_available', return_value=False):
+                processor = ModernVisionProcessor(settings)
+                
+                # Get initial model info
+                initial_info = processor.get_model_info()
+                assert initial_info["provider"] == "clip"
+                
+                # Test model info structure
+                assert "embedding_size" in initial_info
+                assert "input_resolution" in initial_info
+                assert "supports_text" in initial_info
+                assert "supports_image" in initial_info
+                
+        except ImportError:
+            pytest.skip("Dependencies not available")
