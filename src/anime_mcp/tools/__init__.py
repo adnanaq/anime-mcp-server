@@ -16,14 +16,9 @@ from .tier2_standard_tools import register_standard_tools
 from .tier3_detailed_tools import register_detailed_tools
 from .tier4_comprehensive_tools import register_comprehensive_tools
 
-# Platform-specific tools (legacy - maintained for backward compatibility)
-# Note: These imports are temporarily disabled until platform tools are updated
-# from .jikan_tools import register_jikan_tools
-# from .mal_tools import register_mal_tools
-# from .anilist_tools import register_anilist_tools
-# from .kitsu_tools import register_kitsu_tools
+# Specialized tools (kept for active functionality)
+# Note: schedule_tools and enrichment_tools are actively used by QueryAnalyzer and AnimeSwarm
 # from .schedule_tools import register_schedule_tools
-# from .semantic_tools import register_semantic_tools
 # from .enrichment_tools import register_enrichment_tools
 
 __all__ = [
@@ -32,13 +27,8 @@ __all__ = [
     "register_standard_tools",
     "register_detailed_tools",
     "register_comprehensive_tools",
-    # Platform-specific tools (legacy) - temporarily disabled
-    # "register_jikan_tools",
-    # "register_mal_tools",
-    # "register_anilist_tools",
-    # "register_kitsu_tools",
+    # Specialized tools (kept for active functionality)
     # "register_schedule_tools",
-    # "register_semantic_tools",
     # "register_enrichment_tools",
 ]
 
@@ -50,19 +40,6 @@ def register_all_tiered_tools(mcp):
     register_standard_tools(mcp)
     register_detailed_tools(mcp)
     register_comprehensive_tools(mcp)
-
-
-def register_all_platform_tools(mcp):
-    """Register all platform-specific tools with the MCP server (legacy)."""
-    # Temporarily disabled until platform tools are updated
-    # register_jikan_tools(mcp)
-    # register_mal_tools(mcp)
-    # register_anilist_tools(mcp)
-    # register_kitsu_tools(mcp)
-    # register_schedule_tools(mcp)
-    # register_semantic_tools(mcp)
-    # register_enrichment_tools(mcp)
-
 
 # Tier information for documentation and selection
 TIER_INFO = {
