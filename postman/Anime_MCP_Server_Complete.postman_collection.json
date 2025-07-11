@@ -1,0 +1,2134 @@
+{
+  "info": {
+    "name": "Anime MCP Server - Complete API",
+    "description": "Complete API collection for the Anime MCP Server with unified search endpoint architecture. All search operations (text, image, multimodal, similar) use the single /api/search/ endpoint with support for both JSON and form data requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "012676af-f8ff-490b-b61d-00b2a6edf9e8",
+    "version": {
+      "major": 2,
+      "minor": 1,
+      "patch": 0
+    },
+    "updatedAt": "2025-07-11T13:36:32.591543Z"
+  },
+  "item": [
+    {
+      "name": "Core System",
+      "item": [
+        {
+          "name": "",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            }
+          }
+        },
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stats"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Unified Search",
+      "item": [
+        {
+          "name": "Text Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/search/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"action adventure anime\",\n  \"limit\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Similar Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/search/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"anime_id\": \"{{anime_id}}\",\n  \"limit\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Image Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/search/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image_data\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\",\n  \"limit\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Visual Similarity Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/search/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"anime_id\": \"{{anime_id}}\",\n  \"visual_similarity\": true,\n  \"limit\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Multimodal Search",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/search/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mecha anime\",\n  \"image_data\": \"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\",\n  \"text_weight\": 0.7,\n  \"limit\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Image Upload - File Upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/search/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload anime poster image"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Text Search - Form Data",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/search/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "query",
+                  "value": "action adventure anime",
+                  "type": "text"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Multimodal Search - File Upload",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/search/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "query",
+                  "value": "mecha anime",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload robot/mecha poster image"
+                },
+                {
+                  "key": "text_weight",
+                  "value": "0.7",
+                  "type": "text"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "type": "text"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Query",
+      "item": [
+        {
+          "name": "Api Query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/query",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "query"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Find me action anime similar to Attack on Titan\",\n  \"limit\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Api Query Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/query/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "query",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Api Admin Check-Updates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/check-updates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "check-updates"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Api Admin Schedule-Weekly-Update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/schedule-weekly-update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "schedule-weekly-update"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Api Admin Smart-Schedule-Analysis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/smart-schedule-analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "smart-schedule-analysis"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api Admin Smart-Update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/smart-update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "smart-update"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Api Admin Update-Full",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/update-full",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "update-full"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Api Admin Update-Incremental",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/update-incremental",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "update-incremental"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Api Admin Update-Safety-Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/update-safety-check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "update-safety-check"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api Admin Update-Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/update-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "update-status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "External - AniList",
+      "item": [
+        {
+          "name": "Api External Anilist Anime (ID: /api/external/anilist/anime/{anime_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anilist/anime/{anime_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anilist",
+                "anime",
+                "{anime_id}"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anilist Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anilist/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anilist",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anilist Popular",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anilist/popular",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anilist",
+                "popular"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anilist Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anilist/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anilist",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anilist Staff (ID: /api/external/anilist/staff/{staff_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anilist/staff/{staff_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anilist",
+                "staff",
+                "{staff_id}"
+              ],
+              "variable": [
+                {
+                  "key": "staff_id",
+                  "value": "{{staff_id}}",
+                  "description": "Path parameter: staff_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anilist Studio (ID: /api/external/anilist/studio/{studio_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anilist/studio/{studio_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anilist",
+                "studio",
+                "{studio_id}"
+              ],
+              "variable": [
+                {
+                  "key": "studio_id",
+                  "value": "{{studio_id}}",
+                  "description": "Path parameter: studio_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anilist Trending",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anilist/trending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anilist",
+                "trending"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anilist Upcoming",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anilist/upcoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anilist",
+                "upcoming"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "External - MAL",
+      "item": [
+        {
+          "name": "Api External Mal Anime (ID: /api/external/mal/anime/{anime_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/mal/anime/{anime_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "mal",
+                "anime",
+                "{anime_id}"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Mal Anime Statistics (ID: /api/external/mal/anime/{anime_id}/statistics)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/mal/anime/{anime_id}/statistics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "mal",
+                "anime",
+                "{anime_id}",
+                "statistics"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Mal Current-Season",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/mal/current-season",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "mal",
+                "current-season"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Mal Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/mal/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "mal",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Mal Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/mal/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "mal",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Mal Seasonal (ID: /api/external/mal/seasonal/{year}/{season})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/mal/seasonal/{year}/{season}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "mal",
+                "seasonal",
+                "{year}",
+                "{season}"
+              ],
+              "variable": [
+                {
+                  "key": "year",
+                  "value": "{{year}}",
+                  "description": "Path parameter: year"
+                },
+                {
+                  "key": "season",
+                  "value": "{{season}}",
+                  "description": "Path parameter: season"
+                }
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "External - Kitsu",
+      "item": [
+        {
+          "name": "Api External Kitsu Anime (ID: /api/external/kitsu/anime/{anime_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/kitsu/anime/{anime_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "kitsu",
+                "anime",
+                "{anime_id}"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Kitsu Anime Characters (ID: /api/external/kitsu/anime/{anime_id}/characters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/kitsu/anime/{anime_id}/characters",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "kitsu",
+                "anime",
+                "{anime_id}",
+                "characters"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Kitsu Anime Episodes (ID: /api/external/kitsu/anime/{anime_id}/episodes)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/kitsu/anime/{anime_id}/episodes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "kitsu",
+                "anime",
+                "{anime_id}",
+                "episodes"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Kitsu Anime Streaming (ID: /api/external/kitsu/anime/{anime_id}/streaming)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/kitsu/anime/{anime_id}/streaming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "kitsu",
+                "anime",
+                "{anime_id}",
+                "streaming"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Kitsu Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/kitsu/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "kitsu",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Kitsu Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/kitsu/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "kitsu",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Kitsu Trending",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/kitsu/trending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "kitsu",
+                "trending"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "External - AnimeSchedule",
+      "item": [
+        {
+          "name": "Api External Animeschedule Anime Schedule (ID: /api/external/animeschedule/anime/{anime_id}/schedule)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeschedule/anime/{anime_id}/schedule",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeschedule",
+                "anime",
+                "{anime_id}",
+                "schedule"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeschedule Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeschedule/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeschedule",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeschedule Platforms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeschedule/platforms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeschedule",
+                "platforms"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeschedule Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeschedule/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeschedule",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeschedule Seasonal (ID: /api/external/animeschedule/seasonal/{season}/{year})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeschedule/seasonal/{season}/{year}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeschedule",
+                "seasonal",
+                "{season}",
+                "{year}"
+              ],
+              "variable": [
+                {
+                  "key": "season",
+                  "value": "{{season}}",
+                  "description": "Path parameter: season"
+                },
+                {
+                  "key": "year",
+                  "value": "{{year}}",
+                  "description": "Path parameter: year"
+                }
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeschedule Timetable (ID: /api/external/animeschedule/timetable/{date})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeschedule/timetable/{date}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeschedule",
+                "timetable",
+                "{date}"
+              ],
+              "variable": [
+                {
+                  "key": "date",
+                  "value": "{{date}}",
+                  "description": "Path parameter: date"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeschedule Today",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeschedule/today",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeschedule",
+                "today"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "External - AniDB",
+      "item": [
+        {
+          "name": "Api External Anidb Anime (ID: /api/external/anidb/anime/{anime_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anidb/anime/{anime_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anidb",
+                "anime",
+                "{anime_id}"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anidb Anime Characters (ID: /api/external/anidb/anime/{anime_id}/characters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anidb/anime/{anime_id}/characters",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anidb",
+                "anime",
+                "{anime_id}",
+                "characters"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anidb Anime Episodes (ID: /api/external/anidb/anime/{anime_id}/episodes)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anidb/anime/{anime_id}/episodes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anidb",
+                "anime",
+                "{anime_id}",
+                "episodes"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anidb Anime Similar (ID: /api/external/anidb/anime/{anime_id}/similar)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anidb/anime/{anime_id}/similar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anidb",
+                "anime",
+                "{anime_id}",
+                "similar"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anidb Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anidb/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anidb",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anidb Random",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anidb/random",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anidb",
+                "random"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anidb Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anidb/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anidb",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "External - AnimePlanet",
+      "item": [
+        {
+          "name": "Api External Animeplanet Anime (ID: /api/external/animeplanet/anime/{anime_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeplanet/anime/{anime_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeplanet",
+                "anime",
+                "{anime_id}"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeplanet Anime Characters (ID: /api/external/animeplanet/anime/{anime_id}/characters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeplanet/anime/{anime_id}/characters",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeplanet",
+                "anime",
+                "{anime_id}",
+                "characters"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeplanet Anime Recommendations (ID: /api/external/animeplanet/anime/{anime_id}/recommendations)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeplanet/anime/{anime_id}/recommendations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeplanet",
+                "anime",
+                "{anime_id}",
+                "recommendations"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeplanet Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeplanet/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeplanet",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeplanet Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeplanet/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeplanet",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animeplanet Top",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animeplanet/top",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animeplanet",
+                "top"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "External - AniSearch",
+      "item": [
+        {
+          "name": "Api External Anisearch Anime (ID: /api/external/anisearch/anime/{anime_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anisearch/anime/{anime_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anisearch",
+                "anime",
+                "{anime_id}"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anisearch Anime Characters (ID: /api/external/anisearch/anime/{anime_id}/characters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anisearch/anime/{anime_id}/characters",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anisearch",
+                "anime",
+                "{anime_id}",
+                "characters"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anisearch Anime Recommendations (ID: /api/external/anisearch/anime/{anime_id}/recommendations)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anisearch/anime/{anime_id}/recommendations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anisearch",
+                "anime",
+                "{anime_id}",
+                "recommendations"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anisearch Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anisearch/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anisearch",
+                "health"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anisearch Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anisearch/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anisearch",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anisearch Seasonal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anisearch/seasonal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anisearch",
+                "seasonal"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Anisearch Top",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/anisearch/top",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "anisearch",
+                "top"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "External - AnimeCountdown",
+      "item": [
+        {
+          "name": "Api External Animecountdown Anime (ID: /api/external/animecountdown/anime/{anime_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animecountdown/anime/{anime_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animecountdown",
+                "anime",
+                "{anime_id}"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animecountdown Countdown (ID: /api/external/animecountdown/countdown/{anime_id})",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animecountdown/countdown/{anime_id}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animecountdown",
+                "countdown",
+                "{anime_id}"
+              ],
+              "variable": [
+                {
+                  "key": "anime_id",
+                  "value": "{{anime_id}}",
+                  "description": "Path parameter: anime_id"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animecountdown Currently-Airing",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animecountdown/currently-airing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animecountdown",
+                "currently-airing"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animecountdown Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animecountdown/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animecountdown",
+                "health"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animecountdown Popular",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animecountdown/popular",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animecountdown",
+                "popular"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animecountdown Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animecountdown/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animecountdown",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Api External Animecountdown Upcoming",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/external/animecountdown/upcoming",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "external",
+                "animecountdown",
+                "upcoming"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "anime_id",
+      "value": "cac1eeaeddf7",
+      "type": "string",
+      "description": "Example anime ID for testing"
+    },
+    {
+      "key": "staff_id",
+      "value": "95",
+      "type": "string",
+      "description": "Example staff ID for testing"
+    },
+    {
+      "key": "studio_id",
+      "value": "11",
+      "type": "string",
+      "description": "Example studio ID for testing"
+    }
+  ]
+}

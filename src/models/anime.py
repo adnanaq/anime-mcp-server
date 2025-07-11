@@ -56,6 +56,29 @@ class SearchRequest(BaseModel):
     filters: Optional[Dict[str, Any]] = Field(None, description="Search filters")
 
 
+class UnifiedSearchRequest(BaseModel):
+    """Unified search request model for all search types"""
+    
+    # Text search fields
+    query: Optional[str] = Field(None, description="Search query for text search")
+    
+    # ID-based search fields  
+    anime_id: Optional[str] = Field(None, description="Anime ID for similarity search")
+    
+    # Image search fields
+    image_data: Optional[str] = Field(None, description="Base64 encoded image data")
+    
+    # Visual similarity flag
+    visual_similarity: Optional[bool] = Field(False, description="Enable visual similarity search")
+    
+    # Multimodal search weight
+    text_weight: Optional[float] = Field(0.7, ge=0.0, le=1.0, description="Text vs image weight for multimodal")
+    
+    # Common fields
+    limit: int = Field(default=20, ge=1, le=100, description="Number of results")
+    filters: Optional[Dict[str, Any]] = Field(None, description="Search filters")
+
+
 class SearchResult(BaseModel):
     """Search result model"""
 

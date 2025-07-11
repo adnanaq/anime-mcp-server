@@ -346,70 +346,126 @@ Endpoints:
 | `/health` | GET    | Health check   | `curl http://localhost:8000/health` |
 | `/stats`  | GET    | Database stats | `curl http://localhost:8000/stats`  |
 
-### 🔍 Search & Discovery Endpoints
+### 🔍 Unified Search Endpoints
 
-| Endpoint                         | Method | Purpose            | Parameters                                          |
-| -------------------------------- | ------ | ------------------ | --------------------------------------------------- |
-| `/api/search/`                   | GET    | Basic search       | `q` (required), `limit` (1-50, default: 10)        |
-| `/api/search/semantic`           | POST   | Advanced search    | JSON body: `query` (required), `limit` (optional)  |
-| `/api/search/similar/{anime_id}` | GET    | Find similar anime | `anime_id` (path), `limit` (1-50, default: 10)     |
+| Endpoint               | Method | Purpose                        | Content Type     | Parameters                                          |
+| ---------------------- | ------ | ------------------------------ | ---------------- | --------------------------------------------------- |
+| `/api/search/`         | POST   | Unified search (supports both JSON and file uploads) | `application/json` or `multipart/form-data` | JSON body or form data: See examples below |
 
-### 🖼️ Image Search Endpoints
+**Search Types** (Auto-detected based on provided fields):
 
-| Endpoint                                  | Method | Purpose             | Parameters                                          |
-| ----------------------------------------- | ------ | ------------------- | --------------------------------------------------- |
-| `/api/search/by-image`                    | POST   | Image upload search | Form: `image` (file), `limit` (1-50, default: 10)  |
-| `/api/search/by-image-base64`             | POST   | Base64 image search | Form: `image_data` (base64), `limit` (optional)    |
-| `/api/search/visually-similar/{anime_id}` | GET    | Visual similarity   | `anime_id` (path), `limit` (1-50, default: 10)     |
-| `/api/search/multimodal`                  | POST   | Combined search     | Form: `query`, `image`, `limit`, `text_weight`     |
+| Search Type        | Detection Logic                               | JSON Parameters                                     | Form Parameters                                     |
+| ------------------ | --------------------------------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| **Text Search**    | `query` only                                  | `query` (required), `limit` (1-100, default: 20)  | `query` (form field), `limit` (form field)         |
+| **Similar Search** | `anime_id` only                               | `anime_id` (required), `limit` (1-100, default: 20) | `anime_id` (form field), `limit` (form field)      |
+| **Image Search**   | `image_data` or `image` file                  | `image_data` (base64), `limit` (1-100, default: 20) | `image` (file upload), `limit` (form field)        |
+| **Visual Similarity** | `anime_id` + `visual_similarity=true`      | `anime_id`, `visual_similarity=true`, `limit`      | `anime_id`, `visual_similarity=true`, `limit`      |
+| **Multimodal**     | `query` + `image_data`/`image` file          | `query`, `image_data`, `text_weight` (0.0-1.0), `limit` | `query`, `image` (file), `text_weight`, `limit`    |
 
-**Basic Search Examples:**
+**JSON Search Examples** (using `/api/search/`):
+
+```bash
+# Text search (query only)
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "action adventure anime",
+    "limit": 5
+  }'
+
+# Similar search (anime_id only)
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anime_id": "cac1eeaeddf7",
+    "limit": 5
+  }'
+
+# Image search with base64 data
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB...",
+    "limit": 5
+  }'
+
+# Visual similarity search (anime_id + visual_similarity flag)
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anime_id": "cac1eeaeddf7",
+    "visual_similarity": true,
+    "limit": 5
+  }'
+
+# Multimodal search (query + image_data)
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mecha anime",
+    "image_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB...",
+    "text_weight": 0.7,
+    "limit": 10
+  }'
+```
+
+**File Upload Examples** (using `/api/search/` with form data):
+
+```bash
+# Text search with form data
+curl -X POST http://localhost:8000/api/search/ \
+  -F "query=action adventure anime" \
+  -F "limit=5"
+
+# Similar search with form data
+curl -X POST http://localhost:8000/api/search/ \
+  -F "anime_id=cac1eeaeddf7" \
+  -F "limit=5"
+
+# Image search with file upload
+curl -X POST http://localhost:8000/api/search/ \
+  -F "image=@anime_poster.jpg" \
+  -F "limit=5"
+
+# Visual similarity search with form data
+curl -X POST http://localhost:8000/api/search/ \
+  -F "anime_id=cac1eeaeddf7" \
+  -F "visual_similarity=true" \
+  -F "limit=5"
+
+# Multimodal search with file upload
+curl -X POST http://localhost:8000/api/search/ \
+  -F "query=mecha anime" \
+  -F "image=@robot_poster.jpg" \
+  -F "text_weight=0.7" \
+  -F "limit=10"
+```
+
+**Advanced Search Examples:**
 
 ```bash
 # Search by genre
-curl "http://localhost:8000/api/search/?q=action%20adventure&limit=5"
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{"query": "action adventure", "limit": 5}'
 
 # Search by studio
-curl "http://localhost:8000/api/search/?q=studio%20ghibli&limit=3"
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{"query": "studio ghibli", "limit": 3}'
 
 # Search by theme
-curl "http://localhost:8000/api/search/?q=romantic%20comedy&limit=5"
-```
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{"query": "romantic comedy", "limit": 5}'
 
-**Advanced Semantic Search:**
-
-```bash
-curl -X POST http://localhost:8000/api/search/semantic \
+# Complex semantic search
+curl -X POST http://localhost:8000/api/search/ \
   -H "Content-Type: application/json" \
   -d '{
     "query": "mecha robots fighting in space",
     "limit": 10
   }'
-```
-
-**Image Search Examples:**
-
-```bash
-# Upload image file for visual similarity search
-curl -X POST http://localhost:8000/api/search/by-image \
-  -F "image=@anime_poster.jpg" \
-  -F "limit=5"
-
-# Search with base64 encoded image data
-curl -X POST http://localhost:8000/api/search/by-image-base64 \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "image_data=iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB..." \
-  -d "limit=5"
-
-# Find visually similar anime by ID
-curl "http://localhost:8000/api/search/visually-similar/cac1eeaeddf7?limit=5"
-
-# Multimodal search (text + image)
-curl -X POST http://localhost:8000/api/search/multimodal \
-  -F "query=mecha anime" \
-  -F "image=@robot_poster.jpg" \
-  -F "limit=10" \
-  -F "text_weight=0.7"
 ```
 
 ### 🤖 Conversational Workflow Endpoints
@@ -591,6 +647,27 @@ For direct API calls, use these patterns:
 
 ## 🧪 Testing
 
+### Postman Collection
+
+A comprehensive Postman collection is available with all 76 requests organized by category:
+
+**Import the collection:**
+1. **Collection**: `postman/Anime_MCP_Server_Complete.postman_collection.json`
+2. **Environment**: `postman/Anime_MCP_Server_Local.postman_environment.json`
+
+**Collection Structure:**
+- **Core System** (3 requests): Health, stats, API overview
+- **Unified Search** (8 requests): Text, similar, image, visual similarity, multimodal, file upload variations
+- **Query** (2 requests): AI-powered query processing
+- **Admin** (8 requests): Database management endpoints
+- **External Platforms** (55 requests): AniList, MAL, Kitsu, AnimeSchedule, AniDB, AnimePlanet, AniSearch, AnimeCountdown
+
+**Environment Variables:**
+- `baseUrl`: `http://localhost:8000`
+- `anime_id`: `cac1eeaeddf7` (example anime ID)
+- `staff_id`: `95` (example staff ID)
+- `studio_id`: `11` (example studio ID)
+
 ### FastAPI Server Testing
 
 ```bash
@@ -598,7 +675,9 @@ For direct API calls, use these patterns:
 curl http://localhost:8000/health
 
 # Test search
-curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{"query": "dragon ball", "limit": 5}'
 
 # Stats
 curl http://localhost:8000/stats
@@ -617,10 +696,12 @@ curl http://localhost:8000/health
 curl http://localhost:8000/stats
 
 # 3. Simple search
-curl "http://localhost:8000/api/search/?q=dragon%20ball&limit=5"
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{"query": "dragon ball", "limit": 5}'
 
 # 4. Semantic search
-curl -X POST http://localhost:8000/api/search/semantic \
+curl -X POST http://localhost:8000/api/search/ \
   -H "Content-Type: application/json" \
   -d '{"query": "mecha robots fighting in space", "limit": 10}'
 ```
@@ -655,14 +736,15 @@ curl -X POST http://localhost:8000/api/workflow/smart-conversation \
 4. Verify image and text weights
 
 ```bash
-# Upload image search
-curl -X POST http://localhost:8000/api/search/by-image \
-  -F "image=@anime_poster.jpg" -F "limit=5"
+# Image search with base64 data
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{"image_data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB...", "limit": 5}'
 
-# Base64 image search  
-curl -X POST http://localhost:8000/api/search/by-image-base64 \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "image_data=iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB..." -d "limit=5"
+# Visual similarity search
+curl -X POST http://localhost:8000/api/search/ \
+  -H "Content-Type: application/json" \
+  -d '{"anime_id": "cac1eeaeddf7", "visual_similarity": true, "limit": 5}'
 
 # Multimodal workflow
 curl -X POST http://localhost:8000/api/workflow/multimodal \
