@@ -20,7 +20,7 @@ AI_CLIENTS = {
         "module": "openai",
         "class": "AsyncOpenAI", 
         "key": "OPENAI_API_KEY",
-        "default_model": "gpt-4o-mini"
+        "default_model": "gpt-4o"
     },
     "anthropic": {
         "module": "anthropic", 
@@ -212,26 +212,19 @@ ID EXTRACTION TASKS:
 1. Extract MAL ID from MAL URLs (myanimelist.net/anime/{{id}})
 2. Extract AniList ID from AniList URLs (anilist.co/anime/{{id}})  
 
-MANDATORY RELATEDANIME PROCESSING - INCLUDE ALL URLS:
-1. ALWAYS include the "relatedAnime" field in your output - NEVER omit this field
-2. PROCESS EVERY SINGLE original relatedAnime URL from the input data
-3. INCLUDE ALL URLs - do not filter out any unless clearly manga/novels
-4. For EACH URL, create an entry with:
-   - anime_id: Extract meaningful identifier from URL (could be slug, ID, or path segment)
-   - relation_type: Analyze URL patterns, site content, and context for relationship hints, use fuzzy matching, or default to "Other"
-   - title: Extract intelligently from URL path and site content using fuzzy matching and formatting
-   - urls: {{"platform": "original_URL_exactly_as_provided"}}
-5. TITLE EXTRACTION (be creative and intelligent):
+MANDATORY RELATEDANIME PROCESSING:
+1. ALWAYS include the "relatedAnime" field in your output
+2. PROCESS EVERY SINGLE original relatedAnime URL from the input data  
+3. CREATE ONE SEPARATE ENTRY for each original URL - do not group or merge
+4. PRESERVE EXACT URLS: Copy each original URL exactly as provided
+5. EXTRACT CREATIVE TITLES: Use URL path analysis and site content to create meaningful titles
+6. TITLE EXTRACTION (be creative and intelligent):
    - Extract from URL path with intelligent formatting (convert dashes to spaces, proper capitalization)
    - Analyze site content and context to infer proper titles
    - Use fuzzy matching to connect URLs to meaningful content
-   - Convert dashes/underscores to spaces and capitalize properly
-   - For unclear paths, create descriptive titles from available URL components and site context
-6. RELATIONSHIP TYPE INFERENCE:
-   - Look for patterns: "2nd-season" → "Sequel", "movie" → "Movie", "ova" → "OVA"
-   - Use fuzzy matching to detect sequels, spin-offs, etc.
-   - Default to "Other" when unclear
-7. PROCESS ALL: Every original URL should become an entry in output relatedAnime array
+   - For unclear paths, create descriptive titles from available URL components
+7. NEVER USE "Unknown Title" - always extract something meaningful from the URL
+8. VERIFICATION: Your output count must match input count exactly
 
 API FUNCTION CALLS (targeted based on source assignments):
 - fetch_jikan_anime_details (for demographics, content_warnings, aired_dates, staff, themes, episodes, relations, awards, statistics)
@@ -259,7 +252,7 @@ Map the API data to this comprehensive JSON schema (preserve all original fields
     "studios": "Preserve from original data",
     "producers": "Preserve from original data",
     "tags": "Preserve from original data",
-    "relatedAnime": {{\"anime_id\": \"from_URL\", \"relation_type\": \"infer_type\", \"title\": \"fetch_real_title_or_infer\", \"urls\": {{\"platform\": \"original_URL\"}}}}
+    "relatedAnime": [{{\"anime_id\": \"from_URL\", \"relation_type\": \"infer_type\", \"title\": \"extract_from_URL\", \"urls\": {{\"platform\": \"exact_original_URL\"}}}}] (one entry per original URL - do not group)
     
     "synopsis": "Extract from jikan_data.data.synopsis",
     "genres": ["Extract genre names from jikan_data.data.genres array"],
@@ -361,9 +354,10 @@ CRITICAL INSTRUCTIONS:
 9. URL PARSING: Extract meaningful identifiers from various URL structures (slugs, IDs, path segments)
 10. FUZZY MATCHING: Use pattern recognition to infer relationships and titles from URL structure
 11. CRITICAL SEPARATION: relatedAnime = ALL anime relationships, relations = ONLY non-anime (manga/novels)
-12. OUTPUT COUNT: Should match the number of original relatedAnime URLs (unless some are manga/novels)
-13. VALID RELATIONSHIP TYPES: Sequel, Prequel, Side Story, Alternative Version, Spin-off, Parent Story, Summary, Alternative Setting, Character, Other
-14. Return valid JSON only, no explanations
+12. URL PRESERVATION: Copy every original URL exactly - no modifications, substitutions, or changes
+13. OUTPUT COUNT: Must match the exact number of original relatedAnime URLs
+14. VALID RELATIONSHIP TYPES: Sequel, Prequel, Side Story, Alternative Version, Spin-off, Parent Story, Summary, Alternative Setting, Character, Other
+15. Return valid JSON only, no explanations
 
 Map the real API response data to this comprehensive schema structure."""
         
