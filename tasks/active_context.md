@@ -4,88 +4,110 @@
 
 ## Current Work Focus
 
-**Project Status**: Data Enrichment Implementation for Enhanced Fine-Tuning
+**Project Status**: AI-Powered Data Enrichment Enhancement
 
-- **Current Priority**: Implement anime content enrichment pipeline (Task #119)
-- **System State**: Fine-tuning infrastructure complete, but limited by missing synopsis/character data
-- **Immediate Goal**: Enrich 29,007+ anime with synopsis, characters, and trailers to unlock fine-tuning potential
+- **Current Priority**: Enhance AI enrichment agent for comprehensive anime data standardization
+- **System State**: Basic enrichment agent exists but needs intelligent multi-source data processing
+- **Immediate Goal**: Implement AI-driven standardization and smart merging for multi-platform anime data
 
 ## Active Decisions and Considerations
 
-**Data Enrichment Strategy**:
-- **Primary Source**: Jikan API (comprehensive, no auth required, 77 characters per anime)
-- **Secondary Source**: AniList API (validation, 86 characters with pagination)
-- **Coverage**: 74.6% immediate coverage (29,007 anime) using existing MAL URLs
-- **Approach**: Direct ID extraction from anime-offline-database source URLs (no fuzzy matching)
+**AI-Driven Data Enrichment Strategy**:
+- **Multi-Source Integration**: Jikan, AniList, Kitsu, AnimeSchedule APIs based on `_sources` schema mapping
+- **Intelligent Standardization**: AI normalizes different API schemas into uniform properties
+- **Smart Character Merging**: AI deduplicates and enhances characters across multiple sources
+- **Schema Compliance**: Output matches enhanced_anime_schema_example.json structure exactly
 
-**Why This Approach**:
-- **Problem**: Task #118 fine-tuning limited by missing synopsis and character data in anime-offline-database
-- **Solution**: Enrich existing database with comprehensive content data to unlock fine-tuning potential
-- **Advantage**: Existing source URLs eliminate need for fuzzy matching, ensuring 100% accuracy
+**Why AI-Powered Approach**:
+- **Problem**: Different APIs have inconsistent field names, formats, and data structures
+- **Solution**: AI intelligently maps, converts, and standardizes data from multiple sources
+- **Advantage**: Comprehensive coverage with intelligent merging eliminates manual field mapping
 
-**Technical Implementation Details**:
+**AI Enrichment Technical Implementation**:
 
-**URL Parsing Strategy**:
+**Source Mapping Strategy** (based on enhanced_anime_schema_example.json `_sources`):
 ```python
-# Extract IDs from existing sources like:
-# "https://myanimelist.net/anime/16498" → mal_id: 16498
-# "https://anilist.co/anime/16498" → anilist_id: 16498
-def extract_platform_ids(sources):
-    platform_ids = {}
-    for source in sources:
-        if 'myanimelist.net/anime/' in source:
-            platform_ids['mal'] = int(source.split('/anime/')[1])
-        elif 'anilist.co/anime/' in source:
-            platform_ids['anilist'] = int(source.split('/anime/')[1])
-    return platform_ids
-```
+# Single-source fields (primary + fallback)
+SINGLE_SOURCE_MAPPING = {
+    "genres": {"primary": "anilist", "fallback": "jikan"},
+    "demographics": {"primary": "jikan", "fallback": "anilist"},
+    "themes": {"primary": "anilist", "fallback": "jikan"},
+    "broadcast": {"primary": "animeschedule", "fallback": "jikan"},
+    "rating": {"primary": "kitsu", "fallback": "jikan"}
+}
 
-**Data Structure Plan**:
-```python
-# Enhanced anime entry structure
-{
-    "title": "Attack on Titan",
-    "sources": [...],  # Existing
-    "synopsis": "Centuries ago, mankind was slaughtered...",  # NEW from Jikan
-    "characters": [  # NEW from Jikan + AniList
-        {
-            "name": "Eren Yeager",
-            "role": "Main",
-            "character_ids": {
-                "mal": 40882,      # From Jikan
-                "anilist": 40882   # From AniList cross-reference
-            },
-            "images": {
-                "jikan": "https://cdn.myanimelist.net/images/characters/10/216895.jpg",
-                "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b40882-dsj2Ibw8VlpA.jpg"
-            }
-        }
-    ],
-    "trailers": [  # NEW from Jikan/AniList
-        {
-            "youtube_id": "LHtdKWJdif4",
-            "source": "jikan",
-            "thumbnail": "https://i.ytimg.com/vi/LHtdKWJdif4/hqdefault.jpg"
-        }
-    ]
+# Multi-source fields (fetch from all)
+MULTI_SOURCE_MAPPING = {
+    "statistics": ["jikan", "anilist", "kitsu", "animeschedule"],
+    "images": ["jikan", "anilist", "kitsu", "animeschedule"],
+    "characters": ["jikan", "anilist"],  # Character merging
+    "streaming_info": ["animeschedule", "kitsu"]
 }
 ```
 
-**API Integration Specifics**:
-- **Jikan Client**: Already implemented (`src/integrations/clients/jikan_client.py`)
-- **AniList Client**: Already implemented with pagination support discovered
-- **Character Endpoints**: 
-  - Jikan: `/anime/{id}/characters` (77 characters for Attack on Titan)
-  - AniList: GraphQL with pagination (86 characters for Attack on Titan)
-- **Rate Limiting**: Both clients have existing rate limiting infrastructure
+**AI Standardization Examples**:
+```python
+# AI-standardized statistics across platforms
+"statistics": {
+    "mal": {
+        "score": 8.43,           # AI maps from raw "score"
+        "scored_by": 2251158,    # AI maps from "scored_by"
+        "rank": 68,              # AI maps from "rank"
+        "popularity_rank": 12,   # AI maps from "popularity"
+        "members": 3500000,      # AI maps from "members"
+        "favorites": 89234       # AI maps from "favorites"
+    },
+    "anilist": {
+        "score": 8.2,            # AI converts averageScore 82 → 8.2
+        "scored_by": null,       # Not available
+        "rank": null,            # Not available
+        "popularity_rank": null, # Not available
+        "members": 147329,       # AI maps from "popularity"
+        "favorites": 53821       # AI maps from "favourites"
+    },
+    "kitsu": {
+        "score": 8.21,           # AI converts averageRating 82.1 → 8.21
+        "scored_by": 45123,      # AI maps from "ratingCount"
+        "rank": null,            # Not available
+        "popularity_rank": null, # Not available
+        "members": null,         # Not available
+        "favorites": 12456       # AI maps from "favoritesCount"
+    }
+}
 
-**Key Technical Considerations**:
-- **Character Data**: AniList pagination discovered (86 vs 25 characters) - need to implement full pagination
-- **Synopsis Quality**: Jikan/MAL provides longer descriptions (1157 vs 837 chars) - use Jikan as primary
-- **Image Quality**: Both platforms provide high-quality character images - collect from both for redundancy
-- **Cross-Platform IDs**: Need mapping between AniList and MAL character IDs for comprehensive coverage
-- **Storage Strategy**: Extend existing AnimeEntry model vs create separate enrichment tables
-- **Vector Integration**: Include synopsis in text embeddings, character data for fine-tuning datasets
+# AI-merged character data
+"characters": [
+    {
+        "name": "Kamado, Tanjirou",
+        "name_variations": ["Tanjiro Kamado", "炭治郎"],  # AI merges variations
+        "character_ids": {"mal": 146156, "anilist": 127212},  # AI combines IDs
+        "images": {
+            "mal": "https://cdn.myanimelist.net/images/characters/1/364490.jpg",
+            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b127212-AqNr8yCAAhQI.png"
+        },  # AI collects from all sources
+        "voice_actors": [...]  # AI deduplicates across sources
+    }
+]
+```
+
+**AI Enhancement Key Principles**:
+
+**Multi-Source Data Handling**:
+- **Single-Source Fields**: Use primary source, fallback to alternative if primary fails
+- **Multi-Source Fields**: Fetch from ALL relevant APIs, leave empty if source lacks data
+- **No Cross-Substitution**: For multi-source fields, don't substitute missing data with alternative sources
+
+**AI Standardization Approach**:
+- **Uniform Statistics Schema**: AI maps different field names to consistent properties
+- **Unit Conversion**: AI handles scale conversions (82/100 → 8.2/10)
+- **Character Deduplication**: AI identifies same characters across sources using fuzzy matching
+- **Image Collection**: AI gathers character images from all available sources
+
+**Performance Considerations**:
+- **Existing API Infrastructure**: Use current rate limiting and pagination logic
+- **No Additional Calls**: Work within existing fetch mechanisms
+- **Character Chunking**: Maintain existing large dataset processing for characters
+- **Schema Compliance**: Output must match enhanced_anime_schema_example.json exactly
 
 **Critical Data Management Considerations**:
 

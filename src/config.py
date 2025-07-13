@@ -240,6 +240,9 @@ class Settings(BaseSettings):
     anidb_protover: Optional[str] = Field(
         default="1", description="AniDB protocol version for API requests"
     )
+    anime_schedule_token: Optional[str] = Field(
+        default=None, description="AnimeSchedule API token for authenticated requests"
+    )
 
     # Health Check Configuration
     health_check_timeout: int = Field(

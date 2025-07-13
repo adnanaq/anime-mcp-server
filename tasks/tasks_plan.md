@@ -224,6 +224,38 @@
     - **Search Quality**: Improved recommendations with comprehensive content descriptions
   - **Priority**: ⏳ HIGH - Critical enhancement for Task #118 fine-tuning effectiveness
 
+- **Task #120**: 🚀 **ACTIVE** - AI-Powered Data Standardization Enhancement (NEW CRITICAL)
+  - **Status**: 🚀 ACTIVE - Enhancing existing AI enrichment agent with intelligent multi-source data processing
+  - **✅ Current State Analysis**:
+    - **Existing Agent**: `src/services/ai_enrichment_agent.py` provides basic AI-powered enrichment
+    - **Current Approach**: "Call all APIs and let AI merge" - needs targeted optimization
+    - **Schema Reference**: `enhanced_anime_schema_example.json` defines comprehensive output structure
+    - **Gap Identified**: Missing intelligent source mapping and standardized data merging
+  - **🎯 Enhancement Goals**:
+    - **Source Mapping Strategy**: Implement targeted API calls based on `_sources` schema mapping
+    - **AI Standardization**: Intelligent field mapping and unit conversion across platforms
+    - **Character Deduplication**: Smart character merging with fuzzy name matching
+    - **Statistics Harmonization**: Uniform statistics schema across all platforms
+    - **Schema Compliance**: Exact output matching enhanced_anime_schema_example.json
+  - **📋 Implementation Plan**:
+    - **Phase 1**: Define standardized statistics schema in `src/models/anime.py`
+    - **Phase 2**: Create source mapping configuration based on `_sources` schema
+    - **Phase 3**: Enhance AI prompts for targeted data fetching and standardization
+    - **Phase 4**: Implement intelligent character merging and image collection
+    - **Phase 5**: Add schema validation and compliance checking
+  - **🔧 Technical Requirements**:
+    - **Single-Source Fields**: Primary + fallback source strategy (e.g., genres: anilist → jikan)
+    - **Multi-Source Fields**: Fetch from ALL applicable sources, leave empty if unavailable
+    - **No Cross-Substitution**: For multi-source fields, don't substitute missing data
+    - **Performance**: Work within existing API infrastructure and rate limiting
+    - **Character Processing**: Maintain existing pagination logic for large datasets
+  - **✨ Expected Benefits**:
+    - **Comprehensive Coverage**: Full platform data integration with intelligent merging
+    - **Consistent Quality**: Standardized output format regardless of source variations
+    - **Enhanced Accuracy**: Better character deduplication and cross-platform validation
+    - **Schema Compliance**: Perfect alignment with target schema structure
+  - **Priority**: 🚀 CRITICAL - Foundation for comprehensive anime data enhancement
+
 ### COMPLETED FIXES (Recently Finished)
 
 ### URGENT DEAD CODE CLEANUP (Must Fix Immediately)
