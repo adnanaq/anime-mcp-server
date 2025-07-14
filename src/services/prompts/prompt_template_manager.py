@@ -60,6 +60,11 @@ class PromptTemplateManager:
                 "file": "04_statistics_media.txt",
                 "description": "Extract statistics and media fields",
                 "token_reduction": "90%"
+            },
+            5: {
+                "file": "05_character_processing.txt",
+                "description": "Process character data and voice actors",
+                "token_reduction": "85%"
             }
         }
     
@@ -101,7 +106,7 @@ class PromptTemplateManager:
         """Build a complete prompt for a specific stage
         
         Args:
-            stage_num: Stage number (1-4)
+            stage_num: Stage number (1-5)
             **kwargs: Template variables to substitute
             
         Returns:
@@ -129,7 +134,7 @@ class PromptTemplateManager:
         """Get information about a specific stage
         
         Args:
-            stage_num: Stage number (1-4)
+            stage_num: Stage number (1-5)
             
         Returns:
             Stage configuration dictionary

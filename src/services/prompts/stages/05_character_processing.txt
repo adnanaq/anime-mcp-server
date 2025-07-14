@@ -1,0 +1,47 @@
+# CHARACTER PROCESSING STAGE
+Extract character data from Jikan API response.
+
+## INPUT DATA
+{characters_data}
+
+## RULES
+- Process ALL characters 
+- Map roles: "Main"/"Supporting"
+- Extract all voice actors with language
+- Use null for missing data
+
+## OUTPUT SCHEMA
+Return ONLY the characters field as JSON:
+
+```json
+{{
+  "characters": [
+    {{
+      "name": "Character Full Name",
+      "role": "Main",
+      "name_variations": ["Alternative Name 1", "Alternative Name 2"],
+      "name_kanji": "漢字名",
+      "name_native": "Native Name",
+      "character_ids": {{
+        "mal": 12345,
+        "anilist": null
+      }},
+      "images": {{
+        "mal": "https://cdn.myanimelist.net/images/characters/...",
+        "anilist": null
+      }},
+      "description": "Character description or about text",
+      "age": "Character age or null",
+      "gender": "Male/Female/Other or null",
+      "voice_actors": [
+        {{
+          "name": "Voice Actor Name",
+          "language": "Japanese"
+        }}
+      ]
+    }}
+  ]
+}}
+```
+
+Return ONLY valid JSON. No explanations.
