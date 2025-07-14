@@ -30,16 +30,34 @@ async def test_with_offline_data():
     # Test our enrichment function
     print("\n🚀 Running full enrichment...")
     
-    # Create agent to see AI enrichment response
+    # Create agent for AI enrichment
     agent = IterativeAIEnrichmentAgent()
     
     if agent.ai_client:
-        print("\n--- FULL AI ENRICHMENT RESPONSE ---")
-        ai_enriched = await agent._ai_enrich_data(first_anime)
-        print(json.dumps(ai_enriched, indent=2, ensure_ascii=False))
-        print("--- END FULL RESPONSE ---\n")
-    
-    enriched_result = await enrich_anime_for_vector_indexing(first_anime)
+        print("\n--- TESTING AI ENRICHMENT ---")
+        print("This may take a few minutes due to API calls and AI processing...")
+        
+        # Natural processing without artificial timeout constraints
+        try:
+            print("🔄 Starting AI enrichment process...")
+            print("⏳ This may take significant time for anime with many episodes...")
+            enriched_result = await agent._ai_enrich_data(first_anime)
+            print("✅ AI enrichment completed successfully")
+            print(f"📊 Result has {len(enriched_result)} fields")
+            
+            # Check if we got episode details
+            if enriched_result and 'episode_details' in enriched_result:
+                episode_count = len(enriched_result['episode_details'])
+                print(f"📺 Episodes in result: {episode_count}")
+            else:
+                print("❌ No episode details in result")
+                
+        except Exception as e:
+            print(f"❌ AI enrichment failed: {e}")
+            enriched_result = first_anime
+    else:
+        print("No AI client available")
+        enriched_result = first_anime
     
     # Save result to JSON file
     output_file = "iterative_enrichment_result.json"

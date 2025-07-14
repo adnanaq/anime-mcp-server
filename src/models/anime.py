@@ -66,6 +66,13 @@ class RelationEntry(BaseModel):
     urls: Dict[str, str] = Field(default_factory=dict, description="URLs from different platforms")
 
 
+class RelatedAnimeEntry(BaseModel):
+    """Related anime entry from URL processing"""
+    relation_type: str = Field(..., description="Relation type (Sequel, Prequel, Other, etc.)")
+    title: str = Field(..., description="Related anime title extracted from URL")
+    url: str = Field(..., description="Original URL")
+
+
 class StreamingEntry(BaseModel):
     """Streaming platform entry"""
     platform: str = Field(..., description="Streaming platform name")
@@ -152,6 +159,7 @@ class AnimeEntry(BaseModel):
     # Detailed timing information
     aired_dates: Optional[Dict[str, Any]] = Field(None, description="Detailed airing dates")
     broadcast: Optional[Dict[str, Any]] = Field(None, description="Broadcast schedule information")
+    background: Optional[str] = Field(None, description="Background information from MAL")
     
     # Streaming and availability
     streaming_info: List[StreamingEntry] = Field(default_factory=list, description="Streaming platform information")
@@ -178,6 +186,9 @@ class AnimeEntry(BaseModel):
     # Relations with multi-platform URLs
     relations: List[RelationEntry] = Field(default_factory=list, description="Related anime with platform URLs")
     
+    # Related anime from URL processing (different from relations)
+    relatedAnime: List[RelatedAnimeEntry] = Field(default_factory=list, description="Related anime entries from URL processing")
+    
     # Awards and recognition
     awards: List[Dict[str, Any]] = Field(default_factory=list, description="Awards and recognition")
     
@@ -197,7 +208,8 @@ class AnimeEntry(BaseModel):
             len(self.themes) > 0 or
             len(self.streaming_info) > 0 or
             len(self.staff) > 0 or
-            len(self.relations) > 0
+            len(self.relations) > 0 or
+            len(self.relatedAnime) > 0
         )
     
     def is_enrichable(self) -> bool:
@@ -298,6 +310,7 @@ class AnimeEntry(BaseModel):
             "streaming_platform_count": len(self.streaming_info),
             "staff_count": len(self.staff),
             "relation_count": len(self.relations),
+            "related_anime_count": len(self.relatedAnime),
             "award_count": len(self.awards),
             
             # Data quality indicators

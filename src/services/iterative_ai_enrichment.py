@@ -140,22 +140,27 @@ class IterativeAIEnrichmentAgent:
         return enriched_data  # Return original data if AI enrichment failed
     
     async def _call_ai(self, prompt: str, model: Optional[str] = None) -> str:
-        """Call AI provider with unified interface"""
+        """Call AI provider with unified interface and function calling support"""
         if not self.ai_client:
             raise ValueError("No AI client configured")
         
         model = model or AI_CLIENTS[self.ai_provider]["default_model"]
+        
+        # No function calling for now - use pure AI analysis
         
         # Unified call method based on provider
         if self.ai_provider == "openai":
             response = await self.ai_client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.1
+                temperature=0.1,
+                timeout=3600.0  # 1 hour timeout for long-running anime processing
             )
             return response.choices[0].message.content
             
         elif self.ai_provider == "anthropic":
+            # Anthropic doesn't support function calling in the same way
+            # We'll need to handle this differently for Anthropic
             response = await self.ai_client.messages.create(
                 model=model,
                 max_tokens=4000,
@@ -191,69 +196,126 @@ class IterativeAIEnrichmentAgent:
             return anime_data
         
         # Step 2: Fetch real Jikan API data
-        logger.info(f"Fetching Jikan data for MAL ID: {mal_id}")
         jikan_data = await self._fetch_jikan_anime_full(mal_id)
         
         if "error" in jikan_data:
             logger.error(f"Failed to fetch Jikan data: {jikan_data['error']}")
             return anime_data
         
-        # Step 3: Have AI process the real API response with comprehensive schema
+        # Step 3: Fetch episode details
+        episodes_data = await self._fetch_jikan_episodes(mal_id)
+        
+        if "error" in episodes_data:
+            logger.warning(f"Failed to fetch episode data: {episodes_data['error']}")
+            episodes_data = {"data": []}  # Continue without episodes
+        
+        # Step 4: Pre-process episode data to avoid massive AI prompts
+        processed_episodes = []
+        for episode in episodes_data.get("data", []):
+            # Extract only the fields we need, excluding mal_id and forum_url as requested
+            processed_episode = {
+                "url": episode.get("url"),
+                "title": episode.get("title"),
+                "title_japanese": episode.get("title_japanese"),
+                "title_romanji": episode.get("title_romanji"),
+                "aired": episode.get("aired"),
+                "score": episode.get("score"),
+                "filler": episode.get("filler", False),
+                "recap": episode.get("recap", False),
+                "duration": episode.get("duration"),
+                "synopsis": episode.get("synopsis")
+            }
+            processed_episodes.append(processed_episode)
+        
+        logger.info(f"Pre-processed {len(processed_episodes)} episodes for AI")
+        
+        # Step 5: Have AI process the real API response with comprehensive schema
         prompt = f"""
-Process this anime data with the real Jikan API response and map it to the comprehensive schema:
+# ROLE & CONTEXT
+You are an expert anime database enrichment specialist. Your task is to process anime data from an offline database and enrich it with real-time Jikan API data, creating a comprehensive unified schema.
 
-ORIGINAL ANIME DATA:
+# OBJECTIVE
+Transform the provided anime data into a structured, enriched JSON object that preserves all original data while adding detailed metadata from the Jikan API response.
+
+# INPUT DATA
+## ORIGINAL ANIME DATA:
 {anime_data}
 
-JIKAN API RESPONSE:
+## JIKAN API RESPONSE:
 {jikan_data}
 
-ID EXTRACTION TASKS:
-1. Extract MAL ID from MAL URLs (myanimelist.net/anime/{{id}})
-2. Extract AniList ID from AniList URLs (anilist.co/anime/{{id}})  
+## EPISODE DATA (Pre-processed):
+{processed_episodes}
 
-MANDATORY RELATEDANIME PROCESSING:
-1. ALWAYS include the "relatedAnime" field in your output
-2. PROCESS EVERY SINGLE original relatedAnime URL from the input data  
-3. CREATE ONE SEPARATE ENTRY for each original URL - do not group or merge
-4. PRESERVE EXACT URLS: Copy each original URL exactly as provided
-5. EXTRACT CREATIVE TITLES: Use URL path analysis and site content to create meaningful titles
-6. TITLE EXTRACTION (be creative and intelligent):
-   - Extract from URL path with intelligent formatting (convert dashes to spaces, proper capitalization)
-   - Analyze site content and context to infer proper titles
-   - Use fuzzy matching to connect URLs to meaningful content
-   - For unclear paths, create descriptive titles from available URL components
-7. NEVER USE "Unknown Title" - always extract something meaningful from the URL
-8. VERIFICATION: Your output count must match input count exactly
+# PROCESSING INSTRUCTIONS
 
-API FUNCTION CALLS (targeted based on source assignments):
-- fetch_jikan_anime_details (for demographics, content_warnings, aired_dates, staff, themes, episodes, relations, awards, statistics)
+## 1. DATA PRESERVATION REQUIREMENTS
+- Preserve ALL original anime fields exactly as provided unless specified otherwise below
 
-INTELLIGENT DATA STANDARDIZATION:
-- For statistics, intelligently map platform-specific fields to uniform schema:
-   - Convert rating scales (e.g., AniList 82 → score 8.2)
-   - Map field names (e.g., "averageScore" → "score", "popularity" → "members")
-   - Handle missing fields gracefully (set to null)
-   
-Map the API data to this comprehensive JSON schema (preserve all original fields + add enriched fields):
+## 2. RELATEDANIME PROCESSING (CRITICAL TASK)
+This is the most important part of your task. Follow these steps exactly:
+
+### STEP 1: IDENTIFY ORIGINAL URLS
+- Review all URLs in the original data's "relatedAnime" field
+- Process EVERY URL provided - do not filter or exclude any URLs
+
+For each URL, perform intelligent title extraction and relationship inference:
+
+### STEP 2: TITLE EXTRACTION RULES
+- Convert dashes/underscores to spaces
+- Apply proper capitalization
+- Extract meaningful identifiers from URL paths
+- For unclear paths, use descriptive titles from URL components 
+- NEVER use "Unknown Title" - always extract something meaningful
+
+**TITLE EXTRACTION EXAMPLES:**
+
+**EXAMPLE 1:**
+Input: "https://anime-planet.com/anime/dandadan-2nd-season"
+→ Extract: "Dandadan 2nd Season"
+
+**EXAMPLE 2:**
+Input: "https://anime-planet.com/anime/creepy-nuts-otonoke"
+→ Extract: "Creepy Nuts Otonoke"
+
+**EXAMPLE 3:**
+Input: "https://myanimelist.net/anime/60543"
+→ Extract: "Dandadan 2nd Season" (or similar meaningful title)
+
+**EXAMPLE 4:**
+Input: "https://anilist.co/anime/185586"
+→ Extract: "Dandadan 2nd Season" (or similar meaningful title)
+
+### STEP 3: RELATIONSHIP TYPE INFERENCE
+Based on title analysis, determine:
+- "Sequel": For season/part continuations (e.g., "2nd Season", "Part 2")
+- "Prequel": For earlier entries
+- "Side Story": For spin-offs
+- "Other": For theme songs, specials, unclear relationships
+
+
+## 3. DATA EXTRACTION FROM JIKAN API
+- Extract real values from jikan_data.data structure
+- Convert rating scales appropriately (maintain 0-10 scale)
+- Format dates as ISO strings
+- Handle missing fields gracefully (use null/empty arrays)
+
+## 4. SCHEMA SEPARATION RULE
+- **relatedAnime**: ALL anime-related entries (from original URLs)
+- **relations**: ONLY non-anime relationships (manga, novels), smartly observe the url for hints.
+
+
+# OUTPUT SCHEMA
+Map the data to this comprehensive JSON structure (preserve ALL original fields + add these enriched fields):
 
 {{
-    "sources": "Preserve from original data",
-    "title": "Preserve from original data", 
-    "type": "Preserve from original data",
-    "episodes": "Preserve from original data",
-    "status": "Preserve from original data",
-    "animeSeason": "Preserve from original data",
-    "picture": "Preserve from original data",
-    "thumbnail": "Preserve from original data", 
-    "duration": "Preserve from original data",
-    "score": "Preserve from original data",
-    "synonyms": "Preserve from original data",
-    "studios": "Preserve from original data",
-    "producers": "Preserve from original data",
-    "tags": "Preserve from original data",
-    "relatedAnime": [{{\"anime_id\": \"from_URL\", \"relation_type\": \"infer_type\", \"title\": \"extract_from_URL\", \"urls\": {{\"platform\": \"exact_original_URL\"}}}}] (one entry per original URL - do not group)
+    // All original fields preserved as-is
+    ...original_anime_data,
     
+    // Enhanced relatedAnime processing
+    "relatedAnime": [{{\"relation_type\": \"infer_type\", \"title\": \"extract_from_URL\", \"url\": \"exact_original_URL\"}}] (PROCESS ALL original URLs - one entry per URL, no filtering)
+    
+    // New enriched fields
     "synopsis": "Extract from jikan_data.data.synopsis",
     "genres": ["Extract genre names from jikan_data.data.genres array"],
     "demographics": ["Shounen"],
@@ -271,6 +333,7 @@ Map the API data to this comprehensive JSON schema (preserve all original fields
         "time": "23:30",
         "timezone": "JST"
     }},
+    "background": "Extract from jikan_data.data.background",
     "title_japanese": "Extract from jikan_data.data.title_japanese",
     "title_english": "Extract from jikan_data.data.title_english",    
     "streaming_info": [{{
@@ -306,10 +369,11 @@ Map the API data to this comprehensive JSON schema (preserve all original fields
         }}
     }},
     
-    "trailer": {{
-        "url": "http//...",
-        "thumbnail": "Extract max size image"
-    }},
+    "trailers": [{{
+        "youtube_url": "http//...",
+        "title": "Trailer title or use default",
+        "thumbnail_url": "Extract max size image"
+    }}],
     
     "external_links": {{
         "official_website": "Extract from jikan_data.data.external if available"
@@ -322,7 +386,7 @@ Map the API data to this comprehensive JSON schema (preserve all original fields
             "type": "cover"
         }}]
     }},
-    "episode_details": [],
+    "episode_details": processed_episodes (CRITICAL: Use ALL {len(processed_episodes)} pre-processed episodes exactly as provided - DO NOT skip any episodes),
     
     "relations": [{{ CRITICAL: ONLY for NON-ANIME relationships (manga, light novels, etc.). DO NOT put anime entries here - all anime go in relatedAnime field above!
         "anime_id": "manga-id",
@@ -337,53 +401,50 @@ Map the API data to this comprehensive JSON schema (preserve all original fields
         "name": "Award Name",
         "organization": "Organization",
         "year": 2020
-    }}],
-    
-    "jikan_response": "Include the complete jikan_data object"
+    }}]
 }}
 
-CRITICAL INSTRUCTIONS:
-1. Use REAL values from the jikan_data API response - do not make up data
-2. If a field is not available in API response, use null or empty array/object
-3. Preserve ALL original anime fields exactly as they are
-4. Extract actual values from the nested JSON structure
-5. For relatedAnime: PROCESS ALL ORIGINAL URLs from input data
-6. BE INCLUSIVE: Process every URL unless clearly manga/novels
-7. INTELLIGENT TITLE EXTRACTION: Use fuzzy matching, URL analysis, and site content to create meaningful titles
-8. CREATIVE FORMATTING: Convert URL slugs to proper titles (dashes to spaces, proper capitalization)
-9. URL PARSING: Extract meaningful identifiers from various URL structures (slugs, IDs, path segments)
-10. FUZZY MATCHING: Use pattern recognition to infer relationships and titles from URL structure
-11. CRITICAL SEPARATION: relatedAnime = ALL anime relationships, relations = ONLY non-anime (manga/novels)
-12. URL PRESERVATION: Copy every original URL exactly - no modifications, substitutions, or changes
-13. OUTPUT COUNT: Must match the exact number of original relatedAnime URLs
-14. VALID RELATIONSHIP TYPES: Sequel, Prequel, Side Story, Alternative Version, Spin-off, Parent Story, Summary, Alternative Setting, Character, Other
-15. Return valid JSON only, no explanations
+# RESPONSE REQUIREMENTS
 
-Map the real API response data to this comprehensive schema structure."""
+## FORMAT CONSTRAINTS
+- Return ONLY valid JSON - no explanations, no markdown formatting
+- No text before or after the JSON object
+- Ensure proper JSON structure with correct brackets and commas
+
+
+## QUALITY STANDARDS
+- Extract meaningful titles from URL analysis
+- Use intelligent relationship type inference
+- PROCESS ALL ORIGINAL URLs - do not filter or exclude any URLs
+- Output count must match input count (all 16 URLs should be processed)
+- Focus on intelligent title extraction and relationship categorization
+- Maintain data integrity throughout processing
+- Handle edge cases gracefully
+
+Now process the data and return the enriched JSON following this schema structure."""
         
         try:
-            logger.info(f"Processing real API data with AI...")
+            logger.info(f"Processing anime data with AI...")
             response = await self._call_ai(prompt)
             response = response.strip()
             
             # Clean up response if wrapped in markdown
             if response.startswith("```json"):
                 response = response[7:]
+            elif response.startswith("```"):
+                response = response[3:]
             if response.endswith("```"):
                 response = response[:-3]
             response = response.strip()
-            
-            logger.info(f"AI response received")
             
             # Parse AI response
             try:
                 import json
                 enriched_anime = json.loads(response)
-                logger.info(f"Successfully parsed enriched anime data")
+                logger.info(f"Successfully enriched anime data")
                 return enriched_anime
             except json.JSONDecodeError as e:
                 logger.error(f"AI returned invalid JSON: {e}")
-                logger.error(f"Response was: {response}")
                 return None
                 
         except Exception as e:
@@ -398,12 +459,10 @@ Map the real API response data to this comprehensive schema structure."""
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"https://api.jikan.moe/v4/anime/{mal_id}/full"
-                logger.info(f"Fetching Jikan data from: {url}")
                 
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-                        logger.info(f"Successfully fetched Jikan data for MAL ID: {mal_id}")
                         return data
                     else:
                         logger.error(f"Jikan API error: {response.status}")
@@ -412,6 +471,96 @@ Map the real API response data to this comprehensive schema structure."""
         except Exception as e:
             logger.error(f"Failed to fetch Jikan data: {e}")
             return {"error": str(e)}
+    
+    async def _fetch_jikan_episodes(self, mal_id: str) -> Dict[str, Any]:
+        """Fetch detailed episode data from Jikan API with optimized rate limiting and batching"""
+        import aiohttp
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                # First get the episodes list to know how many episodes there are
+                episodes_list_url = f"https://api.jikan.moe/v4/anime/{mal_id}/episodes"
+                
+                async with session.get(episodes_list_url) as response:
+                    if response.status != 200:
+                        logger.error(f"Episodes list API error: {response.status}")
+                        return {"error": f"HTTP {response.status}"}
+                    
+                    episodes_list = await response.json()
+                    episode_count = len(episodes_list.get("data", []))
+                
+                if episode_count == 0:
+                    return {"data": []}
+                
+                # Optimized batch fetching with controlled concurrency
+                detailed_episodes = []
+                batch_size = 2  # Conservative batch size to avoid rate limits
+                rate_limit_delay = 0.8  # 800ms between batches (more conservative)
+                
+                for batch_start in range(1, episode_count + 1, batch_size):
+                    batch_end = min(batch_start + batch_size - 1, episode_count)
+                    batch_tasks = []
+                    
+                    # Create batch of concurrent requests
+                    for episode_num in range(batch_start, batch_end + 1):
+                        task = self._fetch_single_episode(session, mal_id, episode_num)
+                        batch_tasks.append(task)
+                    
+                    # Execute batch concurrently
+                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                    
+                    # Process batch results
+                    for episode_num, result in zip(range(batch_start, batch_end + 1), batch_results):
+                        if isinstance(result, Exception):
+                            logger.warning(f"Failed to fetch episode {episode_num}: {result}")
+                            continue
+                        elif result is None:
+                            continue
+                        else:
+                            detailed_episodes.append(result)
+                    
+                    # Rate limiting delay between batches (except for last batch)
+                    if batch_end < episode_count:
+                        await asyncio.sleep(rate_limit_delay)
+                
+                logger.info(f"Successfully fetched detailed data for {len(detailed_episodes)}/{episode_count} episodes")
+                return {"data": detailed_episodes}
+                        
+        except Exception as e:
+            logger.error(f"Failed to fetch episode data: {e}")
+            return {"error": str(e)}
+    
+    async def _fetch_single_episode(self, session: 'aiohttp.ClientSession', mal_id: str, episode_num: int) -> Optional[Dict[str, Any]]:
+        """Fetch a single episode with error handling"""
+        episode_url = f"https://api.jikan.moe/v4/anime/{mal_id}/episodes/{episode_num}"
+        
+        try:
+            async with session.get(episode_url) as response:
+                if response.status == 200:
+                    episode_data = await response.json()
+                    return episode_data["data"]
+                elif response.status == 429:
+                    logger.warning(f"Rate limited on episode {episode_num}, applying backoff")
+                    # Progressive backoff for rate limits
+                    await asyncio.sleep(2.0)  # Wait 2 seconds before retry
+                    # Retry once with longer delay
+                    async with session.get(episode_url) as retry_response:
+                        if retry_response.status == 200:
+                            retry_data = await retry_response.json()
+                            return retry_data["data"]
+                        elif retry_response.status == 429:
+                            logger.warning(f"Still rate limited on episode {episode_num}, skipping")
+                            return None
+                        else:
+                            logger.error(f"Retry failed for episode {episode_num}: HTTP {retry_response.status}")
+                            return None
+                else:
+                    logger.warning(f"Failed to fetch episode {episode_num}: HTTP {response.status}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Error fetching episode {episode_num}: {e}")
+            return None
     
 
 
