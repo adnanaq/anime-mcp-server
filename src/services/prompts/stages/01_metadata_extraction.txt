@@ -1,0 +1,41 @@
+# OBJECTIVE
+Extract ONLY metadata fields from Jikan API data. Return only the extracted metadata fields.
+
+# INPUT DATA
+## JIKAN CORE DATA:
+{jikan_core_data}
+
+# PROCESSING INSTRUCTIONS
+
+## METADATA EXTRACTION
+Extract core metadata fields from the Jikan API response:
+
+### EXTRACT THESE FIELDS:
+- **synopsis**: Extract from jikan_data.data.synopsis
+- **genres**: Extract genre names from jikan_data.data.genres array
+- **demographics**: Extract from jikan_data.data.demographics array
+- **themes**: Extract from jikan_data.data.themes array
+- **source_material**: Extract from jikan_data.data.source (e.g., "Manga", "Light Novel")
+- **rating**: Extract from jikan_data.data.rating (content rating)
+- **content_warnings**: Infer from rating and content (e.g., ["violence", "profanity"])
+- **title_japanese**: Extract from jikan_data.data.title_japanese
+- **title_english**: Extract from jikan_data.data.title_english
+- **background**: Extract from jikan_data.data.background
+
+# OUTPUT SCHEMA
+Return ONLY these extracted fields in JSON format:
+
+{{
+    "synopsis": "Extract from jikan synopsis or null",
+    "genres": ["Extract genre names from genres array"],
+    "demographics": ["Extract from demographics array"],
+    "themes": [],
+    "source_material": "Extract from source field",
+    "rating": "Extract rating string",
+    "content_warnings": ["Infer from rating"],
+    "title_japanese": "Extract Japanese title",
+    "title_english": "Extract English title", 
+    "background": "Extract background info"
+}}
+
+Extract the metadata fields and return ONLY the fields listed above.

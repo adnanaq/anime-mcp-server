@@ -15,6 +15,15 @@ import logging
 import os
 from typing import Dict, Any, Optional, List
 
+# Import the new prompt template manager and multi-stage implementation
+try:
+    from .prompts.prompt_template_manager import PromptTemplateManager
+    from .iterative_ai_enrichment_v2 import MultiStageEnrichmentMixin
+except ImportError:
+    from src.services.prompts.prompt_template_manager import PromptTemplateManager
+    from src.services.iterative_ai_enrichment_v2 import MultiStageEnrichmentMixin
+
+
 # AI clients with lazy imports
 AI_CLIENTS = {
     "openai": {
@@ -52,7 +61,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class IterativeAIEnrichmentAgent:
+class IterativeAIEnrichmentAgent(MultiStageEnrichmentMixin):
     """
     Simple AI enrichment agent that works iteratively.
     
@@ -67,8 +76,21 @@ class IterativeAIEnrichmentAgent:
         self.ai_provider = ai_provider or self._detect_provider()
         self.ai_client = self._create_client(self.ai_provider) if self.ai_provider else None
         
+        # Initialize prompt template manager for modular prompts
+        self.prompt_manager = PromptTemplateManager()
+        
         if not self.ai_client:
             logger.warning("No AI provider configured")
+        else:
+            logger.info(f"Initialized with AI provider: {self.ai_provider}")
+            
+        # Validate prompt templates
+        template_validation = self.prompt_manager.validate_templates()
+        failed_templates = [t for t, valid in template_validation.items() if not valid]
+        if failed_templates:
+            logger.warning(f"Failed to load templates: {failed_templates}")
+        else:
+            logger.info("All prompt templates validated successfully")
     
     def _detect_provider(self) -> Optional[str]:
         """Auto-detect available provider"""

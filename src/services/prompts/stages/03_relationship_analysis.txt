@@ -1,0 +1,76 @@
+# OBJECTIVE
+Extract ONLY relationship fields from relatedAnime URLs. Use intelligent cross-URL analysis to extract meaningful titles - NO LAZY FALLBACKS.
+
+# INPUT DATA
+## ORIGINAL RELATED ANIME URLS:
+{related_anime_urls}
+
+## JIKAN RELATIONS DATA:
+{jikan_relations_data}
+
+# PROCESSING INSTRUCTIONS
+
+## MANDATORY PROCESSING REQUIREMENT
+You MUST process EVERY SINGLE URL provided. NO FILTERING. NO SKIPPING. NO EXCEPTIONS.
+
+Expected output count: EXACTLY the same number of URLs as input.
+If you receive 16 URLs, you MUST return 16 relatedAnime entries.
+
+## MANDATORY INTELLIGENT TITLE EXTRACTION
+You MUST extract meaningful titles for ALL URLs. NO exceptions for "Anime [ID]" or generic patterns.
+
+### INTELLIGENT CROSS-REFERENCE ANALYSIS:
+1. **Scan ALL URLs first** to identify explicit title patterns
+2. **Use explicit URLs to infer numeric ID meanings**
+3. **Apply consistent titles across platforms for same content**
+
+### SPECIFIC EXTRACTION RULES:
+
+**FOR EXPLICIT TITLE URLS** (anime-planet, etc.):
+- `https://anime-planet.com/anime/dandadan-2nd-season` → "Dandadan 2nd Season"
+- `https://anime-planet.com/anime/creepy-nuts-otonoke` → "Creepy Nuts Otonoke"  
+- `https://anime-planet.com/anime/zutomayo-taidada` → "Zutomayo Taidada"
+
+**FOR NUMERIC ID URLS** (MAL, AniList, etc.):
+- Use the explicit title patterns to infer what these IDs represent
+- If you see "dandadan-2nd-season" in ANY URL, then ALL other URLs likely refer to "Dandadan 2nd Season"
+- If you see theme song patterns, apply to related numeric IDs
+
+### RELATIONSHIP TYPE INFERENCE:
+- **"Sequel"**: Any title containing "2nd Season", "Season 2", "Part 2", etc.
+- **"Other"**: Theme songs, music videos, specials (artist names like "Creepy Nuts", "Zutomayo")
+
+### FORBIDDEN PATTERNS:
+❌ "Anime 19060" - NEVER USE THIS
+❌ "Unknown Title" - NEVER USE THIS  
+❌ "Anime [ID]" - NEVER USE THIS
+❌ Any generic ID-based titles
+
+### MANDATORY PROCESSING APPROACH:
+1. **Identify explicit titles** from clear URL patterns
+2. **Group URLs by content** (same anime = same title across platforms)
+3. **Apply consistent titles** to all URLs referring to same content
+4. **Infer relationship types** based on extracted titles
+
+# OUTPUT SCHEMA
+Return ONLY these extracted fields in JSON format:
+
+{{
+    "relatedAnime": [{{
+        "relation_type": "Sequel/Other", 
+        "title": "meaningful_extracted_title", 
+        "url": "exact_original_URL"
+    }}],
+    "relations": [{{
+        "anime_id": "relation-id",
+        "relation_type": "Adaptation", 
+        "title": "Related work title",
+        "urls": {{
+            "mal": "https://myanimelist.net/manga/123"
+        }}
+    }}]
+}}
+
+CRITICAL: Every URL MUST have a meaningful, specific title. NO generic "Anime [ID]" patterns allowed.
+
+VERIFICATION REQUIREMENT: Count your output entries and ensure they match the input URL count exactly.

@@ -1,0 +1,85 @@
+# OBJECTIVE
+Extract ONLY statistics and media fields from Jikan data. Return only the extracted statistics and media fields.
+
+# INPUT DATA
+## JIKAN STATISTICS DATA:
+{jikan_statistics_data}
+
+## JIKAN MEDIA DATA:
+{jikan_media_data}
+
+# PROCESSING INSTRUCTIONS
+
+## STATISTICS EXTRACTION
+Extract numerical statistics and ratings from Jikan data:
+- Extract score, scored_by, rank, popularity, members, favorites
+- Normalize scores to 0-10 scale if needed
+- Handle missing fields gracefully (use null)
+
+## MEDIA EXTRACTION
+Extract media content from Jikan data:
+- Extract trailers (YouTube URLs and thumbnails)
+- Extract images (covers from different sources)
+- Extract staff information
+- Extract opening/ending themes
+- Extract streaming information
+- Extract licensors and external links
+
+# OUTPUT SCHEMA
+Return ONLY these extracted fields in JSON format:
+
+{{
+    "statistics": {{
+        "mal": {{
+            "score": "Extract score (0-10 scale)",
+            "scored_by": "Number of users who rated", 
+            "rank": "Overall ranking position",
+            "popularity_rank": "Popularity ranking position",
+            "members": "Total members/users tracking",
+            "favorites": "Number of users who favorited"
+        }}
+    }},
+    "trailers": [{{
+        "youtube_url": "Extract YouTube URL",
+        "title": "Trailer title or default",
+        "thumbnail_url": "Extract thumbnail URL"
+    }}],
+    "images": {{
+        "covers": [{{
+            "url": "Extract largest image URL",
+            "source": "jikan",
+            "type": "cover"
+        }}]
+    }},
+    "staff": [{{
+        "name": "Staff member name",
+        "role": "Role (Director/Producer/etc)",
+        "positions": ["List of positions"]
+    }}],
+    "opening_themes": [{{
+        "title": "Theme title",
+        "artist": "Artist name",
+        "episodes": "Episode range or null"
+    }}],
+    "ending_themes": [{{
+        "title": "Theme title",
+        "artist": "Artist name", 
+        "episodes": "Episode range or null"
+    }}],
+    "streaming_info": [{{
+        "name": "Platform name",
+        "url": "Platform URL"
+    }}],
+    "licensors": ["Extract licensor names"],
+    "streaming_licenses": ["Extract streaming licenses"],
+    "external_links": {{
+        "official_website": "Extract official website URL"
+    }},
+    "awards": [{{
+        "name": "Award name",
+        "organization": "Organization",
+        "year": "Year"
+    }}]
+}}
+
+Extract the statistics and media fields and return ONLY the fields listed above.
