@@ -42,15 +42,26 @@ async def test_with_offline_data():
             print("🔄 Starting AI enrichment process...")
             print("⏳ This may take significant time for anime with many episodes...")
             enriched_result = await agent._ai_enrich_data(first_anime)
-            print("✅ AI enrichment completed successfully")
-            print(f"📊 Result has {len(enriched_result)} fields")
+            if enriched_result:
+                print("✅ AI enrichment completed successfully")
+                print(f"📊 Result has {len(enriched_result)} fields")
+            else:
+                print("❌ AI enrichment returned None")
+                enriched_result = first_anime
             
             # Check if we got episode details
-            if enriched_result and 'episode_details' in enriched_result:
+            if enriched_result and 'episode_details' in enriched_result and enriched_result['episode_details']:
                 episode_count = len(enriched_result['episode_details'])
                 print(f"📺 Episodes in result: {episode_count}")
             else:
                 print("❌ No episode details in result")
+                
+            # Check if we got character details
+            if enriched_result and 'characters' in enriched_result and enriched_result['characters']:
+                character_count = len(enriched_result['characters'])
+                print(f"👥 Characters in result: {character_count}")
+            else:
+                print("❌ No character details in result")
                 
         except Exception as e:
             print(f"❌ AI enrichment failed: {e}")

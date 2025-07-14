@@ -1,0 +1,556 @@
+{
+  "_comment": "Enhanced Anime-Offline-Database Entry - Demon Slayer Example",
+
+  // =====================================================================
+  // EXISTING ANIME-OFFLINE-DATABASE FIELDS (Keep Unchanged)
+  // =====================================================================
+  "sources": [
+    "https://myanimelist.net/anime/38000",
+    "https://anilist.co/anime/101922",
+    "https://kitsu.io/anime/kimetsu-no-yaiba",
+    "https://www.anime-planet.com/anime/demon-slayer-kimetsu-no-yaiba",
+    "https://anidb.net/anime/14660",
+    "https://animeschedule.net/anime/demon-slayer-kimetsu-no-yaiba"
+  ],
+  "title": "Kimetsu no Yaiba",
+  "type": "TV",
+  "episodes": 26,
+  "status": "FINISHED",
+  "animeSeason": {
+    "season": "SPRING",
+    "year": 2019
+  },
+  "picture": "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
+  "thumbnail": "https://cdn.myanimelist.net/images/anime/1286/99889t.jpg",
+  "duration": {
+    "value": 1380,
+    "unit": "SECONDS"
+  },
+  "score": {
+    "arithmeticGeometricMean": 8.31,
+    "arithmeticMean": 8.43,
+    "median": 8.37
+  },
+  "synonyms": [
+    "Blade of Demon Destruction",
+    "Demon Slayer: Kimetsu no Yaiba",
+    "鬼滅の刃"
+  ],
+  "tags": ["Action", "Supernatural", "Historical", "Shounen"],
+  "studios": ["ufotable"],
+  "producers": ["Aniplex", "Shueisha", "Fuji TV"],
+
+  // =====================================================================
+  // CURRENT ENRICHMENT FIELDS (Already Enhanced)
+  // =====================================================================
+  "synopsis": "It is the Taisho Period in Japan. Tanjiro, a kindhearted boy who sells charcoal for a living, finds his family slaughtered by a demon. To make matters worse, his younger sister Nezuko, the sole survivor, has been transformed into a demon herself. Though devastated by this grim reality, Tanjiro resolves to become a \"demon slayer\" so that he can turn his sister back into a human, and kill the demon that massacred his family.",
+
+  "characters": [
+    {
+      "name": "Kamado, Tanjirou",
+      "role": "Main",
+      "name_variations": ["Tanjiro Kamado", "炭治郎"],
+      "name_kanji": "竈門 炭治郎",
+      "name_native": "かまど たんじろう",
+      "character_ids": {
+        "mal": 146156,
+        "anilist": 127212
+      },
+      "images": {
+        "mal": "https://cdn.myanimelist.net/images/characters/1/364490.jpg",
+        "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b127212-AqNr8yCAAhQI.png"
+      },
+      "_character_source": "multi-source",
+      "description": "The main protagonist. A kindhearted boy who sells charcoal for a living and cares deeply for his family.",
+      "age": "15",
+      "gender": "Male",
+      "voice_actors": [
+        {
+          "name": "Hanae, Natsuki",
+          "language": "Japanese"
+        },
+        {
+          "name": "Zach Aguilar",
+          "language": "English"
+        }
+      ]
+    },
+    {
+      "name": "Kamado, Nezuko",
+      "role": "Main",
+      "name_variations": ["Nezuko Kamado", "禰豆子"],
+      "name_kanji": "竈門 禰豆子",
+      "name_native": "かまど ねずこ",
+      "character_ids": {
+        "mal": 146157,
+        "anilist": 127211
+      },
+      "images": {
+        "mal": "https://cdn.myanimelist.net/images/characters/2/364491.jpg",
+        "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b127211-HYOsW4MZdlyz.png"
+      },
+      "_character_source": "multi-source",
+      "description": "Tanjiro's younger sister who was transformed into a demon but retains her human emotions.",
+      "age": "14",
+      "gender": "Female",
+      "voice_actors": [
+        {
+          "name": "Sato, Akari",
+          "language": "Japanese"
+        },
+        {
+          "name": "Abby Trott",
+          "language": "English"
+        }
+      ]
+    },
+    {
+      "name": "Agatsuma, Zenitsu",
+      "role": "Main",
+      "name_variations": ["Zenitsu Agatsuma", "善逸"],
+      "name_kanji": "我妻 善逸",
+      "name_native": "あがつま ぜんいつ",
+      "character_ids": {
+        "mal": 146158,
+        "anilist": 127213
+      },
+      "images": {
+        "mal": "https://cdn.myanimelist.net/images/characters/3/364492.jpg",
+        "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b127213-dLHRPCJmrTKN.png"
+      },
+      "_character_source": "multi-source",
+      "description": "A cowardly demon slayer who can only use Thunder Breathing when unconscious.",
+      "age": "16",
+      "gender": "Male",
+      "voice_actors": [
+        {
+          "name": "Shimono, Hiro",
+          "language": "Japanese"
+        },
+        {
+          "name": "Aleks Le",
+          "language": "English"
+        }
+      ]
+    }
+  ],
+
+  "trailers": [
+    {
+      "youtube_url": "https://www.youtube.com/watch?v=6vMuWuWlW4I",
+      "title": "Demon Slayer: Kimetsu no Yaiba Official Trailer",
+      "thumbnail_url": "https://img.youtube.com/vi/6vMuWuWlW4I/maxresdefault.jpg"
+    }
+  ],
+
+  "enrichment_metadata": {
+    "source": "multi-source",
+    "enriched_at": "2025-07-12T13:45:00Z",
+    "character_count": 95,
+    "success": true,
+    "error_message": null
+  },
+
+  // =====================================================================
+  // NEW ENHANCEMENT FIELDS (Add to existing structure)
+  // =====================================================================
+
+  "genres": ["Action", "Adventure", "Supernatural", "Historical"],
+
+  "demographics": ["Shounen"],
+
+  "themes": [
+    {
+      "name": "Demons",
+      "description": "Featuring supernatural demonic entities"
+    },
+    {
+      "name": "Swordsmanship",
+      "description": "Focus on sword fighting techniques"
+    },
+    {
+      "name": "Family",
+      "description": "Strong family bonds and relationships"
+    },
+    {
+      "name": "Revenge",
+      "description": "Characters seeking vengeance"
+    },
+    {
+      "name": "Training",
+      "description": "Characters undergoing physical or mental training"
+    }
+  ],
+
+  "source_material": "manga",
+
+  "rating": "R - 17+ (violence & profanity)",
+
+  "content_warnings": [
+    "Graphic Violence",
+    "Blood and Gore",
+    "Character Death",
+    "Intense Battle Scenes"
+  ],
+
+  "aired_dates": {
+    "from": "2019-04-06T16:25:00Z",
+    "to": "2019-09-28T16:25:00Z",
+    "string": "Apr 6, 2019 to Sep 28, 2019"
+  },
+
+  "broadcast": {
+    "day": "Saturday",
+    "time": "23:30",
+    "timezone": "JST",
+    "string": "Saturdays at 23:30 (JST)"
+  },
+
+  "streaming_info": [
+    {
+      "platform": "Crunchyroll",
+      "url": "https://www.crunchyroll.com/demon-slayer-kimetsu-no-yaiba",
+      "region": "Global",
+      "free": true,
+      "premium_required": false,
+      "subtitle_languages": [
+        "English",
+        "Spanish",
+        "French",
+        "German",
+        "Portuguese"
+      ]
+    },
+    {
+      "platform": "Funimation",
+      "url": "https://www.funimation.com/shows/demon-slayer-kimetsu-no-yaiba/",
+      "region": "US, CA, UK, AU",
+      "free": false,
+      "premium_required": true,
+      "dub_available": true
+    },
+    {
+      "platform": "Netflix",
+      "url": "https://www.netflix.com/title/81091393",
+      "region": "Select Countries",
+      "free": false,
+      "premium_required": true,
+      "dub_available": true
+    },
+    {
+      "platform": "Hulu",
+      "url": "https://www.hulu.com/series/demon-slayer-kimetsu-no-yaiba",
+      "region": "US",
+      "free": false,
+      "premium_required": true,
+      "dub_available": true
+    },
+    {
+      "platform": "Amazon Prime Video",
+      "url": "https://www.primevideo.com/detail/Demon-Slayer",
+      "region": "US, UK, DE",
+      "free": false,
+      "premium_required": true,
+      "dub_available": false
+    }
+  ],
+
+  "staff": [
+    {
+      "name": "Sotozaki, Haruo",
+      "role": "Director",
+      "positions": ["Director", "Episode Director"]
+    },
+    {
+      "name": "Gotouge, Koyoharu",
+      "role": "Original Creator",
+      "positions": ["Story & Art"]
+    },
+    {
+      "name": "Tomioka, Akira",
+      "role": "Series Composition",
+      "positions": ["Script"]
+    },
+    {
+      "name": "Matsushima, Akira",
+      "role": "Character Design",
+      "positions": ["Character Design", "Chief Animation Director"]
+    },
+    {
+      "name": "Tsuji, Yuki",
+      "role": "Music",
+      "positions": ["Music", "Sound Director"]
+    }
+  ],
+
+  "opening_themes": [
+    {
+      "title": "Gurenge",
+      "artist": "LiSA",
+      "episodes": "1-19",
+      "youtube_url": "https://www.youtube.com/watch?v=pmanD_s7G3U"
+    },
+    {
+      "title": "Kamado Tanjirou no Uta",
+      "artist": "Go Shiina feat. Nami Nakagawa",
+      "episodes": "19",
+      "youtube_url": "https://www.youtube.com/watch?v=4Q9DWKs6etI"
+    }
+  ],
+
+  "ending_themes": [
+    {
+      "title": "from the edge",
+      "artist": "FictionJunction feat. LiSA",
+      "episodes": "2-26",
+      "youtube_url": "https://www.youtube.com/watch?v=isOOb6QMa6k"
+    }
+  ],
+
+  "statistics": {
+    "mal": {
+      "score": 8.43,
+      "scored_by": 2251158,
+      "rank": 68,
+      "popularity_rank": 12,
+      "members": 3500000,
+      "favorites": 89234,
+      "_source": "jikan"
+    },
+    "anilist": {
+      "average_score": 82,
+      "mean_score": 82,
+      "popularity": 147329,
+      "favorites": 53821,
+      "trending_rank": null,
+      "_source": "anilist"
+    },
+    "kitsu": {
+      "average_rating": 82.1,
+      "rating_count": 45123,
+      "favorites_count": 12456,
+      "user_count": 78901,
+      "_source": "kitsu"
+    },
+    "animeschedule": {
+      "average_score": 90.66,
+      "rating_count": 338,
+      "tracked_count": 2867,
+      "tracked_rating": 1,
+      "_source": "animeschedule"
+    }
+  },
+
+  "external_links": {
+    "official_website": "https://kimetsu.com/anime/",
+    "twitter": "https://twitter.com/kimetsu_off",
+    "wikipedia_en": "https://en.wikipedia.org/wiki/Demon_Slayer:_Kimetsu_no_Yaiba",
+    "wikipedia_ja": "https://ja.wikipedia.org/wiki/鬼滅の刃",
+    "crunchyroll_news": "https://www.crunchyroll.com/anime-news/tags/demon-slayer",
+    "reddit": "https://www.reddit.com/r/DemonSlayerAnime/",
+    "discord": "https://discord.gg/demonslayer"
+  },
+
+  "licensors": [
+    "Aniplex of America",
+    "Funimation",
+    "Madman Entertainment",
+    "Wakanim"
+  ],
+
+  "streaming_licenses": [
+    "Crunchyroll",
+    "Funimation",
+    "Netflix",
+    "Hulu",
+    "Amazon Prime Video",
+    "Wakanim",
+    "AnimeLab"
+  ],
+
+  "images": {
+    "covers": [
+      {
+        "url": "https://cdn.myanimelist.net/images/anime/1286/99889.jpg",
+        "source": "jikan",
+        "type": "cover"
+      },
+      {
+        "url": "https://cdn.myanimelist.net/images/anime/1286/99889l.jpg",
+        "source": "jikan",
+        "type": "cover"
+      },
+      {
+        "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101922-WBsBl0ClmgYL.jpg",
+        "source": "anilist",
+        "type": "cover"
+      },
+      {
+        "url": "https://media.kitsu.io/anime/poster_images/41370/large.jpg",
+        "source": "kitsu",
+        "type": "cover"
+      },
+      {
+        "url": "https://animeschedule.net/anime/jpg/default/kimetsu-no-yaiba-f2f2a983a8.jpg",
+        "source": "animeschedule",
+        "type": "cover"
+      }
+    ],
+    "banners": [
+      {
+        "url": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-YfZhKBUDDS6L.jpg",
+        "source": "anilist",
+        "type": "banner"
+      }
+    ],
+    "promotional": [
+      {
+        "url": "https://cdn.myanimelist.net/images/anime/1286/99889_promotional1.jpg",
+        "source": "jikan",
+        "type": "promotional"
+      },
+      {
+        "url": "https://cdn.myanimelist.net/images/anime/1286/99889_promotional2.jpg",
+        "source": "jikan",
+        "type": "promotional"
+      }
+    ]
+  },
+
+  "episode_details": [
+    {
+      "number": 1,
+      "title": "Cruelty",
+      "title_japanese": "残酷",
+      "title_romaji": "Zankoku",
+      "aired": "2019-04-06T16:25:00Z",
+      "duration_seconds": 1440,
+      "recap": false,
+      "filler": false,
+      "synopsis": "Tanjiro returns home to find his family slaughtered by demons, with only his sister Nezuko surviving - but she has been transformed into a demon.",
+      "forum_url": "https://myanimelist.net/forum/?topicid=1234567"
+    },
+    {
+      "number": 2,
+      "title": "Trainer Sakonji Urokodaki",
+      "title_japanese": "育手・鱗滝左近次",
+      "title_romaji": "Sodaeshi, Urokodaki Sakonji",
+      "aired": "2019-04-13T16:25:00Z",
+      "duration_seconds": 1440,
+      "recap": false,
+      "filler": false,
+      "synopsis": "Tanjiro meets Giyu Tomioka and learns about demon slayers. He is sent to train under Sakonji Urokodaki.",
+      "forum_url": "https://myanimelist.net/forum/?topicid=1234568"
+    }
+  ],
+
+  "relations": [
+    {
+      "anime_id": "demon-slayer-mugen-train",
+      "relation_type": "sequel",
+      "title": "Kimetsu no Yaiba Movie: Mugen Ressha-hen",
+      "title_english": "Demon Slayer: Mugen Train",
+      "urls": {
+        "mal": "https://myanimelist.net/anime/40456",
+        "anilist": "https://anilist.co/anime/112151",
+        "kitsu": "https://kitsu.io/anime/demon-slayer-mugen-train",
+        "animeschedule": "https://animeschedule.net/anime/demon-slayer-mugen-train"
+      }
+    },
+    {
+      "anime_id": "demon-slayer-entertainment-district",
+      "relation_type": "sequel",
+      "title": "Kimetsu no Yaiba: Yuukaku-hen",
+      "title_english": "Demon Slayer: Entertainment District Arc",
+      "urls": {
+        "mal": "https://myanimelist.net/anime/44081",
+        "anilist": "https://anilist.co/anime/142329",
+        "kitsu": "https://kitsu.io/anime/demon-slayer-entertainment-district",
+        "animeschedule": "https://animeschedule.net/anime/demon-slayer-entertainment-district"
+      }
+    }
+  ],
+
+  "awards": [
+    {
+      "name": "Anime of the Year",
+      "organization": "Crunchyroll Anime Awards",
+      "year": 2020,
+      "category": "Anime of the Year"
+    },
+    {
+      "name": "Best Animation",
+      "organization": "Crunchyroll Anime Awards",
+      "year": 2020,
+      "category": "Best Animation"
+    }
+  ],
+
+  "popularity_trends": {
+    "google_trends_peak": "2019-09",
+    "twitter_mentions_peak": "2019-08",
+    "international_popularity": "Very High",
+    "seasonal_ranking": 1
+  },
+
+  // =====================================================================
+  // ENHANCED METADATA
+  // =====================================================================
+  "enhanced_metadata": {
+    "enhancement_version": "2.0",
+    "last_enhanced": "2025-07-12T13:45:00Z",
+    "enhancement_sources": ["jikan", "anilist", "kitsu", "animeschedule"],
+    "data_quality_score": 0.96,
+    "completeness_score": 0.94,
+    "accuracy_validated": true,
+    "cross_platform_verified": true,
+    "manual_review_required": false
+  },
+
+  "_sources": {
+    // EXISTING ANIME-OFFLINE-DATABASE FIELDS
+    "sources": "anime-offline-database",
+    "title": "anime-offline-database",
+    "type": "anime-offline-database",
+    "episodes": "anime-offline-database",
+    "status": "anime-offline-database",
+    "animeSeason": "anime-offline-database",
+    "picture": "anime-offline-database",
+    "thumbnail": "anime-offline-database",
+    "duration": "anime-offline-database",
+    "score": "anime-offline-database",
+    "synonyms": "anime-offline-database",
+    "tags": "anime-offline-database",
+    "studios": "anime-offline-database",
+    "producers": "anime-offline-database",
+
+    // CURRENT ENRICHMENT FIELDS
+    "synopsis": "multi-source",
+    "characters": "multi-source",
+    "trailers": "jikan",
+    "enrichment_metadata": "system-generated",
+
+    // NEW ENHANCEMENT FIELDS
+    "genres": "anilist",
+    "demographics": "jikan",
+    "themes": "anilist",
+    "source_material": "jikan",
+    "rating": "kitsu",
+    "content_warnings": "jikan",
+    "aired_dates": "jikan",
+    "broadcast": "animeschedule",
+    "streaming_info": "animeschedule",
+    "staff": "jikan",
+    "opening_themes": "jikan",
+    "ending_themes": "jikan",
+    "statistics": "multi-source",
+    "external_links": "animeschedule",
+    "licensors": "animeschedule",
+    "streaming_licenses": "animeschedule",
+    "images": "multi-source",
+    "episode_details": "jikan",
+    "relations": "jikan",
+    "awards": "jikan",
+    "popularity_trends": "multi-source"
+  }
+}

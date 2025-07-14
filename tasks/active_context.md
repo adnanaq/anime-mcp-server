@@ -4,11 +4,12 @@
 
 ## Current Work Focus
 
-**Project Status**: AI-Powered Data Enrichment Enhancement
+**Project Status**: Schema Compliance Crisis and Implementation Gaps
 
-- **Current Priority**: Enhance AI enrichment agent for comprehensive anime data standardization
-- **System State**: Basic enrichment agent exists but needs intelligent multi-source data processing
-- **Immediate Goal**: Implement AI-driven standardization and smart merging for multi-platform anime data
+- **Current Priority**: Fix critical schema violations in iterative AI enrichment system
+- **System State**: Proof-of-concept AI enrichment working but 60%+ schema non-compliant
+- **Immediate Goal**: Align implementation with AnimeEntry Pydantic models and fix type system violations
+- **Critical Issue**: AI returns unvalidated dictionaries instead of proper Pydantic models
 
 ## Active Decisions and Considerations
 
@@ -155,36 +156,51 @@ MULTI_SOURCE_MAPPING = {
 
 ## Recent Changes
 
-**API Testing Completed (Latest Session)**:
-- **Validated data sources**: Confirmed synopsis, character, and trailer availability across platforms
-- **Identified optimal strategy**: Jikan primary + AniList secondary approach
-- **Fixed BaseClient issue**: Resolved deprecated `correlation_logger` attribute error
-- **Discovered pagination**: AniList actually has 86 characters (not 25) when using pagination
-- **Coverage analysis**: 74.6% MAL coverage (29,007 anime) available for immediate enrichment
-- **📋 Detailed Results**: See [API_TESTING_RESULTS.md](API_TESTING_RESULTS.md) for comprehensive findings, data quality comparisons, and implementation recommendations
+**Iterative AI Enrichment Implementation (Latest Session)**:
+- **✅ Proof of Concept Complete**: `src/services/iterative_ai_enrichment.py` (593 lines) working
+- **✅ Episode Processing Optimized**: Batch fetching (2 per batch, 800ms delays) for performance
+- **✅ Real Test Results**: Successfully enriches Dandadan from 15 → 40+ fields
+- **✅ API Integration**: Full Jikan API integration with anime details and episodes
+- **❌ Character Processing Removed**: Eliminated per user performance feedback
+- **❌ Schema Compliance Crisis**: 60%+ of AnimeEntry schema fields missing or incorrectly typed
+- **❌ Type System Violations**: AI returns dictionaries instead of Pydantic models
+- **⚠️ Critical Gap**: Implementation doesn't validate against `src/models/anime.py` AnimeEntry schema
 
 ## Next Steps
 
 **Immediate (Next Session)**:
 
-- **PRIORITY 1**: Data Enrichment Implementation ⏳ **READY TO START**
-  - **Phase 1a**: URL Parser Service (`src/services/url_parser.py`)
-    - Extract MAL/AniList IDs from anime-offline-database source URLs
-    - Handle edge cases (malformed URLs, missing IDs)
-    - Validate extracted IDs before API calls
-  - **Phase 1b**: Jikan Enrichment Service (`src/services/jikan_enrichment.py`)
-    - Use existing Jikan client to fetch synopsis, characters, trailers
-    - Implement batch processing with rate limiting (existing infrastructure)
-    - Process 29,007 anime with MAL URLs (74.6% coverage)
-  - **Phase 1c**: Database Schema Enhancement (`src/models/anime.py`)
-    - Extend AnimeEntry model with synopsis, characters, trailers fields
-    - Maintain backward compatibility with existing data
-    - Add enrichment metadata (sources, timestamps, confidence, last_validated)
-    - Implement enrichment flags to prevent overwriting during weekly updates
-  - **Phase 1d**: Vector Generation Enhancement (`src/vector/qdrant_client.py`)
-    - Include synopsis in text embedding generation
-    - Store character data for fine-tuning dataset preparation
-    - Update processing pipeline to handle enriched data
+- **PRIORITY 1**: Modular Prompt Chunking Strategy ⚡ **HIGH PRIORITY**
+  - **Critical Issue**: 200+ line monolithic prompt causing performance delays and timeouts
+  - **Phase 1a**: Extract mega-prompt into specialized template files (metadata, episodes, relationships)
+    - Create `src/services/prompts/` directory structure with base, specialized, and schema folders
+    - Break current prompt into focused, domain-specific prompts
+    - Implement token management and context window optimization
+  - **Phase 1b**: Multi-Stage Processing Pipeline Implementation
+    - Refactor `_ai_enrich_data()` into 5-stage pipeline (metadata → episodes → relationships → stats → assembly)
+    - Add `PromptTemplateManager` class for file-based prompt loading and substitution
+    - Implement stage-specific error handling and retry logic
+  - **Expected**: 60-80% performance improvement, 90%+ success rate, timeout elimination
+
+- **PRIORITY 2**: Schema Compliance Crisis Resolution 🚨 **CRITICAL**
+  - **Phase 1a**: Schema Validation Implementation (`src/services/iterative_ai_enrichment.py`)
+    - Add Pydantic model validation wrapper around AI output processing
+    - Ensure AI dictionaries convert to proper ThemeEntry, StaffEntry, StreamingEntry models
+    - Implement AnimeEntry validation before return
+    - Add comprehensive error handling for schema violations
+  - **Phase 1b**: Enrichment Metadata Tracking
+    - Implement `EnrichmentMetadata` model creation during AI processing
+    - Add success/failure tracking and timestamp logging
+    - Enable update age checking and re-enrichment logic
+    - Track data quality scores and completeness metrics
+  - **Phase 1c**: Character Processing Decision Resolution
+    - Decide: Remove `characters: List[CharacterEntry]` from schema OR re-implement character processing
+    - Update schema documentation to match implementation reality
+    - Ensure schema and implementation are aligned
+  - **Phase 1d**: Type Safety and Model Integration
+    - Convert all AI dictionary outputs to proper Pydantic models
+    - Add runtime validation and error reporting
+    - Implement comprehensive testing with AnimeEntry model validation
 
 - **PRIORITY 2**: Enhanced Fine-Tuning Dataset Preparation
   - **Phase 2a**: Character Recognition Dataset (`src/vector/anime_dataset.py`)

@@ -10,9 +10,10 @@ This file will:
 """
 
 import asyncio
+import json
 import logging
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 # AI clients with lazy imports
 AI_CLIENTS = {
@@ -209,7 +210,8 @@ class IterativeAIEnrichmentAgent:
             logger.warning(f"Failed to fetch episode data: {episodes_data['error']}")
             episodes_data = {"data": []}  # Continue without episodes
         
-        # Step 4: Pre-process episode data to avoid massive AI prompts
+        
+        # Step 5: Pre-process episode data to avoid massive AI prompts
         processed_episodes = []
         for episode in episodes_data.get("data", []):
             # Extract only the fields we need, excluding mal_id and forum_url as requested
@@ -229,7 +231,12 @@ class IterativeAIEnrichmentAgent:
         
         logger.info(f"Pre-processed {len(processed_episodes)} episodes for AI")
         
-        # Step 5: Have AI process the real API response with comprehensive schema
+        
+        # Safety check for None values
+        if processed_episodes is None:
+            processed_episodes = []
+        
+        # Step 6: Have AI process the real API response with comprehensive schema
         prompt = f"""
 # ROLE & CONTEXT
 You are an expert anime database enrichment specialist. Your task is to process anime data from an offline database and enrich it with real-time Jikan API data, creating a comprehensive unified schema.
@@ -246,6 +253,7 @@ Transform the provided anime data into a structured, enriched JSON object that p
 
 ## EPISODE DATA (Pre-processed):
 {processed_episodes}
+
 
 # PROCESSING INSTRUCTIONS
 
@@ -386,7 +394,8 @@ Map the data to this comprehensive JSON structure (preserve ALL original fields 
             "type": "cover"
         }}]
     }},
-    "episode_details": processed_episodes (CRITICAL: Use ALL {len(processed_episodes)} pre-processed episodes exactly as provided - DO NOT skip any episodes),
+    "episode_details": processed_episodes (CRITICAL: Use ALL pre-processed episodes exactly as provided - DO NOT skip any episodes),
+    
     
     "relations": [{{ CRITICAL: ONLY for NON-ANIME relationships (manga, light novels, etc.). DO NOT put anime entries here - all anime go in relatedAnime field above!
         "anime_id": "manga-id",
@@ -445,11 +454,12 @@ Now process the data and return the enriched JSON following this schema structur
                 return enriched_anime
             except json.JSONDecodeError as e:
                 logger.error(f"AI returned invalid JSON: {e}")
-                return None
+                logger.error(f"Response excerpt: {response[:500]}...")  # Show first 500 chars
+                return anime_data  # Return original data instead of None
                 
         except Exception as e:
             logger.error(f"AI enrichment failed: {e}")
-            return None
+            return anime_data  # Return original data instead of None
     
     
     async def _fetch_jikan_anime_full(self, mal_id: str) -> Dict[str, Any]:

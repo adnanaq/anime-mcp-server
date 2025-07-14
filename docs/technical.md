@@ -76,13 +76,23 @@
 - **Performance Caching**: 50%+ response time improvement via optimal route selection
 - **Memory Management**: Automatic cleanup with configurable limits (10,000 patterns, 1,000 sessions)
 
-### 3.6 AI-Powered Data Standardization System
-- **Multi-Source Integration**: AI intelligently fetches and merges data from 4 anime platforms
-- **Schema Standardization**: AI normalizes different API schemas into uniform properties
-- **Character Deduplication**: AI identifies and merges same characters across platforms using fuzzy matching
-- **Statistics Harmonization**: AI converts different rating scales and field names to consistent format
-- **Fallback Strategy**: Single-source fields use primary + fallback, multi-source leaves empty if unavailable
-- **Schema Compliance**: Output strictly matches enhanced_anime_schema_example.json structure
+### 3.6 Iterative AI Enrichment System (2025-07-14 Implementation)
+- **Implementation Status**: ✅ Proof of concept complete, ❌ Schema non-compliant
+- **Core File**: `src/services/iterative_ai_enrichment.py` (593 lines)
+- **AI Provider Support**: OpenAI (GPT-4o) and Anthropic (Claude Haiku) with auto-detection
+- **API Integration**: Jikan API full data fetching with optimized episode processing
+- **Episode Optimization**: Batch fetching (2 concurrent per batch, 800ms delays) with retry logic
+- **Performance**: Successfully enriches anime from 15 → 40+ fields (Dandadan test case)
+- **Timeout Configuration**: 1-hour AI client timeout for production anime processing
+- **Critical Gap**: 60%+ schema violations vs `src/models/anime.py` AnimeEntry model
+
+### 3.7 AI Prompt Architecture and Performance Issues
+- **Current Approach**: Monolithic 200+ line prompt with massive data injection
+- **Performance Problems**: Token overflow, AI overwhelm, timeout issues, processing delays
+- **Research Completed**: 2024 AI engineering best practices for modular prompt design
+- **Planned Solution**: Multi-stage pipeline with specialized prompts (metadata → episodes → relationships → stats → assembly)
+- **Expected Improvements**: 60-80% performance gain, 90%+ success rate, timeout elimination
+- **Implementation Priority**: HIGH - Critical for production performance
 
 ## 4. Design Patterns in Use
 
