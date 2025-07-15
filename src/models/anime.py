@@ -159,6 +159,7 @@ class AnimeEntry(BaseModel):
     # Detailed timing information
     aired_dates: Optional[Dict[str, Any]] = Field(None, description="Detailed airing dates")
     broadcast: Optional[Dict[str, Any]] = Field(None, description="Broadcast schedule information")
+    month: Optional[str] = Field(None, description="Premiere month from AnimSchedule")
     background: Optional[str] = Field(None, description="Background information from MAL")
     
     # Streaming and availability

@@ -1,11 +1,16 @@
 # METADATA EXTRACTION STAGE
-Extract ONLY metadata fields from Jikan API data. Return only the extracted metadata fields.
+Extract ONLY metadata fields from Jikan and AnimSchedule data. Return only the extracted metadata fields.
 
 ## INPUT DATA
+### JIKAN DATA:
 {jikan_core_data}
 
+### ANIMESCHEDULE DATA:
+{animeschedule_data}
+
 ## EXTRACTION RULES
-Extract these fields from the Jikan API response:
+
+### FROM JIKAN DATA:
 - synopsis: Extract from synopsis field or null
 - genres: Extract genre names from genres array 
 - demographics: Extract from demographics array
@@ -19,12 +24,30 @@ Extract these fields from the Jikan API response:
 - aired_dates: Extract aired information (from, to, string)
 - broadcast: Extract broadcast information (day, time, timezone)
 
+### FROM ANIMESCHEDULE DATA (if available):
+- genres: ADD genre names from AnimSchedule genres array to existing genres (NO DUPLICATES)
+- external_links: Extract from websites object (remove any duplicates, prefer HTTPS URLs)
+- statistics: Create animeschedule statistics object with standardized StatisticsEntry format:
+  - averageScore → score
+  - ratingCount → scored_by  
+  - trackedCount → members
+  - trackedRating → rank
+- images: Create covers array from AnimSchedule imageVersionRoute. ALWAYS prepend "https://img.animeschedule.net/production/assets/public/img/" to the route
+- month: Extract premiere month
+
+## CRITICAL REQUIREMENTS
+
+1. **NO DUPLICATE EXTERNAL LINKS**: Remove any duplicate URLs across all external link sources
+2. **NO DUPLICATE GENRES**: Combine Jikan and AnimSchedule genres, remove duplicates
+3. **IMAGE URL COMPLETION**: Always prepend "https://img.animeschedule.net/production/assets/public/img/" to AnimSchedule imageVersionRoute and add to covers array with source "animeschedule"
+4. **STATISTICS MAPPING**: Create nested structure with animeschedule key containing StatisticsEntry format (score, scored_by, members, rank)
+
 ## OUTPUT FORMAT
 Return ONLY valid JSON with extracted metadata. No explanations.
 
-Example output structure:
+Expected output structure:
 - synopsis: string or null
-- genres: array of strings
+- genres: array of strings (combined from both sources, no duplicates)
 - demographics: array of strings  
 - themes: array of strings
 - source_material: string or null
@@ -35,5 +58,9 @@ Example output structure:
 - background: string or null
 - aired_dates: object with from, to, string fields
 - broadcast: object with day, time, timezone fields
+- external_links: object with deduplicated URLs
+- statistics: nested object with animeschedule key containing score, scored_by, members, rank (if available)
+- images: object with covers array including AnimSchedule image (if available)
+- month: string (if AnimSchedule data available)
 
 IMPORTANT: Return ONLY valid JSON with the exact fields listed above.

@@ -15,8 +15,10 @@ from typing import Dict, Any, Optional, List
 # Import the prompt template manager
 try:
     from .prompts.prompt_template_manager import PromptTemplateManager
+    from .animeschedule_helper import AnimScheduleEnrichmentHelper
 except ImportError:
     from src.services.prompts.prompt_template_manager import PromptTemplateManager
+    from src.services.animeschedule_helper import AnimScheduleEnrichmentHelper
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +156,7 @@ class MultiStageEnrichmentMixin:
                 return await stage_func(*args)
             
             tasks = {
-                "metadata": delayed_stage(0, self._execute_stage_with_retry, 1, self._execute_stage_1, jikan_data),
+                "metadata": delayed_stage(0, self._execute_stage_with_retry, 1, self._execute_stage_1, anime_data, jikan_data),
                 "episodes": delayed_stage(2, self._execute_stage_with_retry, 2, self._execute_stage_2, processed_episodes, jikan_data),
                 "relationships": delayed_stage(4, self._execute_stage_with_retry, 3, self._execute_stage_3, anime_data, jikan_data),
                 "stats_media": delayed_stage(6, self._execute_stage_with_retry, 4, self._execute_stage_4, jikan_data),
@@ -288,7 +290,7 @@ class MultiStageEnrichmentMixin:
         result = json.loads(response)
         return result.get("characters", [])
 
-    async def _execute_stage_1(self, jikan_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_stage_1(self, anime_data: Dict[str, Any], jikan_data: Dict[str, Any]) -> Dict[str, Any]:
         """Stage 1: Metadata extraction - ONLY extract specific metadata fields"""
         # Extract only core fields from jikan_data to reduce token count
         jikan_core = {
@@ -307,13 +309,32 @@ class MultiStageEnrichmentMixin:
             }
         }
         
+        # Fetch AnimSchedule data for enhanced metadata
+        animeschedule_data = None
+        try:
+            logger.info(f"Fetching AnimSchedule data for '{anime_data.get('title')}'...")
+            animeschedule_data = await self.animeschedule_helper.find_anime_match(anime_data)
+            if animeschedule_data:
+                logger.info(f"AnimSchedule data found for '{anime_data.get('title')}'")
+            else:
+                logger.info(f"No AnimSchedule match for '{anime_data.get('title')}'")
+        except Exception as e:
+            logger.warning(f"AnimSchedule fetch failed for '{anime_data.get('title')}': {e}")
+        
         prompt = self.prompt_manager.build_stage_prompt(
             1,
-            jikan_core_data=json.dumps(jikan_core, indent=2)
+            jikan_core_data=json.dumps(jikan_core, indent=2),
+            animeschedule_data=json.dumps(animeschedule_data, indent=2) if animeschedule_data else "{}"
         )
         
         response = await self._call_ai_with_cleanup(prompt)
-        return json.loads(response)
+        result = json.loads(response)
+        
+        # Add AnimSchedule data directly to result for programmatic merge
+        if animeschedule_data:
+            result["_animeschedule_data"] = animeschedule_data
+        
+        return result
     
     async def _execute_stage_2(self, episodes: List[Dict[str, Any]], jikan_data: Dict[str, Any]) -> Dict[str, Any]:
         """Stage 2: Episode processing - process all episodes in batches."""
@@ -392,12 +413,12 @@ class MultiStageEnrichmentMixin:
         # Start with original anime data
         final_result = original_data.copy()
         
-        # Merge Stage 1: Metadata fields (including timing data)
+        # Merge Stage 1: Metadata fields (including timing data and AnimSchedule data)
         if "metadata" in stage_results:
             metadata = stage_results["metadata"]
             for field in ["synopsis", "genres", "demographics", "themes", "source_material", 
                          "rating", "content_warnings", "title_japanese", "title_english", "background",
-                         "aired_dates", "broadcast"]:
+                         "aired_dates", "broadcast", "external_links", "statistics", "images", "month"]:
                 if field in metadata:
                     final_result[field] = metadata[field]
         
@@ -418,11 +439,33 @@ class MultiStageEnrichmentMixin:
         # Merge Stage 4: Statistics and media fields
         if "stats_media" in stage_results:
             stats_media = stage_results["stats_media"]
-            for field in ["statistics", "trailers", "images", "staff", "opening_themes", 
-                         "ending_themes", "streaming_info", "licensors", "streaming_licenses",
-                         "external_links", "awards"]:
+            for field in ["trailers", "staff", "opening_themes", 
+                         "ending_themes", "streaming_info", "licensors", "streaming_licenses", "awards"]:
                 if field in stats_media:
                     final_result[field] = stats_media[field]
+            
+            # Special handling for statistics: merge instead of overwrite
+            if "statistics" in stats_media:
+                if "statistics" not in final_result:
+                    final_result["statistics"] = {}
+                # Merge Stage 4 statistics with existing statistics from Stage 1
+                final_result["statistics"].update(stats_media["statistics"])
+            
+            # Special handling for external_links: merge instead of overwrite
+            if "external_links" in stats_media:
+                if "external_links" not in final_result:
+                    final_result["external_links"] = {}
+                # Merge Stage 4 external_links with existing external_links from Stage 1
+                final_result["external_links"].update(stats_media["external_links"])
+            
+            # Special handling for images: merge covers arrays instead of overwrite
+            if "images" in stats_media and "covers" in stats_media["images"]:
+                if "images" not in final_result:
+                    final_result["images"] = {"covers": []}
+                if "covers" not in final_result["images"]:
+                    final_result["images"]["covers"] = []
+                # Merge Stage 4 covers with existing covers from Stage 1
+                final_result["images"]["covers"].extend(stats_media["images"]["covers"])
         
         # Merge Stage 5: Character fields
         if "characters" in stage_results:
@@ -649,6 +692,9 @@ class IterativeAIEnrichmentAgent(MultiStageEnrichmentMixin):
         
         # Initialize prompt template manager for modular prompts
         self.prompt_manager = PromptTemplateManager()
+        
+        # Initialize AnimSchedule helper for enrichment
+        self.animeschedule_helper = AnimScheduleEnrichmentHelper()
         
         if not self.ai_client:
             logger.warning("No AI provider configured")
