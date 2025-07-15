@@ -147,13 +147,18 @@ class MultiStageEnrichmentMixin:
         pipeline_start = datetime.now()
         
         try:
-            # Create tasks for all enrichment stages to run concurrently
+            # Create tasks for all enrichment stages with staggered delays to avoid rate limits
+            async def delayed_stage(delay_seconds, stage_func, *args):
+                if delay_seconds > 0:
+                    await asyncio.sleep(delay_seconds)
+                return await stage_func(*args)
+            
             tasks = {
-                "metadata": self._execute_stage_with_retry(1, self._execute_stage_1, jikan_data),
-                "episodes": self._execute_stage_with_retry(2, self._execute_stage_2, processed_episodes, jikan_data),
-                "relationships": self._execute_stage_with_retry(3, self._execute_stage_3, anime_data, jikan_data),
-                "stats_media": self._execute_stage_with_retry(4, self._execute_stage_4, jikan_data),
-                "characters": self._execute_stage_with_retry(5, self._execute_stage_5, characters_data)
+                "metadata": delayed_stage(0, self._execute_stage_with_retry, 1, self._execute_stage_1, jikan_data),
+                "episodes": delayed_stage(2, self._execute_stage_with_retry, 2, self._execute_stage_2, processed_episodes, jikan_data),
+                "relationships": delayed_stage(4, self._execute_stage_with_retry, 3, self._execute_stage_3, anime_data, jikan_data),
+                "stats_media": delayed_stage(6, self._execute_stage_with_retry, 4, self._execute_stage_4, jikan_data),
+                "characters": delayed_stage(8, self._execute_stage_with_retry, 5, self._execute_stage_5, characters_data)
             }
 
             # Run tasks concurrently and gather results
