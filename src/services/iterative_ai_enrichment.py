@@ -72,19 +72,21 @@ class MultiStageEnrichmentMixin:
                 logger.info("No MAL URL found, returning original data")
                 return anime_data
 
-            # Step 2: Concurrently fetch all Jikan API data
+            # Step 2: Concurrently fetch ALL external API data
             import asyncio
-            jikan_anime_task = self._fetch_jikan_anime_full(mal_id)
-            jikan_episodes_task = self._fetch_jikan_episodes(mal_id)
-            jikan_characters_task = self._fetch_jikan_characters(mal_id)
-
-            results = await asyncio.gather(
-                jikan_anime_task, jikan_episodes_task, jikan_characters_task,
-                return_exceptions=True
-            )
+            logger.info("Fetching ALL external API data concurrently...")
             
-            jikan_data, episodes_data, characters_data = results
+            api_tasks = {
+                "jikan_anime": self._fetch_jikan_anime_full(mal_id),
+                "jikan_episodes": self._fetch_jikan_episodes(mal_id),
+                "jikan_characters": self._fetch_jikan_characters(mal_id),
+                "animeschedule": self.animeschedule_helper.find_anime_match(anime_data)
+            }
 
+            api_results = await asyncio.gather(*api_tasks.values(), return_exceptions=True)
+            jikan_data, episodes_data, characters_data, animeschedule_data = api_results
+
+            # Handle API fetch results
             if isinstance(jikan_data, Exception) or "error" in jikan_data:
                 logger.error(f"Failed to fetch Jikan data: {jikan_data}")
                 return anime_data
@@ -97,13 +99,17 @@ class MultiStageEnrichmentMixin:
                 logger.warning(f"Failed to fetch character data: {characters_data}")
                 characters_data = {"data": []}
 
+            if isinstance(animeschedule_data, Exception):
+                logger.warning(f"Failed to fetch AnimSchedule data: {animeschedule_data}")
+                animeschedule_data = None
+
             # Step 3: Pre-process episode data
             processed_episodes = self._preprocess_episodes(episodes_data.get("data", []))
             logger.info(f"Pre-processed {len(processed_episodes)} episodes for multi-stage AI processing")
             
-            # Step 4: Execute 5-stage enrichment pipeline
+            # Step 4: Execute 5-stage enrichment pipeline with all API data available
             enriched_data = await self._execute_enrichment_pipeline(
-                anime_data, jikan_data, processed_episodes, characters_data
+                anime_data, jikan_data, processed_episodes, characters_data, animeschedule_data
             )
             
             return enriched_data
@@ -137,7 +143,8 @@ class MultiStageEnrichmentMixin:
         anime_data: Dict[str, Any],
         jikan_data: Dict[str, Any],
         processed_episodes: List[Dict[str, Any]],
-        characters_data: Dict[str, Any]
+        characters_data: Dict[str, Any],
+        animeschedule_data: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """
         Execute the 5-stage enrichment pipeline concurrently with field-specific extraction.
@@ -156,7 +163,7 @@ class MultiStageEnrichmentMixin:
                 return await stage_func(*args)
             
             tasks = {
-                "metadata": delayed_stage(0, self._execute_stage_with_retry, 1, self._execute_stage_1, anime_data, jikan_data),
+                "metadata": delayed_stage(0, self._execute_stage_with_retry, 1, self._execute_stage_1, anime_data, jikan_data, animeschedule_data),
                 "episodes": delayed_stage(2, self._execute_stage_with_retry, 2, self._execute_stage_2, processed_episodes, jikan_data),
                 "relationships": delayed_stage(4, self._execute_stage_with_retry, 3, self._execute_stage_3, anime_data, jikan_data),
                 "stats_media": delayed_stage(6, self._execute_stage_with_retry, 4, self._execute_stage_4, jikan_data),
@@ -290,7 +297,7 @@ class MultiStageEnrichmentMixin:
         result = json.loads(response)
         return result.get("characters", [])
 
-    async def _execute_stage_1(self, anime_data: Dict[str, Any], jikan_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_stage_1(self, anime_data: Dict[str, Any], jikan_data: Dict[str, Any], animeschedule_data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """Stage 1: Metadata extraction - ONLY extract specific metadata fields"""
         # Extract only core fields from jikan_data to reduce token count
         jikan_core = {
@@ -309,17 +316,11 @@ class MultiStageEnrichmentMixin:
             }
         }
         
-        # Fetch AnimSchedule data for enhanced metadata
-        animeschedule_data = None
-        try:
-            logger.info(f"Fetching AnimSchedule data for '{anime_data.get('title')}'...")
-            animeschedule_data = await self.animeschedule_helper.find_anime_match(anime_data)
-            if animeschedule_data:
-                logger.info(f"AnimSchedule data found for '{anime_data.get('title')}'")
-            else:
-                logger.info(f"No AnimSchedule match for '{anime_data.get('title')}'")
-        except Exception as e:
-            logger.warning(f"AnimSchedule fetch failed for '{anime_data.get('title')}': {e}")
+        # AnimSchedule data is now passed as parameter (already fetched concurrently)
+        if animeschedule_data:
+            logger.info(f"Processing AnimSchedule data for '{anime_data.get('title')}'")
+        else:
+            logger.info(f"No AnimSchedule data available for '{anime_data.get('title')}'")
         
         prompt = self.prompt_manager.build_stage_prompt(
             1,
