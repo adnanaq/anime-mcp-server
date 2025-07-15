@@ -42,7 +42,7 @@ async def test_new_system():
     timestamp = int(time.time())
     output_file = f"new_system_result_{timestamp}.json"
     with open(output_file, 'w') as f:
-        json.dump(result, f, indent=2, default=str)
+        json.dump(result, f, indent=2, default=str, ensure_ascii=False)
     print(f"📄 Result saved to: {output_file}")
 
 if __name__ == "__main__":

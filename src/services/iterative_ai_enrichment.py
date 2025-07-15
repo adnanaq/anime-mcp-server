@@ -1,72 +1,638 @@
 #!/usr/bin/env python3
 """
-Iterative AI Enrichment Agent - Simple and Clean Approach
+Multi-Stage AI Enrichment Implementation
 
-This file will:
-1. Import the full anime schema we want to achieve
-2. Accept anime data from offline database (for vector indexing)
-3. Use AI to enrich the data step by step
-4. Build up functionality iteratively
+This is the refactored _ai_enrich_data method with 4-stage pipeline
+to replace the monolithic 200+ line prompt approach.
 """
 
-import asyncio
 import json
 import logging
 import os
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-# Import the new prompt template manager and multi-stage implementation
+# Import the prompt template manager
 try:
     from .prompts.prompt_template_manager import PromptTemplateManager
-    from .iterative_ai_enrichment_v2 import MultiStageEnrichmentMixin
 except ImportError:
     from src.services.prompts.prompt_template_manager import PromptTemplateManager
-    from src.services.iterative_ai_enrichment_v2 import MultiStageEnrichmentMixin
 
+logger = logging.getLogger(__name__)
 
-# AI clients with lazy imports
+# AI clients configuration
 AI_CLIENTS = {
     "openai": {
         "module": "openai",
         "class": "AsyncOpenAI", 
         "key": "OPENAI_API_KEY",
-        "default_model": "gpt-4o"
+        "default_model": "gpt-4o-2024-11-20"
     },
     "anthropic": {
         "module": "anthropic", 
         "class": "AsyncAnthropic",
         "key": "ANTHROPIC_API_KEY", 
-        "default_model": "claude-3-haiku-20240307"
+        "default_model": "claude-sonnet-4-20250514"
     }
 }
 
-# Import the full schema we're targeting
-try:
-    from ..models.anime import (
-        AnimeEntry,
-        CharacterEntry,
-        StaffEntry,
-        StatisticsEntry,
-        EnrichmentMetadata
-    )
-except ImportError:
-    from src.models.anime import (
-        AnimeEntry,
-        CharacterEntry,
-        StaffEntry,
-        StatisticsEntry,
-        EnrichmentMetadata
-    )
 
-logger = logging.getLogger(__name__)
+class MultiStageEnrichmentMixin:
+    """Mixin providing 4-stage enrichment pipeline methods"""
+    
+    async def _ai_enrich_data_v2(self, anime_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Multi-stage AI enrichment using modular prompts for optimal performance.
+        
+        Replaces the monolithic 200+ line prompt with 5 specialized stages:
+        1. Metadata Extraction (synopsis, genres, basic info)
+        2. Episode Processing (episode details, timing)
+        3. Relationship Analysis (relatedAnime URL processing)
+        4. Statistics & Media (stats, trailers, images, staff)
+        5. Character Processing (characters, voice actors)
+        
+        Args:
+            anime_data: Anime data from offline database
+            
+        Returns:
+            Enriched data or None if failed
+        """
+        try:
+            # Step 1: Extract MAL ID
+            sources = anime_data.get('sources', [])
+            mal_id = None
+            for url in sources:
+                if 'myanimelist.net/anime/' in url:
+                    mal_id = url.split('/anime/')[-1].split('/')[0]
+                    break
+            
+            if not mal_id:
+                logger.info("No MAL URL found, returning original data")
+                return anime_data
+
+            # Step 2: Concurrently fetch all Jikan API data
+            import asyncio
+            jikan_anime_task = self._fetch_jikan_anime_full(mal_id)
+            jikan_episodes_task = self._fetch_jikan_episodes(mal_id)
+            jikan_characters_task = self._fetch_jikan_characters(mal_id)
+
+            results = await asyncio.gather(
+                jikan_anime_task, jikan_episodes_task, jikan_characters_task,
+                return_exceptions=True
+            )
+            
+            jikan_data, episodes_data, characters_data = results
+
+            if isinstance(jikan_data, Exception) or "error" in jikan_data:
+                logger.error(f"Failed to fetch Jikan data: {jikan_data}")
+                return anime_data
+
+            if isinstance(episodes_data, Exception) or "error" in episodes_data:
+                logger.warning(f"Failed to fetch episode data: {episodes_data}")
+                episodes_data = {"data": []}
+
+            if isinstance(characters_data, Exception) or "error" in characters_data:
+                logger.warning(f"Failed to fetch character data: {characters_data}")
+                characters_data = {"data": []}
+
+            # Step 3: Pre-process episode data
+            processed_episodes = self._preprocess_episodes(episodes_data.get("data", []))
+            logger.info(f"Pre-processed {len(processed_episodes)} episodes for multi-stage AI processing")
+            
+            # Step 4: Execute 5-stage enrichment pipeline
+            enriched_data = await self._execute_enrichment_pipeline(
+                anime_data, jikan_data, processed_episodes, characters_data
+            )
+            
+            return enriched_data
+            
+        except Exception as e:
+            logger.error(f"Multi-stage AI enrichment failed: {e}")
+            return anime_data  # Return original data instead of None
+    
+    def _preprocess_episodes(self, episodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Pre-process episode data to extract only needed fields"""
+        processed_episodes = []
+        for episode in episodes:
+            # Extract fields from individual episode endpoint (which includes detailed info)
+            processed_episode = {
+                "url": episode.get("url"),
+                "title": episode.get("title"),
+                "title_japanese": episode.get("title_japanese"),
+                "title_romanji": episode.get("title_romanji"),
+                "aired": episode.get("aired"),
+                "score": episode.get("score"),
+                "filler": episode.get("filler", False),
+                "recap": episode.get("recap", False),
+                "duration": episode.get("duration"),
+                "synopsis": episode.get("synopsis")
+            }
+            processed_episodes.append(processed_episode)
+        return processed_episodes
+    
+    async def _execute_enrichment_pipeline(
+        self,
+        anime_data: Dict[str, Any],
+        jikan_data: Dict[str, Any],
+        processed_episodes: List[Dict[str, Any]],
+        characters_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Execute the 5-stage enrichment pipeline concurrently with field-specific extraction.
+        
+        Each stage extracts ONLY its specific fields, then programmatically merged.
+        Massive token reduction and performance improvement vs old merge approach.
+        """
+        import asyncio
+        pipeline_start = datetime.now()
+        
+        try:
+            # Create tasks for all enrichment stages to run concurrently
+            tasks = {
+                "metadata": self._execute_stage_with_retry(1, self._execute_stage_1, jikan_data),
+                "episodes": self._execute_stage_with_retry(2, self._execute_stage_2, processed_episodes, jikan_data),
+                "relationships": self._execute_stage_with_retry(3, self._execute_stage_3, anime_data, jikan_data),
+                "stats_media": self._execute_stage_with_retry(4, self._execute_stage_4, jikan_data),
+                "characters": self._execute_stage_with_retry(5, self._execute_stage_5, characters_data)
+            }
+
+            # Run tasks concurrently and gather results
+            results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+            
+            # Map results back to stage names
+            stage_results = dict(zip(tasks.keys(), results))
+
+            # Handle exceptions and log errors
+            for stage, result in stage_results.items():
+                if isinstance(result, Exception):
+                    logger.error(f"Stage '{stage}' failed: {result}")
+                    stage_results[stage] = {} # Set empty dict for failed stage
+
+            # Stage 6: Programmatic Assembly (eliminate AI dependency)
+            logger.info("Stage 6: Programmatic assembly...")
+            final_result = self._programmatic_merge(anime_data, stage_results)
+            
+            pipeline_time = (datetime.now() - pipeline_start).total_seconds()
+            logger.info(f"✅ 5-stage enrichment pipeline completed in {pipeline_time:.2f}s")
+            
+            return final_result
+            
+        except Exception as e:
+            logger.error(f"Enrichment pipeline failed: {e}")
+            # Attempt partial recovery using completed stages
+            return self._attempt_partial_recovery_v2({}, anime_data, e)
+    
+    async def _execute_stage_with_retry(self, stage_num: int, stage_func, *args, max_retries: int = 2):
+        """Execute a stage with retry logic and error recovery"""
+        for attempt in range(max_retries + 1):
+            try:
+                result = await stage_func(*args)
+                if attempt > 0:
+                    logger.info(f"Stage {stage_num} succeeded on retry {attempt}")
+                return result
+                
+            except json.JSONDecodeError as e:
+                logger.warning(f"Stage {stage_num} JSON decode error (attempt {attempt + 1}/{max_retries + 1}): {e}")
+                if attempt == max_retries:
+                    raise Exception(f"Stage {stage_num} failed after {max_retries + 1} attempts: JSON parsing failed")
+                    
+            except Exception as e:
+                logger.warning(f"Stage {stage_num} error (attempt {attempt + 1}/{max_retries + 1}): {e}")
+                if attempt == max_retries:
+                    raise Exception(f"Stage {stage_num} failed after {max_retries + 1} attempts: {e}")
+    
+    def _attempt_partial_recovery_v2(self, stage_results: Dict[str, Any], original_data: Dict[str, Any], error: Exception) -> Dict[str, Any]:
+        """Attempt to recover with partial data when pipeline fails using programmatic merge"""
+        logger.warning(f"Attempting partial recovery from pipeline failure: {error}")
+        
+        if not stage_results:
+            logger.warning("No stages completed successfully, returning original data")
+            return original_data
+        
+        # Use programmatic merge with whatever stages completed
+        completed_stages = list(stage_results.keys())
+        logger.info(f"Recovering with completed stages: {completed_stages}")
+        
+        # Merge completed stages programmatically
+        partial_result = self._programmatic_merge(original_data, stage_results)
+        
+        # Update metadata to reflect partial recovery
+        partial_result["enrichment_metadata"] = {
+            "source": "iterative_ai_enrichment_partial",
+            "enriched_at": datetime.now().isoformat(),
+            "success": False,
+            "stages_completed": completed_stages,
+            "pipeline_version": "field_extraction_v1",
+            "partial_recovery": True,
+            "error_message": str(error),
+            "optimization": "programmatic_merge"
+        }
+        
+        return partial_result
+
+    async def _process_in_batches(self, items: List[Any], batch_processor, batch_size: int = 10, **kwargs) -> List[Any]:
+        """
+        Generic function to process a list of items in concurrent batches.
+        
+        Args:
+            items: The list of items to process.
+            batch_processor: An async function that takes a batch (list) and kwargs.
+            batch_size: The number of items in each batch.
+            **kwargs: Additional arguments to pass to the batch_processor.
+            
+        Returns:
+            A list of aggregated results from all batches.
+        """
+        import asyncio
+        
+        tasks = []
+        for i in range(0, len(items), batch_size):
+            batch = items[i:i + batch_size]
+            task = batch_processor(batch, **kwargs)
+            tasks.append(task)
+            
+        batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        final_results = []
+        for result in batch_results:
+            if isinstance(result, Exception):
+                logger.error(f"A batch failed during processing: {result}")
+            elif result:
+                final_results.extend(result)
+        
+        return final_results
+
+    async def _process_episode_batch(self, batch: List[Dict[str, Any]], jikan_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Processes a batch of episodes and returns the list of episode details."""
+        prompt = self.prompt_manager.build_stage_prompt(
+            2,
+            episodes_data=json.dumps(batch, indent=2)
+        )
+        response = await self._call_ai_with_cleanup(prompt)
+        result = json.loads(response)
+        return result.get("episode_details", [])
+
+    async def _process_character_batch(self, batch: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Processes a batch of characters and returns the list of characters."""
+        batch_data = {"data": batch}
+        prompt = self.prompt_manager.build_stage_prompt(
+            5,
+            characters_data=json.dumps(batch_data, indent=2)
+        )
+        response = await self._call_ai_with_cleanup(prompt)
+        result = json.loads(response)
+        return result.get("characters", [])
+
+    async def _execute_stage_1(self, jikan_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Stage 1: Metadata extraction - ONLY extract specific metadata fields"""
+        # Extract only core fields from jikan_data to reduce token count
+        jikan_core = {
+            "data": {
+                "synopsis": jikan_data.get("data", {}).get("synopsis"),
+                "genres": jikan_data.get("data", {}).get("genres", []),
+                "demographics": jikan_data.get("data", {}).get("demographics", []),
+                "themes": jikan_data.get("data", {}).get("themes", []),
+                "source": jikan_data.get("data", {}).get("source"),
+                "rating": jikan_data.get("data", {}).get("rating"),
+                "title_japanese": jikan_data.get("data", {}).get("title_japanese"),
+                "title_english": jikan_data.get("data", {}).get("title_english"),
+                "background": jikan_data.get("data", {}).get("background"),
+                "aired": jikan_data.get("data", {}).get("aired"),
+                "broadcast": jikan_data.get("data", {}).get("broadcast")
+            }
+        }
+        
+        prompt = self.prompt_manager.build_stage_prompt(
+            1,
+            jikan_core_data=json.dumps(jikan_core, indent=2)
+        )
+        
+        response = await self._call_ai_with_cleanup(prompt)
+        return json.loads(response)
+    
+    async def _execute_stage_2(self, episodes: List[Dict[str, Any]], jikan_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Stage 2: Episode processing - process all episodes in batches."""
+        total_episodes = len(episodes)
+        logger.info(f"Processing {total_episodes} episodes in batches")
+
+        processed_episode_details = await self._process_in_batches(
+            episodes, self._process_episode_batch, batch_size=10, jikan_data=jikan_data
+        )
+        
+        logger.info(f"Successfully processed {len(processed_episode_details)}/{total_episodes} episodes")
+
+        return {
+            "episode_details": processed_episode_details
+        }
+    
+    async def _execute_stage_3(self, anime_data: Dict[str, Any], jikan_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Stage 3: Relationship analysis - ONLY extract relationship fields"""
+        related_urls = anime_data.get("relatedAnime", [])
+        jikan_relations = {
+            "data": {
+                "relations": jikan_data.get("data", {}).get("relations", [])
+            }
+        }
+        
+        prompt = self.prompt_manager.build_stage_prompt(
+            3,
+            related_anime_urls=json.dumps(related_urls, indent=2),
+            jikan_relations_data=json.dumps(jikan_relations, indent=2)
+        )
+        
+        response = await self._call_ai_with_cleanup(prompt)
+        return json.loads(response)
+    
+    async def _execute_stage_4(self, jikan_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Stage 4: Statistics and media - ONLY extract stats and media fields"""
+        jikan_stats = {
+            "data": {
+                "score": jikan_data.get("data", {}).get("score"),
+                "scored_by": jikan_data.get("data", {}).get("scored_by"),
+                "rank": jikan_data.get("data", {}).get("rank"),
+                "popularity": jikan_data.get("data", {}).get("popularity"),
+                "members": jikan_data.get("data", {}).get("members"),
+                "favorites": jikan_data.get("data", {}).get("favorites")
+            }
+        }
+        
+        jikan_media = {
+            "data": {
+                "trailer": jikan_data.get("data", {}).get("trailer"),
+                "images": jikan_data.get("data", {}).get("images"),
+                "staff": jikan_data.get("data", {}).get("staff", []),
+                "theme": jikan_data.get("data", {}).get("theme", {}),
+                "streaming": jikan_data.get("data", {}).get("streaming", []),
+                "licensors": jikan_data.get("data", {}).get("licensors", []),
+                "external": jikan_data.get("data", {}).get("external", [])
+            }
+        }
+        
+        prompt = self.prompt_manager.build_stage_prompt(
+            4,
+            jikan_statistics_data=json.dumps(jikan_stats, indent=2),
+            jikan_media_data=json.dumps(jikan_media, indent=2)
+        )
+        
+        response = await self._call_ai_with_cleanup(prompt)
+        return json.loads(response)
+    
+    def _programmatic_merge(self, original_data: Dict[str, Any], stage_results: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Programmatically merge all stage outputs with original data.
+        
+        This replaces AI-based final assembly with deterministic code merge.
+        Much faster and more reliable than AI JSON generation.
+        """
+        # Start with original anime data
+        final_result = original_data.copy()
+        
+        # Merge Stage 1: Metadata fields (including timing data)
+        if "metadata" in stage_results:
+            metadata = stage_results["metadata"]
+            for field in ["synopsis", "genres", "demographics", "themes", "source_material", 
+                         "rating", "content_warnings", "title_japanese", "title_english", "background",
+                         "aired_dates", "broadcast"]:
+                if field in metadata:
+                    final_result[field] = metadata[field]
+        
+        # Merge Stage 2: Episode fields only
+        if "episodes" in stage_results:
+            episodes = stage_results["episodes"]
+            for field in ["episode_details"]:
+                if field in episodes:
+                    final_result[field] = episodes[field]
+        
+        # Merge Stage 3: Relationship fields
+        if "relationships" in stage_results:
+            relationships = stage_results["relationships"]
+            for field in ["relatedAnime", "relations"]:
+                if field in relationships:
+                    final_result[field] = relationships[field]
+        
+        # Merge Stage 4: Statistics and media fields
+        if "stats_media" in stage_results:
+            stats_media = stage_results["stats_media"]
+            for field in ["statistics", "trailers", "images", "staff", "opening_themes", 
+                         "ending_themes", "streaming_info", "licensors", "streaming_licenses",
+                         "external_links", "awards"]:
+                if field in stats_media:
+                    final_result[field] = stats_media[field]
+        
+        # Merge Stage 5: Character fields
+        if "characters" in stage_results:
+            characters = stage_results["characters"]
+            if "characters" in characters:
+                final_result["characters"] = characters["characters"]
+        
+        # Add enrichment metadata
+        final_result["enrichment_metadata"] = {
+            "source": "iterative_ai_enrichment_optimized",
+            "enriched_at": datetime.now().isoformat(),
+            "success": True,
+            "stages_completed": list(stage_results.keys()),
+            "pipeline_version": "field_extraction_v1",
+            "optimization": "programmatic_merge"
+        }
+        
+        return final_result
+    
+    async def _call_ai_with_cleanup(self, prompt: str) -> str:
+        """Call AI with response cleanup for JSON parsing"""
+        response = await self._call_ai(prompt)
+        
+        # Find the start and end of the JSON object
+        start_index = response.find('{')
+        end_index = response.rfind('}')
+        
+        if start_index != -1 and end_index != -1 and end_index > start_index:
+            return response[start_index:end_index+1].strip()
+        else:
+            # Fallback for basic markdown cleanup if JSON object not found
+            response = response.strip()
+            if response.startswith("```json"):
+                response = response[7:]
+            elif response.startswith("```"):
+                response = response[3:]
+            if response.endswith("```"):
+                response = response[:-3]
+            return response.strip()
+    
+    async def _fetch_jikan_characters(self, mal_id: str) -> Dict[str, Any]:
+        """Fetch character data from Jikan API"""
+        import aiohttp
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = f"https://api.jikan.moe/v4/anime/{mal_id}/characters"
+                
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return data
+                    else:
+                        logger.error(f"Jikan characters API error: {response.status}")
+                        return {"error": f"HTTP {response.status}"}
+                        
+        except Exception as e:
+            logger.error(f"Failed to fetch Jikan characters: {e}")
+            return {"error": str(e)}
+    
+    async def _execute_stage_5(self, characters_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Stage 5: Character processing - process all characters in batches."""
+        characters_core = []
+        for char_entry in characters_data.get("data", []):
+            character = char_entry.get("character", {})
+            voice_actors = char_entry.get("voice_actors", [])
+            char_core = {
+                "character": {
+                    "mal_id": character.get("mal_id"),
+                    "name": character.get("name"),
+                    "name_kanji": character.get("name_kanji"),
+                    "images": {"jpg": character.get("images", {}).get("jpg", {}).get("image_url")},
+                    "about": character.get("about", "")[:200] if character.get("about") else ""
+                },
+                "role": char_entry.get("role"),
+                "voice_actors": [
+                    {
+                        "person": {
+                            "name": va.get("person", {}).get("name"),
+                            "images": {"jpg": va.get("person", {}).get("images", {}).get("jpg", {}).get("image_url")}
+                        },
+                        "language": va.get("language")
+                    }
+                    for va in voice_actors
+                ]
+            }
+            characters_core.append(char_core)
+
+        total_characters = len(characters_core)
+        logger.info(f"Processing {total_characters} characters in batches")
+
+        processed_characters = await self._process_in_batches(
+            characters_core, self._process_character_batch, batch_size=10
+        )
+
+        logger.info(f"Successfully processed {len(processed_characters)}/{total_characters} characters")
+        return {"characters": processed_characters}
+    
+    async def _fetch_jikan_anime_full(self, mal_id: str) -> Dict[str, Any]:
+        """Fetch complete anime data from Jikan API"""
+        import aiohttp
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = f"https://api.jikan.moe/v4/anime/{mal_id}/full"
+                
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return data
+                    else:
+                        logger.error(f"Jikan API error: {response.status}")
+                        return {"error": f"HTTP {response.status}"}
+                        
+        except Exception as e:
+            logger.error(f"Failed to fetch Jikan data: {e}")
+            return {"error": str(e)}
+    
+    async def _fetch_jikan_episodes(self, mal_id: str) -> Dict[str, Any]:
+        """Fetch detailed episode data from Jikan API with optimized rate limiting and batching"""
+        import aiohttp
+        import asyncio
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                # First get the episodes list to know how many episodes there are
+                episodes_list_url = f"https://api.jikan.moe/v4/anime/{mal_id}/episodes"
+                
+                async with session.get(episodes_list_url) as response:
+                    if response.status != 200:
+                        logger.error(f"Episodes list API error: {response.status}")
+                        return {"error": f"HTTP {response.status}"}
+                    
+                    episodes_list = await response.json()
+                    episode_count = len(episodes_list.get("data", []))
+                
+                if episode_count == 0:
+                    return {"data": []}
+                
+                # Optimized batch fetching with controlled concurrency
+                detailed_episodes = []
+                batch_size = 2  # Conservative batch size to avoid rate limits
+                rate_limit_delay = 0.8  # 800ms between batches (more conservative)
+                
+                for batch_start in range(1, episode_count + 1, batch_size):
+                    batch_end = min(batch_start + batch_size - 1, episode_count)
+                    batch_tasks = []
+                    
+                    # Create batch of concurrent requests
+                    for episode_num in range(batch_start, batch_end + 1):
+                        task = self._fetch_single_episode(session, mal_id, episode_num)
+                        batch_tasks.append(task)
+                    
+                    # Execute batch concurrently
+                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                    
+                    # Process batch results
+                    for episode_num, result in zip(range(batch_start, batch_end + 1), batch_results):
+                        if isinstance(result, Exception):
+                            logger.warning(f"Failed to fetch episode {episode_num}: {result}")
+                            continue
+                        elif result is None:
+                            continue
+                        else:
+                            detailed_episodes.append(result)
+                    
+                    # Rate limiting delay between batches (except for last batch)
+                    if batch_end < episode_count:
+                        await asyncio.sleep(rate_limit_delay)
+                
+                logger.info(f"Successfully fetched detailed data for {len(detailed_episodes)}/{episode_count} episodes")
+                return {"data": detailed_episodes}
+                        
+        except Exception as e:
+            logger.error(f"Failed to fetch episode data: {e}")
+            return {"error": str(e)}
+    
+    async def _fetch_single_episode(self, session: 'aiohttp.ClientSession', mal_id: str, episode_num: int) -> Optional[Dict[str, Any]]:
+        """Fetch a single episode with error handling"""
+        import asyncio
+        
+        episode_url = f"https://api.jikan.moe/v4/anime/{mal_id}/episodes/{episode_num}"
+        
+        try:
+            async with session.get(episode_url) as response:
+                if response.status == 200:
+                    episode_data = await response.json()
+                    return episode_data["data"]
+                elif response.status == 429:
+                    logger.warning(f"Rate limited on episode {episode_num}, applying backoff")
+                    # Progressive backoff for rate limits
+                    await asyncio.sleep(2.0)  # Wait 2 seconds before retry
+                    # Retry once with longer delay
+                    async with session.get(episode_url) as retry_response:
+                        if retry_response.status == 200:
+                            retry_data = await retry_response.json()
+                            return retry_data["data"]
+                        elif retry_response.status == 429:
+                            logger.warning(f"Still rate limited on episode {episode_num}, skipping")
+                            return None
+                        else:
+                            logger.error(f"Retry failed for episode {episode_num}: HTTP {retry_response.status}")
+                            return None
+                else:
+                    logger.warning(f"Failed to fetch episode {episode_num}: HTTP {response.status}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Error fetching episode {episode_num}: {e}")
+            return None
 
 
 class IterativeAIEnrichmentAgent(MultiStageEnrichmentMixin):
     """
-    Simple AI enrichment agent that works iteratively.
-    
-    Takes anime data from offline database and enriches it using AI,
-    following the full schema structure.
+    Complete AI enrichment agent using the v2 multi-stage pipeline.
     """
     
     def __init__(self, ai_provider: Optional[str] = None):
@@ -129,47 +695,12 @@ class IterativeAIEnrichmentAgent(MultiStageEnrichmentMixin):
         except AttributeError:
             raise AttributeError(f"Class {config['class']} not found in {config['module']}")
     
-    async def enrich_anime_from_offline_data(self, offline_anime_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Main entry point: Enrich anime data from offline database.
-        
-        Args:
-            offline_anime_data: Raw anime data from anime-offline-database
-            
-        Returns:
-            Enriched anime data following our full schema
-        """
-        logger.info(f"Starting enrichment for: {offline_anime_data.get('title', 'Unknown')}")
-        
-        # Start with the offline data as base
-        enriched_data = {
-            **offline_anime_data,  # Keep all original data
-        }
-        
-        # AI enrichment
-        if self.ai_client:
-            logger.info(f"AI enriching anime data...")
-            ai_enriched = await self._ai_enrich_data(offline_anime_data)
-            if ai_enriched:
-                logger.info(f"AI enrichment completed for: {enriched_data.get('title')}")
-                return ai_enriched  # Return AI's complete enriched data
-            else:
-                logger.warning(f"AI enrichment failed for: {enriched_data.get('title')}")
-        else:
-            logger.warning(f"No AI client configured, skipping enrichment")
-        
-        logger.info(f"Base data prepared for: {enriched_data.get('title')}")
-        
-        return enriched_data  # Return original data if AI enrichment failed
-    
     async def _call_ai(self, prompt: str, model: Optional[str] = None) -> str:
-        """Call AI provider with unified interface and function calling support"""
+        """Call AI provider with unified interface"""
         if not self.ai_client:
             raise ValueError("No AI client configured")
         
         model = model or AI_CLIENTS[self.ai_provider]["default_model"]
-        
-        # No function calling for now - use pure AI analysis
         
         # Unified call method based on provider
         if self.ai_provider == "openai":
@@ -177,423 +708,48 @@ class IterativeAIEnrichmentAgent(MultiStageEnrichmentMixin):
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
-                timeout=3600.0  # 1 hour timeout for long-running anime processing
+                timeout=3600.0  # 1 hour timeout for long-running processing
             )
             return response.choices[0].message.content
             
         elif self.ai_provider == "anthropic":
-            # Anthropic doesn't support function calling in the same way
-            # We'll need to handle this differently for Anthropic
             response = await self.ai_client.messages.create(
                 model=model,
-                max_tokens=4000,
+                max_tokens=8192,  # Increased for complex multi-agent responses
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.1
+                temperature=0.1,
+                timeout=3600.0  # 1 hour timeout for long-running processing
             )
             return response.content[0].text
             
         else:
             raise ValueError(f"Unknown provider: {self.ai_provider}")
     
-    async def _ai_enrich_data(self, anime_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def enrich_anime_from_offline_data(self, offline_anime_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        AI enriches anime data by processing real API response data.
+        Main entry point: Enrich anime data from offline database using v2 pipeline.
         
         Args:
-            anime_data: Anime data from offline database
+            offline_anime_data: Raw anime data from anime-offline-database
             
         Returns:
-            Enriched data or None if failed
+            Enriched anime data following our full schema
         """
-        # Step 1: Extract MAL ID and fetch real API data
-        sources = anime_data.get('sources', [])
-        mal_id = None
+        logger.info(f"Starting v2 enrichment for: {offline_anime_data.get('title', 'Unknown')}")
         
-        for url in sources:
-            if 'myanimelist.net/anime/' in url:
-                mal_id = url.split('/anime/')[-1].split('/')[0]
-                break
+        # Use the v2 multi-stage pipeline
+        if self.ai_client:
+            logger.info(f"AI enriching anime data with v2 pipeline...")
+            ai_enriched = await self._ai_enrich_data_v2(offline_anime_data)
+            if ai_enriched:
+                logger.info(f"v2 AI enrichment completed for: {ai_enriched.get('title')}")
+                return ai_enriched
+            else:
+                logger.warning(f"v2 AI enrichment failed for: {offline_anime_data.get('title')}")
+        else:
+            logger.warning(f"No AI client configured, skipping enrichment")
         
-        if not mal_id:
-            logger.info("No MAL URL found, returning original data")
-            return anime_data
-        
-        # Step 2: Fetch real Jikan API data
-        jikan_data = await self._fetch_jikan_anime_full(mal_id)
-        
-        if "error" in jikan_data:
-            logger.error(f"Failed to fetch Jikan data: {jikan_data['error']}")
-            return anime_data
-        
-        # Step 3: Fetch episode details
-        episodes_data = await self._fetch_jikan_episodes(mal_id)
-        
-        if "error" in episodes_data:
-            logger.warning(f"Failed to fetch episode data: {episodes_data['error']}")
-            episodes_data = {"data": []}  # Continue without episodes
-        
-        
-        # Step 5: Pre-process episode data to avoid massive AI prompts
-        processed_episodes = []
-        for episode in episodes_data.get("data", []):
-            # Extract only the fields we need, excluding mal_id and forum_url as requested
-            processed_episode = {
-                "url": episode.get("url"),
-                "title": episode.get("title"),
-                "title_japanese": episode.get("title_japanese"),
-                "title_romanji": episode.get("title_romanji"),
-                "aired": episode.get("aired"),
-                "score": episode.get("score"),
-                "filler": episode.get("filler", False),
-                "recap": episode.get("recap", False),
-                "duration": episode.get("duration"),
-                "synopsis": episode.get("synopsis")
-            }
-            processed_episodes.append(processed_episode)
-        
-        logger.info(f"Pre-processed {len(processed_episodes)} episodes for AI")
-        
-        
-        # Safety check for None values
-        if processed_episodes is None:
-            processed_episodes = []
-        
-        # Step 6: Have AI process the real API response with comprehensive schema
-        prompt = f"""
-# ROLE & CONTEXT
-You are an expert anime database enrichment specialist. Your task is to process anime data from an offline database and enrich it with real-time Jikan API data, creating a comprehensive unified schema.
-
-# OBJECTIVE
-Transform the provided anime data into a structured, enriched JSON object that preserves all original data while adding detailed metadata from the Jikan API response.
-
-# INPUT DATA
-## ORIGINAL ANIME DATA:
-{anime_data}
-
-## JIKAN API RESPONSE:
-{jikan_data}
-
-## EPISODE DATA (Pre-processed):
-{processed_episodes}
-
-
-# PROCESSING INSTRUCTIONS
-
-## 1. DATA PRESERVATION REQUIREMENTS
-- Preserve ALL original anime fields exactly as provided unless specified otherwise below
-
-## 2. RELATEDANIME PROCESSING (CRITICAL TASK)
-This is the most important part of your task. Follow these steps exactly:
-
-### STEP 1: IDENTIFY ORIGINAL URLS
-- Review all URLs in the original data's "relatedAnime" field
-- Process EVERY URL provided - do not filter or exclude any URLs
-
-For each URL, perform intelligent title extraction and relationship inference:
-
-### STEP 2: TITLE EXTRACTION RULES
-- Convert dashes/underscores to spaces
-- Apply proper capitalization
-- Extract meaningful identifiers from URL paths
-- For unclear paths, use descriptive titles from URL components 
-- NEVER use "Unknown Title" - always extract something meaningful
-
-**TITLE EXTRACTION EXAMPLES:**
-
-**EXAMPLE 1:**
-Input: "https://anime-planet.com/anime/dandadan-2nd-season"
-→ Extract: "Dandadan 2nd Season"
-
-**EXAMPLE 2:**
-Input: "https://anime-planet.com/anime/creepy-nuts-otonoke"
-→ Extract: "Creepy Nuts Otonoke"
-
-**EXAMPLE 3:**
-Input: "https://myanimelist.net/anime/60543"
-→ Extract: "Dandadan 2nd Season" (or similar meaningful title)
-
-**EXAMPLE 4:**
-Input: "https://anilist.co/anime/185586"
-→ Extract: "Dandadan 2nd Season" (or similar meaningful title)
-
-### STEP 3: RELATIONSHIP TYPE INFERENCE
-Based on title analysis, determine:
-- "Sequel": For season/part continuations (e.g., "2nd Season", "Part 2")
-- "Prequel": For earlier entries
-- "Side Story": For spin-offs
-- "Other": For theme songs, specials, unclear relationships
-
-
-## 3. DATA EXTRACTION FROM JIKAN API
-- Extract real values from jikan_data.data structure
-- Convert rating scales appropriately (maintain 0-10 scale)
-- Format dates as ISO strings
-- Handle missing fields gracefully (use null/empty arrays)
-
-## 4. SCHEMA SEPARATION RULE
-- **relatedAnime**: ALL anime-related entries (from original URLs)
-- **relations**: ONLY non-anime relationships (manga, novels), smartly observe the url for hints.
-
-
-# OUTPUT SCHEMA
-Map the data to this comprehensive JSON structure (preserve ALL original fields + add these enriched fields):
-
-{{
-    // All original fields preserved as-is
-    ...original_anime_data,
-    
-    // Enhanced relatedAnime processing
-    "relatedAnime": [{{\"relation_type\": \"infer_type\", \"title\": \"extract_from_URL\", \"url\": \"exact_original_URL\"}}] (PROCESS ALL original URLs - one entry per URL, no filtering)
-    
-    // New enriched fields
-    "synopsis": "Extract from jikan_data.data.synopsis",
-    "genres": ["Extract genre names from jikan_data.data.genres array"],
-    "demographics": ["Shounen"],
-    "themes": [{{"name": "Theme Name", "description": "Theme description"}}],
-    "source_material": "manga",
-    "rating": "PG-13",
-    "content_warnings": ["Violence"],
-    "aired_dates": {{
-        "from": "2019-04-06T16:25:00Z",
-        "to": "2019-09-28T16:25:00Z",
-        "string": "Apr 6, 2019 to Sep 28, 2019"
-    }},
-    "broadcast": {{
-        "day": "Saturday",
-        "time": "23:30",
-        "timezone": "JST"
-    }},
-    "background": "Extract from jikan_data.data.background",
-    "title_japanese": "Extract from jikan_data.data.title_japanese",
-    "title_english": "Extract from jikan_data.data.title_english",    
-    "streaming_info": [{{
-        "name": "Platform name from jikan_data.data.streaming",
-        "url": "Platform URL"
-    }}],
-    "licensors": ["Extract licensor names from jikan_data.data.licensors"],
-    "streaming_licenses": ["Extract from streaming data"],
-    "staff": [{{
-        "name": "Director Name",
-        "role": "Director",
-        "positions": ["Director", "Episode Director"]
-    }}],
-    "opening_themes": [{{
-        "title": "Theme Title",
-        "artist": "Artist Name",
-        "episodes": "1-26"
-    }}],
-    "ending_themes": [{{
-        "title": "Theme Title", 
-        "artist": "Artist Name",
-        "episodes": "1-26"
-    }}],
-    
-    "statistics": {{
-        "mal": {{
-            "score": "Rating score (normalize to 0-10 scale if needed)",
-            "scored_by": "Number of users who rated", 
-            "rank": "Overall ranking position",
-            "popularity_rank": "Popularity ranking position",
-            "members": "Total members/users tracking",
-            "favorites": "Number of users who favorited"
-        }}
-    }},
-    
-    "trailers": [{{
-        "youtube_url": "http//...",
-        "title": "Trailer title or use default",
-        "thumbnail_url": "Extract max size image"
-    }}],
-    
-    "external_links": {{
-        "official_website": "Extract from jikan_data.data.external if available"
-    }},
-    
-    "images": {{
-        "covers": [{{
-            "url": "https://...", choose the largest one
-            "source": "jikan",
-            "type": "cover"
-        }}]
-    }},
-    "episode_details": processed_episodes (CRITICAL: Use ALL pre-processed episodes exactly as provided - DO NOT skip any episodes),
-    
-    
-    "relations": [{{ CRITICAL: ONLY for NON-ANIME relationships (manga, light novels, etc.). DO NOT put anime entries here - all anime go in relatedAnime field above!
-        "anime_id": "manga-id",
-        "relation_type": "Adaptation", 
-        "title": "Manga Title",
-        "urls": {{
-            "mal": "https://myanimelist.net/manga/123"
-        }}
-    }}],
-    
-    "awards": [{{
-        "name": "Award Name",
-        "organization": "Organization",
-        "year": 2020
-    }}]
-}}
-
-# RESPONSE REQUIREMENTS
-
-## FORMAT CONSTRAINTS
-- Return ONLY valid JSON - no explanations, no markdown formatting
-- No text before or after the JSON object
-- Ensure proper JSON structure with correct brackets and commas
-
-
-## QUALITY STANDARDS
-- Extract meaningful titles from URL analysis
-- Use intelligent relationship type inference
-- PROCESS ALL ORIGINAL URLs - do not filter or exclude any URLs
-- Output count must match input count (all 16 URLs should be processed)
-- Focus on intelligent title extraction and relationship categorization
-- Maintain data integrity throughout processing
-- Handle edge cases gracefully
-
-Now process the data and return the enriched JSON following this schema structure."""
-        
-        try:
-            logger.info(f"Processing anime data with AI...")
-            response = await self._call_ai(prompt)
-            response = response.strip()
-            
-            # Clean up response if wrapped in markdown
-            if response.startswith("```json"):
-                response = response[7:]
-            elif response.startswith("```"):
-                response = response[3:]
-            if response.endswith("```"):
-                response = response[:-3]
-            response = response.strip()
-            
-            # Parse AI response
-            try:
-                import json
-                enriched_anime = json.loads(response)
-                logger.info(f"Successfully enriched anime data")
-                return enriched_anime
-            except json.JSONDecodeError as e:
-                logger.error(f"AI returned invalid JSON: {e}")
-                logger.error(f"Response excerpt: {response[:500]}...")  # Show first 500 chars
-                return anime_data  # Return original data instead of None
-                
-        except Exception as e:
-            logger.error(f"AI enrichment failed: {e}")
-            return anime_data  # Return original data instead of None
-    
-    
-    async def _fetch_jikan_anime_full(self, mal_id: str) -> Dict[str, Any]:
-        """Fetch complete anime data from Jikan API"""
-        import aiohttp
-        
-        try:
-            async with aiohttp.ClientSession() as session:
-                url = f"https://api.jikan.moe/v4/anime/{mal_id}/full"
-                
-                async with session.get(url) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        return data
-                    else:
-                        logger.error(f"Jikan API error: {response.status}")
-                        return {"error": f"HTTP {response.status}"}
-                        
-        except Exception as e:
-            logger.error(f"Failed to fetch Jikan data: {e}")
-            return {"error": str(e)}
-    
-    async def _fetch_jikan_episodes(self, mal_id: str) -> Dict[str, Any]:
-        """Fetch detailed episode data from Jikan API with optimized rate limiting and batching"""
-        import aiohttp
-        
-        try:
-            async with aiohttp.ClientSession() as session:
-                # First get the episodes list to know how many episodes there are
-                episodes_list_url = f"https://api.jikan.moe/v4/anime/{mal_id}/episodes"
-                
-                async with session.get(episodes_list_url) as response:
-                    if response.status != 200:
-                        logger.error(f"Episodes list API error: {response.status}")
-                        return {"error": f"HTTP {response.status}"}
-                    
-                    episodes_list = await response.json()
-                    episode_count = len(episodes_list.get("data", []))
-                
-                if episode_count == 0:
-                    return {"data": []}
-                
-                # Optimized batch fetching with controlled concurrency
-                detailed_episodes = []
-                batch_size = 2  # Conservative batch size to avoid rate limits
-                rate_limit_delay = 0.8  # 800ms between batches (more conservative)
-                
-                for batch_start in range(1, episode_count + 1, batch_size):
-                    batch_end = min(batch_start + batch_size - 1, episode_count)
-                    batch_tasks = []
-                    
-                    # Create batch of concurrent requests
-                    for episode_num in range(batch_start, batch_end + 1):
-                        task = self._fetch_single_episode(session, mal_id, episode_num)
-                        batch_tasks.append(task)
-                    
-                    # Execute batch concurrently
-                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
-                    
-                    # Process batch results
-                    for episode_num, result in zip(range(batch_start, batch_end + 1), batch_results):
-                        if isinstance(result, Exception):
-                            logger.warning(f"Failed to fetch episode {episode_num}: {result}")
-                            continue
-                        elif result is None:
-                            continue
-                        else:
-                            detailed_episodes.append(result)
-                    
-                    # Rate limiting delay between batches (except for last batch)
-                    if batch_end < episode_count:
-                        await asyncio.sleep(rate_limit_delay)
-                
-                logger.info(f"Successfully fetched detailed data for {len(detailed_episodes)}/{episode_count} episodes")
-                return {"data": detailed_episodes}
-                        
-        except Exception as e:
-            logger.error(f"Failed to fetch episode data: {e}")
-            return {"error": str(e)}
-    
-    async def _fetch_single_episode(self, session: 'aiohttp.ClientSession', mal_id: str, episode_num: int) -> Optional[Dict[str, Any]]:
-        """Fetch a single episode with error handling"""
-        episode_url = f"https://api.jikan.moe/v4/anime/{mal_id}/episodes/{episode_num}"
-        
-        try:
-            async with session.get(episode_url) as response:
-                if response.status == 200:
-                    episode_data = await response.json()
-                    return episode_data["data"]
-                elif response.status == 429:
-                    logger.warning(f"Rate limited on episode {episode_num}, applying backoff")
-                    # Progressive backoff for rate limits
-                    await asyncio.sleep(2.0)  # Wait 2 seconds before retry
-                    # Retry once with longer delay
-                    async with session.get(episode_url) as retry_response:
-                        if retry_response.status == 200:
-                            retry_data = await retry_response.json()
-                            return retry_data["data"]
-                        elif retry_response.status == 429:
-                            logger.warning(f"Still rate limited on episode {episode_num}, skipping")
-                            return None
-                        else:
-                            logger.error(f"Retry failed for episode {episode_num}: HTTP {retry_response.status}")
-                            return None
-                else:
-                    logger.warning(f"Failed to fetch episode {episode_num}: HTTP {response.status}")
-                    return None
-                    
-        except Exception as e:
-            logger.error(f"Error fetching episode {episode_num}: {e}")
-            return None
-    
+        return offline_anime_data  # Return original data if AI enrichment failed
 
 
 # Convenience function for vector indexing integration
@@ -602,7 +758,7 @@ async def enrich_anime_for_vector_indexing(
     ai_provider: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Convenience function for vector indexing pipeline.
+    Convenience function for vector indexing pipeline using v2 system.
     
     Args:
         offline_anime_data: Anime data from offline database

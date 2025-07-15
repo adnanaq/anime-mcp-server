@@ -83,3 +83,5 @@ Return ONLY these extracted fields in JSON format:
 }}
 
 Extract the statistics and media fields and return ONLY the fields listed above.
+
+IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON. Do not explain your process. Return only the JSON object with the exact schema above.

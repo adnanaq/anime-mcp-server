@@ -47,8 +47,8 @@ class PromptTemplateManager:
                 "token_reduction": "90%"
             },
             2: {
-                "file": "02_episode_processing.txt", 
-                "description": "Process episode details and timing",
+                "file": "02_episode_processing_multi_agent.txt", 
+                "description": "Process episode details",
                 "token_reduction": "90%"
             },
             3: {
@@ -62,7 +62,7 @@ class PromptTemplateManager:
                 "token_reduction": "90%"
             },
             5: {
-                "file": "05_character_processing.txt",
+                "file": "05_character_processing_multi_agent.txt",
                 "description": "Process character data and voice actors",
                 "token_reduction": "85%"
             }

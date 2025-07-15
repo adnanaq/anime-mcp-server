@@ -1,41 +1,39 @@
-# OBJECTIVE
+# METADATA EXTRACTION STAGE
 Extract ONLY metadata fields from Jikan API data. Return only the extracted metadata fields.
 
-# INPUT DATA
-## JIKAN CORE DATA:
+## INPUT DATA
 {jikan_core_data}
 
-# PROCESSING INSTRUCTIONS
+## EXTRACTION RULES
+Extract these fields from the Jikan API response:
+- synopsis: Extract from synopsis field or null
+- genres: Extract genre names from genres array 
+- demographics: Extract from demographics array
+- themes: Extract from themes array (usually empty)
+- source_material: Extract from source field
+- rating: Extract from rating field
+- content_warnings: Infer from rating and content
+- title_japanese: Extract Japanese title
+- title_english: Extract English title
+- background: Extract background information
+- aired_dates: Extract aired information (from, to, string)
+- broadcast: Extract broadcast information (day, time, timezone)
 
-## METADATA EXTRACTION
-Extract core metadata fields from the Jikan API response:
+## OUTPUT FORMAT
+Return ONLY valid JSON with extracted metadata. No explanations.
 
-### EXTRACT THESE FIELDS:
-- **synopsis**: Extract from jikan_data.data.synopsis
-- **genres**: Extract genre names from jikan_data.data.genres array
-- **demographics**: Extract from jikan_data.data.demographics array
-- **themes**: Extract from jikan_data.data.themes array
-- **source_material**: Extract from jikan_data.data.source (e.g., "Manga", "Light Novel")
-- **rating**: Extract from jikan_data.data.rating (content rating)
-- **content_warnings**: Infer from rating and content (e.g., ["violence", "profanity"])
-- **title_japanese**: Extract from jikan_data.data.title_japanese
-- **title_english**: Extract from jikan_data.data.title_english
-- **background**: Extract from jikan_data.data.background
+Example output structure:
+- synopsis: string or null
+- genres: array of strings
+- demographics: array of strings  
+- themes: array of strings
+- source_material: string or null
+- rating: string or null
+- content_warnings: array of strings
+- title_japanese: string or null
+- title_english: string or null
+- background: string or null
+- aired_dates: object with from, to, string fields
+- broadcast: object with day, time, timezone fields
 
-# OUTPUT SCHEMA
-Return ONLY these extracted fields in JSON format:
-
-{{
-    "synopsis": "Extract from jikan synopsis or null",
-    "genres": ["Extract genre names from genres array"],
-    "demographics": ["Extract from demographics array"],
-    "themes": [],
-    "source_material": "Extract from source field",
-    "rating": "Extract rating string",
-    "content_warnings": ["Infer from rating"],
-    "title_japanese": "Extract Japanese title",
-    "title_english": "Extract English title", 
-    "background": "Extract background info"
-}}
-
-Extract the metadata fields and return ONLY the fields listed above.
+IMPORTANT: Return ONLY valid JSON with the exact fields listed above.

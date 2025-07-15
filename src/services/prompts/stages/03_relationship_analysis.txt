@@ -74,3 +74,5 @@ Return ONLY these extracted fields in JSON format:
 CRITICAL: Every URL MUST have a meaningful, specific title. NO generic "Anime [ID]" patterns allowed.
 
 VERIFICATION REQUIREMENT: Count your output entries and ensure they match the input URL count exactly.
+
+IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON. Do not explain your process. Return only the JSON object with the exact schema above.
