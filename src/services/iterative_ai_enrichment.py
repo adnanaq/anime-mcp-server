@@ -608,8 +608,8 @@ class MultiStageEnrichmentMixin:
                 
                 # Optimized batch fetching with controlled concurrency
                 detailed_episodes = []
-                batch_size = 2  # Conservative batch size to avoid rate limits
-                rate_limit_delay = 0.8  # 800ms between batches (more conservative)
+                batch_size = 2  # Conservative for 3 req/second limit  
+                rate_limit_delay = 0.4  # 400ms between batches (safe utilization)
                 
                 for batch_start in range(1, episode_count + 1, batch_size):
                     batch_end = min(batch_start + batch_size - 1, episode_count)
@@ -657,9 +657,9 @@ class MultiStageEnrichmentMixin:
                     return episode_data["data"]
                 elif response.status == 429:
                     logger.warning(f"Rate limited on episode {episode_num}, applying backoff")
-                    # Progressive backoff for rate limits
-                    await asyncio.sleep(2.0)  # Wait 2 seconds before retry
-                    # Retry once with longer delay
+                    # Shorter initial backoff for quicker recovery
+                    await asyncio.sleep(1.0)  # Wait 1 second before retry
+                    # Retry once with optimized delay
                     async with session.get(episode_url) as retry_response:
                         if retry_response.status == 200:
                             retry_data = await retry_response.json()
