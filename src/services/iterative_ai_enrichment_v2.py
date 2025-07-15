@@ -58,10 +58,9 @@ class MultiStageEnrichmentMixin:
             Enriched data or None if failed
         """
         try:
-            # Step 1: Extract MAL ID and fetch API data
+            # Step 1: Extract MAL ID
             sources = anime_data.get('sources', [])
             mal_id = None
-            
             for url in sources:
                 if 'myanimelist.net/anime/' in url:
                     mal_id = url.split('/anime/')[-1].split('/')[0]
@@ -70,28 +69,39 @@ class MultiStageEnrichmentMixin:
             if not mal_id:
                 logger.info("No MAL URL found, returning original data")
                 return anime_data
+
+            # Step 2: Concurrently fetch all Jikan API data
+            import asyncio
+            jikan_anime_task = self._fetch_jikan_anime_full(mal_id)
+            jikan_episodes_task = self._fetch_jikan_episodes(mal_id)
+            jikan_characters_task = self._fetch_jikan_characters(mal_id)
+
+            results = await asyncio.gather(
+                jikan_anime_task, jikan_episodes_task, jikan_characters_task,
+                return_exceptions=True
+            )
             
-            # Step 2: Fetch real Jikan API data
-            jikan_data = await self._fetch_jikan_anime_full(mal_id)
-            
-            if "error" in jikan_data:
-                logger.error(f"Failed to fetch Jikan data: {jikan_data['error']}")
+            jikan_data, episodes_data, characters_data = results
+
+            if isinstance(jikan_data, Exception) or "error" in jikan_data:
+                logger.error(f"Failed to fetch Jikan data: {jikan_data}")
                 return anime_data
-            
-            # Step 3: Fetch episode details
-            episodes_data = await self._fetch_jikan_episodes(mal_id)
-            
-            if "error" in episodes_data:
-                logger.warning(f"Failed to fetch episode data: {episodes_data['error']}")
-                episodes_data = {"data": []}  # Continue without episodes
-            
-            # Step 4: Pre-process episode data
+
+            if isinstance(episodes_data, Exception) or "error" in episodes_data:
+                logger.warning(f"Failed to fetch episode data: {episodes_data}")
+                episodes_data = {"data": []}
+
+            if isinstance(characters_data, Exception) or "error" in characters_data:
+                logger.warning(f"Failed to fetch character data: {characters_data}")
+                characters_data = {"data": []}
+
+            # Step 3: Pre-process episode data
             processed_episodes = self._preprocess_episodes(episodes_data.get("data", []))
             logger.info(f"Pre-processed {len(processed_episodes)} episodes for multi-stage AI processing")
             
-            # Step 5: Execute 5-stage enrichment pipeline
+            # Step 4: Execute 5-stage enrichment pipeline
             enriched_data = await self._execute_enrichment_pipeline(
-                anime_data, jikan_data, processed_episodes, mal_id
+                anime_data, jikan_data, processed_episodes, characters_data
             )
             
             return enriched_data
@@ -121,57 +131,43 @@ class MultiStageEnrichmentMixin:
         return processed_episodes
     
     async def _execute_enrichment_pipeline(
-        self, 
-        anime_data: Dict[str, Any], 
-        jikan_data: Dict[str, Any], 
+        self,
+        anime_data: Dict[str, Any],
+        jikan_data: Dict[str, Any],
         processed_episodes: List[Dict[str, Any]],
-        mal_id: str
+        characters_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Execute the 5-stage enrichment pipeline with field-specific extraction.
+        Execute the 5-stage enrichment pipeline concurrently with field-specific extraction.
         
         Each stage extracts ONLY its specific fields, then programmatically merged.
         Massive token reduction and performance improvement vs old merge approach.
         """
+        import asyncio
         pipeline_start = datetime.now()
-        stage_results = {}
         
         try:
-            # Stage 1: Metadata Extraction (90% token reduction vs old approach)
-            logger.info("Stage 1: Metadata extraction...")
-            stage_results["metadata"] = await self._execute_stage_with_retry(
-                1, self._execute_stage_1, jikan_data
-            )
+            # Create tasks for all enrichment stages to run concurrently
+            tasks = {
+                "metadata": self._execute_stage_with_retry(1, self._execute_stage_1, jikan_data),
+                "episodes": self._execute_stage_with_retry(2, self._execute_stage_2, processed_episodes, jikan_data),
+                "relationships": self._execute_stage_with_retry(3, self._execute_stage_3, anime_data, jikan_data),
+                "stats_media": self._execute_stage_with_retry(4, self._execute_stage_4, jikan_data),
+                "characters": self._execute_stage_with_retry(5, self._execute_stage_5, characters_data)
+            }
+
+            # Run tasks concurrently and gather results
+            results = await asyncio.gather(*tasks.values(), return_exceptions=True)
             
-            # Stage 2: Episode Processing (90% token reduction vs old approach) 
-            logger.info("Stage 2: Episode processing...")
-            stage_results["episodes"] = await self._execute_stage_with_retry(
-                2, self._execute_stage_2, processed_episodes, jikan_data
-            )
-            
-            # Stage 3: Relationship Analysis (95% token reduction vs old approach)
-            logger.info("Stage 3: Relationship analysis...")
-            stage_results["relationships"] = await self._execute_stage_with_retry(
-                3, self._execute_stage_3, anime_data, jikan_data
-            )
-            
-            # Stage 4: Statistics & Media (90% token reduction vs old approach)
-            logger.info("Stage 4: Statistics and media...")
-            stage_results["stats_media"] = await self._execute_stage_with_retry(
-                4, self._execute_stage_4, jikan_data
-            )
-            
-            # Stage 5: Character Processing (new stage for character data)
-            logger.info("Stage 5: Character processing...")
-            characters_data = await self._fetch_jikan_characters(mal_id)
-            if "error" not in characters_data:
-                stage_results["characters"] = await self._execute_stage_with_retry(
-                    5, self._execute_stage_5, characters_data
-                )
-            else:
-                logger.warning(f"Failed to fetch character data: {characters_data['error']}")
-                stage_results["characters"] = {"characters": []}
-            
+            # Map results back to stage names
+            stage_results = dict(zip(tasks.keys(), results))
+
+            # Handle exceptions and log errors
+            for stage, result in stage_results.items():
+                if isinstance(result, Exception):
+                    logger.error(f"Stage '{stage}' failed: {result}")
+                    stage_results[stage] = {} # Set empty dict for failed stage
+
             # Stage 6: Programmatic Assembly (eliminate AI dependency)
             logger.info("Stage 6: Programmatic assembly...")
             final_result = self._programmatic_merge(anime_data, stage_results)
@@ -184,7 +180,7 @@ class MultiStageEnrichmentMixin:
         except Exception as e:
             logger.error(f"Enrichment pipeline failed: {e}")
             # Attempt partial recovery using completed stages
-            return self._attempt_partial_recovery_v2(stage_results, anime_data, e)
+            return self._attempt_partial_recovery_v2({}, anime_data, e)
     
     async def _execute_stage_with_retry(self, stage_num: int, stage_func, *args, max_retries: int = 2):
         """Execute a stage with retry logic and error recovery"""
@@ -391,17 +387,23 @@ class MultiStageEnrichmentMixin:
     async def _call_ai_with_cleanup(self, prompt: str) -> str:
         """Call AI with response cleanup for JSON parsing"""
         response = await self._call_ai(prompt)
-        response = response.strip()
         
-        # Clean up response if wrapped in markdown
-        if response.startswith("```json"):
-            response = response[7:]
-        elif response.startswith("```"):
-            response = response[3:]
-        if response.endswith("```"):
-            response = response[:-3]
+        # Find the start and end of the JSON object
+        start_index = response.find('{')
+        end_index = response.rfind('}')
         
-        return response.strip()
+        if start_index != -1 and end_index != -1 and end_index > start_index:
+            return response[start_index:end_index+1].strip()
+        else:
+            # Fallback for basic markdown cleanup if JSON object not found
+            response = response.strip()
+            if response.startswith("```json"):
+                response = response[7:]
+            elif response.startswith("```"):
+                response = response[3:]
+            if response.endswith("```"):
+                response = response[:-3]
+            return response.strip()
     
     async def _fetch_jikan_characters(self, mal_id: str) -> Dict[str, Any]:
         """Fetch character data from Jikan API"""
@@ -424,21 +426,20 @@ class MultiStageEnrichmentMixin:
             return {"error": str(e)}
     
     async def _execute_stage_5(self, characters_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Stage 5: Character processing - ONLY extract character fields"""
-        # Extract only essential character fields to reduce tokens but keep ALL characters
+        """Stage 5: Character processing - process all characters in batches"""
+        import asyncio
+
         characters_core = []
         for char_entry in characters_data.get("data", []):
             character = char_entry.get("character", {})
             voice_actors = char_entry.get("voice_actors", [])
-            
-            # Extract only essential fields per character - keep ALL but reduce field size
             char_core = {
                 "character": {
                     "mal_id": character.get("mal_id"),
                     "name": character.get("name"),
                     "name_kanji": character.get("name_kanji"),
                     "images": {"jpg": character.get("images", {}).get("jpg", {}).get("image_url")},
-                    "about": character.get("about", "")[:200] if character.get("about") else ""  # Truncate long descriptions
+                    "about": character.get("about", "")[:200] if character.get("about") else ""
                 },
                 "role": char_entry.get("role"),
                 "voice_actors": [
@@ -449,22 +450,41 @@ class MultiStageEnrichmentMixin:
                         },
                         "language": va.get("language")
                     }
-                    for va in voice_actors  # Keep ALL voice actors
+                    for va in voice_actors
                 ]
             }
             characters_core.append(char_core)
-        
+
         total_characters = len(characters_core)
-        logger.info(f"Processing {total_characters} characters in single batch")
-        
-        # Process ALL characters but with optimized data structure
-        characters_optimized = {"data": characters_core}
-        
+        logger.info(f"Processing {total_characters} characters in batches")
+
+        batch_size = 10
+        tasks = []
+
+        for i in range(0, total_characters, batch_size):
+            batch = characters_core[i:i + batch_size]
+            task = self._process_character_batch(batch)
+            tasks.append(task)
+
+        batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        final_characters = []
+        for result in batch_results:
+            if isinstance(result, Exception):
+                logger.error(f"Character batch failed: {result}")
+            elif result and "characters" in result:
+                final_characters.extend(result["characters"])
+
+        logger.info(f"Successfully processed {len(final_characters)}/{total_characters} characters")
+        return {"characters": final_characters}
+
+    async def _process_character_batch(self, batch: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Process a single batch of characters"""
+        batch_data = {"data": batch}
         prompt = self.prompt_manager.build_stage_prompt(
             5,
-            characters_data=json.dumps(characters_optimized, indent=2)
+            characters_data=json.dumps(batch_data, indent=2)
         )
-        
         response = await self._call_ai_with_cleanup(prompt)
         return json.loads(response)
     
