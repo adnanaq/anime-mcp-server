@@ -8,10 +8,33 @@ to replace the monolithic 200+ line prompt approach.
 
 import json
 import logging
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
+# Import the prompt template manager
+try:
+    from .prompts.prompt_template_manager import PromptTemplateManager
+except ImportError:
+    from src.services.prompts.prompt_template_manager import PromptTemplateManager
+
 logger = logging.getLogger(__name__)
+
+# AI clients configuration
+AI_CLIENTS = {
+    "openai": {
+        "module": "openai",
+        "class": "AsyncOpenAI", 
+        "key": "OPENAI_API_KEY",
+        "default_model": "gpt-4o-2024-11-20"
+    },
+    "anthropic": {
+        "module": "anthropic", 
+        "class": "AsyncAnthropic",
+        "key": "ANTHROPIC_API_KEY", 
+        "default_model": "claude-sonnet-4-20250514"
+    }
+}
 
 
 class MultiStageEnrichmentMixin:
@@ -431,6 +454,9 @@ class MultiStageEnrichmentMixin:
             }
             characters_core.append(char_core)
         
+        total_characters = len(characters_core)
+        logger.info(f"Processing {total_characters} characters in single batch")
+        
         # Process ALL characters but with optimized data structure
         characters_optimized = {"data": characters_core}
         
@@ -554,3 +580,144 @@ class MultiStageEnrichmentMixin:
         except Exception as e:
             logger.error(f"Error fetching episode {episode_num}: {e}")
             return None
+
+
+class IterativeAIEnrichmentAgent(MultiStageEnrichmentMixin):
+    """
+    Complete AI enrichment agent using the v2 multi-stage pipeline.
+    """
+    
+    def __init__(self, ai_provider: Optional[str] = None):
+        """Initialize with AI provider (auto-detects if None)"""
+        logger.info("Initializing Iterative AI Enrichment Agent")
+        
+        self.ai_provider = ai_provider or self._detect_provider()
+        self.ai_client = self._create_client(self.ai_provider) if self.ai_provider else None
+        
+        # Initialize prompt template manager for modular prompts
+        self.prompt_manager = PromptTemplateManager()
+        
+        if not self.ai_client:
+            logger.warning("No AI provider configured")
+        else:
+            logger.info(f"Initialized with AI provider: {self.ai_provider}")
+            
+        # Validate prompt templates
+        template_validation = self.prompt_manager.validate_templates()
+        failed_templates = [t for t, valid in template_validation.items() if not valid]
+        if failed_templates:
+            logger.warning(f"Failed to load templates: {failed_templates}")
+        else:
+            logger.info("All prompt templates validated successfully")
+    
+    def _detect_provider(self) -> Optional[str]:
+        """Auto-detect available provider"""
+        for name, config in AI_CLIENTS.items():
+            if os.getenv(config["key"]) and self._has_module(config["module"]):
+                return name
+        return None
+    
+    def _has_module(self, module_name: str) -> bool:
+        """Check if module is available"""
+        try:
+            __import__(module_name)
+            return True
+        except ImportError:
+            return False
+    
+    def _create_client(self, provider: str):
+        """Create AI client using factory pattern"""
+        if provider not in AI_CLIENTS:
+            raise ValueError(f"Unknown provider: {provider}")
+        
+        config = AI_CLIENTS[provider]
+        api_key = os.getenv(config["key"])
+        
+        if not api_key:
+            raise ValueError(f"{config['key']} not found in environment")
+        
+        try:
+            module = __import__(config["module"])
+            client_class = getattr(module, config["class"])
+            client = client_class(api_key=api_key)
+            logger.info(f"{provider} client initialized")
+            return client
+        except ImportError:
+            raise ImportError(f"{config['module']} package not installed")
+        except AttributeError:
+            raise AttributeError(f"Class {config['class']} not found in {config['module']}")
+    
+    async def _call_ai(self, prompt: str, model: Optional[str] = None) -> str:
+        """Call AI provider with unified interface"""
+        if not self.ai_client:
+            raise ValueError("No AI client configured")
+        
+        model = model or AI_CLIENTS[self.ai_provider]["default_model"]
+        
+        # Unified call method based on provider
+        if self.ai_provider == "openai":
+            response = await self.ai_client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                timeout=3600.0  # 1 hour timeout for long-running processing
+            )
+            return response.choices[0].message.content
+            
+        elif self.ai_provider == "anthropic":
+            response = await self.ai_client.messages.create(
+                model=model,
+                max_tokens=8192,  # Increased for complex multi-agent responses
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                timeout=3600.0  # 1 hour timeout for long-running processing
+            )
+            return response.content[0].text
+            
+        else:
+            raise ValueError(f"Unknown provider: {self.ai_provider}")
+    
+    async def enrich_anime_from_offline_data(self, offline_anime_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Main entry point: Enrich anime data from offline database using v2 pipeline.
+        
+        Args:
+            offline_anime_data: Raw anime data from anime-offline-database
+            
+        Returns:
+            Enriched anime data following our full schema
+        """
+        logger.info(f"Starting v2 enrichment for: {offline_anime_data.get('title', 'Unknown')}")
+        
+        # Use the v2 multi-stage pipeline
+        if self.ai_client:
+            logger.info(f"AI enriching anime data with v2 pipeline...")
+            ai_enriched = await self._ai_enrich_data_v2(offline_anime_data)
+            if ai_enriched:
+                logger.info(f"v2 AI enrichment completed for: {ai_enriched.get('title')}")
+                return ai_enriched
+            else:
+                logger.warning(f"v2 AI enrichment failed for: {offline_anime_data.get('title')}")
+        else:
+            logger.warning(f"No AI client configured, skipping enrichment")
+        
+        return offline_anime_data  # Return original data if AI enrichment failed
+
+
+# Convenience function for vector indexing integration
+async def enrich_anime_for_vector_indexing(
+    offline_anime_data: Dict[str, Any], 
+    ai_provider: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Convenience function for vector indexing pipeline using v2 system.
+    
+    Args:
+        offline_anime_data: Anime data from offline database
+        ai_provider: "openai" or "anthropic" (auto-detects if None)
+        
+    Returns:
+        Enriched anime data ready for vector indexing
+    """
+    agent = IterativeAIEnrichmentAgent(ai_provider=ai_provider)
+    return await agent.enrich_anime_from_offline_data(offline_anime_data)
