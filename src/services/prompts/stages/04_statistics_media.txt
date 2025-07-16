@@ -1,5 +1,5 @@
 # OBJECTIVE
-Extract ONLY statistics and media fields from Jikan data. Return only the extracted statistics and media fields.
+Extract ONLY statistics and media fields from multiple data sources. Return only the extracted statistics and media fields.
 
 # INPUT DATA
 ## JIKAN STATISTICS DATA:
@@ -8,13 +8,19 @@ Extract ONLY statistics and media fields from Jikan data. Return only the extrac
 ## JIKAN MEDIA DATA:
 {jikan_media_data}
 
+## ANIMESCHEDULE STATISTICS DATA:
+{animeschedule_statistics_data}
+
+
 # PROCESSING INSTRUCTIONS
 
 ## STATISTICS EXTRACTION
-Extract numerical statistics and ratings from Jikan data:
-- Extract score, scored_by, rank, popularity, members, favorites
+Extract numerical statistics and ratings from ALL available data sources and intelligently map them to standard AnimeEntry schema properties:
+- **FROM JIKAN**: Extract score, scored_by, rank, popularity, members, favorites
+- **FROM ANIMESCHEDULE**: Extract averageScore, ratingCount, trackedCount, trackedRating
 - Normalize scores to 0-10 scale if needed
 - Handle missing fields gracefully (use null)
+- Map all statistics to standard property names regardless of source
 
 ## MEDIA EXTRACTION
 Extract media content from Jikan data:
@@ -25,18 +31,27 @@ Extract media content from Jikan data:
 - Extract streaming information
 - Extract licensors and external links
 
+
 # OUTPUT SCHEMA
 Return ONLY these extracted fields in JSON format:
 
 {{
     "statistics": {{
         "mal": {{
-            "score": "Extract score (0-10 scale)",
-            "scored_by": "Number of users who rated", 
-            "rank": "Overall ranking position",
-            "popularity_rank": "Popularity ranking position",
-            "members": "Total members/users tracking",
-            "favorites": "Number of users who favorited"
+            "score": "Extract Jikan score (0-10 scale)",
+            "scored_by": "Number of MAL users who rated",
+            "rank": "MAL overall ranking position",
+            "popularity_rank": "MAL popularity ranking position",
+            "members": "MAL total members/users tracking",
+            "favorites": "MAL number of users who favorited"
+        }},
+        "animeschedule": {{
+            "score": "Extract AnimSchedule averageScore (normalize to 0-10 scale)",
+            "scored_by": "AnimSchedule users who rated (ratingCount)",
+            "rank": "Map to rank if available or null",
+            "popularity_rank": "Map to popularity rank if available or null",
+            "members": "AnimSchedule users tracking (trackedCount)",
+            "favorites": "Map to favorites if available or null"
         }}
     }},
     "trailers": [{{
@@ -81,6 +96,47 @@ Return ONLY these extracted fields in JSON format:
         "year": "Year"
     }}]
 }}
+
+## INTELLIGENT MAPPING INSTRUCTIONS
+
+**SOURCE-SPECIFIC EXTRACTION**:
+- Each platform gets its own statistics object with standardized property names
+- Map platform-specific fields to standard property names within each source
+- ALL sources must use the SAME standard properties: `score`, `scored_by`, `rank`, `popularity_rank`, `members`, `favorites`
+
+**STANDARD PROPERTIES FOR ALL SOURCES**:
+- `score`: Rating score (normalized to 0-10 scale)
+- `scored_by`: Number of users who rated
+- `rank`: Overall ranking position
+- `popularity_rank`: Popularity ranking position
+- `members`: Total members/users tracking
+- `favorites`: Number of users who favorited
+
+**EXAMPLE MAPPINGS** (These are examples - there could be more sources):
+
+**MAL/JIKAN MAPPING**:
+- `score`: Direct from Jikan (already 0-10 scale)
+- `scored_by`: Direct from Jikan scored_by field
+- `rank`: Direct from Jikan rank field
+- `popularity_rank`: Direct from Jikan popularity field
+- `members`: Direct from Jikan members field
+- `favorites`: Direct from Jikan favorites field
+
+**ANIMESCHEDULE MAPPING**:
+- `score`: AnimSchedule averageScore ÷ 10 (normalize 0-100 to 0-10)
+- `scored_by`: AnimSchedule ratingCount
+- `rank`: null (AnimSchedule doesn't have ranking)
+- `popularity_rank`: null (AnimSchedule doesn't have popularity ranking)
+- `members`: AnimSchedule trackedCount
+- `favorites`: null (AnimSchedule doesn't have favorites)
+
+**FOR FUTURE SOURCES**: Intelligently map their specific fields to these same standard properties
+
+
+**DATA HANDLING RULES**:
+- Handle missing fields gracefully (use null)
+- Maintain source attribution and separation
+- Apply appropriate normalization per source
 
 Extract the statistics and media fields and return ONLY the fields listed above.
 
