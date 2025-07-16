@@ -37,7 +37,10 @@ Extract ONLY metadata fields from Jikan and AnimSchedule data. Return only the e
 
 ## CRITICAL REQUIREMENTS
 
-1. **NO DUPLICATE EXTERNAL LINKS**: Remove any duplicate URLs across all external link sources
+1. **INTELLIGENT EXTERNAL LINK DEDUPLICATION**: 
+   - Remove any duplicate URLs across all external link sources
+   - If same URL appears with different property names (e.g., "official" and "official_website"), keep only one with the most descriptive name
+   - Prioritize shorter, cleaner property names: "official" > "official_website", "mal" > "myanimelist"
 2. **NO DUPLICATE GENRES**: Combine Jikan and AnimSchedule genres, remove duplicates
 3. **IMAGE URL COMPLETION**: Always prepend "https://img.animeschedule.net/production/assets/public/img/" to AnimSchedule imageVersionRoute and add to covers array with source "animeschedule"
 4. **STATISTICS MAPPING**: Create nested structure with animeschedule key containing StatisticsEntry format (score, scored_by, members, rank)
