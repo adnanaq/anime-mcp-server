@@ -53,7 +53,7 @@ class ImageEntry(BaseModel):
     """Image entry with source attribution"""
     url: str = Field(..., description="Image URL")
     source: str = Field(..., description="Source platform")
-    type: str = Field(..., description="Image type (cover, banner, promotional)")
+    type: Optional[str] = Field(None, description="Image type (cover, banner, promotional) - optional when organized by type arrays")
 
 
 class RelationEntry(BaseModel):
@@ -150,6 +150,7 @@ class AnimeEntry(BaseModel):
     source_material: Optional[str] = Field(None, description="Source material (manga, light novel, etc.)")
     rating: Optional[str] = Field(None, description="Content rating (PG-13, R, etc.)")
     content_warnings: List[str] = Field(default_factory=list, description="Content warnings")
+    nsfw: Optional[bool] = Field(None, description="Not Safe For Work flag from Kitsu")
     
     # Title variations from different sources
     title_japanese: Optional[str] = Field(None, description="Japanese title")

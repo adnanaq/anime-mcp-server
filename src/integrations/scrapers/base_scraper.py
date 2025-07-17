@@ -179,7 +179,6 @@ class BaseScraper(BaseClient):
     def _extract_base_data(self, soup: BeautifulSoup, url: str) -> Dict[str, Any]:
         """Extract basic data common to all anime sites."""
         base_data = {
-            "url": url,
             "domain": urlparse(url).netloc,
             "page_title": None,
             "meta_description": None,

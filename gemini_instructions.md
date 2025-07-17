@@ -4,7 +4,7 @@ This document outlines the PRODUCTION-LEVEL process for enriching anime data bas
 
 ## 1. Objective
 
-The primary goal is to take a raw anime data object (from an offline database) and enrich it with additional information from external APIs (Jikan, AnimSchedule) and AI processing. This is a PRODUCTION implementation of the `enrich_anime_from_offline_data` method.
+The primary goal is to take a raw anime data object (from an offline database) and enrich it with additional information from external APIs (Jikan, AnimSchedule, Kitsu) and AI processing. This is a PRODUCTION implementation of the `enrich_anime_from_offline_data` method.
 
 **CRITICAL: This is NOT a simulation. This is a production-level enrichment process that must use REAL API calls and REAL data.**
 
@@ -16,12 +16,17 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 **CRITICAL RULE: I must not proceed to the next step unless the current step has been completed successfully.**
 
-### Step 1: Extract MAL ID
+### Step 1: Extract Platform IDs
 
 1.  Check the `sources` field in the `offline_anime_data`.
-2.  Find the URL containing "myanimelist.net/anime/".
-3.  Extract the numerical ID from this URL.
-4.  If no MAL ID is found, the process stops, and the original `offline_anime_data` is returned.
+2.  **MAL ID Extraction:**
+    - Find the URL containing "myanimelist.net/anime/".
+    - Extract the numerical ID from this URL.
+    - If no MAL ID is found, the process stops, and the original `offline_anime_data` is returned.
+3.  **Kitsu ID Extraction:**
+    - Find the URL containing "kitsu.io/anime/" or "kitsu.app/anime/".
+    - Extract the numerical ID from this URL.
+    - If no Kitsu ID is found, Kitsu data fetching will be skipped.
 
 ### Step 2: Concurrent External API Data Fetching
 
@@ -30,18 +35,23 @@ The primary goal is to take a raw anime data object (from an offline database) a
 2.  **Jikan Episodes Data:** Fetch episode data from Jikan API. Use episodes property from the `offline_anime_data` (from base_anime_sample.json). Do not skip any episode. Save in temporary file in temp/episodes.json to be used later
     - **FIRST:** Create temp/episodes.json with the episode count from offline_anime_data: `{"episodes": <episode_count>}`
     - **IMPORTANT:** For anime with >100 episodes, use the reusable script:
-      `python src/batch_enrichment/data_fetchers/fetch_detailed_jikan_data.py episodes {mal_id} temp/episodes.json temp/episodes_detailed.json`
-    - **CRITICAL:** The reusable script will read the episode count from temp/episodes.json and fetch detailed data for each episode from the Jikan API endpoints
-    - **CRITICAL:** NEVER give up on fetching all episodes regardless of time taken. Wait for the reusable script to complete fully before proceeding. ALL episodes MUST be fetched - no exceptions.
+      `python src/batch_enrichment/jikan_helper.py episodes {mal_id} temp/episodes.json temp/episodes_detailed.json`
+    - **CRITICAL:**
+      - NEVER give up on fetching all episodes regardless of time taken. Wait for the reusable script to complete fully before proceeding. ALL episodes MUST be fetched - no exceptions.
+      - The reusable script will read the episode count from temp/episodes.json and fetch detailed data for each episode from the Jikan API endpoints
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/episodes/{episode_num}`
 3.  **Jikan Characters Data:** Fetch character data from Jikan API. Do not skip any character. Save in temporary file in temp/characters.json to be used later
-    - **IMPORTANT:** For anime with >50 characters, use the reusable script: `python src/batch_enrichment/data_fetchers/fetch_detailed_jikan_data.py characters {mal_id} temp/characters.json temp/characters_detailed.json`
+    - **IMPORTANT:** For anime with >50 characters, use the reusable script: `python src/batch_enrichment/jikan_helper.py characters {mal_id} temp/characters.json temp/characters_detailed.json`
     - **CRITICAL:** NEVER give up on fetching all characters regardless of time taken. Wait for the reusable script to complete fully before proceeding. ALL characters MUST be fetched - no exceptions.
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/characters`
 4.  **AnimSchedule Data:** Find a matching anime on AnimSchedule using REAL API calls. Save in temporary file in temp/as.json to be used later
     - URL: `https://animeschedule.net/api/v3/anime?q={search_term}`
     - This involves a smart search using title, synonyms, and other metadata from `offline_anime_data`. Follow the logic in `animeschedule_helper.py` to implement proper search strategy.
     - **NEVER mock this data** - Always make real API calls to AnimSchedule to get accurate, up-to-date information including statistics, images, and external links.
+5.  **Kitsu Data:** Fetch comprehensive Kitsu data using the extracted Kitsu ID. Save in temporary file in temp/kitsu.json to be used later
+    - **ONLY if Kitsu ID was found in Step 1** - otherwise skip this step entirely
+    - Use the `KitsuEnrichmentHelper.fetch_all_data(kitsu_id)` method from `src/batch_enrichment/kitsu_helper.py`
+    - **NEVER mock this data** - Always make real API calls to Kitsu to get accurate information including categories, statistics, images, and NSFW flags.
 
 ### Step 3: Pre-process Episode Data
 
@@ -53,9 +63,9 @@ This is the core of the process, where AI is used to process the collected data.
 
 **IMPORTANT: Strictly follow AnimeEtry schema from `src/models/anime.py`at each stage**
 
-1.  **Stage 1: Metadata Extraction** PROMPT: src/services/prompts/stages/01_metadata_extraction.txt
-    - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data.
-    - **Action:** Generate a JSON object containing `synopsis`, `genres`, `demographics`, `themes`, `source_material`, `rating`, `content_warnings`, `title_japanese`, `title_english`, `background`, `aired_dates`, `broadcast`, `external_links`, `statistics`, `images`, `month`.
+1.  **Stage 1: Metadata Extraction** PROMPT: src/services/prompts/stages/01_metadata_extraction_v2.txt
+    - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data, Kitsu data.
+    - **Action:** Generate a JSON object containing `synopsis`, `genres`, `demographics`, `themes`, `source_material`, `rating`, `content_warnings`, `nsfw`, `title_japanese`, `title_english`, `background`, `aired_dates`, `broadcast`, `broadcast_schedule`, `premiere_dates`, `delay_information`, `episode_overrides`, `external_links`, `statistics`, `images`, `month`.
 2.  **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing_multi_agent.txt
     - **Inputs:** The pre-processed episode list.
     - **Action:** Process episodes in batches. For each batch, generate a list of `episode_details`. DO NOT skip any episode
@@ -73,7 +83,7 @@ This is the core of the process, where AI is used to process the collected data.
     - **Inputs:** Jikan statistics and media data.
     - **Action:** Generate a JSON object with `trailers`, `staff`, `opening_themes`, `ending_themes`, `streaming_info`, `licensors`, `streaming_licenses`, `awards`, `statistics`, `external_links`, and `images`.
     - **CRITICAL RULES:**
-      - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule` key (e.g., `{"statistics": {"mal": {...}}}`). There could be multiple sources.
+      - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu` key (e.g., `{"statistics": {"mal": {...}, "kitsu": {...}}}`). There could be multiple sources.
 5.  **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing_multi_agent.txt
     - **Inputs:** Jikan characters data.
     - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any charatcer
@@ -96,7 +106,7 @@ You will act as the Data Enrichment Expert. You will go through each step of the
 
 **PRODUCTION REQUIREMENTS:**
 
-- Always make real API calls to Jikan and AnimSchedule
+- Always make real API calls to Jikan, AnimSchedule, and Kitsu (when IDs are available)
 - Never mock or simulate data - this is production-level enrichment
 - Handle API rate limits and errors gracefully
 - Save all API responses to temporary files for reproducibility

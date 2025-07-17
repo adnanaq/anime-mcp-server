@@ -57,7 +57,7 @@ class AnimePlanetScraper(BaseScraper):
                 except:
                     pass
 
-            return result if result.get("title") else None
+            return result if result.get("json_ld", {}).get("name") else None
 
         except Exception as e:
             # Re-raise circuit breaker exceptions
@@ -81,63 +81,28 @@ class AnimePlanetScraper(BaseScraper):
         except Exception:
             return []
 
+    def _extract_json_ld(self, soup) -> Optional[Dict[str, Any]]:
+        """Override base method to fix Anime-Planet's malformed image URLs."""
+        json_ld = super()._extract_json_ld(soup)
+        
+        # Fix Anime-Planet's bug: malformed image URLs with double base_url
+        if json_ld and "image" in json_ld and isinstance(json_ld["image"], str):
+            image_url = json_ld["image"]
+            if "anime-planet.comhttps://" in image_url:
+                json_ld["image"] = image_url.replace("https://www.anime-planet.comhttps://", "https://")
+        
+        return json_ld
+
     def _extract_anime_data(self, soup) -> Dict[str, Any]:
         """Extract anime-specific data from Anime-Planet page."""
         data = {}
 
-        # Title - multiple possible selectors
-        title_selectors = [
-            ("h1", {"itemprop": "name"}),
-            ("h1", {}),
-            (".title", {}),
-            ("h2", {"class": "title"}),
-        ]
 
-        title = None
-        for tag, attrs in title_selectors:
-            title_elem = soup.find(tag, attrs)
-            if title_elem:
-                title = self._clean_text(title_elem.text)
-                break
-
-        data["title"] = title
-
-        # Synopsis/Description - multiple possible locations
-        synopsis_selectors = [
-            ("p", {"itemprop": "description"}),
-            (".entryDetails p", {}),
-            (".synopsis", {}),
-            (".description", {}),
-            (".entry-description", {}),
-        ]
-
-        synopsis = None
-        for selector, attrs in synopsis_selectors:
-            if "." in selector:
-                # CSS selector
-                synopsis_elem = soup.select_one(selector)
-            else:
-                synopsis_elem = soup.find(selector, attrs)
-
-            if synopsis_elem:
-                synopsis = self._clean_text(synopsis_elem.text)
-                break
-
-        data["synopsis"] = synopsis
-
-        # Fallback: extract synopsis from JSON-LD if not found in HTML
-        if not synopsis:
-            json_ld = self._extract_json_ld(soup)
-            if json_ld and "description" in json_ld:
-                data["synopsis"] = json_ld["description"]
 
         # Extract metadata from info table
         info_data = self._extract_info_table(soup)
         data.update(info_data)
 
-        # Extract tags/genres
-        tags = self._extract_tags(soup)
-        data["tags"] = tags
 
         # Extract rating if available
         rating = self._extract_rating(soup)
@@ -476,9 +441,6 @@ class AnimePlanetScraper(BaseScraper):
         json_ld_data = self._extract_enhanced_json_ld(soup)
         enhanced_data.update(json_ld_data)
 
-        # Extract rating/score from multiple sources
-        rating_data = self._extract_comprehensive_rating(soup)
-        enhanced_data.update(rating_data)
 
         # Extract ranking information
         rank_data = self._extract_ranking(soup)
@@ -510,63 +472,13 @@ class AnimePlanetScraper(BaseScraper):
         if not json_ld:
             return data
 
-        # Extract score and score count from aggregateRating
-        if "aggregateRating" in json_ld:
-            agg_rating = json_ld["aggregateRating"]
-            if isinstance(agg_rating, dict):
-                if "ratingValue" in agg_rating:
-                    data["score"] = float(agg_rating["ratingValue"])
-                if "ratingCount" in agg_rating:
-                    data["score_count"] = int(agg_rating["ratingCount"])
-                if "worstRating" in agg_rating:
-                    data["rating_scale_min"] = float(agg_rating["worstRating"])
-                if "bestRating" in agg_rating:
-                    data["rating_scale_max"] = float(agg_rating["bestRating"])
-                # NEW: Add review count and review type
-                if "reviewCount" in agg_rating:
-                    data["review_count"] = int(agg_rating["reviewCount"])
-                if "@type" in agg_rating:
-                    data["review_type"] = agg_rating["@type"]
 
-        # Extract character information
-        if "character" in json_ld and isinstance(json_ld["character"], list):
-            characters = []
-            for char in json_ld["character"][:20]:  # Limit to 20 characters
-                if isinstance(char, dict) and "name" in char:
-                    char_data = {"name": char["name"]}
-                    if "url" in char:
-                        char_data["url"] = char["url"]
-                    characters.append(char_data)
-            if characters:
-                data["characters"] = characters
 
-        # Extract enhanced staff/crew information
-        staff_data = self._extract_staff_from_json_ld(json_ld)
-        if staff_data:
-            data.update(staff_data)
 
-        # Extract end date if available
-        if "endDate" in json_ld:
-            data["end_date"] = json_ld["endDate"]
 
-        # Extract episodes from JSON-LD
-        if "numberOfEpisodes" in json_ld:
-            data["episodes"] = int(json_ld["numberOfEpisodes"])
 
-        # Extract genres from JSON-LD
-        if "genre" in json_ld and isinstance(json_ld["genre"], list):
-            data["genres"] = json_ld["genre"]
 
-        # Extract Anime-Planet specialized properties
-        if "url" in json_ld:
-            data["canonical_url"] = json_ld["url"]
 
-        if "@type" in json_ld:
-            data["schema_type"] = json_ld["@type"]
-
-        # Store full JSON-LD as structured metadata (already available as json_ld field)
-        # Note: structured_metadata is essentially the same as json_ld field we already extract
-        data["structured_metadata"] = json_ld
 
         return data
 
@@ -597,18 +509,6 @@ class AnimePlanetScraper(BaseScraper):
                 ]
                 if composer_names:
                     staff_data["music_composers"] = composer_names
-
-        # Voice actors are already in the main extraction, but we can enhance it
-        if "actor" in json_ld and isinstance(json_ld["actor"], list):
-            voice_actors = []
-            for actor in json_ld["actor"][:50]:  # Limit to 50 main voice actors
-                if isinstance(actor, dict) and "name" in actor:
-                    actor_data = {"name": actor["name"]}
-                    if "url" in actor:
-                        actor_data["url"] = actor["url"]
-                    voice_actors.append(actor_data)
-            if voice_actors:
-                staff_data["voice_actors"] = voice_actors
 
         return staff_data
 
@@ -873,7 +773,6 @@ class AnimePlanetScraper(BaseScraper):
             end_date = json_ld.get("endDate")
 
             if start_date:
-                status_data["start_date"] = start_date
                 # Extract year from start date
                 year_match = re.search(r"(\d{4})", start_date)
                 if year_match:
@@ -883,9 +782,6 @@ class AnimePlanetScraper(BaseScraper):
                 season = self._determine_season_from_date(start_date)
                 if season:
                     status_data["season"] = season
-
-            if end_date:
-                status_data["end_date"] = end_date
 
             # Determine status from dates
             if start_date and end_date:
