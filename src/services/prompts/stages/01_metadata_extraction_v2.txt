@@ -1,5 +1,5 @@
 # METADATA EXTRACTION STAGE - MULTI-SOURCE INTEGRATION
-Extract metadata from Jikan, AnimSchedule, and Kitsu APIs with proper categorization merging and consistent output format.
+Extract metadata from Jikan, AnimSchedule, Kitsu, and Anime-Planet APIs with proper categorization merging and consistent output format.
 
 ## INPUT DATA
 ### JIKAN DATA:
@@ -10,6 +10,9 @@ Extract metadata from Jikan, AnimSchedule, and Kitsu APIs with proper categoriza
 
 ### KITSU DATA:
 {kitsu_data}
+
+### ANIME-PLANET DATA:
+{animeplanet_data}
 
 ## STATISTICS ENTRY FORMAT
 StatisticsEntry format includes these standardized fields:
@@ -23,7 +26,7 @@ StatisticsEntry format includes these standardized fields:
 ## EXTRACTION RULES
 
 ### CATEGORIZATION & LINKS (Multi-Source Integration):
-- **genres**: Extract from Jikan genres + AnimSchedule genres (combine, no duplicates)
+- **genres**: Extract from Jikan genres + AnimSchedule genres + Anime-Planet genres (combine, no duplicates)
 - **demographics**: Extract from Jikan demographics array only
 - **themes**: Extract from Jikan themes + Kitsu categories with intelligent merging:
   1. Add all Jikan themes with their descriptions (null if no description)
@@ -36,14 +39,17 @@ StatisticsEntry format includes these standardized fields:
   - Ensure no duplication of URLs or property names
   - If same URL exists in both sources, keep only one instance
   - If same property name exists in both sources, merge or keep non-conflicting entries
-- **images**: Extract from Jikan + AnimSchedule + Kitsu organized by image type:
+- **images**: Extract from Jikan + AnimSchedule + Kitsu + Anime-Planet organized by image type:
   - Jikan: Extract from images.jpg.large_image_url → add to covers array
   - AnimSchedule: Extract from imageVersionRoute (prepend "https://img.animeschedule.net/production/assets/public/img/") → add to covers array
   - Kitsu: Extract with type inference:
     - posterImage.original → add to posters array
     - coverImage.original → add to covers array
+  - Anime-Planet: Extract from multiple sources → add to covers array:
+    - json_ld.image → add to covers array
+    - opengraph.image → add to covers array (if different URL)
   - Ensure no duplication of URLs within each image type array
-  - Add source attribution ("jikan", "animeschedule", "kitsu") to each image
+  - Add source attribution ("jikan", "animeschedule", "kitsu", "animeplanet") to each image
 - **source_material**: Extract from Jikan source field
 - **rating**: Extract from Jikan rating field
 - **content_warnings**: Infer from Jikan rating and content
@@ -97,6 +103,20 @@ StatisticsEntry format includes these standardized fields:
   - popularityRank → popularity_rank
   - ratingRank → rank
 
+### ANIME-PLANET ENHANCEMENTS:
+- **statistics**: Create animeplanet statistics object with standardized StatisticsEntry format:
+  - json_ld.aggregateRating.ratingValue → score (×2 for 0-10 scale normalization, e.g., 4.355 → 8.71)
+  - json_ld.aggregateRating.ratingCount → scored_by
+  - rank → rank (Anime-Planet ranking position)
+- **images**: Extract Anime-Planet images and add to covers array:
+  - json_ld.image → add to covers array with source "animeplanet"
+  - opengraph.image → add to covers array with source "animeplanet" (if different URL)
+- **external_links**: Add Anime-Planet URL to external_links:
+  - json_ld.url → add as "animeplanet" property
+- **episodes**: Cross-validate json_ld.numberOfEpisodes with existing episode count
+- **dates**: Cross-validate json_ld.startDate/endDate with existing aired dates
+- **studios**: Cross-validate studios array with existing studio data
+
 ## CRITICAL REQUIREMENTS
 
 1. **INTELLIGENT CATEGORIZATION MERGING**: 
@@ -130,8 +150,8 @@ StatisticsEntry format includes these standardized fields:
    - Do not include type field in image objects (type is implied by array organization)
 
 5. **STATISTICS MAPPING**: 
-   - Create nested structure with mal, animeschedule, and kitsu keys containing StatisticsEntry format
-   - Normalize scores to 0-10 scale as floats (Kitsu: ÷10, MAL: already 0-10, AnimSchedule: as-is)
+   - Create nested structure with mal, animeschedule, kitsu, and animeplanet keys containing StatisticsEntry format
+   - Normalize scores to 0-10 scale as floats (Kitsu: ÷10, MAL: already 0-10, AnimSchedule: as-is, Anime-Planet: ×2)
    - Omit fields that are not available for each source (don't use null values)
 
 6. **HANDLE MISSING DATA**: 
@@ -201,7 +221,7 @@ StatisticsEntry format includes these standardized fields:
       "members": 1524895,
       "favorites": 26442
     }
-  }, // EXAMPLE - Use source names as keys: "mal", "animeschedule", "kitsu", etc. with StatisticsEntry fields as values
+  }, // EXAMPLE - Use source names as keys: "mal", "animeschedule", "kitsu", "animeplanet", etc. with StatisticsEntry fields as values
   "images": {
     "posters": [
       {

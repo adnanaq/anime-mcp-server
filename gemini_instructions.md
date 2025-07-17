@@ -4,7 +4,7 @@ This document outlines the PRODUCTION-LEVEL process for enriching anime data bas
 
 ## 1. Objective
 
-The primary goal is to take a raw anime data object (from an offline database) and enrich it with additional information from external APIs (Jikan, AnimSchedule, Kitsu) and AI processing. This is a PRODUCTION implementation of the `enrich_anime_from_offline_data` method.
+The primary goal is to take a raw anime data object (from an offline database) and enrich it with additional information from external APIs (Jikan, AnimSchedule, Kitsu, Anime-Planet) and AI processing. This is a PRODUCTION implementation of the `enrich_anime_from_offline_data` method.
 
 **CRITICAL: This is NOT a simulation. This is a production-level enrichment process that must use REAL API calls and REAL data.**
 
@@ -27,6 +27,10 @@ The primary goal is to take a raw anime data object (from an offline database) a
     - Find the URL containing "kitsu.io/anime/" or "kitsu.app/anime/".
     - Extract the numerical ID from this URL.
     - If no Kitsu ID is found, Kitsu data fetching will be skipped.
+4.  **Anime-Planet Slug Extraction:**
+    - Find the URL containing "anime-planet.com/anime/".
+    - Extract the slug from this URL (e.g., "dandadan" from "https://www.anime-planet.com/anime/dandadan").
+    - If no Anime-Planet URL is found, Anime-Planet data fetching will be skipped.
 
 ### Step 2: Concurrent External API Data Fetching
 
@@ -52,6 +56,10 @@ The primary goal is to take a raw anime data object (from an offline database) a
     - **ONLY if Kitsu ID was found in Step 1** - otherwise skip this step entirely
     - Use the `KitsuEnrichmentHelper.fetch_all_data(kitsu_id)` method from `src/batch_enrichment/kitsu_helper.py`
     - **NEVER mock this data** - Always make real API calls to Kitsu to get accurate information including categories, statistics, images, and NSFW flags.
+6.  **Anime-Planet Data:** Fetch comprehensive Anime-Planet data using web scraping. Save in temporary file in temp/animeplanet.json to be used later
+    - **ONLY if Anime-Planet URL was found in Step 1** - otherwise skip this step entirely
+    - Use the `AnimePlanetEnrichmentHelper.fetch_all_data(offline_anime_data)` method from `src/batch_enrichment/animeplanet_helper.py`
+    - **NEVER mock this data** - Always make real web scraping calls to Anime-Planet to get accurate information including ratings, images, rankings, and genre data.
 
 ### Step 3: Pre-process Episode Data
 
@@ -64,7 +72,7 @@ This is the core of the process, where AI is used to process the collected data.
 **IMPORTANT: Strictly follow AnimeEtry schema from `src/models/anime.py`at each stage**
 
 1.  **Stage 1: Metadata Extraction** PROMPT: src/services/prompts/stages/01_metadata_extraction_v2.txt
-    - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data, Kitsu data.
+    - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data, Kitsu data, Anime-Planet data.
     - **Action:** Generate a JSON object containing `synopsis`, `genres`, `demographics`, `themes`, `source_material`, `rating`, `content_warnings`, `nsfw`, `title_japanese`, `title_english`, `background`, `aired_dates`, `broadcast`, `broadcast_schedule`, `premiere_dates`, `delay_information`, `episode_overrides`, `external_links`, `statistics`, `images`, `month`.
 2.  **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing_multi_agent.txt
     - **Inputs:** The pre-processed episode list.
@@ -83,7 +91,7 @@ This is the core of the process, where AI is used to process the collected data.
     - **Inputs:** Jikan statistics and media data.
     - **Action:** Generate a JSON object with `trailers`, `staff`, `opening_themes`, `ending_themes`, `streaming_info`, `licensors`, `streaming_licenses`, `awards`, `statistics`, `external_links`, and `images`.
     - **CRITICAL RULES:**
-      - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu` key (e.g., `{"statistics": {"mal": {...}, "kitsu": {...}}}`). There could be multiple sources.
+      - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu`, `animeplanet` key (e.g., `{"statistics": {"mal": {...}, "kitsu": {...}, "animeplanet": {...}}}`). There could be multiple sources.
 5.  **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing_multi_agent.txt
     - **Inputs:** Jikan characters data.
     - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any charatcer
@@ -106,7 +114,7 @@ You will act as the Data Enrichment Expert. You will go through each step of the
 
 **PRODUCTION REQUIREMENTS:**
 
-- Always make real API calls to Jikan, AnimSchedule, and Kitsu (when IDs are available)
+- Always make real API calls to Jikan, AnimSchedule, Kitsu (when IDs are available), and Anime-Planet (when URLs are available)
 - Never mock or simulate data - this is production-level enrichment
 - Handle API rate limits and errors gracefully
 - Save all API responses to temporary files for reproducibility
