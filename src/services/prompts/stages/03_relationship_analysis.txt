@@ -1,133 +1,83 @@
-# OBJECTIVE
-Extract ONLY relationship fields from BOTH offline URLs and Jikan relations data. Consolidate and categorize properly based on media type and relation type.
+# RELATIONSHIP ANALYSIS STAGE
+Process related anime from three data sources and consolidate into a single deduplicated list.
 
-# INPUT DATA
-## ORIGINAL RELATED ANIME URLS:
+## INPUT DATA
+### OFFLINE RELATED ANIME URLS:
 {related_anime_urls}
 
-## JIKAN RELATIONS DATA:
+### JIKAN RELATIONS DATA:
 {jikan_relations_data}
 
-## ANIMESCHEDULE RELATIONS DATA:
+### ANIMESCHEDULE RELATIONS DATA:
 {animeschedule_relations_data}
 
-# PROCESSING INSTRUCTIONS
+## PROCESSING RULES
 
-## MANDATORY CONSOLIDATION REQUIREMENT
-You MUST process ALL THREE input sources and consolidate them properly:
+### TITLE EXTRACTION PRIORITY
+1. **URL Slug Available**: Extract title from URL slug (e.g., "one-piece-film-red" → "One Piece Film Red")
+2. **Numeric ID Only**: MANDATORY - Visit the URL and extract the actual title from page content
+3. **Jikan/AnimSchedule**: Use provided title if available
 
-### SOURCE 1: OFFLINE URLs (always anime)
-- Process ALL offline URLs → goes to `relatedAnime` array
-- Extract meaningful titles using intelligent cross-URL analysis
+### TITLE EXTRACTION EXAMPLES
+- `https://anime-planet.com/anime/one-piece-film-red` → "One Piece Film Red"
+- `https://myanimelist.net/anime/12345/One_Piece_Movie` → "One Piece Movie"
+- `https://kitsu.app/anime/12345` → Visit URL, extract real title from page (e.g., "One Piece Film: Red")
+- `https://anidb.net/anime/12345` → Visit URL, extract real title from page content
 
-### SOURCE 2: JIKAN RELATIONS DATA (categorized by media type)
-- **Check URL to determine media type**:
-  - **URLs containing "/manga/"** → manga/source material → goes to `relations` array
-  - **URLs containing "/anime/"** → anime content → goes to `relatedAnime` array
-- **Extract relation_type directly from Jikan response** (use the "relation" field from each relation group)
-- **If relation_type is unclear or missing**, analyze the title/URL content to intelligently determine the relationship
+### CRITICAL TITLE EXTRACTION RULES
+- **NO LAZY FALLBACKS**: Never use "KITSU Anime 12345", "ANIDB Anime 12345", or similar generic patterns
+- **MANDATORY WEB CONTENT CHECK**: For any numeric-only URL, you MUST visit the actual webpage and extract the real anime title
+- **NO EXCUSES**: If the URL has only a numeric ID, fetch the real title from the page content
 
-### SOURCE 3: ANIMESCHEDULE RELATIONS DATA (anime content)
-- **All AnimSchedule relations are anime content** → goes to `relatedAnime` array
-- **Map AnimSchedule relation types to standard types**:
-  - `prequels` → `"Prequel"`
-  - `alternatives` → `"Alternative Version"`
-  - `sideStories` → `"Side Story"`
-  - `other` → `"Other"`
-- **Convert route slugs to titles** (e.g., "one-piece-film-red" → "One Piece Film: Red")
-- **Convert routes to full URLs**: `https://animeschedule.net/anime/{route}`
+### RELATIONSHIP TYPE ASSIGNMENT
+1. To find relations ship type, check the url content to find the relation. The relationship could be anything, for example:
+  - Movie, Sequel, Prequel, Special, OVA, ONA, TV special etc
+  - Find relationships from the the url content.
+  - Follow title extraction method to extract relation as well.
 
-## DEDUPLICATION REQUIREMENT
-- Check for duplicates between ALL THREE sources (offline URLs, Jikan relations, AnimSchedule relations)
-- **Priority order**: Jikan > AnimSchedule > Offline URLs (most detailed first)
-- Match by title similarity, URL similarity, or route similarity
-- If same anime appears in multiple sources, keep the highest priority version (most detailed)
+### DEDUPLICATION RULES
+1. **URL Matching**: Remove exact URL duplicates
+2. **Title Matching**: Remove entries with identical titles (case-insensitive)
+3. **Priority Order**: When duplicates found, keep entry with most data:
+   - Jikan (has complete title + relation) > AnimSchedule (has route + category) > Offline URLs
 
-## MANDATORY INTELLIGENT TITLE EXTRACTION
-You MUST extract meaningful titles for ALL URLs. NO exceptions for "Anime [ID]" or generic patterns.
+### ANIMESCHEDULE URL CONVERSION
+Convert route to full URL: `https://animeschedule.net/anime/[route]`
 
-### INTELLIGENT CROSS-REFERENCE ANALYSIS:
-1. **Scan ALL URLs first** to identify explicit title patterns
-2. **Use explicit URLs to infer numeric ID meanings**
-3. **Apply consistent titles across platforms for same content**
+## OUTPUT SCHEMA
+Return ONLY valid JSON with this exact structure:
 
-### SPECIFIC EXTRACTION RULES:
-
-**FOR EXPLICIT TITLE URLS** (anime-planet, etc.):
-- `https://anime-planet.com/anime/dandadan-2nd-season` → "Dandadan 2nd Season"
-- `https://anime-planet.com/anime/creepy-nuts-otonoke` → "Creepy Nuts Otonoke"  
-- `https://anime-planet.com/anime/zutomayo-taidada` → "Zutomayo Taidada"
-
-**FOR NUMERIC ID URLS** (MAL, AniList, etc.):
-- Use the explicit title patterns to infer what these IDs represent
-- If you see "dandadan-2nd-season" in ANY URL, then ALL other URLs likely refer to "Dandadan 2nd Season"
-- If you see theme song patterns, apply to related numeric IDs
-
-### INTELLIGENT RELATIONSHIP TYPE EXTRACTION:
-
-**PRIMARY METHOD: Extract from Jikan Response**
-- Use the "relation" field from Jikan relations data as the primary source
-- Common Jikan relation types: "Side Story", "Summary", "Alternative Version", "Character", "Other", "Special", "Sequel", "Prequel", "Spin-off"
-
-**FALLBACK METHOD: Intelligent Content Analysis**
-If relation type is unclear from Jikan or for offline URLs, analyze title/URL patterns:
-- **"Episode of"/"Recap"/"Log"** → "Summary"  
-- **"Special"/"OVA"** → "Special"
-- **"Season 2"/"Part 2"** → "Sequel"
-- **"Prequel"/"Origin"** → "Prequel"
-- **"Alternative"/"Retelling"** → "Alternative Version"
-- **Crossover content** → "Character"
-- **Movies/Films/Specials** → "Side Story" (but prefer Jikan's categorization)
-- **Default fallback** → "Other"
-
-**SITE CONTENT ANALYSIS** (if title analysis insufficient):
-- Visit the URL to extract additional context about the relationship
-- Look for keywords in page content that indicate relationship type
-- Use site-specific patterns (e.g., MyAnimeList relation indicators)
-
-### FORBIDDEN PATTERNS:
-❌ "Anime 19060" - NEVER USE THIS
-❌ "Unknown Title" - NEVER USE THIS  
-❌ "Anime [ID]" - NEVER USE THIS
-❌ Any generic ID-based titles
-
-### MANDATORY PROCESSING APPROACH:
-1. **Identify explicit titles** from clear URL patterns
-2. **Group URLs by content** (same anime = same title across platforms)
-3. **Apply consistent titles** to all URLs referring to same content
-4. **Infer relationship types** based on extracted titles
-
-# OUTPUT SCHEMA
-Return ONLY these extracted fields in JSON format:
-
+```json
 {{
-    "relatedAnime": [{{
-        "relation_type": "intelligently_extracted_relation_type", 
-        "title": "meaningful_extracted_title", 
-        "url": "exact_original_URL"
-    }}],
-    "relations": [{{
-        "anime_id": "relation-id",
-        "relation_type": "intelligently_extracted_relation_type", 
-        "title": "Related work title",
-        "urls": {{
-            "mal": "https://myanimelist.net/manga/123"
-        }}
-    }}]
+  "relatedAnime": [
+    {{
+      "title": "Full Anime Title",
+      "url": "https://complete-url",
+      "relationship": "Side Story"
+    }}
+  ],
+  "relations": [
+    {{
+      "title": "Manga Title",
+      "url": "https://manga-url",
+      "relationship": "Adaptation"
+    }}
+  ]
 }}
+```
 
-## CONSOLIDATION LOGIC:
-1. **Process offline URLs** → add to `relatedAnime` with inferred relation_type
-2. **Process Jikan relations** (use URL-based detection):
-   - **URLs containing "/manga/"** → add to `relations` array
-   - **URLs containing "/anime/"** → add to `relatedAnime` array (check for duplicates first)
-3. **Process AnimSchedule relations** → add to `relatedAnime` with mapped relation_type (check for duplicates first)
-4. **Final arrays**:
-   - `relatedAnime`: ALL anime content from all three sources (deduplicated)
-   - `relations`: ONLY manga/source material from Jikan (determined by URL containing "/manga/")
+## PROCESSING STEPS
+1. **Process Jikan Relations**: Extract anime (goes to relatedAnime) and manga (goes to relations)
+2. **Process AnimSchedule Relations**: Convert routes to titles and URLs, assign relationship types
+3. **Process Offline URLs**: Extract titles from slugs or page content, determine relationships
+4. **Deduplicate**: Remove duplicates using priority order
+5. **Output**: Return consolidated JSON
 
-CRITICAL: Every URL MUST have a meaningful, specific title. NO generic "Anime [ID]" patterns allowed.
+## CRITICAL REQUIREMENTS
+- NO duplicate URLs or titles in final output
+- ALL titles must be meaningful (no "Anime ID 12345" patterns)
+- Relationship types must be accurate meaningful and consistent
+- Relationship types can be found in on the url site content
+- Keep only essential fields: title, url, relationship
 
-VERIFICATION REQUIREMENT: Total entries should be comprehensive from all three sources, with proper categorization and no duplicates.
-
-IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON. Do not explain your process. Return only the JSON object with the exact schema above.
+IMPORTANT: Return ONLY valid JSON with the exact schema above. Do not include explanations or commentary.

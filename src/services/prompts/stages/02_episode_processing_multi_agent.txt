@@ -83,6 +83,7 @@ Return ONLY valid JSON with episode details (no timing data):
   "episode_details": [
     {{
       "url": "Episode URL",
+      "episode_number": "Episode Number",
       "title": "Episode Title",
       "title_japanese": "Japanese Title",
       "title_romanji": "Romanized Title",

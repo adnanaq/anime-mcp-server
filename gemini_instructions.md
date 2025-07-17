@@ -12,7 +12,7 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 - `offline_anime_data`: A JSON object representing a single anime. This will be provided at the start of the process.
 
-## 3. The Process (ACT AS `_ai_enrich_data_v2`)
+## 3. The Process
 
 **CRITICAL RULE: I must not proceed to the next step unless the current step has been completed successfully.**
 
@@ -27,12 +27,17 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 1.  **Jikan Anime Full Data:** Fetch full anime data from Jikan API using the MAL ID. Save in temporary file in temp/jikan.json to be used later
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/full`
-2.  **Jikan Episodes Data:** Fetch episode data from Jikan API. Use epsisode property from the anime entry. Do not skip any episode. Save in temporary file in temp/episodes.json to be used later
+2.  **Jikan Episodes Data:** Fetch episode data from Jikan API. Use episodes property from the `offline_anime_data` (from base_anime_sample.json). Do not skip any episode. Save in temporary file in temp/episodes.json to be used later
+    - **FIRST:** Create temp/episodes.json with the episode count from offline_anime_data: `{"episodes": <episode_count>}`
+    - **IMPORTANT:** For anime with >100 episodes, use the reusable script:
+      `python src/batch_enrichment/data_fetchers/fetch_detailed_jikan_data.py episodes {mal_id} temp/episodes.json temp/episodes_detailed.json`
+    - **CRITICAL:** The reusable script will read the episode count from temp/episodes.json and fetch detailed data for each episode from the Jikan API endpoints
+    - **CRITICAL:** NEVER give up on fetching all episodes regardless of time taken. Wait for the reusable script to complete fully before proceeding. ALL episodes MUST be fetched - no exceptions.
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/episodes/{episode_num}`
-    - **IMPORTANT:** For anime with >100 episodes, use the reusable script: `python scripts/fetch_detailed_jikan_data.py episodes {mal_id} temp/episodes.json temp/episodes_detailed.json`
 3.  **Jikan Characters Data:** Fetch character data from Jikan API. Do not skip any character. Save in temporary file in temp/characters.json to be used later
+    - **IMPORTANT:** For anime with >50 characters, use the reusable script: `python src/batch_enrichment/data_fetchers/fetch_detailed_jikan_data.py characters {mal_id} temp/characters.json temp/characters_detailed.json`
+    - **CRITICAL:** NEVER give up on fetching all characters regardless of time taken. Wait for the reusable script to complete fully before proceeding. ALL characters MUST be fetched - no exceptions.
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/characters`
-    - **IMPORTANT:** For anime with >50 characters, use the reusable script: `python scripts/fetch_detailed_jikan_data.py characters {mal_id} temp/characters.json temp/characters_detailed.json`
 4.  **AnimSchedule Data:** Find a matching anime on AnimSchedule using REAL API calls. Save in temporary file in temp/as.json to be used later
     - URL: `https://animeschedule.net/api/v3/anime?q={search_term}`
     - This involves a smart search using title, synonyms, and other metadata from `offline_anime_data`. Follow the logic in `animeschedule_helper.py` to implement proper search strategy.
@@ -44,7 +49,7 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 ### Step 4: Execute 5-Stage Enrichment Pipeline
 
-This is the core of the process, where AI is used to process the collected data. Act as expert data scientist who is collecting, sanitizing and organizing anime data, and gnerate the expected JSON output for each stage based on the provided data and the logic in the corresponding prompt templates. Follow eahc stage systematically, DO NOT load all stage prompts at once.
+This is the core of the process, where AI is used to process the collected data. Act as expert data scientist who is collecting, sanitizing and organizing anime data, and gnerate the expected JSON output for each stage based on the provided data and the logic in the corresponding prompt templates. Follow eahc stage systematically, DO NOT load all stage prompts at once. And when creating script, DO NOT use ChatGPT or ANthropic API.
 
 **IMPORTANT: Strictly follow AnimeEtry schema from `src/models/anime.py`at each stage**
 
@@ -68,7 +73,7 @@ This is the core of the process, where AI is used to process the collected data.
     - **Inputs:** Jikan statistics and media data.
     - **Action:** Generate a JSON object with `trailers`, `staff`, `opening_themes`, `ending_themes`, `streaming_info`, `licensors`, `streaming_licenses`, `awards`, `statistics`, `external_links`, and `images`.
     - **CRITICAL RULES:**
-      - The `statistics` field must be a nested object with a `mal` key (e.g., `{"statistics": {"mal": {...}}}`).
+      - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule` key (e.g., `{"statistics": {"mal": {...}}}`). There could be multiple sources.
 5.  **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing_multi_agent.txt
     - **Inputs:** Jikan characters data.
     - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any charatcer
@@ -87,7 +92,7 @@ The final output of this process must be a single JSON object that validates aga
 
 ## 5. My Role
 
-I will act as the `IterativeAIEnrichmentAgent`. I will go through each step of the process, making REAL requests to the external APIs and then generating the expected JSON output for each of the five AI-driven stages. I will then perform the final programmatic merge to produce the final, enriched anime data object.
+You will act as the Data Enrichment Expert. You will go through each step of the process, making REAL requests to the external APIs and then generating the expected JSON output for each of the five AI-driven stages. I will then perform the final programmatic merge to produce the final, enriched anime data object.
 
 **PRODUCTION REQUIREMENTS:**
 

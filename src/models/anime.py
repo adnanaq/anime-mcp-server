@@ -45,7 +45,6 @@ class EnrichmentMetadata(BaseModel):
     
     source: str = Field(..., description="Source of enrichment (mal, anilist, multi-source, etc.)")
     enriched_at: datetime = Field(..., description="When enrichment was performed")
-    character_count: int = Field(default=0, description="Number of characters enriched")
     success: bool = Field(default=True, description="Whether enrichment was successful")
     error_message: Optional[str] = Field(None, description="Error message if enrichment failed")
 
@@ -161,6 +160,12 @@ class AnimeEntry(BaseModel):
     broadcast: Optional[Dict[str, Any]] = Field(None, description="Broadcast schedule information")
     month: Optional[str] = Field(None, description="Premiere month from AnimSchedule")
     background: Optional[str] = Field(None, description="Background information from MAL")
+    
+    # Broadcast scheduling from AnimSchedule
+    broadcast_schedule: Optional[Dict[str, Any]] = Field(None, description="Broadcast timing for different versions (jpn_time, sub_time, dub_time)")
+    premiere_dates: Optional[Dict[str, Any]] = Field(None, description="Premiere dates for different versions (original, sub, dub)")
+    delay_information: Optional[Dict[str, Any]] = Field(None, description="Current delay status and reasons")
+    episode_overrides: Optional[Dict[str, Any]] = Field(None, description="Episode override information for different versions (main_override, sub_override, dub_override)")
     
     # Streaming and availability
     streaming_info: List[StreamingEntry] = Field(default_factory=list, description="Streaming platform information")
@@ -317,6 +322,10 @@ class AnimeEntry(BaseModel):
             # Data quality indicators
             "has_synopsis": self.synopsis is not None,
             "has_detailed_timing": self.aired_dates is not None and self.broadcast is not None,
+            "has_broadcast_schedule": self.broadcast_schedule is not None,
+            "has_premiere_dates": self.premiere_dates is not None,
+            "has_delay_information": self.delay_information is not None,
+            "has_episode_overrides": self.episode_overrides is not None,
             "has_streaming_info": len(self.streaming_info) > 0,
             "has_staff_info": len(self.staff) > 0,
             "has_theme_info": len(self.opening_themes) > 0 or len(self.ending_themes) > 0,
@@ -337,7 +346,7 @@ class AnimeEntry(BaseModel):
     def _calculate_completeness_score(self) -> float:
         """Calculate overall data completeness score (0-1)"""
         score = 0.0
-        total_possible = 20.0  # Total possible enhancement areas
+        total_possible = 23.0  # Total possible enhancement areas
         
         # Basic enrichment (4 points)
         if self.synopsis: score += 1.0
@@ -345,13 +354,16 @@ class AnimeEntry(BaseModel):
         if len(self.trailers) > 0: score += 1.0
         if len(self.genres) > 0: score += 1.0
         
-        # Detailed metadata (6 points)
+        # Detailed metadata (9 points)
         if len(self.themes) > 0: score += 1.0
         if self.source_material: score += 1.0
         if self.rating: score += 1.0
         if self.aired_dates and self.broadcast: score += 1.0
         if len(self.demographics) > 0: score += 1.0
         if len(self.content_warnings) > 0: score += 1.0
+        if self.broadcast_schedule: score += 1.0
+        if self.premiere_dates: score += 1.0
+        if self.episode_overrides: score += 1.0
         
         # Rich content (5 points)
         if len(self.streaming_info) > 0: score += 1.0

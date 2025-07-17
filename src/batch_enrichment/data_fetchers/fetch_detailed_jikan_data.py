@@ -158,7 +158,24 @@ class JikanDetailedFetcher:
         return len(all_data)
     
     def fetch_detailed_data(self, input_file: str, output_file: str):
-        """Main method to fetch detailed data with batch processing."""
+        """Main method to fetch detailed data with batch processing. When processing each object should 
+        have these properties, example for characters:
+        {
+            "name": "Character Full Name",
+            "role": "Main/Supporting/Minor",
+            "name_variations": ["Alternative names"],
+            "name_kanji": "漢字名",
+            "name_native": "Native Name", 
+            "character_ids": {{"mal": 12345, "anilist": null}},
+            "images": {{"mal": "image_url", "anilist": null}},
+            "description": "Character description",
+            "age": "Character age or null",
+            "gender": "Male/Female/Other or null",
+            "voice_actors": [
+                {{"name": "Voice Actor Name", "language": "Japanese"}}
+            ]
+        }
+        """
         # Load input data
         with open(input_file, 'r', encoding='utf-8') as f:
             input_data = json.load(f)
