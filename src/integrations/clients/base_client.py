@@ -104,6 +104,9 @@ class BaseClient:
 
         # Simple logging
         self.logger = logging.getLogger(f"integrations.{service_name}")
+        
+        # Deprecated correlation_logger - set to None for backward compatibility
+        self.correlation_logger = None
 
         # Note: rate_limiter removed since we use global rate_limit_manager directly
 

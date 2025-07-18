@@ -76,6 +76,24 @@
 - **Performance Caching**: 50%+ response time improvement via optimal route selection
 - **Memory Management**: Automatic cleanup with configurable limits (10,000 patterns, 1,000 sessions)
 
+### 3.6 Iterative AI Enrichment System (2025-07-14 Implementation)
+- **Implementation Status**: ✅ Proof of concept complete, ❌ Schema non-compliant
+- **Core File**: `src/services/iterative_ai_enrichment.py` (593 lines)
+- **AI Provider Support**: OpenAI (GPT-4o) and Anthropic (Claude Haiku) with auto-detection
+- **API Integration**: Jikan API full data fetching with optimized episode processing
+- **Episode Optimization**: Batch fetching (2 concurrent per batch, 800ms delays) with retry logic
+- **Performance**: Successfully enriches anime from 15 → 40+ fields (Dandadan test case)
+- **Timeout Configuration**: 1-hour AI client timeout for production anime processing
+- **Critical Gap**: 60%+ schema violations vs `src/models/anime.py` AnimeEntry model
+
+### 3.7 AI Prompt Architecture and Performance Issues
+- **Current Approach**: Monolithic 200+ line prompt with massive data injection
+- **Performance Problems**: Token overflow, AI overwhelm, timeout issues, processing delays
+- **Research Completed**: 2024 AI engineering best practices for modular prompt design
+- **Planned Solution**: Multi-stage pipeline with specialized prompts (metadata → episodes → relationships → stats → assembly)
+- **Expected Improvements**: 60-80% performance gain, 90%+ success rate, timeout elimination
+- **Implementation Priority**: HIGH - Critical for production performance
+
 ## 4. Design Patterns in Use
 
 ### 4.1 Service Layer Patterns
@@ -159,21 +177,127 @@ curl -X POST http://localhost:8000/api/admin/update-full
 - **MAL_CLIENT_ID/SECRET**: MyAnimeList API access (optional)
 - **Other Platform APIs**: See platform documentation for requirements
 
-## 7. Testing Infrastructure
+## 7. AI-Powered Data Standardization Architecture
 
-### 7.1 Test Categories
+### 7.1 Source Mapping Strategy
+The AI enrichment agent uses a hardcoded source mapping based on the `_sources` schema to determine which APIs to call for each property:
+
+```python
+# Single-source fields (primary + fallback)
+SINGLE_SOURCE_MAPPING = {
+    "genres": {"primary": "anilist", "fallback": "jikan"},
+    "demographics": {"primary": "jikan", "fallback": "anilist"},
+    "themes": {"primary": "anilist", "fallback": "jikan"},
+    "source_material": {"primary": "jikan", "fallback": "anilist"},
+    "rating": {"primary": "kitsu", "fallback": "jikan"},
+    "aired_dates": {"primary": "jikan", "fallback": "anilist"},
+    "broadcast": {"primary": "animeschedule", "fallback": "jikan"},
+    "staff": {"primary": "jikan", "fallback": "anilist"},
+    "opening_themes": {"primary": "jikan", "fallback": "anilist"},
+    "ending_themes": {"primary": "jikan", "fallback": "anilist"},
+    "episode_details": {"primary": "jikan", "fallback": "anilist"},
+    "relations": {"primary": "jikan", "fallback": "anilist"},
+    "awards": {"primary": "jikan", "fallback": "anilist"},
+    "external_links": {"primary": "animeschedule", "fallback": "jikan"},
+    "licensors": {"primary": "animeschedule", "fallback": "jikan"},
+    "streaming_licenses": {"primary": "animeschedule", "fallback": "jikan"}
+}
+
+# Multi-source fields (fetch from all applicable sources)
+MULTI_SOURCE_MAPPING = {
+    "statistics": ["jikan", "anilist", "kitsu", "animeschedule"],
+    "images": ["jikan", "anilist", "kitsu", "animeschedule"],
+    "characters": ["jikan", "anilist"],  # Special character merging
+    "streaming_info": ["animeschedule", "kitsu"],
+    "popularity_trends": ["jikan", "anilist", "kitsu"]
+}
+```
+
+### 7.2 AI Standardization Process
+
+**Statistics Harmonization**: AI maps different field names and scales to uniform properties:
+```python
+# Example: Converting AniList data to standardized format
+{
+    "anilist": {
+        "score": 8.2,            # AI converts averageScore 82 → 8.2 (10-point scale)
+        "scored_by": null,       # Not available in AniList
+        "rank": null,            # Not available in AniList  
+        "popularity_rank": null, # Different concept in AniList
+        "members": 147329,       # AI maps "popularity" field to members
+        "favorites": 53821       # AI maps "favourites" to favorites
+    }
+}
+```
+
+**Character Deduplication Logic**: AI identifies same characters across platforms:
+- **Name Matching**: Fuzzy matching on character names and variations
+- **Role Consistency**: Ensures consistent character roles across sources
+- **Image Collection**: Gathers character images from all available sources
+- **Voice Actor Merging**: Deduplicates voice actors across different sources
+
+### 7.3 Multi-Source Data Handling
+
+**Key Principles**:
+- **Single-Source Fields**: Use primary source, fallback to alternative if primary fails
+- **Multi-Source Fields**: Fetch from ALL relevant APIs, include only available data
+- **No Cross-Substitution**: For multi-source fields, don't substitute missing data with alternative sources
+- **Empty Handling**: Leave platform entries empty if source doesn't have the data
+
+**Example Multi-Source Output**:
+```json
+{
+    "statistics": {
+        "mal": {"score": 8.43, "scored_by": 2251158, "rank": 68},
+        "anilist": {"score": 8.2, "members": 147329, "favorites": 53821},
+        "kitsu": {},  // Empty - Kitsu didn't have relevant data
+        "animeschedule": {"average_score": 90.66, "rating_count": 338}
+    }
+}
+```
+
+### 7.4 Schema Compliance & Validation
+
+**Output Requirements**:
+- **Exact Schema Match**: Output must match `enhanced_anime_schema_example.json` structure
+- **Property Preservation**: All properties present even if empty
+- **Type Consistency**: Maintain correct data types for all fields
+- **Nested Structure**: Preserve complex nested objects and arrays
+
+**Validation Process**:
+1. **AI Generates Structured Response**: Based on comprehensive prompt with schema definition
+2. **Schema Validation**: Pydantic models ensure type safety and required fields
+3. **Completeness Check**: Verify all expected properties are present
+4. **Error Recovery**: Graceful handling of malformed AI responses
+
+### 7.5 Performance & Efficiency
+
+**API Call Optimization**:
+- **Targeted Fetching**: Only call APIs that provide specific required data
+- **Existing Infrastructure**: Leverage current rate limiting and pagination logic
+- **Character Chunking**: Maintain existing large dataset processing for characters
+- **No Additional Calls**: Work within existing fetch mechanisms
+
+**Memory Management**:
+- **Streaming Processing**: Process large character datasets in chunks
+- **Rate Limiting**: Respect existing platform rate limits
+- **Error Handling**: Continue processing with available sources if some fail
+
+## 8. Testing Infrastructure
+
+### 8.1 Test Categories
 - **Unit Tests**: Individual component testing with mocks
 - **Integration Tests**: Cross-component testing with real dependencies
 - **MCP Tests**: Protocol compliance and tool execution testing
 - **Performance Tests**: Load testing and response time validation
 
-### 7.2 Testing Patterns
+### 8.2 Testing Patterns
 - **Mock Strategy**: Global external mocks + specific business logic mocks
 - **Async Testing**: Full async test suite with proper cleanup
 - **Fixture Management**: Reusable test data and client fixtures
 - **Coverage Tracking**: Target >80% code coverage
 
-### 7.3 CI/CD Considerations
+### 8.3 CI/CD Considerations
 - **Dependency Isolation**: Tests run without external API dependencies
 - **Container Testing**: Docker-based test environments
 - **Platform Testing**: Multiple Python versions and OS compatibility

@@ -1,0 +1,296 @@
+{
+  "domain": "anime-planet",
+  "page_title": "Dandadan | Anime-Planet",
+  "meta_description": "Dandadan anime info and recommendations. Momo Ayase and&nbsp;Okarun are on opposite sides o...",
+  "json_ld": {
+    "@context": "http://schema.org",
+    "@type": "TVSeries",
+    "name": "Dandadan",
+    "description": "Momo Ayase and&nbsp;Okarun are on opposite sides of the paranormal spectrum regarding what they&rsquo;ll believe in and what they won&rsquo;t. Their quest to prove each other wrong leads them down a path of secret crushes and paranormal battles they&rsquo;ll have to participate in to believe!",
+    "url": "https://www.anime-planet.com/anime/dandadan",
+    "image": "https://cdn.anime-planet.com/anime/primary/dandadan-1-285x417.webp?t=1727693937",
+    "startDate": "2024-10-04",
+    "endDate": "2024-12-19",
+    "numberOfEpisodes": 12,
+    "genre": [
+      "Action",
+      "Based on a Manga",
+      "Bullying",
+      "Drama",
+      "Ecchi",
+      "Mature Themes",
+      "Physical Abuse",
+      "Sexual Abuse",
+      "Shounen",
+      "Supernatural"
+    ],
+    "actor": [
+      {
+        "@type": "Person",
+        "name": "Abby TROTT",
+        "url": "https://www.anime-planet.com/people/abby-trott"
+      },
+      {
+        "@type": "Person",
+        "name": "A. J. BECKLES",
+        "url": "https://www.anime-planet.com/people/a-j-beckles"
+      },
+      {
+        "@type": "Person",
+        "name": "Aleks LE",
+        "url": "https://www.anime-planet.com/people/aleks-le"
+      },
+      {
+        "@type": "Person",
+        "name": "Anairis QUI\u00d1ONES",
+        "url": "https://www.anime-planet.com/people/anairis-quinones"
+      },
+      {
+        "@type": "Person",
+        "name": "Ayane SAKURA",
+        "url": "https://www.anime-planet.com/people/ayane-sakura"
+      },
+      {
+        "@type": "Person",
+        "name": "Barbara GOODSON",
+        "url": "https://www.anime-planet.com/people/barbara-goodson"
+      },
+      {
+        "@type": "Person",
+        "name": "Daisuke TAKAHASHI",
+        "url": "https://www.anime-planet.com/people/daisuke-takahashi"
+      },
+      {
+        "@type": "Person",
+        "name": "Doug ERHOLTZ",
+        "url": "https://www.anime-planet.com/people/doug-erholtz"
+      },
+      {
+        "@type": "Person",
+        "name": "Fumi HIRANO",
+        "url": "https://www.anime-planet.com/people/fumi-hirano"
+      },
+      {
+        "@type": "Person",
+        "name": "Hayato KASHIWAZAKI",
+        "url": "https://www.anime-planet.com/people/hayato-kashiwazaki"
+      },
+      {
+        "@type": "Person",
+        "name": "Hina KINO",
+        "url": "https://www.anime-planet.com/people/hina-kino"
+      },
+      {
+        "@type": "Person",
+        "name": "Jaynelia COADOU",
+        "url": "https://www.anime-planet.com/people/jaynelia-coadou"
+      },
+      {
+        "@type": "Person",
+        "name": "Kaito ISHIKAWA",
+        "url": "https://www.anime-planet.com/people/kaito-ishikawa"
+      },
+      {
+        "@type": "Person",
+        "name": "Kaori MAEDA",
+        "url": "https://www.anime-planet.com/people/kaori-maeda"
+      },
+      {
+        "@type": "Person",
+        "name": "Kari WAHLGREN",
+        "url": "https://www.anime-planet.com/people/kari-wahlgren"
+      },
+      {
+        "@type": "Person",
+        "name": "Kazuya NAKAI",
+        "url": "https://www.anime-planet.com/people/kazuya-nakai"
+      },
+      {
+        "@type": "Person",
+        "name": "Kikuko INOUE",
+        "url": "https://www.anime-planet.com/people/kikuko-inoue"
+      },
+      {
+        "@type": "Person",
+        "name": "Kirk THORNTON",
+        "url": "https://www.anime-planet.com/people/kirk-thornton"
+      },
+      {
+        "@type": "Person",
+        "name": "Lisa REIMOLD",
+        "url": "https://www.anime-planet.com/people/lisa-reimold"
+      },
+      {
+        "@type": "Person",
+        "name": "Mayumi TANAKA",
+        "url": "https://www.anime-planet.com/people/mayumi-tanaka"
+      },
+      {
+        "@type": "Person",
+        "name": "Miyu TOMITA",
+        "url": "https://www.anime-planet.com/people/miyu-tomita"
+      },
+      {
+        "@type": "Person",
+        "name": "Nana MIZUKI",
+        "url": "https://www.anime-planet.com/people/nana-mizuki"
+      },
+      {
+        "@type": "Person",
+        "name": "Natsuki HANAE",
+        "url": "https://www.anime-planet.com/people/natsuki-hanae"
+      },
+      {
+        "@type": "Person",
+        "name": "Ryuunosuke WATANUKI",
+        "url": "https://www.anime-planet.com/people/ryuunosuke-watanuki"
+      },
+      {
+        "@type": "Person",
+        "name": "Ryuzaburo OTOMO",
+        "url": "https://www.anime-planet.com/people/ryuzaburo-otomo"
+      },
+      {
+        "@type": "Person",
+        "name": "Sarah WILLIAMS",
+        "url": "https://www.anime-planet.com/people/sarah-williams"
+      },
+      {
+        "@type": "Person",
+        "name": "Sean CHIPLOCK",
+        "url": "https://www.anime-planet.com/people/sean-chiplock"
+      },
+      {
+        "@type": "Person",
+        "name": "Shion WAKAYAMA",
+        "url": "https://www.anime-planet.com/people/shion-wakayama"
+      },
+      {
+        "@type": "Person",
+        "name": "Shiro SAITO",
+        "url": "https://www.anime-planet.com/people/shiro-saito"
+      },
+      {
+        "@type": "Person",
+        "name": "Shunichi MAKI",
+        "url": "https://www.anime-planet.com/people/shunichi-maki"
+      },
+      {
+        "@type": "Person",
+        "name": "Tomokazu SEKI",
+        "url": "https://www.anime-planet.com/people/tomokazu-seki"
+      },
+      {
+        "@type": "Person",
+        "name": "Tomokazu SUGITA",
+        "url": "https://www.anime-planet.com/people/tomokazu-sugita"
+      },
+      {
+        "@type": "Person",
+        "name": "Yuki TAMAI",
+        "url": "https://www.anime-planet.com/people/yuki-tamai"
+      },
+      {
+        "@type": "Person",
+        "name": "Yuusuke SASAKI",
+        "url": "https://www.anime-planet.com/people/yuusuke-sasaki"
+      }
+    ],
+    "director": [
+      {
+        "@type": "Person",
+        "name": "Fuuga YAMASHIRO",
+        "url": "https://www.anime-planet.com/people/fuuga-yamashiro"
+      }
+    ],
+    "musicBy": [
+      {
+        "@type": "Person",
+        "name": "Kensuke USHIO",
+        "url": "https://www.anime-planet.com/people/kensuke-ushio"
+      }
+    ],
+    "character": [
+      {
+        "@type": "Person",
+        "name": "Aira SHIRATORI",
+        "url": "https://www.anime-planet.com/characters/aira-shiratori"
+      },
+      {
+        "@type": "Person",
+        "name": "Jin ENJOJI",
+        "url": "https://www.anime-planet.com/characters/jin-enjoji"
+      },
+      {
+        "@type": "Person",
+        "name": "Ken TAKAKURA",
+        "url": "https://www.anime-planet.com/characters/ken-takakura"
+      },
+      {
+        "@type": "Person",
+        "name": "Momo AYASE",
+        "url": "https://www.anime-planet.com/characters/momo-ayase"
+      },
+      {
+        "@type": "Person",
+        "name": "Seiko AYASE",
+        "url": "https://www.anime-planet.com/characters/seiko-ayase"
+      },
+      {
+        "@type": "Person",
+        "name": "Turbo Granny",
+        "url": "https://www.anime-planet.com/characters/turbo-granny"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingCount": 11032,
+      "bestRating": 5,
+      "worstRating": 0.5,
+      "ratingValue": 4.355,
+      "reviewCount": 64
+    }
+  },
+  "opengraph": {
+    "site_name": "Anime-Planet",
+    "title": "Dandadan",
+    "url": "https://www.anime-planet.com/anime/dandadan",
+    "description": "Momo Ayase and&nbsp;Okarun are on opposite sides of the paranormal spectrum regarding what they&rsquo;ll believe in and what they won&rsquo;t. Their quest to prove each other wrong leads them down a path of secret crushes and paranormal battles they&rsquo;ll have to participate in to believe!",
+    "type": "video.tv_show",
+    "image": "https://www.anime-planet.com/images/anime/screenshots/dandadan-24086-1.jpg",
+    "image:secure_url": "https://www.anime-planet.com/images/anime/screenshots/dandadan-24086-1.jpg"
+  },
+  "slug": "dandadan",
+  "rank": 12,
+  "studios": [
+    "Science SARU"
+  ],
+  "year": 2024,
+  "season": "FALL",
+  "status": "COMPLETED",
+  "related_anime": [
+    {
+      "title": "Creepy Nuts: Otonoke 2024-10-31 - 2024-10-31 Music Video: 1 ep",
+      "slug": "creepy-nuts-otonoke",
+      "url": "https://www.anime-planet.com/anime/creepy-nuts-otonoke",
+      "relation_type": "same_franchise"
+    },
+    {
+      "title": "ZUTOMAYO: TAIDADA 2024-12-05 - 2024-12-05 Music Video: 1 ep",
+      "slug": "zutomayo-taidada",
+      "url": "https://www.anime-planet.com/anime/zutomayo-taidada",
+      "relation_type": "same_franchise"
+    },
+    {
+      "title": "Dandadan 2nd Season Sequel 2025-07-03 - - ? TV: 3+ ep",
+      "slug": "dandadan-2nd-season",
+      "url": "https://www.anime-planet.com/anime/dandadan-2nd-season",
+      "relation_type": "same_franchise",
+      "relation_subtype": "Sequel",
+      "type": "TV",
+      "year": 2025,
+      "start_date": "2025-07-03"
+    }
+  ],
+  "related_count": 3
+}

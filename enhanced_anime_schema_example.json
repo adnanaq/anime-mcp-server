@@ -1,0 +1,47 @@
+  "_sources": {
+    // EXISTING ANIME-OFFLINE-DATABASE FIELDS
+    "sources": "anime-offline-database",
+    "title": "anime-offline-database",
+    "type": "anime-offline-database",
+    "episodes": "anime-offline-database",
+    "status": "anime-offline-database",
+    "animeSeason": "anime-offline-database",
+    "picture": "anime-offline-database",
+    "thumbnail": "anime-offline-database",
+    "duration": "anime-offline-database",
+    "score": "anime-offline-database",
+    "synonyms": "anime-offline-database",
+    "tags": "anime-offline-database",
+    "studios": "anime-offline-database",
+    "producers": "anime-offline-database",
+
+    // CURRENT ENRICHMENT FIELDS
+    "synopsis": "multi-source",
+    "characters": "multi-source",
+    "trailers": "jikan",
+    "enrichment_metadata": "system-generated",
+
+    // NEW ENHANCEMENT FIELDS
+    "genres": "anilist",
+    "demographics": "jikan",
+    "themes": "anilist",
+    "source_material": "jikan",
+    "rating": "kitsu",
+    "content_warnings": "jikan",
+    "aired_dates": "jikan",
+    "broadcast": "animeschedule",
+    "streaming_info": "animeschedule",
+    "staff": "jikan",
+    "opening_themes": "jikan",
+    "ending_themes": "jikan",
+    "statistics": "multi-source",
+    "external_links": "animeschedule",
+    "licensors": "animeschedule",
+    "streaming_licenses": "animeschedule",
+    "images": "multi-source",
+    "episode_details": "jikan",
+    "relations": "jikan",
+    "awards": "jikan",
+    "popularity_trends": "multi-source"
+  }
+}

@@ -1,0 +1,96 @@
+# METADATA EXTRACTION STAGE
+Extract ONLY metadata fields from Jikan and AnimSchedule data. Return only the extracted metadata fields.
+
+## INPUT DATA
+### JIKAN DATA:
+{jikan_core_data}
+
+### ANIMESCHEDULE DATA:
+{animeschedule_data}
+
+## EXTRACTION RULES
+
+### FROM JIKAN DATA:
+- synopsis: Extract from synopsis field or null
+- genres: Extract genre names from genres array 
+- demographics: Extract from demographics array
+- themes: Extract from themes array (usually empty)
+- source_material: Extract from source field
+- rating: Extract from rating field
+- content_warnings: Infer from rating and content
+- title_japanese: Extract Japanese title
+- title_english: Extract English title
+- background: Extract background information
+- aired_dates: Extract aired information (from, to, string)
+- broadcast: Extract broadcast information (day, time, timezone)
+
+### FROM ANIMESCHEDULE DATA (if available):
+- genres: ADD genre names from AnimSchedule genres array to existing genres (NO DUPLICATES)
+- external_links: Extract from websites object (remove any duplicates, prefer HTTPS URLs)
+- broadcast_schedule: Extract broadcast timing information from AnimSchedule
+- premiere_dates: Extract different version premiere dates
+- delay_information: Extract current delay status and reasons
+- statistics: Create animeschedule statistics object with standardized StatisticsEntry format:
+  - averageScore → score
+  - ratingCount → scored_by  
+  - trackedCount → members
+  - trackedRating → rank
+- images: Create covers array from AnimSchedule imageVersionRoute. ALWAYS prepend "https://img.animeschedule.net/production/assets/public/img/" to the route
+- month: Extract premiere month
+- broadcast_schedule: Extract broadcast timing from AnimSchedule fields:
+  - jpn_time: AnimSchedule jpnTime field (original Japanese broadcast time)
+  - sub_time: AnimSchedule subTime field (subtitled version release time)
+  - dub_time: AnimSchedule dubTime field (dubbed version release time)
+- premiere_dates: Extract premiere information from AnimSchedule fields:
+  - original: AnimSchedule premier field (first Japanese episode date)
+  - sub: AnimSchedule subPremier field (first subtitled episode date)
+  - dub: AnimSchedule dubPremier field (first dubbed episode date)
+- delay_information: Extract delay status from AnimSchedule fields:
+  - delayed_timetable: AnimSchedule delayedTimetable field
+  - delayed_from: AnimSchedule delayedFrom field
+  - delayed_until: AnimSchedule delayedUntil field
+  - delay_reason: AnimSchedule delayedDesc field (reason for delay)
+- episode_overrides: Extract episode override information from AnimSchedule fields:
+  - main_override: AnimSchedule episodeOverride object (overrideDate, overrideEpisode, episodesAired)
+  - sub_override: AnimSchedule subEpisodeOverride object (overrideDate, overrideEpisode, episodesAired)
+  - dub_override: AnimSchedule dubEpisodeOverride object (overrideDate, overrideEpisode, episodesAired)
+
+## CRITICAL REQUIREMENTS
+
+1. **INTELLIGENT EXTERNAL LINK DEDUPLICATION**: 
+   - Remove any duplicate URLs across all external link sources
+   - If same URL appears with different property names (e.g., "official" and "official_website"), keep only one with the most descriptive name
+   - Prioritize shorter, cleaner property names: "official" > "official_website", "mal" > "myanimelist"
+2. **NO DUPLICATE GENRES**: Combine Jikan and AnimSchedule genres, remove duplicates
+3. **IMAGE URL COMPLETION**: Always prepend "https://img.animeschedule.net/production/assets/public/img/" to AnimSchedule imageVersionRoute and add to covers array with source "animeschedule"
+4. **STATISTICS MAPPING**: Create nested structure with animeschedule key containing StatisticsEntry format (score, scored_by, members, rank)
+5. **BROADCAST SCHEDULING EXTRACTION**: Extract all AnimSchedule timing fields (jpnTime, subTime, dubTime, premier, subPremier, dubPremier, delayedTimetable, delayedFrom, delayedUntil, delayedDesc)
+6. **EPISODE OVERRIDE EXTRACTION**: Extract all AnimSchedule episode override fields (episodeOverride, subEpisodeOverride, dubEpisodeOverride) with their complete objects
+7. **HANDLE MISSING TIMING DATA**: If AnimSchedule timing fields are missing or null, set corresponding output fields to null
+
+## OUTPUT FORMAT
+Return ONLY valid JSON with extracted metadata. No explanations.
+
+Expected output structure:
+- synopsis: string or null
+- genres: array of strings (combined from both sources, no duplicates)
+- demographics: array of strings  
+- themes: array of strings
+- source_material: string or null
+- rating: string or null
+- content_warnings: array of strings
+- title_japanese: string or null
+- title_english: string or null
+- background: string or null
+- aired_dates: object with from, to, string fields
+- broadcast: object with day, time, timezone fields
+- broadcast_schedule: object with jpn_time, sub_time, dub_time fields (from AnimSchedule)
+- premiere_dates: object with original, sub, dub premiere dates (from AnimSchedule)
+- delay_information: object with current delay status and reasons (from AnimSchedule)
+- episode_overrides: object with main_override, sub_override, dub_override objects (from AnimSchedule)
+- external_links: object with deduplicated URLs
+- statistics: nested object with animeschedule key containing score, scored_by, members, rank (if available)
+- images: object with covers array including AnimSchedule image (if available)
+- month: string (if AnimSchedule data available)
+
+IMPORTANT: Return ONLY valid JSON with the exact fields listed above.

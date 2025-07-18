@@ -19,7 +19,7 @@ from qdrant_client.models import VectorParams
 from src.config import get_settings
 from src.anime_mcp.server import mcp
 from src.vector.qdrant_client import QdrantClient
-from tests.vector.test_vision_processor import MockVisionProcessor
+# Legacy import removed - using modern mocks
 
 
 class TestPhase4Integration:

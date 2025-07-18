@@ -465,7 +465,7 @@ async def main():
     # Save detailed results
     output_file = '/home/dani/code/anime-mcp-server/tests/results/routing_analysis_detailed.json'
     with open(output_file, 'w') as f:
-        json.dump(results, f, indent=2, default=str)
+        json.dump(results, f, indent=2, default=str, ensure_ascii=False)
     
     print(f"\n📁 Detailed results saved to: {output_file}")
     

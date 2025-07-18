@@ -1,0 +1,83 @@
+# RELATIONSHIP ANALYSIS STAGE
+Process related anime from three data sources and consolidate into a single deduplicated list.
+
+## INPUT DATA
+### OFFLINE RELATED ANIME URLS:
+{related_anime_urls}
+
+### JIKAN RELATIONS DATA:
+{jikan_relations_data}
+
+### ANIMESCHEDULE RELATIONS DATA:
+{animeschedule_relations_data}
+
+## PROCESSING RULES
+
+### TITLE EXTRACTION PRIORITY
+1. **URL Slug Available**: Extract title from URL slug (e.g., "one-piece-film-red" → "One Piece Film Red")
+2. **Numeric ID Only**: MANDATORY - Visit the URL and extract the actual title from page content
+3. **Jikan/AnimSchedule**: Use provided title if available
+
+### TITLE EXTRACTION EXAMPLES
+- `https://anime-planet.com/anime/one-piece-film-red` → "One Piece Film Red"
+- `https://myanimelist.net/anime/12345/One_Piece_Movie` → "One Piece Movie"
+- `https://kitsu.app/anime/12345` → Visit URL, extract real title from page (e.g., "One Piece Film: Red")
+- `https://anidb.net/anime/12345` → Visit URL, extract real title from page content
+
+### CRITICAL TITLE EXTRACTION RULES
+- **NO LAZY FALLBACKS**: Never use "KITSU Anime 12345", "ANIDB Anime 12345", or similar generic patterns
+- **MANDATORY WEB CONTENT CHECK**: For any numeric-only URL, you MUST visit the actual webpage and extract the real anime title
+- **NO EXCUSES**: If the URL has only a numeric ID, fetch the real title from the page content
+
+### RELATIONSHIP TYPE ASSIGNMENT
+1. To find relations ship type, check the url content to find the relation. The relationship could be anything, for example:
+  - Movie, Sequel, Prequel, Special, OVA, ONA, TV special etc
+  - Find relationships from the the url content.
+  - Follow title extraction method to extract relation as well.
+
+### DEDUPLICATION RULES
+1. **URL Matching**: Remove exact URL duplicates
+2. **Title Matching**: Remove entries with identical titles (case-insensitive)
+3. **Priority Order**: When duplicates found, keep entry with most data:
+   - Jikan (has complete title + relation) > AnimSchedule (has route + category) > Offline URLs
+
+### ANIMESCHEDULE URL CONVERSION
+Convert route to full URL: `https://animeschedule.net/anime/[route]`
+
+## OUTPUT SCHEMA
+Return ONLY valid JSON with this exact structure:
+
+```json
+{{
+  "relatedAnime": [
+    {{
+      "title": "Full Anime Title",
+      "url": "https://complete-url",
+      "relationship": "Side Story"
+    }}
+  ],
+  "relations": [
+    {{
+      "title": "Manga Title",
+      "url": "https://manga-url",
+      "relationship": "Adaptation"
+    }}
+  ]
+}}
+```
+
+## PROCESSING STEPS
+1. **Process Jikan Relations**: Extract anime (goes to relatedAnime) and manga (goes to relations)
+2. **Process AnimSchedule Relations**: Convert routes to titles and URLs, assign relationship types
+3. **Process Offline URLs**: Extract titles from slugs or page content, determine relationships
+4. **Deduplicate**: Remove duplicates using priority order
+5. **Output**: Return consolidated JSON
+
+## CRITICAL REQUIREMENTS
+- NO duplicate URLs or titles in final output
+- ALL titles must be meaningful (no "Anime ID 12345" patterns)
+- Relationship types must be accurate meaningful and consistent
+- Relationship types can be found in on the url site content
+- Keep only essential fields: title, url, relationship
+
+IMPORTANT: Return ONLY valid JSON with the exact schema above. Do not include explanations or commentary.

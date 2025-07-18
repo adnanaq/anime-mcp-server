@@ -4,233 +4,239 @@
 
 ## Current Work Focus
 
-**Project Status**: System Performance Optimization & Enhancement
+**Project Status**: 5-Stage Modular Enrichment Pipeline Complete - Ready for Multi-Source Integration
 
-- **Status**: Search endpoint consolidation completed, optimization opportunities identified
-- **System State**: Unified search interface operational, performance bottlenecks analyzed
-- **Current Focus**: Vector database optimization and embedding model modernization
-- **Priority**: Implement Qdrant optimization for 8x performance improvement
+- **Current Priority**: Add multi-source data integration (AniList, Kitsu, AnimeSchedule, AniDB)
+- **System State**: 5-stage modular prompt system working optimally with character processing
+- **Recent Achievement**: Successfully implemented Stage 5 character processing with 100% character coverage
+- **Immediate Goal**: Extend current Jikan-only system to multi-source data aggregation
+- **Next Phase**: Multi-source integration → Large anime testing → Schema validation
 
-**Current Session Work**: System Optimization Analysis & Task Planning ✅ **COMPLETED**
+## Active Decisions and Considerations
 
-- **Activity**: Comprehensive analysis of current system performance and optimization opportunities
-- **Achievement**: Identified critical optimization opportunities with massive performance potential
-- **Detailed Analysis Context**:
-  - **Current Qdrant Setup**: Basic configuration, no quantization, default HNSW parameters
-  - **Current Embedding Models**:
-    - Text: BAAI/bge-small-en-v1.5 (384-dim, 2023)
-    - Image: CLIP ViT-B/32 (512-dim, 2021, 224x224 resolution)
-  - **Performance Baseline**: 3.5s average response time, 57.1% image accuracy (JPEG format)
-  - **Database Scale**: 38,894 anime entries, multi-vector collection (text + image)
-  - **Current API Structure**: Single `/api/search/` endpoint with content-type detection
-- **Key Findings**:
-  - **Search Endpoint Consolidation**: ✅ COMPLETED - 87.5% reduction (7 → 1 endpoint)
-  - **Performance Analysis**: Current system 3-4 years behind SOTA, 8x speedup potential
-  - **Accuracy Assessment**: 57.1% image search accuracy with room for 25% improvement
-  - **Cost Optimization**: 60% reduction potential in vector database costs
-- **Optimization Roadmap**: 3-phase approach identified (Qdrant → Models → Fine-tuning)
-- **Task Planning**: Added Tasks #116-118 for systematic optimization implementation
+**AI-Driven Data Enrichment Strategy**:
+- **Multi-Source Integration**: Jikan, AniList, Kitsu, AnimeSchedule APIs based on `_sources` schema mapping
+- **Intelligent Standardization**: AI normalizes different API schemas into uniform properties
+- **Smart Character Merging**: AI deduplicates and enhances characters across multiple sources
+- **Schema Compliance**: Output matches enhanced_anime_schema_example.json structure exactly
 
-## Recent Changes (What Was Recently Done)
+**Why AI-Powered Approach**:
+- **Problem**: Different APIs have inconsistent field names, formats, and data structures
+- **Solution**: AI intelligently maps, converts, and standardizes data from multiple sources
+- **Advantage**: Comprehensive coverage with intelligent merging eliminates manual field mapping
 
-**Latest Session (2025-07-11)**: System Optimization Analysis & Performance Enhancement Planning
+**AI Enrichment Technical Implementation**:
 
-- **Performance Analysis**: Comprehensive evaluation of current system capabilities and bottlenecks
-  - **Current Technical Stack**:
-    - **Vector Database**: Qdrant (basic config, no quantization enabled)
-    - **Text Embeddings**: BAAI/bge-small-en-v1.5 (384 dimensions, FastEmbed)
-    - **Image Embeddings**: CLIP ViT-B/32 (512 dimensions, 224x224 input resolution)
-    - **Collection Structure**: Multi-vector (text + picture + thumbnail vectors)
-    - **Processing**: CPU-only, no GPU acceleration configured
-  - **Performance Metrics Documented**:
-    - **Image Search Accuracy**: 57.1% with JPEG format vs 16.7% with mixed formats
-    - **Response Time**: 3.5s average for image search, <1s for text search
-    - **Multimodal Search**: 100% accuracy when combining image + text
-    - **Database Scale**: 38,894 anime entries, ~4.9M potential vectors with video indexing
-  - **Current Limitations Identified**:
-    - **Missing Quantization**: No Binary/Scalar/Product quantization enabled (40x speedup potential)
-    - **Outdated Models**: CLIP from 2021, BGE from 2023 (3-4 years behind SOTA)
-    - **No HNSW Tuning**: Default ef_construct and M parameters, not optimized for anime content
-    - **No Payload Indexing**: Missing indexes for genre/year/type filtering operations
-    - **Storage Inefficiency**: No compression, basic memory mapping configuration
-- **Optimization Research Findings**:
-  - **Modern Alternatives Available**:
-    - **SigLIP (Google 2024)**: Sigmoid loss, better zero-shot performance than CLIP
-    - **JinaCLIP v2 (Dec 2024)**: 512x512 resolution, 98% Flickr30k accuracy, multilingual
-    - **OpenCLIP ViT-L**: Larger models with 20%+ accuracy improvements
-  - **Qdrant Optimization Features**:
-    - **Vector Quantization**: Binary/Scalar/Product options, 60-75% memory reduction
-    - **GPU Acceleration**: Qdrant 1.13+ supports GPU-powered indexing (10x faster)
-    - **Hybrid Search**: Modern API for combined vector searches in single request
-    - **Payload Indexing**: Structured filtering for improved query performance
-- **Cost Analysis Details**:
-  - **Current Vector DB Costs**: Estimated $880-2000/month for video indexing (4.9M vectors)
-  - **Optimization Potential**: 60% reduction through quantization and compression
-  - **Storage Requirements**: 9.4GB current vs 3.8GB with quantization
-  - **ROI Timeline**: Immediate performance gains, cost savings within first month
-- **Implementation Risk Assessment**:
-  - **Low Risk**: Quantization and HNSW tuning (configuration changes only)
-  - **Medium Risk**: Model upgrades (require re-embedding, but backward compatible)
-  - **High Reward**: 8x speed improvement, 25% accuracy gain, 60% cost reduction
-- **Roadmap Development**: 3-phase optimization strategy established
-  - **Phase 1**: Qdrant optimization (quantization, HNSW tuning, GPU acceleration)
-  - **Phase 2**: Model modernization (SigLIP, JinaCLIP v2, latest BGE)
-  - **Phase 3**: Domain-specific fine-tuning (anime character/style recognition)
-- **Task Planning**: Added Tasks #116-118 to tasks_plan.md with detailed implementation strategies
-- **Technical Validation**: Confirmed optimization opportunities with minimal implementation risk
+**Source Mapping Strategy** (based on enhanced_anime_schema_example.json `_sources`):
+```python
+# Single-source fields (primary + fallback)
+SINGLE_SOURCE_MAPPING = {
+    "genres": {"primary": "anilist", "fallback": "jikan"},
+    "demographics": {"primary": "jikan", "fallback": "anilist"},
+    "themes": {"primary": "anilist", "fallback": "jikan"},
+    "broadcast": {"primary": "animeschedule", "fallback": "jikan"},
+    "rating": {"primary": "kitsu", "fallback": "jikan"}
+}
 
-**Previous Session (2025-07-11)**: Search Endpoint Replacement & Image Upload Enhancement
+# Multi-source fields (fetch from all)
+MULTI_SOURCE_MAPPING = {
+    "statistics": ["jikan", "anilist", "kitsu", "animeschedule"],
+    "images": ["jikan", "anilist", "kitsu", "animeschedule"],
+    "characters": ["jikan", "anilist"],  # Character merging
+    "streaming_info": ["animeschedule", "kitsu"]
+}
+```
 
-- **Complete Endpoint Replacement**: Replaced 7 original search endpoints with unified interface
-  - **Endpoints Removed**: `/api/search/semantic`, `/api/search/by-image`, `/api/search/multimodal`, etc.
-  - **New Endpoints**: `/api/search/` (JSON) + `/api/search/upload` (form data)
-  - **Smart Detection**: Automatically detects search type based on request fields
-  - **Supported Types**: text, similar, image, visual_similarity, multimodal
-  - **Code Organization**: Modular handler functions for each search type
-- **Image Upload Enhancement**: Added direct file upload support
-  - **User-Friendly**: Direct image file upload via `/api/search/upload`
-  - **Dual Interface**: JSON (base64) + form data (file upload) support
-  - **File Validation**: Image type validation and size handling
-  - **Logging**: Enhanced logging for image upload operations
-- **File Changes**:
-  - **Removed**: `src/api/search.py` (original 7 endpoints, 411 lines)
-  - **Replaced**: New `src/api/search.py` with dual endpoint support (460 lines)
-  - **Updated**: `src/main.py` routing to use unified search endpoints
-- **API Surface Reduction**: 80 → 70 endpoints (2 unified search endpoints)
-- **Documentation Updates**:
-  - **README.md**: Updated with both JSON and file upload examples
-  - **Postman Collection**: Updated with 76 requests including image upload variations
-  - **Collection Structure**: 12 folders, 76 requests, 4 environment variables
-- **Testing**: Verified both JSON and form data endpoints functionality
+**AI Standardization Examples**:
+```python
+# AI-standardized statistics across platforms
+"statistics": {
+    "mal": {
+        "score": 8.43,           # AI maps from raw "score"
+        "scored_by": 2251158,    # AI maps from "scored_by"
+        "rank": 68,              # AI maps from "rank"
+        "popularity_rank": 12,   # AI maps from "popularity"
+        "members": 3500000,      # AI maps from "members"
+        "favorites": 89234       # AI maps from "favorites"
+    },
+    "anilist": {
+        "score": 8.2,            # AI converts averageScore 82 → 8.2
+        "scored_by": null,       # Not available
+        "rank": null,            # Not available
+        "popularity_rank": null, # Not available
+        "members": 147329,       # AI maps from "popularity"
+        "favorites": 53821       # AI maps from "favourites"
+    },
+    "kitsu": {
+        "score": 8.21,           # AI converts averageRating 82.1 → 8.21
+        "scored_by": 45123,      # AI maps from "ratingCount"
+        "rank": null,            # Not available
+        "popularity_rank": null, # Not available
+        "members": null,         # Not available
+        "favorites": 12456       # AI maps from "favoritesCount"
+    }
+}
 
-**Previous Session**: Platform-Specific Tools Cleanup and Architecture Consolidation
+# AI-merged character data
+"characters": [
+    {
+        "name": "Kamado, Tanjirou",
+        "name_variations": ["Tanjiro Kamado", "炭治郎"],  # AI merges variations
+        "character_ids": {"mal": 146156, "anilist": 127212},  # AI combines IDs
+        "images": {
+            "mal": "https://cdn.myanimelist.net/images/characters/1/364490.jpg",
+            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b127212-AqNr8yCAAhQI.png"
+        },  # AI collects from all sources
+        "voice_actors": [...]  # AI deduplicates across sources
+    }
+]
+```
 
-- **Platform Tools Removed**: Successfully removed 5 redundant platform-specific tools (5,152 lines)
-- **Architecture Preservation**: Maintained all functionality through tiered tools
-- **System Verification**: Confirmed 79 FastAPI endpoints + 33 MCP tools operational
+**AI Enhancement Key Principles**:
 
-**Universal Parameter System Modernization**: ✅ **COMPLETED**
+**Multi-Source Data Handling**:
+- **Single-Source Fields**: Use primary source, fallback to alternative if primary fails
+- **Multi-Source Fields**: Fetch from ALL relevant APIs, leave empty if source lacks data
+- **No Cross-Substitution**: For multi-source fields, don't substitute missing data with alternative sources
 
-- **Achievement**: 90% complexity reduction with zero functionality loss
-- **Architecture**: Modern 4-tier tool system replacing 444-parameter Universal system
-- **Integration**: 33 MCP tools operational with structured response models
-- **Testing**: 100% query coverage validated with live API integration
+**AI Standardization Approach**:
+- **Uniform Statistics Schema**: AI maps different field names to consistent properties
+- **Unit Conversion**: AI handles scale conversions (82/100 → 8.2/10)
+- **Character Deduplication**: AI identifies same characters across sources using fuzzy matching
+- **Image Collection**: AI gathers character images from all available sources
 
-## What's Happening Now
+**Performance Considerations**:
+- **Existing API Infrastructure**: Use current rate limiting and pagination logic
+- **No Additional Calls**: Work within existing fetch mechanisms
+- **Character Chunking**: Maintain existing large dataset processing for characters
+- **Schema Compliance**: Output must match enhanced_anime_schema_example.json exactly
 
-**Current Activity**: System Optimization Analysis & Performance Enhancement Planning ✅ **COMPLETED**
+**Critical Data Management Considerations**:
 
-- **System Status**: Consolidated search endpoint operational, optimization roadmap established
-- **Implementation**: Single unified endpoint `/api/search/` with content-type detection
-- **Analysis Complete**: Comprehensive performance bottleneck identification and optimization planning
-- **Next Phase**: Ready to implement Qdrant optimization (Tasks #116-118)
+**Weekly Database Update Strategy**:
+- **Current Update Process**: Need to investigate how weekly anime-offline-database updates work
+- **Enrichment Preservation**: Enriched data (synopsis, characters, trailers) should NOT be overwritten during updates
+- **Update Logic Required**: 
+  ```python
+  # Proposed update strategy
+  if existing_anime.has_enrichment_data():
+      # Only update core fields (title, episodes, status, etc.)
+      # Preserve enriched fields (synopsis, characters, trailers)
+      merge_core_fields_only(existing_anime, new_anime_data)
+  else:
+      # Full update for non-enriched entries
+      full_update(existing_anime, new_anime_data)
+  ```
 
-**Production System Status**:
+**Data Staleness and Change Frequency**:
+- **Static Data** (rarely changes):
+  - Synopsis: Fixed once anime completes production
+  - Character core info: Names, roles, basic descriptions
+  - Trailers: PVs are typically static
+- **Dynamic Data** (potential changes):
+  - Character count: New characters might be added during long-running series
+  - Character images: CDN links may break or be updated
+  - Trailer links: YouTube videos may be removed/replaced
+- **Refresh Strategy**: Need periodic re-enrichment for data validation
 
-- **Core Systems**: ✅ All operational (FastAPI, MCP server, Qdrant, AnimeSwarm)
-- **Recent Implementation**: ✅ Search endpoint replacement with image upload enhancement
-- **Architecture**: ✅ Clean 4-tier + 3-specialized tool structure + unified search interface
-- **Current State**: 🎯 System optimization roadmap established, ready for performance enhancement implementation
+**CDN and External Link Reliability**:
+- **Image CDN Issues**: 
+  - MAL/AniList CDN links may break over time
+  - Need image download and local caching strategy
+  - Implement image validation and re-fetching mechanisms
+- **YouTube Trailer Links**:
+  - Trailer videos may be removed/made private
+  - Need trailer validation and fallback mechanisms
+- **API Availability**: Jikan/AniList APIs may have downtime
 
-**Detailed System Context**:
+**Incremental Enrichment Strategy**:
+- **Skip Already Enriched**: Check for existing synopsis/characters before API calls
+- **Selective Re-enrichment**: Only re-fetch data older than X months
+- **Validation Checks**: Periodically validate image URLs and trailer links
+- **Metadata Tracking**: Track enrichment timestamps and sources for each anime
 
-- **FastAPI Server**: Running on port 8000, 70 total endpoints, CORS enabled, lifespan management
-- **MCP Integration**: 2 server implementations (core + modern), 33 tools operational, stdio/HTTP/SSE protocols
-- **Vector Database**: Qdrant multi-vector collection with 38,894 anime entries
-  - Text vectors: 384-dim BAAI/bge-small-en-v1.5 embeddings
-  - Image vectors: 512-dim CLIP ViT-B/32 embeddings
-  - Collection: anime_database with text + picture + thumbnail vector types
-- **Search Capabilities**:
-  - Text search: Semantic search via FastEmbed
-  - Image search: CLIP-based visual similarity (57.1% accuracy with JPEG)
-  - Multimodal: Combined text+image search (100% accuracy)
-  - Similar anime: Vector similarity by anime ID
-  - Visual similarity: Image-based similarity by anime ID
-- **Performance Characteristics**:
-  - Response time: ~3.5s average, <5s for image processing
-  - Format support: JPEG optimal, AVIF/WebP processing issues
-  - Batch processing: 1000-point batches with progress tracking
-  - Memory usage: CLIP processing can be memory-intensive
-- **Data Pipeline**:
-  - Source: anime-offline-database (38,894 entries)
-  - Processing: Multi-vector embedding generation (text + image)
-  - Storage: Qdrant collection with metadata and quality scoring
-  - Updates: Weekly database refresh cycle
-- **Integration Architecture**:
-  - 4-tier tool system: Core → Advanced → Cross-platform → Discovery
-  - 3 specialized tools: Schedule, Enrichment, Semantic
-  - 9 platform integrations: MAL, AniList, Jikan, Kitsu, AniDB, etc.
-  - LangGraph workflows: AnimeSwarm, ReactAgent with conversation memory
+## Recent Changes
+
+**5-Stage Modular Enrichment Pipeline (Latest Session)**:
+- **✅ Modular Prompt System Complete**: `src/services/iterative_ai_enrichment_v2.py` (556 lines) with 5 specialized stages
+- **✅ Stage 5 Character Processing**: Successfully processes ALL characters (38 for Dandadan) with multi-language voice actors
+- **✅ Token Optimization**: 90%+ token reduction per stage, eliminated timeout issues
+- **✅ Performance Achieved**: 4-minute total pipeline (vs 4+ minute single stage previously)
+- **✅ API Independence**: Complete Jikan API integration (15 calls: 3 base + 12 episodes + 1 characters)
+- **✅ Programmatic Assembly**: Field-specific extraction with deterministic merge (no AI assembly)
+- **✅ Character Schema Compliance**: Full character data with proper voice actor and image mapping
+- **⚠️ Single-Source Limitation**: Currently Jikan-only, needs multi-source integration
+- **⚠️ Large Anime Untested**: Not tested on 100+ episode series like One Piece
+- **⚠️ Schema Validation Missing**: No runtime validation against enhanced_anime_schema_example.json
 
 ## Next Steps
 
 **Immediate (Next Session)**:
 
-- **PRIORITY 1**: Implement Qdrant vector quantization (Task #116 - 40x speedup potential)
-  - Enable Binary/Scalar/Product quantization for 60% storage reduction
-  - Configure GPU acceleration for 10x faster indexing
-  - Tune HNSW parameters (ef_construct, M) for anime search patterns
-- **PRIORITY 2**: Upgrade to SigLIP/JinaCLIP v2 models (Task #117 - 25% accuracy improvement)
-  - Replace CLIP ViT-B/32 (224x224) with JinaCLIP v2 (512x512)
-  - Upgrade BGE text embeddings to latest version
-  - Implement sigmoid loss improvements from SigLIP
-- **PRIORITY 3**: Configure advanced Qdrant features (Task #116)
-  - Setup payload indexing for genre/year/type filtering
-  - Implement hybrid search API (single request vs multiple)
-  - Configure memory mapping and storage optimization
-- **PRIORITY 4**: Performance benchmarking and validation of optimizations
-  - Measure response time improvements (target: 3.5s → 0.4s)
-  - Validate accuracy improvements (target: 57.1% → 71%+)
-  - Monitor cost reduction (target: 60% vector DB cost savings)
+- **PRIORITY 1**: Multi-Source Data Integration 🚀 **HIGH PRIORITY**
+  - **Current State**: 5-stage pipeline works perfectly with Jikan, needs multi-source extension
+  - **Target Sources**: AniList, Kitsu, AnimeSchedule, AniDB (based on enhanced_anime_schema_example.json)
+  - **Phase 1a**: Stage 6 - Multi-Source Data Fetching
+    - Add parallel API calls to all 4 additional sources alongside existing Jikan
+    - Implement source-specific data extraction and normalization
+    - Add intelligent fallback mechanisms when sources are unavailable
+  - **Phase 1b**: Stage 7 - Multi-Source Data Merge
+    - Implement AI-powered multi-source data merging based on `_sources` mapping
+    - Handle single-source fields (primary + fallback) vs multi-source fields (aggregate all)
+    - Add conflict resolution for contradictory data across sources
+  - **Expected**: Complete multi-source coverage matching enhanced_anime_schema_example.json
 
-**Specific Technical Research Context**:
+- **PRIORITY 2**: Large Anime Testing & Optimization 📏 **CRITICAL**
+  - **Current Limitation**: Only tested on 12-episode anime (Dandadan)
+  - **Phase 2a**: One Piece Testing Protocol
+    - Test 5-stage pipeline on One Piece (1000+ episodes)
+    - Monitor API call scaling (3 base + 1000+ episodes + 1 characters = 1000+ calls)
+    - Implement episode chunking and rate limiting optimization
+  - **Phase 2b**: Performance Optimization for Large Series
+    - Add episode count limits and sampling strategies
+    - Implement intelligent episode selection (key episodes, season finales, etc.)
+    - Add configurable episode processing limits for different anime sizes
+  - **Expected**: Handle anime with 100+ episodes without timeout or rate limiting issues
 
-- **Qdrant 2025 Features Available**:
-  - Vector quantization: Binary, Scalar, Product methods (40x speedup documented)
-  - GPU acceleration: NVIDIA support for 10x indexing performance
-  - Hybrid search: Single API call for multiple vector types
-  - Advanced HNSW: Configurable ef_construct, M parameters
-  - Strict mode: Production resource limits and monitoring
-- **Modern Embedding Models Researched**:
-  - **SigLIP**: Google 2024, sigmoid loss, better zero-shot performance
-  - **JinaCLIP v2**: 0.9B params, 512x512 input, 89 languages, 98% Flickr30k accuracy
-  - **OpenCLIP ViT-L**: Larger models with improved performance over original CLIP
-  - **Latest BGE**: Newer text embedding models with better semantic understanding
-- **Cost Analysis Context**:
-  - Current storage needs: 9.4GB for video indexing (4.9M vectors)
-  - Vector DB pricing: $200-2000/month depending on provider and configuration
-  - Storage reduction: 60% possible through quantization
-  - Performance improvement: 8x speed reduction in response times
+- **PRIORITY 3**: Schema Validation Implementation 🔍 **MEDIUM**
+  - **Current Gap**: No runtime validation against enhanced_anime_schema_example.json structure
+  - **Phase 3a**: Pydantic Model Validation
+    - Add comprehensive validation against enhanced AnimeEntry schema
+    - Implement proper type conversion from AI dictionaries to Pydantic models
+    - Add validation error reporting and recovery mechanisms
+  - **Phase 3b**: Data Quality Assurance
+    - Implement enhanced_metadata tracking with data quality scores
+    - Add cross-platform data correlation validation
+    - Enable periodic re-validation and data freshness checks
+  - **Expected**: 100% schema compliance with production-ready validation
 
-**Comprehensive Testing & Validation Results**:
+- **PRIORITY 2**: Enhanced Fine-Tuning Dataset Preparation
+  - **Phase 2a**: Character Recognition Dataset (`src/vector/anime_dataset.py`)
+    - Use enriched character images and names for training data
+    - Create character-anime association datasets
+    - Generate character similarity datasets across anime
+  - **Phase 2b**: Enhanced Text Embeddings (`src/vector/text_processor.py`)
+    - Include synopsis content in embedding generation: `title + synopsis + tags + studios`
+    - Improve semantic search quality with richer content
+    - Generate genre classification datasets from synopsis content
+  - **Phase 2c**: Art Style Classification (`src/vector/art_style_classifier.py`)
+    - Use character images as additional training data
+    - Cross-reference with studio/year metadata for style classification
+    - Create visual similarity datasets using character designs
 
-- **Image Format Impact Analysis**:
-  - **JPEG Images**: 57.1% accuracy (4/7 successful matches)
-    - ✅ mv241103_sp.jpg → Sports anime (Haikyu!!, Shokugeki no Souma)
-    - ✅ get.jpg → Naruto content (Perfect match)
-    - ✅ one-piece-wano-kv-scaled.jpeg → One Piece Wano arc
-    - ✅ download.jpg → Quality anime (Evangelion, Chihayafuru)
-  - **Mixed Format Images**: 16.7% accuracy (1/6 successful matches)
-  - **Key Finding**: JPEG format dramatically outperforms other formats
-- **Multimodal Search Validation**:
-  - **Success Rate**: 100% (2/2 tests successful)
-  - **Test Cases**:
-    - Jujutsu Kaisen 0 image + "jujutsu kaisen" text → Perfect JJK results
-    - One Piece image + "one piece" text → Enhanced One Piece results
-  - **Character Recognition Limitation**: Gojo image + "gojo satoru" text failed (no character-specific results)
-- **Technical Performance Metrics**:
-  - **Response Consistency**: Identical results across multiple runs (deterministic behavior)
-  - **Response Times**: ~3-5 seconds for image search, <1 second for text search
-  - **File Upload Handling**: Successfully processed real anime images from user downloads
-  - **Content-Type Detection**: Seamless routing between JSON and form data requests
-  - **Error Handling**: Proper validation for invalid image types, missing files, malformed requests
-- **Database Content Analysis**:
-  - **Mainstream Anime Recognition**: Good for popular series (Naruto, One Piece)
-  - **Modern Anime Gap**: Recent series (Jujutsu Kaisen) less well represented
-  - **Character Recognition**: Weak performance for specific character identification
-  - **Genre Classification**: Decent performance for sports anime, action genres
-- **System Limitations Identified**:
-  - **AVIF/WebP Format Issues**: These formats had processing problems
-  - **Character-Specific Searches**: Poor accuracy for character recognition queries
-  - **Modern Content Coverage**: Newer anime series not well represented in vector embeddings
-  - **Image Resolution**: Limited by 224x224 CLIP input resolution
+- **PRIORITY 3**: Cross-Platform Data Validation
+  - **Phase 3a**: AniList Pagination Implementation
+    - Fix existing `get_anime_characters` to fetch all pages (86 vs 25 characters)
+    - Implement proper GraphQL pagination with page tracking
+    - Test with Attack on Titan to validate full character retrieval
+  - **Phase 3b**: Character ID Mapping (`src/services/character_mapping.py`)
+    - Match characters between Jikan (MAL IDs) and AniList (AniList IDs)
+    - Use name similarity + role matching for cross-platform validation
+    - Create unified character database with both platform IDs
+  - **Phase 3c**: Data Quality Assurance
+    - Validate synopsis length and quality across platforms
+    - Cross-check character counts and image availability
+    - Implement fallback mechanisms for missing or low-quality data
+    - Create update strategy to preserve enriched data during weekly database updates
+    - Implement periodic validation for CDN links and external resources
+    - Design incremental re-enrichment for stale or broken data

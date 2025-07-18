@@ -196,12 +196,16 @@ class GenreEnhancementModel(nn.Module):
 class GenreEnhancementFinetuner:
     """Genre enhancement fine-tuner for anime genre understanding."""
     
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Optional[Settings] = None):
         """Initialize genre enhancement fine-tuner.
         
         Args:
             settings: Configuration settings instance
         """
+        if settings is None:
+            from ..config import get_settings
+            settings = get_settings()
+        
         self.settings = settings
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
@@ -220,14 +224,13 @@ class GenreEnhancementFinetuner:
         
         logger.info(f"Genre enhancement fine-tuner initialized on {self.device}")
     
-    def setup_lora_model(self, lora_config: LoraConfig, fine_tuning_config: Any):
+    def setup_lora_model(self, lora_config: LoraConfig):
         """Setup LoRA model for parameter-efficient fine-tuning.
         
         Args:
             lora_config: LoRA configuration
-            fine_tuning_config: Fine-tuning configuration
         """
-        self.fine_tuning_config = fine_tuning_config
+        logger.info("Setting up LoRA model for genre enhancement")
         
         try:
             # Get text model info
@@ -304,8 +307,8 @@ class GenreEnhancementFinetuner:
             # Setup optimizer
             self.optimizer = torch.optim.AdamW(
                 self.enhancement_model.parameters(),
-                lr=self.fine_tuning_config.learning_rate,
-                weight_decay=self.fine_tuning_config.weight_decay
+                lr=1e-4,
+                weight_decay=1e-5
             )
         
         logger.info(f"Model prepared for training with {self.num_genres} genres")

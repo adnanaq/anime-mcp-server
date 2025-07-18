@@ -9,7 +9,8 @@ An AI-powered anime search and recommendation system built with **FastAPI**, **Q
 - **Comprehensive Database**: 38,894 anime entries with rich metadata
 - **MCP Protocol Integration**: FastMCP server for AI assistant communication
 - **Real-time Vector Search**: Qdrant-powered semantic search
-- **Multi-Modal Search**: Visual similarity and combined text+image search with CLIP embeddings
+- **Modern Multi-Modal Search**: Advanced image search with SigLIP/JinaCLIP v2 (512x512 resolution) and BGE-M3 text embeddings
+- **Legacy Multi-Modal Search**: Visual similarity and combined text+image search with CLIP embeddings
 - **Conversational Workflows**: LangGraph-powered intelligent conversation flows with ToolNode integration
 - **Smart Orchestration**: Advanced multi-step query processing with complexity assessment
 - **AI-Powered Query Understanding**: Natural language parameter extraction with LLM intelligence
@@ -40,8 +41,10 @@ anime-mcp-server/
 │   │   ├── anime_swarm.py             # Multi-agent swarm workflows
 │   │   └── agents/                    # Specialized workflow agents
 │   ├── vector/
-│   │   ├── qdrant_client.py     # Vector database operations
-│   │   └── vision_processor.py  # CLIP image processing
+│   │   ├── qdrant_client.py           # Vector database operations with modern embedding support
+│   │   ├── modern_text_processor.py   # Modern text embeddings (BGE-M3, HuggingFace, Sentence Transformers)
+│   │   ├── modern_vision_processor.py # Modern vision embeddings (SigLIP, JinaCLIP v2, CLIP)
+│   │   └── vision_processor.py        # Legacy CLIP image processing
 │   ├── models/
 │   │   └── anime.py             # Pydantic data models
 │   ├── services/
@@ -237,6 +240,8 @@ python scripts/test_mcp_server_comprehensive.py
 
 ### Configuration Options
 
+#### MCP Server Configuration
+
 Environment variables for MCP server:
 
 ```bash
@@ -244,6 +249,66 @@ Environment variables for MCP server:
 SERVER_MODE=stdio          # Core server: stdio, http, sse, streamable | Modern server: stdio, sse
 MCP_HOST=0.0.0.0          # HTTP server host (for HTTP modes)
 MCP_PORT=8001             # HTTP server port (for HTTP modes)
+```
+
+#### Modern Embedding Models Configuration
+
+The system now supports modern embedding models for improved accuracy and performance:
+
+```bash
+# Text Embedding Configuration
+TEXT_EMBEDDING_PROVIDER=fastembed     # Options: fastembed, huggingface, sentence-transformers
+TEXT_EMBEDDING_MODEL=BAAI/bge-small-en-v1.5  # Model name for text embeddings
+TEXT_EMBEDDING_MODEL_FALLBACK=BAAI/bge-base-en-v1.5  # Fallback model
+
+# Image Embedding Configuration  
+IMAGE_EMBEDDING_PROVIDER=clip         # Options: clip, siglip, jinaclip
+IMAGE_EMBEDDING_MODEL=ViT-B/32        # Model name for image embeddings
+IMAGE_EMBEDDING_MODEL_FALLBACK=ViT-L/14  # Fallback model
+
+# SigLIP Configuration (improved zero-shot performance)
+SIGLIP_MODEL=google/siglip-so400m-patch14-384
+SIGLIP_INPUT_RESOLUTION=384           # Higher resolution than CLIP's 224
+
+# JinaCLIP v2 Configuration (512x512 resolution, multilingual)
+JINACLIP_MODEL=jinaai/jina-clip-v2
+JINACLIP_INPUT_RESOLUTION=512         # 4x higher resolution than CLIP
+JINACLIP_TEXT_MAX_LENGTH=77
+
+# BGE Configuration (latest text embeddings)
+BGE_MODEL_VERSION=v1.5               # Options: v1.5, m3, reranker
+BGE_MODEL_SIZE=small                 # Options: small, base, large
+BGE_ENABLE_MULTILINGUAL=false        # Enable BGE-M3 multilingual model
+BGE_MAX_LENGTH=512
+
+# Model Management
+ENABLE_MODEL_FALLBACK=true           # Automatic fallback on model failure
+MODEL_CACHE_DIR=/path/to/cache       # Custom model cache directory
+MODEL_WARM_UP=true                   # Pre-load models during startup
+ENABLE_LEGACY_MODEL_SUPPORT=true     # Maintain compatibility with existing vectors
+```
+
+**Modern vs Legacy Models:**
+
+| Feature | Legacy Models | Modern Models |
+|---------|---------------|---------------|
+| **Text Embedding** | BGE-small-en-v1.5 (384d) | BGE-M3 (1024d, 100+ languages) |
+| **Image Embedding** | CLIP ViT-B/32 (224px, 512d) | JinaCLIP v2 (512px, 768d) |
+| **Performance** | 3.5s avg response | <0.5s target with SigLIP |
+| **Accuracy** | 57% image search | 25%+ improvement expected |
+| **Languages** | English primarily | 89 languages (JinaCLIP v2) |
+| **Resolution** | 224x224 pixels | 512x512 pixels (4x detail) |
+
+**Performance Benchmarking:**
+
+```bash
+# Run embedding model benchmark
+python scripts/benchmark_modern_embeddings.py
+
+# Expected improvements:
+# - SigLIP: 40% better zero-shot performance
+# - JinaCLIP v2: 4x higher resolution, 98% Flickr30k accuracy  
+# - BGE-M3: Multilingual support, 8192 token context
 ```
 
 ### Client Integration
