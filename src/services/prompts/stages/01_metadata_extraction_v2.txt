@@ -30,10 +30,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
      - Skip if theme name already exists AND has description (case-insensitive comparison)
      - If theme name exists but has null description: Update that theme's description only
      - Otherwise: Add new theme with name + description
-- **external_links**: Extract from Jikan external links + AnimSchedule websites object:
-  - Ensure no duplication of URLs or property names
-  - If same URL exists in both sources, keep only one instance
-  - If same property name exists in both sources, merge or keep non-conflicting entries
+- **external_links**: Extract from all available sources (see EXTERNAL LINK PROCESSING section for details and section 4 for deduplication rules)
 - **synonyms**: Extract from all sources that provide alternative titles:
   - AniList: Add all entries from synonyms array
   - Jikan: Add entries from titles.synonyms array if available
@@ -57,7 +54,8 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
     - bannerImage → add to banners array
   - Ensure no duplication of URLs within each image type array
   - Add source attribution ("jikan", "animeschedule", "kitsu", "animeplanet", "anilist") to each image
-- **source_material**: Extract from Jikan source field
+- **source_material**: Extract from Jikan source field, use AniList source as fallback if Jikan is null/missing
+- **type**: Extract from Jikan type field, use AniList format as cross-validation/fallback if Jikan is null/missing (TV, Movie, OVA, Special, etc.)
 - **rating**: Extract from Jikan rating field
 - **content_warnings**: Infer from Jikan rating and content
 
@@ -96,21 +94,24 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 - **episodes**: Cross-validate json_ld.numberOfEpisodes with existing episode count
 - **dates**: Cross-validate json_ld.startDate/endDate with existing aired dates
 - **studios**: Cross-validate studios array with existing studio data
-
-### ANILIST ENHANCEMENTS:
-- Additional metadata fields available for future extraction
-
-### ANIME-PLANET LINK PROCESSING:
 - **images**: Extract Anime-Planet images and add to covers array:
   - json_ld.image → add to covers array with source "animeplanet"
   - opengraph.image → add to covers array with source "animeplanet" (if different URL)
 
+### ANILIST ENHANCEMENTS:
+- **source_material**: Use as fallback if Jikan source field is null/missing (Light Novel, Manga, etc.)
+- **type**: Use AniList format field for cross-validation of Jikan type field (TV, Movie, OVA, Special, etc.)
+
 ### EXTERNAL LINK PROCESSING:
 - **external_links**: Add platform URLs to external_links:
+  - Jikan: Extract from external_links
+  - AnimSchedule; Extract from websites
   - Anime-Planet: json_ld.url → add as "animeplanet" property
-  - AniList: Extract from externalLinks array with site normalization:
+  - AniList: Extract from externalLinks array:
+    - Extract only site and url properties
     - Convert site property to lowercase and remove all spaces to create key
     - Use url as the value
+    - Skip if URL already exists in external_links from other sources
     - Examples: "Official Site" → "officialsite", "Crunchyroll" → "crunchyroll", "MyAnimeList" → "myanimelist"
 
 ## CRITICAL REQUIREMENTS
@@ -133,14 +134,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
      - Kitsu categories: category.attributes.title → name, category.attributes.description → description
      - AniList tags: tag.name → name, tag.description → description
 
-3. **MULTI-SOURCE EXTERNAL LINK DEDUPLICATION**: 
-   - Extract external links from both Jikan and AnimSchedule sources
-   - Ensure no duplication of URLs or property names
-   - If same URL exists in both sources, keep only one instance
-   - If same property name exists in both sources, merge or keep non-conflicting entries
-   - Maintain proper naming from both sources
-
-4. **ORGANIZED IMAGE TYPE HANDLING**: 
+3. **ORGANIZED IMAGE TYPE HANDLING**: 
    - Extract images from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList organized by image type
    - Create separate arrays: posters, covers, banners (and potentially screenshots in future)
    - Type inference rules:
@@ -154,12 +148,13 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
    - Add source attribution to each image object
    - Do not include type field in image objects (type is implied by array organization)
 
-5. **EXTERNAL LINK DEDUPLICATION**:
-   - Extract external links from all available sources
-   - Ensure no duplication of URLs or property names
-   - Maintain proper naming from all sources
+4. **EXTERNAL LINK DEDUPLICATION**:
+   - Extract external links from all available sources (Jikan, AnimSchedule, Anime-Planet, AniList)
+   - **Universal key normalization**: Convert ALL external link keys to lowercase (regardless of source)
+   - Ensure no duplication of URLs or normalized property names
+   - If same normalized key exists from multiple sources, keep only one instance
 
-6. **HANDLE MISSING DATA**: 
+5. **HANDLE MISSING DATA**: 
    - If any API data is missing or null, set corresponding output fields to null
    - Continue processing with available data sources
    - Do not include statistics section (handled in separate Stage 4)
@@ -176,7 +171,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
     {"name": "Magic", "description": "Magic is the art of purportedly manipulating aspects of reality either by supernatural means or through knowledge of unknown occult laws."}, // EXAMPLE - From Kitsu categories
     {"name": "Violence", "description": "Physical force against self or other, compelling action against one's will on pain of being hurt."}
   ],
-  "source_material": "Manga", // EXAMPLE - Extract actual source material
+  "source_material": "Manga", // EXAMPLE - Extract from Jikan, fallback to AniList if null
   "rating": "R - 17+ (violence & profanity)", // EXAMPLE - Extract actual rating
   "content_warnings": ["Violence", "Strong Language"], // EXAMPLE - Extract actual content warnings
   "nsfw": false, // EXAMPLE - Extract actual nsfw flag from Kitsu
@@ -216,9 +211,8 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
     "dub_override": null
   }, // EXAMPLE - Extract actual episode overrides
   "external_links": {
-    "official": "https://example.com",
     "mal": "https://myanimelist.net/anime/121",
-    "officialsite": "https://cowboy-bebop.com/",
+    "official": "https://cowboy-bebop.com/",
     "crunchyroll": "https://crunchyroll.com/series/cowboy-bebop"
   }, // EXAMPLE - Extract actual external links with AniList normalized keys
   "images": {

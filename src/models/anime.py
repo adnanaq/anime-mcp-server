@@ -96,6 +96,16 @@ class StaffEntry(BaseModel):
     positions: List[str] = Field(default_factory=list, description="All positions held")
 
 
+class ContextualRank(BaseModel):
+    """Contextual ranking information from platforms like AniList"""
+    rank: int = Field(..., description="Rank position")
+    type: str = Field(..., description="Ranking type (POPULAR, RATED, etc.)")
+    format: Optional[str] = Field(None, description="Format context (TV, Movie, etc.)")
+    year: Optional[int] = Field(None, description="Year context")
+    season: Optional[str] = Field(None, description="Season context (SPRING, SUMMER, FALL, WINTER)")
+    allTime: Optional[bool] = Field(None, description="Whether this is an all-time ranking")
+
+
 class StatisticsEntry(BaseModel):
     """Standardized statistics entry - AI maps all platforms to these uniform properties"""
     score: Optional[float] = Field(None, description="Rating score (normalized to 0-10 scale)")
@@ -104,6 +114,7 @@ class StatisticsEntry(BaseModel):
     popularity_rank: Optional[int] = Field(None, description="Popularity ranking position")
     members: Optional[int] = Field(None, description="Total members/users tracking")
     favorites: Optional[int] = Field(None, description="Number of users who favorited")
+    contextual_ranks: Optional[List[ContextualRank]] = Field(None, description="Contextual ranking achievements (e.g., 'Best of 2021')")
 
 
 class AnimeEntry(BaseModel):

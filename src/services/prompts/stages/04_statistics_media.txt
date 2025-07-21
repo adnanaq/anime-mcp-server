@@ -57,6 +57,7 @@ Extract statistics from ALL available data sources with standardized StatisticsE
   - averageScore → score (÷10 for 0-10 scale, e.g., 86 → 8.6)
   - favourites → favorites
   - popularity → popularity_rank
+  - rankings → contextual_ranks (extract array of ranking objects with rank, type, format, year, season, allTime)
 
 - **ANIDB**:
   - Extract score, votes, and other statistical data from ratings section
@@ -103,7 +104,17 @@ Return ONLY statistics in JSON format:
         "anilist": {
             "score": 8.6,
             "popularity_rank": 50,
-            "favorites": 18500
+            "favorites": 18500,
+            "contextual_ranks": [
+                {
+                    "rank": 1,
+                    "type": "POPULAR",
+                    "format": "TV",
+                    "year": 2021,
+                    "season": "FALL",
+                    "allTime": false
+                }
+            ]
         },
         "anidb": {
             "score": 8.4,
