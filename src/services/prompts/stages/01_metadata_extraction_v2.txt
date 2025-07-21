@@ -17,14 +17,6 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 ### ANILIST DATA:
 {anilist_data}
 
-## STATISTICS ENTRY FORMAT
-StatisticsEntry format includes these standardized fields:
-- score: Rating score (0-10 scale as float)
-- scored_by: Number of users who rated (integer)
-- rank: Overall ranking position (integer)
-- popularity_rank: Popularity ranking position (integer)
-- members: Total users tracking (integer)
-- favorites: Users who favorited (integer)
 
 ## EXTRACTION RULES
 
@@ -76,13 +68,6 @@ StatisticsEntry format includes these standardized fields:
 - **background**: Extract background information from Jikan
 - **aired_dates**: Extract aired information from Jikan (from, to, string)
 - **broadcast**: Extract broadcast information from Jikan (day, time, timezone)
-- **statistics**: Create mal statistics object with standardized StatisticsEntry format:
-  - score → score (as float, already 0-10 scale)
-  - scored_by → scored_by
-  - rank → rank
-  - popularity → popularity_rank
-  - members → members
-  - favorites → favorites
 
 ### ANIMESCHEDULE ENHANCEMENTS:
 - **broadcast_schedule**: Extract broadcast timing information from AnimeSchedule:
@@ -102,43 +87,31 @@ StatisticsEntry format includes these standardized fields:
   - main_override: AnimSchedule episodeOverride object (overrideDate, overrideEpisode, episodesAired)
   - sub_override: AnimSchedule subEpisodeOverride object (overrideDate, overrideEpisode, episodesAired)
   - dub_override: AnimSchedule dubEpisodeOverride object (overrideDate, overrideEpisode, episodesAired)
-- **statistics**: Create animeschedule statistics object with standardized StatisticsEntry format:
-  - averageScore → score (as float, normalized to 0-10 scale)
-  - ratingCount → scored_by  
-  - trackedCount → members
-  - trackedRating → rank
 - **month**: Extract premiere month from AnimSchedule
 
 ### KITSU ENHANCEMENTS:
 - **nsfw**: Extract from nsfw field (boolean)
-- **statistics**: Create kitsu statistics object with standardized StatisticsEntry format:
-  - averageRating → score (÷10 as float, e.g., "82.14" → 8.214)
-  - userCount → members
-  - favoritesCount → favorites
-  - popularityRank → popularity_rank
-  - ratingRank → rank
 
 ### ANIME-PLANET ENHANCEMENTS:
-- **statistics**: Create animeplanet statistics object with standardized StatisticsEntry format:
-  - json_ld.aggregateRating.ratingValue → score (×2 for 0-10 scale normalization, e.g., 4.355 → 8.71)
-  - json_ld.aggregateRating.ratingCount → scored_by
-  - rank → rank (Anime-Planet ranking position)
+- **episodes**: Cross-validate json_ld.numberOfEpisodes with existing episode count
+- **dates**: Cross-validate json_ld.startDate/endDate with existing aired dates
+- **studios**: Cross-validate studios array with existing studio data
 
 ### ANILIST ENHANCEMENTS:
-- **statistics**: Create anilist statistics object with standardized StatisticsEntry format:
-  - averageScore → score (÷10 for 0-10 scale, e.g., 86 → 8.6)
-  - favourites → favorites
-  - popularity → popularity_rank
+- Additional metadata fields available for future extraction
 
 ### ANIME-PLANET LINK PROCESSING:
 - **images**: Extract Anime-Planet images and add to covers array:
   - json_ld.image → add to covers array with source "animeplanet"
   - opengraph.image → add to covers array with source "animeplanet" (if different URL)
-- **external_links**: Add Anime-Planet URL to external_links:
-  - json_ld.url → add as "animeplanet" property
-- **episodes**: Cross-validate json_ld.numberOfEpisodes with existing episode count
-- **dates**: Cross-validate json_ld.startDate/endDate with existing aired dates
-- **studios**: Cross-validate studios array with existing studio data
+
+### EXTERNAL LINK PROCESSING:
+- **external_links**: Add platform URLs to external_links:
+  - Anime-Planet: json_ld.url → add as "animeplanet" property
+  - AniList: Extract from externalLinks array with site normalization:
+    - Convert site property to lowercase and remove all spaces to create key
+    - Use url as the value
+    - Examples: "Official Site" → "officialsite", "Crunchyroll" → "crunchyroll", "MyAnimeList" → "myanimelist"
 
 ## CRITICAL REQUIREMENTS
 
@@ -181,14 +154,15 @@ StatisticsEntry format includes these standardized fields:
    - Add source attribution to each image object
    - Do not include type field in image objects (type is implied by array organization)
 
-5. **STATISTICS MAPPING**: 
-   - Create nested structure with mal, animeschedule, kitsu, animeplanet, and anilist keys containing StatisticsEntry format
-   - Normalize scores to 0-10 scale as floats (Kitsu: ÷10, MAL: already 0-10, AnimSchedule: as-is, Anime-Planet: ×2, AniList: ÷10)
-   - Omit fields that are not available for each source (don't use null values)
+5. **EXTERNAL LINK DEDUPLICATION**:
+   - Extract external links from all available sources
+   - Ensure no duplication of URLs or property names
+   - Maintain proper naming from all sources
 
 6. **HANDLE MISSING DATA**: 
    - If any API data is missing or null, set corresponding output fields to null
    - Continue processing with available data sources
+   - Do not include statistics section (handled in separate Stage 4)
 
 ## OUTPUT FORMAT
 **IMPORTANT: The values shown below are EXAMPLES ONLY. Extract actual data from the provided APIs.**
@@ -243,18 +217,10 @@ StatisticsEntry format includes these standardized fields:
   }, // EXAMPLE - Extract actual episode overrides
   "external_links": {
     "official": "https://example.com",
-    "mal": "https://myanimelist.net/anime/121"
-  }, // EXAMPLE - Extract actual external links
-  "statistics": {
-    "source_name": {
-      "score": 8.11,
-      "scored_by": 916846,
-      "rank": 530,
-      "popularity_rank": 85,
-      "members": 1524895,
-      "favorites": 26442
-    }
-  }, // EXAMPLE - Use source names as keys: "mal", "animeschedule", "kitsu", "animeplanet", "anilist" etc. with StatisticsEntry fields as values
+    "mal": "https://myanimelist.net/anime/121",
+    "officialsite": "https://cowboy-bebop.com/",
+    "crunchyroll": "https://crunchyroll.com/series/cowboy-bebop"
+  }, // EXAMPLE - Extract actual external links with AniList normalized keys
   "images": {
     "posters": [
       {

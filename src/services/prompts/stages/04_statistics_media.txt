@@ -1,143 +1,123 @@
-# OBJECTIVE
-Extract ONLY statistics and media fields from multiple data sources. Return only the extracted statistics and media fields.
+# STATISTICS EXTRACTION STAGE
+Extract ONLY statistics from multiple data sources with proper normalization and standardization.
 
 # INPUT DATA
-## JIKAN STATISTICS DATA:
-{jikan_statistics_data}
+## JIKAN DATA:
+{jikan_data}
 
-## JIKAN MEDIA DATA:
-{jikan_media_data}
+## ANIMESCHEDULE DATA:
+{animeschedule_data}
 
-## ANIMESCHEDULE STATISTICS DATA:
-{animeschedule_statistics_data}
+## KITSU DATA:
+{kitsu_data}
+
+## ANIME-PLANET DATA:
+{animeplanet_data}
+
+## ANILIST DATA:
+{anilist_data}
+
+## ANIDB DATA:
+{anidb_data}
 
 
 # PROCESSING INSTRUCTIONS
 
 ## STATISTICS EXTRACTION
-Extract numerical statistics and ratings from ALL available data sources and intelligently map them to standard AnimeEntry schema properties:
-- **FROM JIKAN**: Extract score, scored_by, rank, popularity, members, favorites
-- **FROM ANIMESCHEDULE**: Extract averageScore, ratingCount, trackedCount, trackedRating
-- Normalize scores to 0-10 scale if needed
-- Handle missing fields gracefully (use null)
-- Map all statistics to standard property names regardless of source
+Extract statistics from ALL available data sources with standardized StatisticsEntry format:
 
-## MEDIA EXTRACTION
-Extract media content from Jikan data:
-- Extract trailers (YouTube URLs and thumbnails)
-- Extract images (covers from different sources)
-- Extract staff information
-- Extract opening/ending themes
-- Extract streaming information
-- Extract licensors and external links
+### SOURCE-SPECIFIC MAPPINGS:
+- **JIKAN (MAL)**: 
+  - score → score (already 0-10 scale)
+  - scored_by → scored_by
+  - rank → rank
+  - popularity → popularity_rank
+  - members → members
+  - favorites → favorites
+
+- **ANIMESCHEDULE**:
+  - averageScore → score (normalized to 0-10 scale)
+  - ratingCount → scored_by
+  - trackedCount → members
+  - trackedRating → rank
+
+- **KITSU**:
+  - averageRating → score (÷10 for 0-10 scale, e.g., "82.14" → 8.214)
+  - userCount → members
+  - favoritesCount → favorites
+  - popularityRank → popularity_rank
+  - ratingRank → rank
+
+- **ANIME-PLANET**:
+  - json_ld.aggregateRating.ratingValue → score (×2 for 0-10 scale, e.g., 4.355 → 8.71)
+  - json_ld.aggregateRating.ratingCount → scored_by
+  - rank → rank (if available)
+
+- **ANILIST**:
+  - averageScore → score (÷10 for 0-10 scale, e.g., 86 → 8.6)
+  - favourites → favorites
+  - popularity → popularity_rank
+
+- **ANIDB**:
+  - Extract score, votes, and other statistical data from ratings section
+  - Normalize to 0-10 scale if needed
+
+## STATISTICS NORMALIZATION RULES:
+- **Score Normalization**: All scores must be normalized to 0-10 scale as floats
+- **Missing Fields**: Use null for unavailable fields (don't omit entirely)
+- **Source Attribution**: Each source gets its own statistics object
+- **Standard Properties**: All sources use same property names: score, scored_by, rank, popularity_rank, members, favorites
 
 
 # OUTPUT SCHEMA
-Return ONLY these extracted fields in JSON format:
+Return ONLY statistics in JSON format:
 
-{{
-    "statistics": {{
-        "mal": {{
-            "score": "Extract Jikan score (0-10 scale)",
-            "scored_by": "Number of MAL users who rated",
-            "rank": "MAL overall ranking position",
-            "popularity_rank": "MAL popularity ranking position",
-            "members": "MAL total members/users tracking",
-            "favorites": "MAL number of users who favorited"
-        }},
-        "animeschedule": {{
-            "score": "Extract AnimSchedule averageScore (normalize to 0-10 scale)",
-            "scored_by": "AnimSchedule users who rated (ratingCount)",
-            "rank": "Map to rank if available or null",
-            "popularity_rank": "Map to popularity rank if available or null",
-            "members": "AnimSchedule users tracking (trackedCount)",
-            "favorites": "Map to favorites if available or null"
-        }}
-    }},
-    "trailers": [{{
-        "youtube_url": "Extract YouTube URL",
-        "title": "Trailer title or default",
-        "thumbnail_url": "Extract thumbnail URL"
-    }}],
-    "images": {{
-        "covers": [{{
-            "url": "Extract largest image URL",
-            "source": "jikan",
-            "type": "cover"
-        }}]
-    }},
-    "staff": [{{
-        "name": "Staff member name",
-        "role": "Role (Director/Producer/etc)",
-        "positions": ["List of positions"]
-    }}],
-    "opening_themes": [{{
-        "title": "Theme title",
-        "artist": "Artist name",
-        "episodes": "Episode range or null"
-    }}],
-    "ending_themes": [{{
-        "title": "Theme title",
-        "artist": "Artist name", 
-        "episodes": "Episode range or null"
-    }}],
-    "streaming_info": [{{
-        "name": "Platform name",
-        "url": "Platform URL"
-    }}],
-    "licensors": ["Extract licensor names"],
-    "streaming_licenses": ["Extract streaming licenses"],
-    "external_links": {{
-        "official_website": "Extract official website URL"
-    }},
-    "awards": [{{
-        "name": "Award name",
-        "organization": "Organization",
-        "year": "Year"
-    }}]
-}}
+{
+    "statistics": {
+        "mal": {
+            "score": 8.11,
+            "scored_by": 916846,
+            "rank": 530,
+            "popularity_rank": 85,
+            "members": 1524895,
+            "favorites": 26442
+        },
+        "animeschedule": {
+            "score": 8.5,
+            "scored_by": 1200,
+            "members": 5000,
+            "rank": 45
+        },
+        "kitsu": {
+            "score": 8.214,
+            "members": 15000,
+            "favorites": 2500,
+            "popularity_rank": 120,
+            "rank": 67
+        },
+        "animeplanet": {
+            "score": 8.71,
+            "scored_by": 8500,
+            "rank": 78
+        },
+        "anilist": {
+            "score": 8.6,
+            "popularity_rank": 50,
+            "favorites": 18500
+        },
+        "anidb": {
+            "score": 8.4,
+            "scored_by": 3200
+        }
+    }
+}
 
-## INTELLIGENT MAPPING INSTRUCTIONS
-
-**SOURCE-SPECIFIC EXTRACTION**:
-- Each platform gets its own statistics object with standardized property names
-- Map platform-specific fields to standard property names within each source
-- ALL sources must use the SAME standard properties: `score`, `scored_by`, `rank`, `popularity_rank`, `members`, `favorites`
-
-**STANDARD PROPERTIES FOR ALL SOURCES**:
-- `score`: Rating score (normalized to 0-10 scale)
-- `scored_by`: Number of users who rated
-- `rank`: Overall ranking position
-- `popularity_rank`: Popularity ranking position
-- `members`: Total members/users tracking
-- `favorites`: Number of users who favorited
-
-**EXAMPLE MAPPINGS** (These are examples - there could be more sources):
-
-**MAL/JIKAN MAPPING**:
-- `score`: Direct from Jikan (already 0-10 scale)
-- `scored_by`: Direct from Jikan scored_by field
-- `rank`: Direct from Jikan rank field
-- `popularity_rank`: Direct from Jikan popularity field
-- `members`: Direct from Jikan members field
-- `favorites`: Direct from Jikan favorites field
-
-**ANIMESCHEDULE MAPPING**:
-- `score`: AnimSchedule averageScore ÷ 10 (normalize 0-100 to 0-10)
-- `scored_by`: AnimSchedule ratingCount
-- `rank`: null (AnimSchedule doesn't have ranking)
-- `popularity_rank`: null (AnimSchedule doesn't have popularity ranking)
-- `members`: AnimSchedule trackedCount
-- `favorites`: null (AnimSchedule doesn't have favorites)
-
-**FOR FUTURE SOURCES**: Intelligently map their specific fields to these same standard properties
-
-
-**DATA HANDLING RULES**:
-- Handle missing fields gracefully (use null)
+**CRITICAL REQUIREMENTS**:
+- Handle missing fields gracefully (use null, don't omit fields)
 - Maintain source attribution and separation
-- Apply appropriate normalization per source
+- Apply appropriate score normalization per source
+- Use only the standardized property names across all sources
+- Extract statistics from ALL available sources that have data
+- Omit source objects entirely if no statistical data is available from that source
 
-Extract the statistics and media fields and return ONLY the fields listed above.
-
-IMPORTANT: Your response must be ONLY valid JSON. Do not include any text before or after the JSON. Do not explain your process. Return only the JSON object with the exact schema above.
+**IMPORTANT**: Your response must be ONLY valid JSON. Do not include any text before or after the JSON. Do not explain your process. Return only the JSON object with the exact schema above.
