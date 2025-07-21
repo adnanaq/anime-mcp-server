@@ -60,8 +60,8 @@ Extract statistics from ALL available data sources with standardized StatisticsE
   - rankings → contextual_ranks (extract array of ranking objects with rank, type, format, year, season, allTime)
 
 - **ANIDB**:
-  - Extract score, votes, and other statistical data from ratings section
-  - Normalize to 0-10 scale if needed
+  - ratings.permanent.value → score (already 0-10 scale)
+  - ratings.permanent.count → scored_by
 
 ## STATISTICS NORMALIZATION RULES:
 - **Score Normalization**: All scores must be normalized to 0-10 scale as floats
@@ -117,8 +117,8 @@ Return ONLY statistics in JSON format:
             ]
         },
         "anidb": {
-            "score": 8.4,
-            "scored_by": 3200
+            "score": 8.74,
+            "scored_by": 18699
         }
     }
 }

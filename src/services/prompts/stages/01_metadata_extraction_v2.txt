@@ -23,24 +23,37 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 ### CATEGORIZATION & LINKS (Multi-Source Integration):
 - **genres**: Extract from Jikan genres + AnimSchedule genres + Anime-Planet genres + Anilist genres (combine, no duplicates)
 - **demographics**: Extract from Jikan demographics array only
-- **themes**: Extract from Jikan themes + Kitsu categories + AniList tags with intelligent merging:
+- **themes**: Extract from Jikan themes + Kitsu categories + AniList tags + AniDB tags with intelligent merging:
   1. Add all Jikan themes with their descriptions (null if no description)
-  2. For each Kitsu category (first) then each AniList tag (second):
-     - Skip if name exists in genres (case-insensitive comparison)
-     - Skip if theme name already exists AND has description (case-insensitive comparison)
-     - If theme name exists but has null description: Update that theme's description only
-     - Otherwise: Add new theme with name + description
+  2. For each source in priority order (Kitsu → AniList → AniDB):
+     - Kitsu: Process category.attributes.title → name, category.attributes.description → description
+     - AniList: Process tag.name → name, tag.description → description
+     - AniDB: Process tag.name → name, tag.description → description
+     - For each theme from current source:
+       - Skip if name exists in genres (case-insensitive comparison)
+       - Skip if theme name already exists AND has description (case-insensitive comparison)
+       - If theme name exists but has null description: Update that theme's description only
+       - Otherwise: Add new theme with name + description
 - **external_links**: Extract from all available sources (see EXTERNAL LINK PROCESSING section for details and section 4 for deduplication rules)
-- **synonyms**: Extract from all sources that provide alternative titles:
-  - AniList: Add all entries from synonyms array
-  - Jikan: Add entries from titles.synonyms array if available
-  - Kitsu: Add entries from abbreviatedTitles array if available
-  - Anime-Planet: Add entries from alternative titles if available
-  - AnimSchedule: Add entries from names.synonyms array if available
-  - Ensure no duplication across all sources (case-insensitive comparison)
-  - Skip if synonym already exists in title_japanese, title_english, or canonicalTitle
-  - Combine all unique synonyms into a single array
-- **images**: Extract from Jikan + AnimSchedule + Kitsu + Anime-Planet + AniList organized by image type:
+- **synonyms**: Extract from all sources that provide alternative titles with intelligent merging:
+  1. Start with all unique titles from Jikan titles.synonyms array (if available)
+  2. For each source in priority order (AniList → Kitsu → Anime-Planet → AnimSchedule → AniDB):
+     - AniList: Process all entries from synonyms array
+     - Kitsu: Process all entries from abbreviatedTitles array  
+     - Anime-Planet: Process all entries from alternative titles
+     - AnimSchedule: Process all entries from names.synonyms array
+     - AniDB: Process all entries from titles.synonyms array
+     - For each title from current source:
+       - Skip if already exists in main titles (title_japanese, title_english, canonicalTitle) - case-insensitive
+       - Skip if already exists in synonyms array - case-insensitive comparison
+       - Skip if it's just a minor variation (different spacing/punctuation) of existing synonym
+       - Otherwise: Add unique synonym to array
+  3. Apply final cleanup:
+     - Remove any duplicates that might have been missed
+     - Remove empty strings or null values
+     - Trim whitespace from all entries
+     - Combine all unique synonyms into a single array
+- **images**: Extract from Jikan + AnimSchedule + Kitsu + Anime-Planet + AniList + AniDB organized by image type:
   - Jikan: Extract from images.jpg.large_image_url → add to covers array
   - AnimSchedule: Extract from imageVersionRoute (prepend "https://img.animeschedule.net/production/assets/public/img/") → add to covers array
   - Kitsu: Extract with type inference:
@@ -52,8 +65,9 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
   - AniList: Extract with type inference:
     - coverImage.extraLarge → add to covers array
     - bannerImage → add to banners array
+  - AniDB: Extract from picture field (prepend "https://cdn.anidb.net/images/main/") → add to covers array
   - Ensure no duplication of URLs within each image type array
-  - Add source attribution ("jikan", "animeschedule", "kitsu", "animeplanet", "anilist") to each image
+  - Add source attribution ("jikan", "animeschedule", "kitsu", "animeplanet", "anilist", "anidb") to each image
 - **source_material**: Extract from Jikan source field, use AniList source as fallback if Jikan is null/missing
 - **type**: Extract from Jikan type field, use AniList format as cross-validation/fallback if Jikan is null/missing (TV, Movie, OVA, Special, etc.)
 - **rating**: Extract from Jikan rating field
@@ -104,7 +118,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 
 ### EXTERNAL LINK PROCESSING:
 - **external_links**: Add platform URLs to external_links:
-  - Jikan: Extract from external_links
+  - Jikan: Extract from external
   - AnimSchedule; Extract from websites
   - Anime-Planet: json_ld.url → add as "animeplanet" property
   - AniList: Extract from externalLinks array:
@@ -119,11 +133,11 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 1. **INTELLIGENT CATEGORIZATION MERGING**: 
    - Combine Jikan and AnimSchedule genres, remove duplicates
    - Intelligent theme merging with case-insensitive comparison:
-     - Skip Kitsu categories and AniList tags that match existing genre names
-     - Skip Kitsu categories and AniList tags that match existing theme names with descriptions
-     - Update existing themes with null descriptions using Kitsu/AniList descriptions
-     - Add new themes from Kitsu categories and AniList tags that don't conflict
-     - Process Kitsu categories first, then AniList tags to avoid race conditions
+     - Skip Kitsu categories, AniList tags, and AniDB tags that match existing genre names
+     - Skip Kitsu categories, AniList tags, and AniDB tags that match existing theme names with descriptions
+     - Update existing themes with null descriptions using Kitsu/AniList/AniDB descriptions
+     - Add new themes from Kitsu "categories", AniList "tags", and AniDB "tags" that don't conflict
+     - Process Kitsu "categories" first, then AniList "tags", then AniDB "tags" to avoid race conditions
 
 2. **PROPER THEMES STRUCTURE**: 
    - Output themes as single unified array of objects: [{"name": "Theme Name", "description": "Description or null"}]
@@ -133,6 +147,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
      - Jikan themes: theme.name → name, null → description
      - Kitsu categories: category.attributes.title → name, category.attributes.description → description
      - AniList tags: tag.name → name, tag.description → description
+     - AniDB tags: tag.name → name, tag.description → description
 
 3. **ORGANIZED IMAGE TYPE HANDLING**: 
    - Extract images from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList organized by image type
