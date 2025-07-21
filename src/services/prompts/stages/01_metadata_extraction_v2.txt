@@ -1,5 +1,5 @@
 # METADATA EXTRACTION STAGE - MULTI-SOURCE INTEGRATION
-Extract metadata from Jikan, AnimSchedule, Kitsu, and Anime-Planet APIs with proper categorization merging and consistent output format.
+Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs with proper categorization merging and consistent output format.
 
 ## INPUT DATA
 ### JIKAN DATA:
@@ -14,6 +14,9 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, and Anime-Planet APIs with pro
 ### ANIME-PLANET DATA:
 {animeplanet_data}
 
+### ANILIST DATA:
+{anilist_data}
+
 ## STATISTICS ENTRY FORMAT
 StatisticsEntry format includes these standardized fields:
 - score: Rating score (0-10 scale as float)
@@ -26,11 +29,11 @@ StatisticsEntry format includes these standardized fields:
 ## EXTRACTION RULES
 
 ### CATEGORIZATION & LINKS (Multi-Source Integration):
-- **genres**: Extract from Jikan genres + AnimSchedule genres + Anime-Planet genres (combine, no duplicates)
+- **genres**: Extract from Jikan genres + AnimSchedule genres + Anime-Planet genres + Anilist genres (combine, no duplicates)
 - **demographics**: Extract from Jikan demographics array only
-- **themes**: Extract from Jikan themes + Kitsu categories with intelligent merging:
+- **themes**: Extract from Jikan themes + Kitsu categories + AniList tags with intelligent merging:
   1. Add all Jikan themes with their descriptions (null if no description)
-  2. For each Kitsu category:
+  2. For each Kitsu category (first) then each AniList tag (second):
      - Skip if name exists in genres (case-insensitive comparison)
      - Skip if theme name already exists AND has description (case-insensitive comparison)
      - If theme name exists but has null description: Update that theme's description only
@@ -39,7 +42,16 @@ StatisticsEntry format includes these standardized fields:
   - Ensure no duplication of URLs or property names
   - If same URL exists in both sources, keep only one instance
   - If same property name exists in both sources, merge or keep non-conflicting entries
-- **images**: Extract from Jikan + AnimSchedule + Kitsu + Anime-Planet organized by image type:
+- **synonyms**: Extract from all sources that provide alternative titles:
+  - AniList: Add all entries from synonyms array
+  - Jikan: Add entries from titles.synonyms array if available
+  - Kitsu: Add entries from abbreviatedTitles array if available
+  - Anime-Planet: Add entries from alternative titles if available
+  - AnimSchedule: Add entries from names.synonyms array if available
+  - Ensure no duplication across all sources (case-insensitive comparison)
+  - Skip if synonym already exists in title_japanese, title_english, or canonicalTitle
+  - Combine all unique synonyms into a single array
+- **images**: Extract from Jikan + AnimSchedule + Kitsu + Anime-Planet + AniList organized by image type:
   - Jikan: Extract from images.jpg.large_image_url → add to covers array
   - AnimSchedule: Extract from imageVersionRoute (prepend "https://img.animeschedule.net/production/assets/public/img/") → add to covers array
   - Kitsu: Extract with type inference:
@@ -48,8 +60,11 @@ StatisticsEntry format includes these standardized fields:
   - Anime-Planet: Extract from multiple sources → add to covers array:
     - json_ld.image → add to covers array
     - opengraph.image → add to covers array (if different URL)
+  - AniList: Extract with type inference:
+    - coverImage.extraLarge → add to covers array
+    - bannerImage → add to banners array
   - Ensure no duplication of URLs within each image type array
-  - Add source attribution ("jikan", "animeschedule", "kitsu", "animeplanet") to each image
+  - Add source attribution ("jikan", "animeschedule", "kitsu", "animeplanet", "anilist") to each image
 - **source_material**: Extract from Jikan source field
 - **rating**: Extract from Jikan rating field
 - **content_warnings**: Infer from Jikan rating and content
@@ -108,6 +123,14 @@ StatisticsEntry format includes these standardized fields:
   - json_ld.aggregateRating.ratingValue → score (×2 for 0-10 scale normalization, e.g., 4.355 → 8.71)
   - json_ld.aggregateRating.ratingCount → scored_by
   - rank → rank (Anime-Planet ranking position)
+
+### ANILIST ENHANCEMENTS:
+- **statistics**: Create anilist statistics object with standardized StatisticsEntry format:
+  - averageScore → score (÷10 for 0-10 scale, e.g., 86 → 8.6)
+  - favourites → favorites
+  - popularity → popularity_rank
+
+### ANIME-PLANET LINK PROCESSING:
 - **images**: Extract Anime-Planet images and add to covers array:
   - json_ld.image → add to covers array with source "animeplanet"
   - opengraph.image → add to covers array with source "animeplanet" (if different URL)
@@ -122,15 +145,20 @@ StatisticsEntry format includes these standardized fields:
 1. **INTELLIGENT CATEGORIZATION MERGING**: 
    - Combine Jikan and AnimSchedule genres, remove duplicates
    - Intelligent theme merging with case-insensitive comparison:
-     - Skip Kitsu categories that match existing genre names
-     - Skip Kitsu categories that match existing theme names with descriptions
-     - Update existing themes with null descriptions using Kitsu descriptions
-     - Add new themes from Kitsu categories that don't conflict
+     - Skip Kitsu categories and AniList tags that match existing genre names
+     - Skip Kitsu categories and AniList tags that match existing theme names with descriptions
+     - Update existing themes with null descriptions using Kitsu/AniList descriptions
+     - Add new themes from Kitsu categories and AniList tags that don't conflict
+     - Process Kitsu categories first, then AniList tags to avoid race conditions
 
 2. **PROPER THEMES STRUCTURE**: 
-   - Output themes as array of objects: [{"name": "Theme Name", "description": "Description or null"}]
-   - Jikan themes: {"name": "theme_name", "description": null}
-   - Kitsu categories: {"name": "category_name", "description": "category_description"}
+   - Output themes as single unified array of objects: [{"name": "Theme Name", "description": "Description or null"}]
+   - Merge all themes from all sources into one array using the intelligent merging rules above
+   - Each theme object format: {"name": "theme_name", "description": "description_text_or_null"}
+   - Source field mappings:
+     - Jikan themes: theme.name → name, null → description
+     - Kitsu categories: category.attributes.title → name, category.attributes.description → description
+     - AniList tags: tag.name → name, tag.description → description
 
 3. **MULTI-SOURCE EXTERNAL LINK DEDUPLICATION**: 
    - Extract external links from both Jikan and AnimSchedule sources
@@ -140,18 +168,22 @@ StatisticsEntry format includes these standardized fields:
    - Maintain proper naming from both sources
 
 4. **ORGANIZED IMAGE TYPE HANDLING**: 
-   - Extract images from Jikan, AnimSchedule, and Kitsu organized by image type
-   - Create separate arrays: posters, covers (and potentially banners, screenshots in future)
-   - Kitsu type inference: posterImage.original → posters array, coverImage.original → covers array
-   - Jikan and AnimSchedule images → covers array
+   - Extract images from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList organized by image type
+   - Create separate arrays: posters, covers, banners (and potentially screenshots in future)
+   - Type inference rules:
+     - Kitsu posterImage.original → posters array
+     - Kitsu coverImage.original → covers array
+     - AniList coverImage.extraLarge → covers array
+     - AniList bannerImage → banners array
+     - Jikan, AnimSchedule, and Anime-Planet images → covers array
    - AnimSchedule: prepend "https://img.animeschedule.net/production/assets/public/img/" to imageVersionRoute
    - Ensure no duplication of URLs within each image type array
    - Add source attribution to each image object
    - Do not include type field in image objects (type is implied by array organization)
 
 5. **STATISTICS MAPPING**: 
-   - Create nested structure with mal, animeschedule, kitsu, and animeplanet keys containing StatisticsEntry format
-   - Normalize scores to 0-10 scale as floats (Kitsu: ÷10, MAL: already 0-10, AnimSchedule: as-is, Anime-Planet: ×2)
+   - Create nested structure with mal, animeschedule, kitsu, animeplanet, and anilist keys containing StatisticsEntry format
+   - Normalize scores to 0-10 scale as floats (Kitsu: ÷10, MAL: already 0-10, AnimSchedule: as-is, Anime-Planet: ×2, AniList: ÷10)
    - Omit fields that are not available for each source (don't use null values)
 
 6. **HANDLE MISSING DATA**: 
@@ -176,6 +208,7 @@ StatisticsEntry format includes these standardized fields:
   "nsfw": false, // EXAMPLE - Extract actual nsfw flag from Kitsu
   "title_japanese": "鋼の錬金術師", // EXAMPLE - Extract actual Japanese title
   "title_english": "Fullmetal Alchemist", // EXAMPLE - Extract actual English title
+  "synonyms": ["FMA", "Hagane no Renkinjutsushi", "강철의 연금술사"], // EXAMPLE - Extract actual synonyms from all sources, no duplicates
   "background": "Fullmetal Alchemist won the TV Feature Award...", // EXAMPLE - Extract actual background
   "aired_dates": {
     "from": "2003-10-04T00:00:00+00:00",
@@ -221,7 +254,7 @@ StatisticsEntry format includes these standardized fields:
       "members": 1524895,
       "favorites": 26442
     }
-  }, // EXAMPLE - Use source names as keys: "mal", "animeschedule", "kitsu", "animeplanet", etc. with StatisticsEntry fields as values
+  }, // EXAMPLE - Use source names as keys: "mal", "animeschedule", "kitsu", "animeplanet", "anilist" etc. with StatisticsEntry fields as values
   "images": {
     "posters": [
       {
@@ -234,8 +267,14 @@ StatisticsEntry format includes these standardized fields:
         "url": "https://media.kitsu.app/anime/cover_images/100/original.jpg",
         "source": "kitsu"
       }
+    ],
+    "banners": [
+      {
+        "url": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/1-T3PJUjFJyRwg.jpg",
+        "source": "anilist"
+      }
     ]
-  }, // EXAMPLE - Organize by image type: "posters", "covers", etc. Multiple sources can contribute to each type
+  }, // EXAMPLE - Organize by image type: "posters", "covers", "banners", etc. Multiple sources can contribute to each type
   "month": "January" // EXAMPLE - Extract actual premiere month
 }
 

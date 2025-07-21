@@ -86,3 +86,5 @@ tmp/
 *.bak
 *.backup
 
+# Mock files
+MagicMock/
