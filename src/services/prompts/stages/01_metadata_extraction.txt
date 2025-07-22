@@ -17,6 +17,9 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 ### ANILIST DATA:
 {anilist_data}
 
+### ANIDB DATA:
+{anidb_data}
+
 
 ## EXTRACTION RULES
 
@@ -70,7 +73,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
   - Ensure no duplication of URLs within each image type array
   - Add source attribution ("jikan", "animeschedule", "kitsu", "animeplanet", "anilist", "anidb") to each image
 - **source_material**: Extract from Jikan source field, use AniList source as fallback if Jikan is null/missing
-- **type**: Extract from Jikan type field, use AniList format as cross-validation/fallback if Jikan is null/missing (TV, Movie, OVA, Special, etc.)
+- **type**: Cross-validate with offline database type (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → Kitsu)
 - **rating**: Extract from Jikan rating field
 - **content_warnings**: Infer from Jikan rating and content
 - **synopsis**: Extract using source hierarchy for best quality description:
@@ -132,8 +135,13 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 ### KITSU ENHANCEMENTS:
 - **nsfw**: Extract from nsfw field (boolean)
 
+### CROSS-VALIDATION PROPERTIES:
+- **episodes**: Cross-validate across all sources with offline database episode count (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → Kitsu)
+- **status**: Cross-validate across sources with offline database status (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → Kitsu)
+- **animeSeason**: Cross-validate existing offline database animeSeason.season and animeSeason.year with external sources (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → AnimSchedule)
+- **duration**: Cross-validate existing offline database duration (int seconds or dict with value/unit) with external sources (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → Kitsu)
+
 ### ANIME-PLANET ENHANCEMENTS:
-- **episodes**: Cross-validate json_ld.numberOfEpisodes with existing episode count
 - **dates**: Cross-validate json_ld.startDate/endDate with existing aired dates
 - **studios**: Cross-validate studios array with existing studio data
 - **images**: Extract Anime-Planet images and add to covers array:
@@ -223,6 +231,10 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
   "title_english": "Fullmetal Alchemist", // EXAMPLE - Extract actual English title
   "synonyms": ["FMA", "Hagane no Renkinjutsushi", "강철의 연금술사"], // EXAMPLE - Extract actual synonyms from all sources, no duplicates
   "background": "Fullmetal Alchemist won the TV Feature Award...", // EXAMPLE - Extract actual background
+  "episodes": 26, // EXAMPLE - Cross-validate with offline database episode count
+  "status": "Finished", // EXAMPLE - Cross-validate with offline database status
+  "animeSeason": {"season": "SPRING", "year": 1998}, // EXAMPLE - Cross-validate offline database animeSeason with external sources
+  "duration": 1440, // EXAMPLE - Cross-validate with offline database duration (seconds or dict structure)
   "trailers": [
     {
       "youtube_url": "https://www.youtube.com/watch?v=qig4KOK2R2g",
