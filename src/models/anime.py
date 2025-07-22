@@ -32,6 +32,46 @@ class CharacterEntry(BaseModel):
     voice_actors: List[Dict[str, Any]] = Field(default_factory=list, description="Voice actor information")
 
 
+class EpisodeThumbnail(BaseModel):
+    """Episode thumbnail with source attribution"""
+    
+    url: str = Field(..., description="Thumbnail image URL")
+    source: str = Field(..., description="Source platform (anilist, kitsu, etc.)")
+    platform: Optional[str] = Field(None, description="Streaming platform (crunchyroll, funimation, etc.)")
+
+
+class EpisodeDetailEntry(BaseModel):
+    """Comprehensive episode details with multi-source integration"""
+    
+    # Primary identification
+    episode_number: int = Field(..., description="Episode number")
+    season_number: Optional[int] = Field(None, description="Season number from Kitsu")
+    
+    # Episode titles from different sources
+    title: str = Field(..., description="Primary episode title")
+    title_japanese: Optional[str] = Field(None, description="Japanese episode title")
+    title_romanji: Optional[str] = Field(None, description="Romanized episode title")
+    
+    # Episode content
+    synopsis: Optional[str] = Field(None, description="Episode synopsis/description")
+    
+    # Visual content and streaming
+    thumbnails: List[EpisodeThumbnail] = Field(default_factory=list, description="Episode thumbnails from all sources")
+    streaming: Dict[str, str] = Field(default_factory=dict, description="Streaming platforms and URLs {platform: url}")
+    
+    # Technical metadata
+    aired: Optional[str] = Field(None, description="Episode air date with timezone")
+    duration: Optional[int] = Field(None, description="Episode duration in seconds")
+    score: Optional[float] = Field(None, description="Episode rating score")
+    
+    # Episode flags
+    filler: bool = Field(default=False, description="Whether episode is filler")
+    recap: bool = Field(default=False, description="Whether episode is recap")
+    
+    # Source attribution
+    url: Optional[str] = Field(None, description="Episode page URL (typically MAL)")
+
+
 class TrailerEntry(BaseModel):
     """Trailer information from external APIs"""
     
@@ -198,8 +238,8 @@ class AnimeEntry(BaseModel):
     # Enhanced images with source attribution
     images: Dict[str, List[ImageEntry]] = Field(default_factory=dict, description="Images from multiple sources")
     
-    # Episode details
-    episode_details: List[Dict[str, Any]] = Field(default_factory=list, description="Detailed episode information")
+    # Episode details with multi-source support
+    episode_details: List[EpisodeDetailEntry] = Field(default_factory=list, description="Detailed episode information with multi-source integration")
     
     # Relations with multi-platform URLs
     relations: List[RelationEntry] = Field(default_factory=list, description="Related anime with platform URLs")
@@ -222,6 +262,7 @@ class AnimeEntry(BaseModel):
             self.synopsis is not None or 
             len(self.characters) > 0 or 
             len(self.trailers) > 0 or
+            len(self.episode_details) > 0 or
             len(self.genres) > 0 or
             len(self.themes) > 0 or
             len(self.streaming_info) > 0 or
@@ -358,12 +399,13 @@ class AnimeEntry(BaseModel):
     def _calculate_completeness_score(self) -> float:
         """Calculate overall data completeness score (0-1)"""
         score = 0.0
-        total_possible = 23.0  # Total possible enhancement areas
+        total_possible = 24.0  # Total possible enhancement areas
         
-        # Basic enrichment (4 points)
+        # Basic enrichment (5 points)
         if self.synopsis: score += 1.0
         if len(self.characters) > 0: score += 1.0
         if len(self.trailers) > 0: score += 1.0
+        if len(self.episode_details) > 0: score += 1.0
         if len(self.genres) > 0: score += 1.0
         
         # Detailed metadata (9 points)
