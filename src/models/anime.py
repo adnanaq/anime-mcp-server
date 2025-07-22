@@ -16,6 +16,7 @@ class CharacterEntry(BaseModel):
     name_variations: List[str] = Field(default_factory=list, description="All name spellings and variations")
     name_kanji: Optional[str] = Field(None, description="Character name in Kanji/Japanese")
     name_native: Optional[str] = Field(None, description="Native language name")
+    nicknames: List[str] = Field(default_factory=list, description="Character nicknames from Jikan API")
     
     # Platform IDs (replaces sources/is_merged metadata)
     character_ids: Dict[str, int] = Field(default_factory=dict, description="Character IDs across platforms (mal, anilist, etc.)")
