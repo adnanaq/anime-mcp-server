@@ -35,9 +35,10 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
        - If theme name exists but has null description: Update that theme's description only
        - Otherwise: Add new theme with name + description
 - **external_links**: Extract from all available sources (see EXTERNAL LINK PROCESSING section for details and section 4 for deduplication rules)
-- **synonyms**: Extract from all sources that provide alternative titles with intelligent merging:
-  1. Start with all unique titles from Jikan titles.synonyms array (if available)
-  2. For each source in priority order (AniList → Kitsu → Anime-Planet → AnimSchedule → AniDB):
+- **synonyms**: Extract from offline database + all sources that provide alternative titles with intelligent merging:
+  1. Start with existing offline database synonyms as foundation
+  2. For each source in priority order (Jikan → AniList → Kitsu → Anime-Planet → AnimSchedule → AniDB):
+     - Jikan: Process all entries from titles.synonyms array
      - AniList: Process all entries from synonyms array
      - Kitsu: Process all entries from abbreviatedTitles array  
      - Anime-Planet: Process all entries from alternative titles
@@ -72,12 +73,39 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 - **type**: Extract from Jikan type field, use AniList format as cross-validation/fallback if Jikan is null/missing (TV, Movie, OVA, Special, etc.)
 - **rating**: Extract from Jikan rating field
 - **content_warnings**: Infer from Jikan rating and content
+- **synopsis**: Extract using source hierarchy for best quality description:
+  1. **AniDB**: description field (highest priority - most comprehensive with production context)
+     - Processing: Remove hyperlinks `[link text]` → `link text`, clean markup `[i]text[/i]` → `text`
+  2. **Jikan**: synopsis field (high priority - narrative excellence with character development)
+  3. **AnimSchedule**: description field (medium priority - comprehensive but needs HTML cleanup)
+     - Processing: Convert HTML entities `&#39;` → `'`, `&#34;` → `"`, remove `<br>` tags
+  4. **Kitsu**: synopsis or description field (medium priority - clean alternative to AnimSchedule)
+  5. **Anime-Planet**: description from json_ld field (lower priority - concise and accessible)
+  6. **AniList**: description field (fallback only - basic plot outline)
+     - Processing: Remove `<br>` tags, minimal content
+  - Apply source-specific formatting cleanup as specified above
+  - Ensure final synopsis is coherent and complete
 
 ### CORE METADATA (Jikan Primary):
-- **synopsis**: Extract from Jikan synopsis field or null
 - **title_japanese**: Extract Japanese title from Jikan
 - **title_english**: Extract English title from Jikan
 - **background**: Extract background information from Jikan
+- **trailers**: Extract from all available sources with deduplication:
+  - **Jikan**: Extract from trailer object:
+    - youtube_url: trailer.url 
+    - thumbnail_url: trailer.images.maximum_image_url (fallback to last item in trailer.images if maximum_image_url unavailable)
+    - title: trailer.title (if available)
+  - **AniList**: Extract from trailer object:
+    - youtube_url: Convert trailer.id to full YouTube URL "https://www.youtube.com/watch?v={trailer.id}"
+    - thumbnail_url: trailer.thumbnail 
+    - title: trailer.site + " Trailer" (if no specific title available)
+  - **Kitsu**: Extract from youtubeVideoId:
+    - youtube_url: Convert youtubeVideoId to full YouTube URL "https://www.youtube.com/watch?v={youtubeVideoId}"
+    - thumbnail_url: null (Kitsu doesn't provide thumbnail URLs)
+    - title: "Official Trailer"
+  - Ensure no duplicate YouTube URLs across all trailers
+  - Only include trailers with valid YouTube URLs
+  - Combine all unique trailers into single array
 - **aired_dates**: Extract aired information from Jikan (from, to, string)
 - **broadcast**: Extract broadcast information from Jikan (day, time, timezone)
 
@@ -118,9 +146,9 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 
 ### EXTERNAL LINK PROCESSING:
 - **external_links**: Add platform URLs to external_links:
-  - Jikan: Extract from external
+  - Jikan: Extract from external + streaming
+    - Extract name as key and url as value
   - AnimSchedule; Extract from websites
-  - Anime-Planet: json_ld.url → add as "animeplanet" property
   - AniList: Extract from externalLinks array:
     - Extract only site and url properties
     - Convert site property to lowercase and remove all spaces to create key
@@ -187,6 +215,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
     {"name": "Violence", "description": "Physical force against self or other, compelling action against one's will on pain of being hurt."}
   ],
   "source_material": "Manga", // EXAMPLE - Extract from Jikan, fallback to AniList if null
+  "type": "TV", // EXAMPLE - Extract from Jikan type field, use AniList format as cross-validation/fallback
   "rating": "R - 17+ (violence & profanity)", // EXAMPLE - Extract actual rating
   "content_warnings": ["Violence", "Strong Language"], // EXAMPLE - Extract actual content warnings
   "nsfw": false, // EXAMPLE - Extract actual nsfw flag from Kitsu
@@ -194,6 +223,13 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
   "title_english": "Fullmetal Alchemist", // EXAMPLE - Extract actual English title
   "synonyms": ["FMA", "Hagane no Renkinjutsushi", "강철의 연금술사"], // EXAMPLE - Extract actual synonyms from all sources, no duplicates
   "background": "Fullmetal Alchemist won the TV Feature Award...", // EXAMPLE - Extract actual background
+  "trailers": [
+    {
+      "youtube_url": "https://www.youtube.com/watch?v=qig4KOK2R2g",
+      "thumbnail_url": "https://i.ytimg.com/vi/qig4KOK2R2g/hqdefault.jpg",
+      "title": "Official Trailer"
+    }
+  ], // EXAMPLE - Extract actual trailers from Jikan, AniList, Kitsu with deduplication
   "aired_dates": {
     "from": "2003-10-04T00:00:00+00:00",
     "to": "2004-10-02T00:00:00+00:00",
