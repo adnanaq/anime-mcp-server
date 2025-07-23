@@ -1,0 +1,332 @@
+{
+  "data": [
+    {
+      "id": "111273",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/111273"
+      },
+      "attributes": {
+        "createdAt": "2018-08-02T18:39:13.016Z",
+        "updatedAt": "2018-08-02T21:59:28.929Z",
+        "role": "supporting"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111273/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/111273/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111273/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/111273/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111273/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/111273/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "111274",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/111274"
+      },
+      "attributes": {
+        "createdAt": "2018-08-02T18:39:13.037Z",
+        "updatedAt": "2018-08-02T18:39:13.037Z",
+        "role": "main"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111274/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/111274/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111274/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/111274/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111274/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/111274/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "111278",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/111278"
+      },
+      "attributes": {
+        "createdAt": "2018-08-02T18:39:13.088Z",
+        "updatedAt": "2018-08-02T18:39:13.088Z",
+        "role": "main"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111278/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/111278/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111278/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/111278/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111278/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/111278/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "111280",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/111280"
+      },
+      "attributes": {
+        "createdAt": "2018-08-02T18:39:13.135Z",
+        "updatedAt": "2018-08-02T18:39:13.135Z",
+        "role": "supporting"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111280/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/111280/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111280/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/111280/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/111280/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/111280/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "126387",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/126387"
+      },
+      "attributes": {
+        "createdAt": "2018-08-03T03:14:40.031Z",
+        "updatedAt": "2018-08-03T03:14:40.031Z",
+        "role": "main"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126387/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/126387/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126387/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/126387/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126387/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/126387/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "126388",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/126388"
+      },
+      "attributes": {
+        "createdAt": "2018-08-03T03:14:40.053Z",
+        "updatedAt": "2018-08-03T03:14:40.053Z",
+        "role": "main"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126388/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/126388/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126388/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/126388/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126388/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/126388/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "126389",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/126389"
+      },
+      "attributes": {
+        "createdAt": "2018-08-03T03:14:40.061Z",
+        "updatedAt": "2018-08-03T03:14:40.061Z",
+        "role": "supporting"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126389/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/126389/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126389/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/126389/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126389/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/126389/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "126390",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/126390"
+      },
+      "attributes": {
+        "createdAt": "2018-08-03T03:14:40.077Z",
+        "updatedAt": "2018-08-03T03:14:40.077Z",
+        "role": "supporting"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126390/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/126390/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126390/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/126390/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126390/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/126390/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "126391",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/126391"
+      },
+      "attributes": {
+        "createdAt": "2018-08-03T03:14:40.089Z",
+        "updatedAt": "2018-08-03T03:14:40.089Z",
+        "role": "supporting"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126391/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/126391/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126391/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/126391/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126391/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/126391/voices"
+          }
+        }
+      }
+    },
+    {
+      "id": "126392",
+      "type": "mediaCharacters",
+      "links": {
+        "self": "https://kitsu.io/api/edge/media-characters/126392"
+      },
+      "attributes": {
+        "createdAt": "2018-08-03T03:14:40.100Z",
+        "updatedAt": "2018-08-03T03:14:40.100Z",
+        "role": "supporting"
+      },
+      "relationships": {
+        "media": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126392/relationships/media",
+            "related": "https://kitsu.io/api/edge/media-characters/126392/media"
+          }
+        },
+        "character": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126392/relationships/character",
+            "related": "https://kitsu.io/api/edge/media-characters/126392/character"
+          }
+        },
+        "voices": {
+          "links": {
+            "self": "https://kitsu.io/api/edge/media-characters/126392/relationships/voices",
+            "related": "https://kitsu.io/api/edge/media-characters/126392/voices"
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "count": 125
+  },
+  "links": {
+    "first": "https://kitsu.io/api/edge/anime/1/characters?page%5Blimit%5D=10&page%5Boffset%5D=0",
+    "next": "https://kitsu.io/api/edge/anime/1/characters?page%5Blimit%5D=10&page%5Boffset%5D=10",
+    "last": "https://kitsu.io/api/edge/anime/1/characters?page%5Blimit%5D=10&page%5Boffset%5D=115"
+  }
+}

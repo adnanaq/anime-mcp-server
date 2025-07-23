@@ -1,0 +1,122 @@
+{
+  "id": "NoXc",
+  "title": "Cowboy Bebop",
+  "route": "cowboy-bebop",
+  "premier": "1998-04-02T16:00:00Z",
+  "subPremier": "0001-01-01T00:00:00Z",
+  "dubPremier": "0001-01-01T00:00:00Z",
+  "month": "April",
+  "year": 1998,
+  "season": {
+    "title": "Spring 1998",
+    "year": "1998",
+    "season": "Spring",
+    "route": "spring-1998"
+  },
+  "episodeOverride": {
+    "overrideDate": "0001-01-01T00:00:00Z",
+    "overrideEpisode": 0,
+    "episodesAired": 0
+  },
+  "subEpisodeOverride": {
+    "overrideDate": "0001-01-01T00:00:00Z",
+    "overrideEpisode": 0,
+    "episodesAired": 0
+  },
+  "dubEpisodeOverride": {
+    "overrideDate": "0001-01-01T00:00:00Z",
+    "overrideEpisode": 0,
+    "episodesAired": 0
+  },
+  "delayedFrom": "0001-01-01T00:00:00Z",
+  "delayedUntil": "0001-01-01T00:00:00Z",
+  "subDelayedFrom": "0001-01-01T00:00:00Z",
+  "subDelayedUntil": "0001-01-01T00:00:00Z",
+  "dubDelayedFrom": "0001-01-01T00:00:00Z",
+  "dubDelayedUntil": "0001-01-01T00:00:00Z",
+  "jpnTime": "2020-06-14T16:00:00Z",
+  "subTime": "2023-03-18T16:01:00Z",
+  "dubTime": "2023-03-18T16:01:00Z",
+  "description": "In the year 2071, humanity has colonized several of the planets and moons of the solar system leaving the now uninhabitable surface of planet Earth behind. The Inter Solar System Police attempts to keep peace in the galaxy, aided in part by outlaw bounty hunters, referred to as &#34;Cowboys.&#34; The ragtag team aboard the spaceship Bebop are two such individuals.<br><br>Mellow and carefree Spike Spiegel is balanced by his boisterous, pragmatic partner Jet Black as the pair makes a living chasing bounties and collecting rewards. Thrown off course by the addition of new members that they meet in their travels—Ein, a genetically engineered, highly intelligent Welsh Corgi; femme fatale Faye Valentine, an enigmatic trickster with memory loss; and the strange computer whiz kid Edward Wong—the crew embarks on thrilling adventures that unravel each member&#39;s dark and mysterious past little by little.<br><br>Well-balanced with high density action and light-hearted comedy, Cowboy Bebop is a space Western classic and an homage to the smooth and improvised music it is named after.<br><br>(Source: MAL Rewrite)",
+  "genres": [
+    {
+      "name": "Action",
+      "route": "action"
+    },
+    {
+      "name": "Adventure",
+      "route": "adventure"
+    },
+    {
+      "name": "Comedy",
+      "route": "comedy"
+    },
+    {
+      "name": "Drama",
+      "route": "drama"
+    },
+    {
+      "name": "Sci-Fi",
+      "route": "sci-fi"
+    },
+    {
+      "name": "Space",
+      "route": "space"
+    }
+  ],
+  "studios": [
+    {
+      "name": "Sunrise",
+      "route": "sunrise"
+    }
+  ],
+  "sources": [
+    {
+      "name": "Original",
+      "route": "original"
+    }
+  ],
+  "mediaTypes": [
+    {
+      "name": "TV",
+      "route": "tv"
+    }
+  ],
+  "episodes": 26,
+  "lengthMin": 24,
+  "status": "Finished",
+  "imageVersionRoute": "anime/jpg/default/cowboy-bebop-f6e5005100.jpg",
+  "stats": {
+    "averageScore": 83.6670150756836,
+    "ratingCount": 243,
+    "trackedCount": 613,
+    "trackedRating": 600,
+    "colorLightMode": "2E6E39",
+    "colorDarkMode": "4AAF5B"
+  },
+  "names": {
+    "native": "カウボーイビバップ"
+  },
+  "relations": {
+    "other": [
+      "cowboy-bebop-yoseatsume-blues"
+    ],
+    "sideStories": [
+      "cowboy-bebop-ein-no-natsuyasumi",
+      "cowboy-bebop-tengoku-no-tobira"
+    ]
+  },
+  "websites": {
+    "official": "www.cowboy-bebop.net/",
+    "mal": "myanimelist.net/anime/1",
+    "aniList": "anilist.co/anime/1",
+    "kitsu": "kitsu.io/anime/1",
+    "anidb": "anidb.net/anime/23",
+    "crunchyroll": "www.crunchyroll.com/cowboy-bebop",
+    "funimation": "www.funimation.com/shows/cowboy-bebop/",
+    "amazon": "www.amazon.com/gp/video/detail/B00R2KO8ZE/",
+    "hulu": "www.hulu.com/cowboy-bebop",
+    "netflix": "www.netflix.com/title/80001305",
+    "apple": "apple.co/4gG7FOq"
+  }
+}
