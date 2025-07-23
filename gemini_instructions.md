@@ -4,7 +4,7 @@ This document outlines the PRODUCTION-LEVEL process for enriching anime data bas
 
 ## 1. Objective
 
-The primary goal is to take a raw anime data object (from an offline database) and enrich it with additional information from external APIs (Jikan, AnimSchedule, Kitsu, Anime-Planet) and AI processing. This is a PRODUCTION implementation of the `enrich_anime_from_offline_data` method.
+The primary goal is to take a raw anime data object (from an offline database) and enrich it with additional information from external APIs (Jikan, AnimSchedule, Kitsu, Anime-Planet, AniList, AniDB) and AI processing. This is a PRODUCTION implementation of the `enrich_anime_from_offline_data` method.
 
 **CRITICAL: This is NOT a simulation. This is a production-level enrichment process that must use REAL API calls and REAL data.**
 
@@ -31,6 +31,14 @@ The primary goal is to take a raw anime data object (from an offline database) a
     - Find the URL containing "anime-planet.com/anime/".
     - Extract the slug from this URL (e.g., "dandadan" from "https://www.anime-planet.com/anime/dandadan").
     - If no Anime-Planet URL is found, Anime-Planet data fetching will be skipped.
+5.  **AniList ID Extraction:**
+    - Find the URL containing "anilist.co/anime/".
+    - Extract the numerical ID from this URL.
+    - If no AniList ID is found, AniList data fetching will be skipped.
+6.  **AniDB ID Extraction:**
+    - Find the URL containing "anidb.net/anime/" or "anidb.info/a".
+    - Extract the numerical ID from this URL.
+    - If no AniDB ID is found, AniDB data fetching will be skipped.
 
 ### Step 2: Concurrent External API Data Fetching
 
@@ -60,6 +68,14 @@ The primary goal is to take a raw anime data object (from an offline database) a
     - **ONLY if Anime-Planet URL was found in Step 1** - otherwise skip this step entirely
     - Use the `AnimePlanetEnrichmentHelper.fetch_all_data(offline_anime_data)` method from `src/batch_enrichment/animeplanet_helper.py`
     - **NEVER mock this data** - Always make real web scraping calls to Anime-Planet to get accurate information including ratings, images, rankings, and genre data.
+7.  **AniList Data:** Fetch comprehensive AniList data using the extracted AniList ID. Save in temporary file in temp/anilist.json to be used later
+    - **ONLY if AniList ID was found in Step 1** - otherwise skip this step entirely
+    - URL: `https://graphql.anilist.co/` with GraphQL query to fetch anime details, characters, staff, relations, and statistics
+    - **NEVER mock this data** - Always make real GraphQL calls to AniList to get accurate information including detailed character data, staff information, and comprehensive statistics.
+8.  **AniDB Data:** Fetch comprehensive AniDB data using the extracted AniDB ID. Save in temporary file in temp/anidb.json to be used later  
+    - **ONLY if AniDB ID was found in Step 1** - otherwise skip this step entirely
+    - Use WebFetch to scrape AniDB pages for detailed anime information including staff, episode details, and technical information
+    - **NEVER mock this data** - Always make real web scraping calls to AniDB to get accurate information including comprehensive staff data, episode information, and technical details.
 
 ### Step 3: Pre-process Episode Data
 
@@ -72,12 +88,12 @@ This is the core of the process, where AI is used to process the collected data.
 **IMPORTANT: Strictly follow AnimeEtry schema from `src/models/anime.py`at each stage**
 
 1.  **Stage 1: Metadata Extraction** PROMPT: src/services/prompts/stages/01_metadata_extraction_v2.txt
-    - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data, Kitsu data, Anime-Planet data.
+    - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data, Kitsu data, Anime-Planet data, AniList data, AniDB data.
     - **Action:** Generate a JSON object containing `synopsis`, `genres`, `demographics`, `themes`, `source_material`, `rating`, `content_warnings`, `nsfw`, `title_japanese`, `title_english`, `background`, `aired_dates`, `broadcast`, `broadcast_schedule`, `premiere_dates`, `delay_information`, `episode_overrides`, `external_links`, `statistics`, `images`, `month`.
 2.  **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing_multi_agent.txt
     - **Inputs:** The pre-processed episode list.
     - **Action:** Process episodes in batches. For each batch, generate a list of `episode_details`. DO NOT skip any episode
-3.  **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis.txt
+3.  **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis_v2.txt
     - **Inputs:** `relatedAnime` URLs from `offline_anime_data`, and `relations` from Jikan data.
     - **Action:** Generate a JSON object with `relatedAnime` and `relations` fields.
     - **CRITICAL RULES:**
@@ -88,13 +104,14 @@ This is the core of the process, where AI is used to process the collected data.
         - Do not use numeric ID from url as the title.
       - **FORBIDDEN PATTERNS:** Do not use generic titles like "Anime [ID]", "Unknown Title", or "Anime 19060".
 4.  **Stage 4: Statistics and Media** PROMPT: src/services/prompts/stages/04_statistics_media.txt
-    - **Inputs:** Jikan statistics and media data.
+    - **Inputs:** Jikan statistics and media data, AniList statistics, AniDB statistics and staff data.
     - **Action:** Generate a JSON object with `trailers`, `staff`, `opening_themes`, `ending_themes`, `streaming_info`, `licensors`, `streaming_licenses`, `awards`, `statistics`, `external_links`, and `images`.
     - **CRITICAL RULES:**
-      - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu`, `animeplanet` key (e.g., `{"statistics": {"mal": {...}, "kitsu": {...}, "animeplanet": {...}}}`). There could be multiple sources.
+      - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu`, `animeplanet`, `anilist`, `anidb` key (e.g., `{"statistics": {"mal": {...}, "anilist": {...}, "anidb": {...}}}`). There could be multiple sources.
+      - Prioritize AniDB for comprehensive staff data merging including detailed roles and credits.
 5.  **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing_multi_agent.txt
-    - **Inputs:** Jikan characters data.
-    - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any charatcer
+    - **Inputs:** Jikan characters data, AniList characters data.
+    - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any character. Merge character data from multiple sources for comprehensive character profiles.
 
 ### Step 5: Programmatic Assembly
 
