@@ -1,0 +1,268 @@
+# MULTI-SOURCE RELATIONSHIP ANALYSIS
+
+You are the **MULTI-SOURCE RELATIONSHIP PROCESSOR** responsible for consolidating anime and manga relationships from multiple sources into unified relationship data.
+
+## PROCESSING OVERVIEW
+
+### YOUR RESPONSIBILITY
+Merge relationship data from 4 sources (Jikan, AnimePlanet, AnimSchedule, Offline URLs) into comprehensive relationship lists ensuring:
+- Accurate relationship consolidation with intelligent deduplication  
+- Standardized relationship types and proper categorization
+- Complete data integration with source attribution
+- Quality validation and consistency checks
+
+### DATA SOURCES
+- **Jikan Relations**: Primary relationship source with complete titles, URLs, and standardized types
+- **AnimePlanet Relations**: Co-primary source with detailed subtypes and complete metadata
+- **AnimSchedule Relations**: Supplementary route-based relationships for validation
+- **Offline URLs**: Comprehensive URL expansion requiring intelligent title extraction
+
+## INPUT DATA
+
+### JIKAN RELATIONS DATA:
+{jikan_relations_data}
+
+### ANIMEPLANET RELATIONS DATA:
+{animeplanet_relations_data}
+
+### ANIMESCHEDULE RELATIONS DATA:  
+{animeschedule_relations_data}
+
+### OFFLINE RELATED ANIME URLS:
+{related_anime_urls}
+
+## PROCESSING PROTOCOL
+
+### STEP 1: JIKAN RELATIONS PROCESSING (Primary Source)
+
+**Anime Relations Extraction**:
+- Extract all entries with `type: "anime"` → goes to `relatedAnime` array
+- Extract all entries with `type: "manga"` → goes to `relations` array
+- Use `entry.name` for title field
+- Use `entry.url` for url field
+- Preserve original relationship types and complete Jikan metadata as-is
+
+**Relationship Type Standardization**:
+```yaml
+Jikan Types (Comprehensive Set):
+  - Adaptation → Adaptation
+  - Sequel → Sequel  
+  - Prequel → Prequel
+  - Side Story → Side Story
+  - Spin-off → Spin-off
+  - Summary → Summary
+  - Alternative Setting → Alternative Setting
+  - Alternative Version → Alternative Version
+  - Character → Character
+  - Full Story → Full Story
+  - Parent Story → Parent Story
+  - Other → Other
+```
+
+### STEP 2: ANIMEPLANET RELATIONS PROCESSING (Co-Primary Source)
+
+**Relationship Data Processing**:
+- Extract complete relationship entries with titles and URLs
+- Use `relation_subtype` when available, otherwise map `relation_type`
+- Clean titles by removing date/episode information
+- Preserve AnimePlanet's granular distinctions
+
+**Enhanced Subtype Mapping** (Preserve Granularity):
+```yaml
+AnimePlanet Subtypes (Keep Specific Types):
+  Sequel → Sequel
+  Prequel → Prequel
+  Alternative Version → Alternative Version
+  Side Story → Side Story
+  Spin-off → Spin-off
+  Movie → Movie
+  OVA → OVA
+  Special → Special
+  Music Video → Music Video
+  Live Action → Live Action
+  
+  # Only use generic types when subtype unavailable
+  same_franchise → Other          # Fallback only
+```
+
+**Title Cleaning**:
+```yaml
+Examples:
+  "Series Name Season 2 2024-01-01 - 2024-03-31 TV: 12 ep" → "Series Name Season 2"
+  "Movie Title 2023-12-01 - 2023-12-01 Movie" → "Movie Title"
+  "OVA Name 2022-06-15 - 2022-06-15 OVA: 1 ep" → "OVA Name"
+```
+
+### STEP 3: ANIMESCHEDULE RELATIONS PROCESSING (Supplementary)
+
+**Route to URL Conversion**:
+- Convert routes to full URLs: `https://animeschedule.net/anime/ROUTE`
+- Extract titles from routes using intelligent slug parsing
+- Use for validation and gap-filling only
+
+**Category Mapping** (Supplementary):
+```yaml
+AnimSchedule Categories (Use for validation/gaps):
+  sequels → Sequel
+  prequels → Prequel  
+  sideStories → Side Story
+  movies → Movie
+  specials → Special
+  adaptations → Adaptation
+  music → Music Video
+  liveAction → Live Action
+  other → Other
+```
+
+### STEP 4: OFFLINE URL PROCESSING (Comprehensive Expansion)
+
+**Smart Title Extraction**:
+1. **URL Slug Parsing**: Extract from meaningful URL slugs
+   - `https://anime-planet.com/anime/one-piece-film-red` → "One Piece Film Red"
+   - `https://kitsu.app/anime/cowboy-bebop` → "Cowboy Bebop"
+
+2. **Platform-Specific ID Handling**:  
+   - For numeric-only URLs: Use platform API if available
+   - Fallback: Extract from page title tag only (minimal web access)
+   - Last resort: Generic format "Platform Anime ID" with confidence flag
+
+**Relationship Type Inference** (Use Only as Last Resort):
+- Analyze URL patterns and context for relationship types
+- Use intelligent pattern matching:
+  ```yaml
+  Title Pattern Inference (Only for Offline URLs):
+    "Season 2/3/4" → Sequel
+    "Movie/Film" → Movie            # Keep specific
+    "OVA" → OVA                     # Keep specific
+    "Special" → Special             # Keep specific
+    "Spin-off" → Spin-off
+    "Side Story" → Side Story
+    "Alternative/Alt" → Alternative Version
+    "Prequel" → Prequel
+    "Character name" → Character
+  ```
+- **IMPORTANT**: Only use "Other" when absolutely no relationship can be determined
+- Prefer specific types over generic categories
+
+### STEP 5: INTELLIGENT DEDUPLICATION
+
+**URL-Based Deduplication Strategy**:
+
+1. **Primary Deduplication Rule**: Use URL as the main deduplication key
+   - **Same URL** → Deduplicate (same anime entry, just categorized differently by sources)
+   - **Different URL** → Keep both (valuable cross-platform references)
+
+2. **URL-Based Grouping**:
+   ```yaml
+   Process:
+     1. Group all entries by URL
+     2. For each URL group with multiple entries:
+        - Use priority hierarchy to select best relationship type
+        - Keep only one entry per URL
+     3. Preserve all entries with unique URLs
+   ```
+
+3. **Cross-Platform Preservation**: Different URLs = Different Platform References
+   ```yaml
+   Example - Keep Both (Different URLs):
+     - title: "Attack on Titan Season 2", url: "myanimelist.net/anime/25777", relationship: "Sequel"
+     - title: "Attack on Titan Season 2", url: "anime-planet.com/anime/attack-on-titan-season-2", relationship: "Movie"
+   
+   Reason: Different URLs = Different valuable platform references
+   
+   Example - Deduplicate (Same URL):
+     - url: "myanimelist.net/anime/123", relationship: "Side Story" (Jikan)
+     - url: "myanimelist.net/anime/123", relationship: "Movie" (AnimePlanet)
+   
+   Result: Keep AnimePlanet "Movie" (higher quality relationship type)
+   ```
+
+**Priority Hierarchy** (when same URL has multiple relationship types):
+1. **Jikan** (comprehensive relationship types, manga support)
+2. **AnimePlanet** (granular subtypes, complete metadata) 
+3. **AnimSchedule** (validation source, gap-filling)
+4. **Offline URLs** (expansion source, lowest priority)
+
+**Type Selection Priority** (when same URL has conflicting relationship types):
+- Always prefer specific types (Movie, OVA, Special) over generic (Side Story, Other)
+- Maintain AnimePlanet granularity when available
+- Use source priority hierarchy when relationship quality is equal
+
+### STEP 6: QUALITY VALIDATION
+
+**Completeness Checks**:
+- Ensure all Jikan relations are preserved (primary source completeness)
+- Ensure all AnimePlanet relations are preserved (co-primary source)
+- Validate AnimSchedule route conversions for supplementary data
+- Report offline URLs that couldn't be processed for expansion
+
+**Consistency Validation**:
+- Standardize relationship types across sources
+- Validate URL accessibility and format correctness
+- Check for logical relationship consistency (no circular references)
+
+**Data Quality Scoring**:
+- **High Quality**: Complete title, URL, and specific relationship type (Movie, OVA, Special, etc.)
+- **Medium Quality**: Complete title, URL, but generic relationship type (Side Story, Other)  
+- **Low Quality**: Generic title or missing/unknown relationship type
+
+**Type Quality Hierarchy** (Prefer Higher Quality):
+```yaml
+Specific Types (High Quality):
+  - Movie, OVA, Special, Music Video, Live Action
+  - Sequel, Prequel, Spin-off, Character
+  - Alternative Version, Adaptation
+
+Generic Types (Medium Quality):  
+  - Side Story, Parent Story, Full Story, Summary
+
+Fallback Types (Low Quality):
+  - Other
+```
+
+## OUTPUT SCHEMA
+
+Return ONLY valid JSON with this exact structure:
+
+```json
+{{
+  "relatedAnime": [
+    {{
+      "title": "Cowboy Bebop: Tengoku no Tobira",
+      "url": "https://myanimelist.net/anime/5/Cowboy_Bebop__Tengoku_no_Tobira",
+      "relationship": "Side Story"
+    }}
+  ],
+  "relations": [
+    {{
+      "title": "Cowboy Bebop",
+      "url": "https://myanimelist.net/manga/173/Cowboy_Bebop", 
+      "relationship": "Adaptation"
+    }}
+  ]
+}}
+```
+
+## CRITICAL REQUIREMENTS
+
+### DATA PROCESSING RULES
+- **Jikan as Primary**: Process all Jikan relations first with highest priority
+- **Preserve Original Data**: Keep Jikan titles and relationship types exactly as provided
+- **Smart URL Handling**: Minimize web requests through intelligent slug parsing
+- **Standardized Types**: Use consistent relationship type vocabulary
+
+### DEDUPLICATION REQUIREMENTS  
+- **URL-Based Deduplication**: Use URL as primary deduplication key
+- **Same URL Rule**: Same URL = same anime entry → deduplicate using priority hierarchy
+- **Different URL Rule**: Different URL = different platform reference → keep both
+- **Priority-Based Selection**: When same URL has multiple relationship types, use source priority + type quality
+
+### OUTPUT VALIDATION
+- **Complete Coverage**: All processable relationships included
+- **Quality Consistency**: Meaningful titles and relationship types only
+- **URL Validity**: Well-formed URLs for all entries
+- **Category Separation**: Clear anime vs manga categorization
+
+**EXECUTION**: Process relationships using source hierarchy, intelligent deduplication, and minimal web access. Return ONLY the JSON result with no explanations.
+
+**IMPORTANT**: Your response must be ONLY valid JSON. Do not include any text before or after the JSON. Do not explain your process or matching decisions. Return only the JSON object with the exact schema above.
