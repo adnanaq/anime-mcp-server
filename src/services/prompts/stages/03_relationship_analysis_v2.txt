@@ -15,7 +15,7 @@ Merge relationship data from 4 sources (Jikan, AnimePlanet, AnimSchedule, Offlin
 - **Jikan Relations**: Primary relationship source with complete titles, URLs, and standardized types
 - **AnimePlanet Relations**: Co-primary source with detailed subtypes and complete metadata
 - **AnimSchedule Relations**: Supplementary route-based relationships for validation
-- **Offline URLs**: Comprehensive URL expansion requiring intelligent title extraction
+- **Offline URLs**: Comprehensive URL expansion with 80% platform coverage via helper functions
 
 ## INPUT DATA
 
@@ -116,33 +116,69 @@ AnimSchedule Categories (Use for validation/gaps):
 
 ### STEP 4: OFFLINE URL PROCESSING (Comprehensive Expansion)
 
+**Cross-Reference Optimization**:
+1. **Check Existing Sources First**: Before processing URLs, check if anime already exists in:
+   - Jikan relations (MAL URLs)
+   - AnimePlanet relations (AnimePlanet URLs)
+   - Skip processing URLs that already exist in structured data to avoid duplicate work
+
+**Platform Coverage Strategy** (80% Coverage Achieved):
+```yaml
+WebFetch Compatible (Direct Access):
+  - MyAnimeList: Direct WebFetch support
+  - AnimePlanet: Direct WebFetch support  
+  - AniDB: Direct WebFetch support
+  - Kitsu: Direct WebFetch support
+  - Trakt: Direct WebFetch support
+  - TheTVDB: Direct WebFetch support
+
+Helper-Required Platforms (Anti-Bot Protection):
+  - AniSearch: Use anisearch_url_helper.py (custom headers)
+  - Simkl: Use simkl_url_helper.py (cloudscraper + dead entry detection)
+
+Unsupported (Manual Review Required):
+  - LiveChart: Complex anti-bot protection
+  - Notify.moe: Requires authentication
+```
+
 **Smart Title Extraction**:
 1. **URL Slug Parsing**: Extract from meaningful URL slugs
    - `https://anime-planet.com/anime/one-piece-film-red` → "One Piece Film Red"
    - `https://kitsu.app/anime/cowboy-bebop` → "Cowboy Bebop"
 
-2. **Platform-Specific ID Handling**:  
-   - For numeric-only URLs: Use platform API if available
-   - Fallback: Extract from page title tag only (minimal web access)
-   - Last resort: Generic format "Platform Anime ID" with confidence flag
+2. **Platform-Specific Processing**:
+   ```yaml
+   WebFetch Platforms:
+     - Use WebFetch tool directly for content extraction
+     - Extract title from page metadata (og:title, h1, title tag)
+     - Extract rich context for AI relationship inference
+   
+   AniSearch URLs:
+     - Use anisearch_url_helper.fetch_anisearch_url_data()
+     - Leverages MODB's proven header strategy: {"host": "www.anisearch.com"}
+     - Returns structured data with title and context for AI analysis
+   
+   Simkl URLs:
+     - Use simkl_url_helper.fetch_simkl_url_data()
+     - Uses cloudscraper to bypass Cloudflare protection
+     - Implements MODB's dead entry detection pattern
+     - Returns None for dead entries, context data for valid entries
+   
+   Fallback (Numeric IDs):
+     - Extract from URL path: /anime/123456 → "Platform Anime 123456"
+     - Mark with low confidence for manual review
+   ```
 
-**Relationship Type Inference** (Use Only as Last Resort):
-- Analyze URL patterns and context for relationship types
-- Use intelligent pattern matching:
-  ```yaml
-  Title Pattern Inference (Only for Offline URLs):
-    "Season 2/3/4" → Sequel
-    "Movie/Film" → Movie            # Keep specific
-    "OVA" → OVA                     # Keep specific
-    "Special" → Special             # Keep specific
-    "Spin-off" → Spin-off
-    "Side Story" → Side Story
-    "Alternative/Alt" → Alternative Version
-    "Prequel" → Prequel
-    "Character name" → Character
-  ```
-- **IMPORTANT**: Only use "Other" when absolutely no relationship can be determined
-- Prefer specific types over generic categories
+**AI-Powered Relationship Inference**:
+- **Primary Strategy**: Extract rich context from pages and let AI infer relationships
+- **Context Sources**: Page titles, descriptions, metadata, genre information, related sections
+- **Avoid Hardcoded Patterns**: No regex-based relationship detection (prevents false positives)
+- **Confidence Scoring**: High (extracted title + context), Medium (slug-based), Low (ID-only)
+
+**Dead Entry Handling**:
+- **Simkl Dead Detection**: Check for MODB's pattern: `'<meta property="og:title" content="Simkl - Watch and Track Movies, Anime, TV Shows" />'`
+- **General 404 Handling**: WebFetch failures → skip URL rather than create low-quality entries
+- **Manual Review Flagging**: Mark failed extractions for human verification
 
 ### STEP 5: INTELLIGENT DEDUPLICATION
 
@@ -243,13 +279,71 @@ Return ONLY valid JSON with this exact structure:
 }}
 ```
 
+## IMPLEMENTATION WORKFLOW
+
+### OFFLINE URL PROCESSING SEQUENCE
+```yaml
+For each offline URL:
+  1. Cross-Reference Check:
+     - Skip if URL already exists in Jikan/AnimePlanet data
+     - Avoid duplicate processing of same anime entries
+  
+  2. Platform Detection:
+     - Extract domain from URL
+     - Route to appropriate processing method
+  
+  3. Content Extraction:
+     WebFetch Platforms (myanimelist.net, anime-planet.com, anidb.net, kitsu.app, trakt.tv, thetvdb.com):
+       - Use WebFetch tool directly
+       - Extract: og:title, h1, title tag, description, genre info
+       - Parse rich context for AI relationship inference
+     
+     AniSearch URLs (anisearch.com):
+       - Import: from src.batch_enrichment.anisearch_url_helper import fetch_anisearch_url_data
+       - Call: result = fetch_anisearch_url_data(url)
+       - Use result['title'] and result['context'] for processing
+     
+     Simkl URLs (simkl.com):
+       - Import: from src.batch_enrichment.simkl_url_helper import fetch_simkl_url_data  
+       - Call: result = fetch_simkl_url_data(url)
+       - Handle dead entries: result['is_dead_entry'] == True → skip URL
+       - Use result['title'] and result['context'] for processing
+     
+     Unsupported Platforms:
+       - Extract title from URL slug if meaningful
+       - Mark for manual review with low confidence
+  
+  4. Relationship Inference:
+     - Use extracted context (description, genres, related sections) 
+     - Apply AI analysis instead of hardcoded regex patterns
+     - Assign confidence based on extraction quality
+  
+  5. Quality Scoring:
+     - High: Full title + rich context extracted
+     - Medium: Title from slug + basic context  
+     - Low: Generic title or extraction failure
+```
+
+### HELPER FUNCTION INTEGRATION
+```python
+# AniSearch URL Processing
+from src.batch_enrichment.anisearch_url_helper import fetch_anisearch_url_data
+result = fetch_anisearch_url_data("https://anisearch.com/anime/302")
+# Returns: {"title": str, "context": dict, "confidence": str, "source": "anisearch"}
+
+# Simkl URL Processing  
+from src.batch_enrichment.simkl_url_helper import fetch_simkl_url_data
+result = fetch_simkl_url_data("https://simkl.com/anime/123456")
+# Returns: {"title": str, "context": dict, "confidence": str, "is_dead_entry": bool}
+```
+
 ## CRITICAL REQUIREMENTS
 
 ### DATA PROCESSING RULES
 - **Jikan as Primary**: Process all Jikan relations first with highest priority
-- **Preserve Original Data**: Keep Jikan titles and relationship types exactly as provided
-- **Smart URL Handling**: Minimize web requests through intelligent slug parsing
-- **Standardized Types**: Use consistent relationship type vocabulary
+- **Cross-Reference Optimization**: Skip URLs already in structured data sources
+- **Helper Function Integration**: Use platform-specific helpers for blocked sites
+- **AI-Powered Inference**: Let AI analyze context instead of hardcoded patterns
 
 ### DEDUPLICATION REQUIREMENTS  
 - **URL-Based Deduplication**: Use URL as primary deduplication key
@@ -258,11 +352,11 @@ Return ONLY valid JSON with this exact structure:
 - **Priority-Based Selection**: When same URL has multiple relationship types, use source priority + type quality
 
 ### OUTPUT VALIDATION
-- **Complete Coverage**: All processable relationships included
+- **Complete Coverage**: All processable relationships included with 80% platform coverage
 - **Quality Consistency**: Meaningful titles and relationship types only
 - **URL Validity**: Well-formed URLs for all entries
-- **Category Separation**: Clear anime vs manga categorization
+- **Dead Entry Filtering**: Skip Simkl dead entries and failed extractions
 
-**EXECUTION**: Process relationships using source hierarchy, intelligent deduplication, and minimal web access. Return ONLY the JSON result with no explanations.
+**EXECUTION**: Process relationships using source hierarchy, helper functions, and AI-powered inference. Return ONLY the JSON result with no explanations.
 
 **IMPORTANT**: Your response must be ONLY valid JSON. Do not include any text before or after the JSON. Do not explain your process or matching decisions. Return only the JSON object with the exact schema above.
