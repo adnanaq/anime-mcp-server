@@ -93,7 +93,7 @@ This is the core of the process, where AI is used to process the collected data.
 2.  **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing_multi_agent.txt
     - **Inputs:** The pre-processed episode list.
     - **Action:** Process episodes in batches. For each batch, generate a list of `episode_details`. DO NOT skip any episode
-3.  **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis_v2.txt
+3.  **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis.txt
     - **Inputs:** `relatedAnime` URLs from `offline_anime_data`, and `relations` from Jikan data.
     - **Action:** Generate a JSON object with `relatedAnime` and `relations` fields.
     - **CRITICAL RULES:**

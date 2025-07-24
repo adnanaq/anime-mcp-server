@@ -13,9 +13,12 @@ import json
 import logging
 import os
 import xml.etree.ElementTree as ET
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Set
 import aiohttp
 import time
+import hashlib
+from dataclasses import dataclass
+from enum import Enum
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -24,111 +27,334 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+class CircuitBreakerState(Enum):
+    """Circuit breaker states for AniDB API protection."""
+    CLOSED = "closed"      # Normal operation
+    OPEN = "open"          # Service unavailable, blocking requests
+    HALF_OPEN = "half_open" # Testing if service recovered
+
+
+@dataclass
+class AniDBRequestMetrics:
+    """Metrics for tracking AniDB API health and compliance."""
+    total_requests: int = 0
+    successful_requests: int = 0
+    failed_requests: int = 0
+    consecutive_failures: int = 0
+    last_request_time: float = 0
+    last_error_time: float = 0
+    current_interval: float = 2.0
+    
+    @property
+    def success_rate(self) -> float:
+        """Calculate success rate as percentage."""
+        if self.total_requests == 0:
+            return 100.0
+        return (self.successful_requests / self.total_requests) * 100.0
+    
+    @property
+    def error_rate(self) -> float:
+        """Calculate error rate as percentage."""
+        return 100.0 - self.success_rate
+
+
 class AniDBEnrichmentHelper:
-    """Helper for AniDB XML API data fetching in AI enrichment pipeline."""
+    """Enhanced AniDB XML API helper with production-level rate limiting and session management."""
     
     def __init__(self, client_name: str = None, client_version: str = None):
-        """Initialize AniDB enrichment helper."""
+        """Initialize AniDB enrichment helper with enhanced reliability features."""
         self.base_url = "http://api.anidb.net:9001/httpapi"
-        # Use environment variables if available, fallback to defaults
+        
+        # Client configuration
         self.client_name = client_name or os.getenv("ANIDB_CLIENT", "animeenrichment")
         self.client_version = client_version or os.getenv("ANIDB_CLIENTVER", "1.0")
+        
+        # Session management
         self.session = None
-        # AniDB has very strict rate limits (1 request per 2 seconds)
-        self.last_request_time = 0
-        self.min_request_interval = 2.0  # 2 seconds between requests
+        self._session_created_at = 0
+        self._session_max_age = 300  # Recreate session every 5 minutes
         
-    async def _wait_for_rate_limit(self):
-        """Ensure we don't exceed AniDB rate limits."""
+        # Enhanced rate limiting configuration
+        self.min_request_interval = float(os.getenv("ANIDB_MIN_REQUEST_INTERVAL", "2.0"))
+        self.max_request_interval = float(os.getenv("ANIDB_MAX_REQUEST_INTERVAL", "10.0"))
+        self.error_cooldown_base = float(os.getenv("ANIDB_ERROR_COOLDOWN_BASE", "5.0"))
+        self.max_retries = int(os.getenv("ANIDB_MAX_RETRIES", "3"))
+        
+        # Circuit breaker configuration
+        self.circuit_breaker_threshold = int(os.getenv("ANIDB_CIRCUIT_BREAKER_THRESHOLD", "5"))
+        self.circuit_breaker_timeout = float(os.getenv("ANIDB_CIRCUIT_BREAKER_TIMEOUT", "300"))
+        self.circuit_breaker_state = CircuitBreakerState.CLOSED
+        self.circuit_breaker_opened_at = 0
+        
+        # Request tracking and metrics
+        self.metrics = AniDBRequestMetrics()
+        self.recent_requests: Set[str] = set()  # Track recent request fingerprints
+        self._request_lock = asyncio.Lock()  # Ensure request serialization
+        
+        logger.info(f"AniDB helper initialized with enhanced features:")
+        logger.info(f"  - Rate limiting: {self.min_request_interval}s-{self.max_request_interval}s")
+        logger.info(f"  - Circuit breaker: {self.circuit_breaker_threshold} failures")
+        logger.info(f"  - Max retries: {self.max_retries}")
+        
+    def _generate_request_fingerprint(self, params: Dict[str, Any]) -> str:
+        """Generate fingerprint for request deduplication."""
+        # Create a consistent hash of request parameters
+        param_str = "&".join(f"{k}={v}" for k, v in sorted(params.items()))
+        return hashlib.md5(param_str.encode()).hexdigest()
+    
+    async def _check_circuit_breaker(self) -> bool:
+        """Check if circuit breaker allows requests."""
         current_time = time.time()
-        time_since_last = current_time - self.last_request_time
         
-        if time_since_last < self.min_request_interval:
-            wait_time = self.min_request_interval - time_since_last
-            logger.info(f"Rate limiting: waiting {wait_time:.2f} seconds")
+        if self.circuit_breaker_state == CircuitBreakerState.OPEN:
+            # Check if timeout has passed
+            if current_time - self.circuit_breaker_opened_at > self.circuit_breaker_timeout:
+                self.circuit_breaker_state = CircuitBreakerState.HALF_OPEN
+                logger.info("Circuit breaker moved to HALF_OPEN state")
+                return True
+            else:
+                remaining = self.circuit_breaker_timeout - (current_time - self.circuit_breaker_opened_at)
+                logger.warning(f"Circuit breaker OPEN - blocking request. {remaining:.1f}s remaining")
+                return False
+                
+        return True  # CLOSED or HALF_OPEN allows requests
+    
+    def _update_circuit_breaker(self, success: bool):
+        """Update circuit breaker state based on request result."""
+        if success:
+            if self.circuit_breaker_state == CircuitBreakerState.HALF_OPEN:
+                self.circuit_breaker_state = CircuitBreakerState.CLOSED
+                logger.info("Circuit breaker moved to CLOSED state - service recovered")
+            self.metrics.consecutive_failures = 0
+        else:
+            self.metrics.consecutive_failures += 1
+            
+            if (self.circuit_breaker_state == CircuitBreakerState.CLOSED and 
+                self.metrics.consecutive_failures >= self.circuit_breaker_threshold):
+                self.circuit_breaker_state = CircuitBreakerState.OPEN
+                self.circuit_breaker_opened_at = time.time()
+                logger.error(f"Circuit breaker OPENED after {self.metrics.consecutive_failures} consecutive failures")
+    
+    async def _adaptive_rate_limit(self, is_retry: bool = False):
+        """Enhanced rate limiting with adaptive delays and error recovery."""
+        current_time = time.time()
+        time_since_last = current_time - self.metrics.last_request_time
+        
+        # Calculate adaptive interval based on recent errors
+        if self.metrics.consecutive_failures > 0:
+            # Exponential backoff for errors
+            error_multiplier = min(2 ** self.metrics.consecutive_failures, 8)
+            adaptive_interval = min(self.error_cooldown_base * error_multiplier, self.max_request_interval)
+        else:
+            adaptive_interval = self.metrics.current_interval
+        
+        # Add extra delay for retries
+        if is_retry:
+            adaptive_interval *= 1.5
+            
+        if time_since_last < adaptive_interval:
+            wait_time = adaptive_interval - time_since_last
+            logger.info(f"Adaptive rate limiting: waiting {wait_time:.2f}s (interval: {adaptive_interval:.2f}s)")
             await asyncio.sleep(wait_time)
         
-        self.last_request_time = time.time()
+        self.metrics.last_request_time = time.time()
+        self.metrics.current_interval = adaptive_interval
+    
+    async def _ensure_session_health(self):
+        """Ensure session is healthy and recreate if needed."""
+        current_time = time.time()
         
-    async def _make_request(self, params: Dict[str, Any]) -> Optional[str]:
-        """Make XML request to AniDB API."""
-        await self._wait_for_rate_limit()
+        # Check if session needs recreation
+        if (self.session is None or 
+            current_time - self._session_created_at > self._session_max_age):
+            
+            if self.session:
+                logger.debug("Recreating AniDB session (max age reached)")
+                await self.session.close()
+            
+            # Create new session with optimized settings
+            headers = {
+                'Accept-Encoding': 'gzip, deflate',
+                'User-Agent': f'{self.client_name}/{self.client_version}',
+                'Accept': 'application/xml, text/xml',
+                'Connection': 'keep-alive',  # Better connection reuse
+                'Cache-Control': 'no-cache'  # Prevent caching issues
+            }
+            
+            connector = aiohttp.TCPConnector(
+                limit=2,  # Small connection pool
+                limit_per_host=1,  # Single connection to AniDB
+                ttl_dns_cache=300,  # DNS cache for 5 minutes
+                use_dns_cache=True,
+                keepalive_timeout=60,  # Keep connections alive
+                enable_cleanup_closed=True
+            )
+            
+            self.session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=60, connect=30),
+                headers=headers,
+                connector=connector
+            )
+            
+            self._session_created_at = current_time
+            logger.debug("Created new AniDB session with enhanced settings")
         
+    async def _make_request_with_retry(self, params: Dict[str, Any]) -> Optional[str]:
+        """Make request with enhanced retry logic and error handling."""
+        # Generate request fingerprint for deduplication
+        fingerprint = self._generate_request_fingerprint(params)
+        
+        # Check for recent duplicate requests
+        if fingerprint in self.recent_requests:
+            logger.warning(f"Skipping duplicate request (fingerprint: {fingerprint[:8]}...)")
+            return None
+            
+        # Add to recent requests (with cleanup of old entries)
+        self.recent_requests.add(fingerprint)
+        if len(self.recent_requests) > 1000:  # Prevent memory growth
+            # Remove oldest half of entries (simple cleanup)
+            old_requests = list(self.recent_requests)[:500]
+            self.recent_requests -= set(old_requests)
+        
+        # Try request with retries
+        last_exception = None
+        
+        for attempt in range(self.max_retries + 1):
+            try:
+                is_retry = attempt > 0
+                
+                # Check circuit breaker
+                if not await self._check_circuit_breaker():
+                    return None
+                
+                # Apply adaptive rate limiting
+                await self._adaptive_rate_limit(is_retry=is_retry)
+                
+                # Ensure session health
+                await self._ensure_session_health()
+                
+                # Make the actual request
+                result = await self._make_single_request(params, attempt)
+                
+                if result is not None:
+                    # Success - update metrics and circuit breaker
+                    self.metrics.successful_requests += 1
+                    self._update_circuit_breaker(success=True)
+                    
+                    if is_retry:
+                        logger.info(f"Request succeeded on attempt {attempt + 1}")
+                    
+                    return result
+                else:
+                    # Request failed but no exception
+                    self.metrics.failed_requests += 1
+                    self._update_circuit_breaker(success=False)
+                    
+                    if attempt < self.max_retries:
+                        wait_time = (2 ** attempt) + (time.time() % 1)  # Exponential backoff with jitter
+                        logger.warning(f"Request failed, retrying in {wait_time:.2f}s (attempt {attempt + 1}/{self.max_retries})")
+                        await asyncio.sleep(wait_time)
+                    
+            except Exception as e:
+                last_exception = e
+                self.metrics.failed_requests += 1
+                self._update_circuit_breaker(success=False)
+                
+                if attempt < self.max_retries:
+                    wait_time = (2 ** attempt) + (time.time() % 1)  # Exponential backoff with jitter
+                    logger.warning(f"Request exception, retrying in {wait_time:.2f}s: {e} (attempt {attempt + 1}/{self.max_retries})")
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(f"Request failed after {self.max_retries + 1} attempts: {e}")
+            
+            finally:
+                self.metrics.total_requests += 1
+        
+        # All retries exhausted
+        if last_exception:
+            logger.error(f"Request failed permanently after {self.max_retries + 1} attempts: {last_exception}")
+        
+        return None
+    
+    async def _make_single_request(self, params: Dict[str, Any], attempt: int) -> Optional[str]:
+        """Make a single request attempt to the AniDB API."""
         # Add required client parameters
-        params.update({
+        request_params = params.copy()
+        request_params.update({
             "client": self.client_name,
             "clientver": self.client_version,
             "protover": os.getenv("ANIDB_PROTOVER", "1"),
         })
         
-        try:
-            if not self.session:
-                # Set headers to handle compression and identify client properly
-                headers = {
-                    'Accept-Encoding': 'gzip, deflate',
-                    'User-Agent': f'{self.client_name}/{self.client_version}',
-                    'Accept': 'application/xml, text/xml',
-                    'Connection': 'close'  # Force close connection after each request
-                }
-                self.session = aiohttp.ClientSession(
-                    timeout=aiohttp.ClientTimeout(total=60),  # Longer timeout for AniDB
-                    headers=headers,
-                    connector=aiohttp.TCPConnector(limit=1)  # Single connection
-                )
+        logger.debug(f"AniDB request attempt {attempt + 1}: {self.base_url} with params: {request_params}")
+        
+        async with self.session.get(self.base_url, params=request_params) as response:
+            logger.debug(f"AniDB response status: {response.status}")
             
-            logger.info(f"AniDB request: {self.base_url} with params: {params}")
-            
-            async with self.session.get(self.base_url, params=params) as response:
-                logger.info(f"AniDB response status: {response.status}")
-                logger.info(f"AniDB response headers: {dict(response.headers)}")
+            if response.status == 200:
+                # Handle successful response
+                content = await response.read()
+                logger.debug(f"Response content length: {len(content)} bytes")
                 
-                if response.status == 200:
-                    # Handle compressed response
-                    content = await response.read()
-                    logger.info(f"Response content length: {len(content)} bytes")
-                    
-                    # Check if content is gzipped by magic bytes
-                    if content.startswith(b'\x1f\x8b'):
-                        logger.info("Content is gzip compressed, decompressing...")
-                        try:
-                            content = gzip.decompress(content)
-                            logger.info(f"Decompressed content length: {len(content)} bytes")
-                        except Exception as e:
-                            logger.error(f"Failed to decompress gzipped content: {e}")
-                            return None
-                    
-                    # Try to decode as text
+                # Handle gzip compression
+                if content.startswith(b'\x1f\x8b'):
+                    logger.debug("Decompressing gzipped content")
                     try:
-                        text_content = content.decode('utf-8')
-                        logger.info(f"Decoded text preview: {text_content[:200]}")
-                        return text_content
-                    except UnicodeDecodeError as e:
-                        logger.error(f"Failed to decode as UTF-8: {e}")
-                        # Try other encodings
-                        for encoding in ['latin-1', 'cp1252', 'iso-8859-1']:
-                            try:
-                                text_content = content.decode(encoding)
-                                logger.info(f"Successfully decoded with {encoding}")
-                                return text_content
-                            except:
-                                continue
-                        logger.error("Failed to decode with any encoding")
-                        return None
-                        
-                elif response.status == 503:
-                    logger.warning("AniDB service unavailable (503)")
-                    return None
-                elif response.status == 555:
-                    logger.warning("AniDB banned/blocked (555)")
+                        content = gzip.decompress(content)
+                        logger.debug(f"Decompressed content length: {len(content)} bytes")
+                    except Exception as e:
+                        logger.error(f"Failed to decompress gzipped content: {e}")
+                        raise
+                
+                # Decode content with multiple encoding fallbacks
+                text_content = self._decode_content(content)
+                if text_content and not text_content.strip().startswith("<error"):
+                    logger.debug(f"Successfully decoded response: {text_content[:100]}...")
+                    return text_content
+                elif "<error" in text_content:
+                    logger.warning(f"AniDB returned error response: {text_content[:200]}")
                     return None
                 else:
-                    logger.warning(f"AniDB API error: HTTP {response.status}")
-                    error_content = await response.text()
-                    logger.info(f"Error response: {error_content[:200]}")
+                    logger.error("Failed to decode response content")
                     return None
-        except Exception as e:
-            logger.error(f"AniDB API request failed: {e}")
-            return None
+                    
+            elif response.status == 503:
+                logger.warning("AniDB service unavailable (503) - will retry")
+                self.metrics.last_error_time = time.time()
+                return None
+                
+            elif response.status == 555:
+                logger.error("AniDB banned/blocked (555) - serious rate limit violation")
+                self.metrics.last_error_time = time.time()
+                # Force circuit breaker open for ban scenarios
+                self.circuit_breaker_state = CircuitBreakerState.OPEN
+                self.circuit_breaker_opened_at = time.time()
+                return None
+                
+            else:
+                logger.warning(f"AniDB API error: HTTP {response.status}")
+                error_content = await response.text()
+                logger.debug(f"Error response: {error_content[:200]}")
+                self.metrics.last_error_time = time.time()
+                return None
+    
+    def _decode_content(self, content: bytes) -> Optional[str]:
+        """Decode response content with multiple encoding fallbacks."""
+        encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+        
+        for encoding in encodings:
+            try:
+                return content.decode(encoding)
+            except UnicodeDecodeError:
+                continue
+        
+        logger.error(f"Failed to decode content with any encoding: {encodings}")
+        return None
+    
+    async def _make_request(self, params: Dict[str, Any]) -> Optional[str]:
+        """Thread-safe request method with serialization lock."""
+        async with self._request_lock:
+            return await self._make_request_with_retry(params)
     
     def _parse_anime_xml(self, xml_content: str) -> Dict[str, Any]:
         """Parse anime XML response into structured data."""
@@ -411,10 +637,71 @@ class AniDBEnrichmentHelper:
             logger.error(f"Error in fetch_all_data for AniDB ID {anidb_id}: {e}")
             return None
     
+    def get_health_status(self) -> Dict[str, Any]:
+        """Get comprehensive health and performance metrics."""
+        current_time = time.time()
+        
+        return {
+            "session_health": {
+                "session_active": self.session is not None,
+                "session_age": current_time - self._session_created_at if self.session else 0,
+                "session_max_age": self._session_max_age
+            },
+            "circuit_breaker": {
+                "state": self.circuit_breaker_state.value,
+                "consecutive_failures": self.metrics.consecutive_failures,
+                "threshold": self.circuit_breaker_threshold,
+                "opened_at": self.circuit_breaker_opened_at,
+                "time_until_retry": max(0, self.circuit_breaker_timeout - (current_time - self.circuit_breaker_opened_at)) if self.circuit_breaker_state == CircuitBreakerState.OPEN else 0
+            },
+            "rate_limiting": {
+                "current_interval": self.metrics.current_interval,
+                "min_interval": self.min_request_interval,
+                "max_interval": self.max_request_interval,
+                "time_since_last_request": current_time - self.metrics.last_request_time,
+                "ready_for_request": (current_time - self.metrics.last_request_time) >= self.metrics.current_interval
+            },
+            "request_metrics": {
+                "total_requests": self.metrics.total_requests,
+                "successful_requests": self.metrics.successful_requests,
+                "failed_requests": self.metrics.failed_requests,
+                "success_rate": self.metrics.success_rate,
+                "error_rate": self.metrics.error_rate,
+                "last_error_time": self.metrics.last_error_time
+            },
+            "deduplication": {
+                "recent_requests_tracked": len(self.recent_requests),
+                "max_tracked_requests": 1000
+            },
+            "configuration": {
+                "client_name": self.client_name,
+                "client_version": self.client_version,
+                "max_retries": self.max_retries,
+                "error_cooldown_base": self.error_cooldown_base
+            }
+        }
+    
+    async def reset_circuit_breaker(self) -> bool:
+        """Manually reset circuit breaker (admin function)."""
+        if self.circuit_breaker_state != CircuitBreakerState.CLOSED:
+            old_state = self.circuit_breaker_state
+            self.circuit_breaker_state = CircuitBreakerState.CLOSED
+            self.metrics.consecutive_failures = 0
+            logger.info(f"Circuit breaker manually reset from {old_state.value} to CLOSED")
+            return True
+        return False
+    
     async def close(self):
-        """Close the HTTP session."""
+        """Close the HTTP session with cleanup."""
         if self.session:
-            await self.session.close()
+            try:
+                await self.session.close()
+                logger.debug("AniDB session closed successfully")
+            except Exception as e:
+                logger.warning(f"Error closing AniDB session: {e}")
+            finally:
+                self.session = None
+                self._session_created_at = 0
 
 
 async def main():
