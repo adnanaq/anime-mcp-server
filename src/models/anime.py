@@ -130,11 +130,67 @@ class ThemeEntry(BaseModel):
     description: Optional[str] = Field(None, description="Theme description")
 
 
-class StaffEntry(BaseModel):
-    """Staff member entry"""
+class StaffMember(BaseModel):
+    """Individual staff member with multi-source integration"""
+    staff_ids: Dict[str, str] = Field(default_factory=dict, description="Staff IDs across platforms (anidb, anilist)")
     name: str = Field(..., description="Staff member name")
+    native_name: Optional[str] = Field(None, description="Native language name")
     role: str = Field(..., description="Primary role")
-    positions: List[str] = Field(default_factory=list, description="All positions held")
+    image: Optional[str] = Field(None, description="Staff member image URL")
+    biography: Optional[str] = Field(None, description="Staff member biography")
+    birth_date: Optional[str] = Field(None, description="Birth date")
+    hometown: Optional[str] = Field(None, description="Hometown")
+    primary_occupations: List[str] = Field(default_factory=list, description="Primary occupations")
+    years_active: List[int] = Field(default_factory=list, description="Years active")
+    gender: Optional[str] = Field(None, description="Gender")
+    blood_type: Optional[str] = Field(None, description="Blood type")
+    community_favorites: Optional[int] = Field(None, description="Community favorites count")
+    enhancement_status: Optional[str] = Field(None, description="Enhancement status from AniList matching")
+
+
+class VoiceActor(BaseModel):
+    """Voice actor with character assignments"""
+    staff_ids: Dict[str, str] = Field(default_factory=dict, description="Staff IDs across platforms")
+    name: str = Field(..., description="Voice actor name")
+    native_name: Optional[str] = Field(None, description="Native language name")
+    character_assignments: List[str] = Field(default_factory=list, description="Characters voiced")
+    image: Optional[str] = Field(None, description="Voice actor image URL")
+    biography: Optional[str] = Field(None, description="Voice actor biography")
+    birth_date: Optional[str] = Field(None, description="Birth date")
+    blood_type: Optional[str] = Field(None, description="Blood type")
+
+
+class CompanyEntry(BaseModel):
+    """Studio/Producer/Licensor company entry"""
+    name: str = Field(..., description="Company name")
+    type: str = Field(..., description="Company type (animation_studio, producer, licensor)")
+    url: Optional[str] = Field(None, description="Company URL")
+
+
+class ProductionStaff(BaseModel):
+    """Production staff organized by role"""
+    directors: List[StaffMember] = Field(default_factory=list, description="Directors")
+    music_composers: List[StaffMember] = Field(default_factory=list, description="Music composers")
+    character_designers: List[StaffMember] = Field(default_factory=list, description="Character designers")
+    series_writers: List[StaffMember] = Field(default_factory=list, description="Series writers")
+    animation_directors: List[StaffMember] = Field(default_factory=list, description="Animation directors")
+    original_creators: List[StaffMember] = Field(default_factory=list, description="Original creators")
+
+
+class VoiceActors(BaseModel):
+    """Voice actors organized by language"""
+    japanese: List[VoiceActor] = Field(default_factory=list, description="Japanese voice actors")
+
+
+class StaffData(BaseModel):
+    """Comprehensive staff data structure"""
+    production_staff: ProductionStaff = Field(default_factory=ProductionStaff, description="Production staff by role")
+    studios: List[CompanyEntry] = Field(default_factory=list, description="Animation studios")
+    producers: List[CompanyEntry] = Field(default_factory=list, description="Producers")
+    licensors: List[CompanyEntry] = Field(default_factory=list, description="Licensors")
+    voice_actors: VoiceActors = Field(default_factory=VoiceActors, description="Voice actors by language")
+
+
 
 
 class ContextualRank(BaseModel):
@@ -190,7 +246,6 @@ class AnimeEntry(BaseModel):
     synopsis: Optional[str] = Field(None, description="Detailed anime synopsis from external sources")
     characters: List[CharacterEntry] = Field(default_factory=list, description="Character information with multi-source support")
     trailers: List[TrailerEntry] = Field(default_factory=list, description="Trailer information from external APIs")
-    platform_ids: Optional[Dict[str, Optional[int]]] = Field(None, description="Platform IDs extracted from sources")
     enrichment_metadata: Optional[EnrichmentMetadata] = Field(None, description="Metadata about enrichment process")
 
     # =====================================================================
@@ -226,7 +281,7 @@ class AnimeEntry(BaseModel):
     streaming_licenses: List[str] = Field(default_factory=list, description="Streaming licenses")
     
     # Staff and music
-    staff: List[StaffEntry] = Field(default_factory=list, description="Staff information")
+    staff_data: Optional[StaffData] = Field(None, description="Comprehensive staff data with multi-source integration")
     opening_themes: List[Dict[str, Any]] = Field(default_factory=list, description="Opening theme songs")
     ending_themes: List[Dict[str, Any]] = Field(default_factory=list, description="Ending theme songs")
     
@@ -267,7 +322,7 @@ class AnimeEntry(BaseModel):
             len(self.genres) > 0 or
             len(self.themes) > 0 or
             len(self.streaming_info) > 0 or
-            len(self.staff) > 0 or
+            self.staff_data is not None or
             len(self.relations) > 0 or
             len(self.relatedAnime) > 0
         )
@@ -368,7 +423,7 @@ class AnimeEntry(BaseModel):
             "genre_count": len(self.genres),
             "theme_count": len(self.themes),
             "streaming_platform_count": len(self.streaming_info),
-            "staff_count": len(self.staff),
+            "staff_count": self._get_staff_data_count(),
             "relation_count": len(self.relations),
             "related_anime_count": len(self.relatedAnime),
             "award_count": len(self.awards),
@@ -381,7 +436,7 @@ class AnimeEntry(BaseModel):
             "has_delay_information": self.delay_information is not None,
             "has_episode_overrides": self.episode_overrides is not None,
             "has_streaming_info": len(self.streaming_info) > 0,
-            "has_staff_info": len(self.staff) > 0,
+            "has_staff_info": self.staff_data is not None,
             "has_theme_info": len(self.opening_themes) > 0 or len(self.ending_themes) > 0,
             "has_episode_details": len(self.episode_details) > 0,
             "has_external_links": len(self.external_links) > 0,
@@ -422,7 +477,7 @@ class AnimeEntry(BaseModel):
         
         # Rich content (5 points)
         if len(self.streaming_info) > 0: score += 1.0
-        if len(self.staff) > 0: score += 1.0
+        if self.staff_data is not None: score += 1.0
         if len(self.opening_themes) > 0 or len(self.ending_themes) > 0: score += 1.0
         if len(self.episode_details) > 0: score += 1.0
         if len(self.relations) > 0: score += 1.0
@@ -437,6 +492,31 @@ class AnimeEntry(BaseModel):
         if self.popularity_trends: score += 1.0
         
         return min(score / total_possible, 1.0)
+    
+    def _get_staff_data_count(self) -> int:
+        """Get total count of staff members in comprehensive staff data"""
+        if not self.staff_data:
+            return 0
+        
+        count = 0
+        # Production staff
+        production = self.staff_data.production_staff
+        count += len(production.directors)
+        count += len(production.music_composers)
+        count += len(production.character_designers)
+        count += len(production.series_writers)
+        count += len(production.animation_directors)
+        count += len(production.original_creators)
+        
+        # Voice actors
+        count += len(self.staff_data.voice_actors.japanese)
+        
+        # Companies
+        count += len(self.staff_data.studios)
+        count += len(self.staff_data.producers)
+        count += len(self.staff_data.licensors)
+        
+        return count
 
     @field_validator("duration")
     @classmethod

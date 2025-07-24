@@ -6,6 +6,9 @@ Simple data fetcher for Kitsu API without modifying existing kitsu_client.py
 """
 
 import logging
+import asyncio
+import json
+import sys
 from typing import Dict, Any, Optional, List
 import aiohttp
 
@@ -71,8 +74,6 @@ class KitsuEnrichmentHelper:
         """Fetch all Kitsu data for an anime ID."""
         try:
             # Fetch all data concurrently
-            import asyncio
-            
             results = await asyncio.gather(
                 self.get_anime_by_id(anime_id),
                 self.get_anime_episodes(anime_id),
@@ -95,3 +96,25 @@ class KitsuEnrichmentHelper:
                 "episodes": [],
                 "categories": []
             }
+
+async def main():
+    if len(sys.argv) != 3:
+        print("Usage: python kitsu_helper.py <anime_id> <output_file>")
+        sys.exit(1)
+
+    anime_id = int(sys.argv[1])
+    output_file = sys.argv[2]
+
+    helper = KitsuEnrichmentHelper()
+    data = await helper.fetch_all_data(anime_id)
+
+    if data:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        print(f"Data for {anime_id} saved to {output_file}")
+    else:
+        print(f"Could not fetch data for {anime_id}")
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())

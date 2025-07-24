@@ -1,6 +1,6 @@
 # Gemini Self-Instruction Manual for Anime Data Enrichment
 
-This document outlines the PRODUCTION-LEVEL process for enriching anime data based on the logic in `src/services/iterative_ai_enrichment.py`.
+This document outlines the PRODUCTION-LEVEL process for enriching anime data.
 
 ## 1. Objective
 
@@ -72,7 +72,7 @@ The primary goal is to take a raw anime data object (from an offline database) a
     - **ONLY if AniList ID was found in Step 1** - otherwise skip this step entirely
     - URL: `https://graphql.anilist.co/` with GraphQL query to fetch anime details, characters, staff, relations, and statistics
     - **NEVER mock this data** - Always make real GraphQL calls to AniList to get accurate information including detailed character data, staff information, and comprehensive statistics.
-8.  **AniDB Data:** Fetch comprehensive AniDB data using the extracted AniDB ID. Save in temporary file in temp/anidb.json to be used later  
+8.  **AniDB Data:** Fetch comprehensive AniDB data using the extracted AniDB ID. Save in temporary file in temp/anidb.json to be used later
     - **ONLY if AniDB ID was found in Step 1** - otherwise skip this step entirely
     - Use WebFetch to scrape AniDB pages for detailed anime information including staff, episode details, and technical information
     - **NEVER mock this data** - Always make real web scraping calls to AniDB to get accurate information including comprehensive staff data, episode information, and technical details.
@@ -81,18 +81,46 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 1.  From the fetched Jikan episodes data, create a simplified list of episodes, extracting only the following fields for each episode: `url`, `title`, `title_japanese`, `title_romanji`, `aired`, `score`, `filler`, `recap`, `duration`, `synopsis`.
 
-### Step 4: Execute 5-Stage Enrichment Pipeline
+### Step 4: Execute 6-Stage Enrichment Pipeline (Multi-Agent Parallel Processing)
 
-This is the core of the process, where AI is used to process the collected data. Act as expert data scientist who is collecting, sanitizing and organizing anime data, and gnerate the expected JSON output for each stage based on the provided data and the logic in the corresponding prompt templates. Follow eahc stage systematically, DO NOT load all stage prompts at once. And when creating script, DO NOT use ChatGPT or ANthropic API.
+This is the core of the process, where AI is used to process the collected data. Act as expert data scientist who is collecting, sanitizing and organizing anime data, and generate the expected JSON output for each stage based on the provided data and the logic in the corresponding prompt templates. **OPTIMIZATION: Run 4 concurrent agents to parallelize the 6 stages for maximum efficiency.** When creating script, DO NOT use ChatGPT or ANthropic API.
 
-**IMPORTANT: Strictly follow AnimeEtry schema from `src/models/anime.py`at each stage**
+**IMPORTANT: Strictly follow AnimeEtry schema from `src/models/anime.py` at each stage**
 
-1.  **Stage 1: Metadata Extraction** PROMPT: src/services/prompts/stages/01_metadata_extraction_v2.txt
+**AGENT EXECUTION REQUIREMENTS:**
+
+**CRITICAL INSTRUCTIONS FOR ALL AGENTS:**
+1. **Read Prompt Files Completely**: Each agent MUST read their assigned prompt file(s) from top to bottom before starting processing
+2. **Handle Large Data Files**: If input data files are large (>25k tokens), use chunking to read them completely - DO NOT skip data due to size limits
+3. **Process ALL Data Sources**: Every data source mentioned in the prompt must be processed - do not leave any arrays empty unless the source data is genuinely unavailable
+4. **No "Pending" Status**: Do not mark anything as "pending" or "to be processed later" - perform all processing steps immediately
+5. **Verification Before Output**: Before saving stage output files, verify that all expected data sections contain actual data, not placeholders
+
+**COMPLETION VERIFICATION:**
+- Stage 1: Metadata must include themes from multiple sources, organized images, external links
+- Stage 2: Episode details must include data from all available episode sources  
+- Stage 3: Relationships must process EVERY URL with intelligent title extraction
+- Stage 4: Statistics must include data from ALL available API sources
+- Stage 5: Characters must include data from multiple sources with proper matching
+- Stage 6: Staff must include production staff, studios, producers, AND voice actors
+
+**IF ANY EXPECTED SECTION IS EMPTY OR INCOMPLETE, THE AGENT MUST RE-EXAMINE THE DATA SOURCES AND PROCESSING LOGIC**
+
+**AGENT DISTRIBUTION:**
+
+**Agent 1 - Metadata Specialist:**
+1.  **Stage 1: Metadata Extraction** PROMPT: src/services/prompts/stages/01_metadata_extraction.txt
     - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data, Kitsu data, Anime-Planet data, AniList data, AniDB data.
     - **Action:** Generate a JSON object containing `synopsis`, `genres`, `demographics`, `themes`, `source_material`, `rating`, `content_warnings`, `nsfw`, `title_japanese`, `title_english`, `background`, `aired_dates`, `broadcast`, `broadcast_schedule`, `premiere_dates`, `delay_information`, `episode_overrides`, `external_links`, `statistics`, `images`, `month`.
-2.  **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing_multi_agent.txt
+    - **Output:** `temp/stage1_metadata.json`
+
+**Agent 2 - Episode Specialist:**
+2.  **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing.txt
     - **Inputs:** The pre-processed episode list.
     - **Action:** Process episodes in batches. For each batch, generate a list of `episode_details`. DO NOT skip any episode
+    - **Output:** `temp/stage2_episodes.json`
+
+**Agent 3 - Relationship & Media Specialist:**
 3.  **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis.txt
     - **Inputs:** `relatedAnime` URLs from `offline_anime_data`, and `relations` from Jikan data.
     - **Action:** Generate a JSON object with `relatedAnime` and `relations` fields.
@@ -103,23 +131,50 @@ This is the core of the process, where AI is used to process the collected data.
         - Visit each site to find the approprioate title and relation
         - Do not use numeric ID from url as the title.
       - **FORBIDDEN PATTERNS:** Do not use generic titles like "Anime [ID]", "Unknown Title", or "Anime 19060".
+    - **Output:** `temp/stage3_relationships.json`
+
 4.  **Stage 4: Statistics and Media** PROMPT: src/services/prompts/stages/04_statistics_media.txt
     - **Inputs:** Jikan statistics and media data, AniList statistics, AniDB statistics and staff data.
     - **Action:** Generate a JSON object with `trailers`, `staff`, `opening_themes`, `ending_themes`, `streaming_info`, `licensors`, `streaming_licenses`, `awards`, `statistics`, `external_links`, and `images`.
     - **CRITICAL RULES:**
       - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu`, `animeplanet`, `anilist`, `anidb` key (e.g., `{"statistics": {"mal": {...}, "anilist": {...}, "anidb": {...}}}`). There could be multiple sources.
       - Prioritize AniDB for comprehensive staff data merging including detailed roles and credits.
-5.  **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing_multi_agent.txt
+    - **Output:** `temp/stage4_statistics_media.json`
+
+**Agent 4 - Character & Staff Specialist:**
+5.  **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing.txt
     - **Inputs:** Jikan characters data, AniList characters data.
     - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any character. Merge character data from multiple sources for comprehensive character profiles.
+    - **Output:** `temp/stage5_characters.json`
+
+6.  **Stage 6: Staff Processing** PROMPT: src/services/prompts/stages/06_staff_processing.txt
+    - **Inputs:** AniDB staff data, AniList staff data, Jikan company data.
+    - **Action:** Generate a JSON object with comprehensive `staff_data` including production staff (directors, music composers, character designers), studios, producers, and voice actors with multi-source integration and biographical enhancement.
+    - **Output:** `temp/stage6_staff.json`
+
+**SYNCHRONIZATION POINT:** All 4 agents must complete their assigned stages before proceeding to Step 5. Verify all stage output files exist:
+- `temp/stage1_metadata.json`
+- `temp/stage2_episodes.json` 
+- `temp/stage3_relationships.json`
+- `temp/stage4_statistics_media.json`
+- `temp/stage5_characters.json`
+- `temp/stage6_staff.json`
 
 ### Step 5: Programmatic Assembly
 
-1.  Merge the results from all five stages into a single JSON object.
-2.  Start with the original `offline_anime_data`, and append animeschedule url for the relevent anime in the sources proeprty.
-3.  Update the fields with the data from each stage's output following AnimeEtry schema from `src/models/anime.py`
-4.  Add an `enrichment_metadata` object.
-5.  **CRITICAL: Unicode Character Handling** - When saving the final JSON output, always use `ensure_ascii=False` and `encoding='utf-8'` to properly display international characters (Greek, Cyrillic, Japanese, etc.) instead of Unicode escape sequences.
+1.  **Synchronization Check:** Verify all 6 stage output files from the 4 agents exist before proceeding:
+    - `temp/stage1_metadata.json` (Agent 1)
+    - `temp/stage2_episodes.json` (Agent 2) 
+    - `temp/stage3_relationships.json` (Agent 3)
+    - `temp/stage4_statistics_media.json` (Agent 3)
+    - `temp/stage5_characters.json` (Agent 4)
+    - `temp/stage6_staff.json` (Agent 4)
+
+2.  Merge the results from all six stages into a single JSON object.
+3.  Start with the original `offline_anime_data`, and append animeschedule url for the relevent anime in the sources proeprty.
+4.  Update the fields with the data from each stage's output following AnimeEtry schema from `src/models/anime.py`
+5.  Add an `enrichment_metadata` object.
+6.  **CRITICAL: Unicode Character Handling** - When saving the final JSON output, always use `ensure_ascii=False` and `encoding='utf-8'` to properly display international characters (Greek, Cyrillic, Japanese, etc.) instead of Unicode escape sequences.
 
 ## 4. Output Schema
 

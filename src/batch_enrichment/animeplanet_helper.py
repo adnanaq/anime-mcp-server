@@ -9,8 +9,15 @@ import logging
 import re
 from typing import Optional, Dict, Any
 from urllib.parse import urlparse
+import sys
+import os
+import asyncio
+import json
 
-from ..integrations.scrapers.extractors.anime_planet_scraper import AnimePlanetScraper
+# Add project root to path to allow absolute imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
+from src.integrations.scrapers.extractors.anime_planet_scraper import AnimePlanetScraper
 
 logger = logging.getLogger(__name__)
 
@@ -105,3 +112,26 @@ class AnimePlanetEnrichmentHelper:
     async def close(self):
         """Close the scraper."""
         await self.scraper.close()
+
+async def main():
+    if len(sys.argv) != 3:
+        print("Usage: python animeplanet_helper.py <slug> <output_file>")
+        sys.exit(1)
+
+    slug = sys.argv[1]
+    output_file = sys.argv[2]
+
+    helper = AnimePlanetEnrichmentHelper()
+    data = await helper.fetch_anime_data(slug)
+    await helper.close()
+
+    if data:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        print(f"Data for {slug} saved to {output_file}")
+    else:
+        print(f"Could not fetch data for {slug}")
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())
