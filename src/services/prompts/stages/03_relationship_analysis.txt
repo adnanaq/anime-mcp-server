@@ -150,7 +150,6 @@ anidb.net, anidb.info:
   - Use result['title'] and result['context']
 
 notify.moe:
-  - Skip processing
   - Flag for manual review
 ```
 

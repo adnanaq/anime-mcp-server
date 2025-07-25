@@ -65,6 +65,11 @@ class PromptTemplateManager:
                 "file": "05_character_processing_multi_agent.txt",
                 "description": "Process character data and voice actors",
                 "token_reduction": "85%"
+            },
+            6: {
+                "file": "06_staff_processing.txt",
+                "description": "Multi-source staff integration with AniDB, AniList, Jikan data",
+                "token_reduction": "80%"
             }
         }
     
@@ -106,7 +111,7 @@ class PromptTemplateManager:
         """Build a complete prompt for a specific stage
         
         Args:
-            stage_num: Stage number (1-5)
+            stage_num: Stage number (1-6)
             **kwargs: Template variables to substitute
             
         Returns:
@@ -134,7 +139,7 @@ class PromptTemplateManager:
         """Get information about a specific stage
         
         Args:
-            stage_num: Stage number (1-5)
+            stage_num: Stage number (1-6)
             
         Returns:
             Stage configuration dictionary

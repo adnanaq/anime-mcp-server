@@ -5,7 +5,7 @@ You are the **MULTI-SOURCE STAFF PROCESSOR** responsible for integrating staff d
 ## PROCESSING OVERVIEW
 
 ### YOUR RESPONSIBILITY
-Merge staff data from 3 sources (AniDB, AniList, Jikan) into comprehensive staff details ensuring:
+Merge staff data from 3 sources (Offline-database, AniDB, AniList, Jikan) into comprehensive staff details ensuring:
 - Accurate staff matching across sources using intelligent name matching
 - Complete data integration with proper hierarchy and role standardization
 - Collection of all available biographical information and professional images
@@ -15,6 +15,7 @@ Merge staff data from 3 sources (AniDB, AniList, Jikan) into comprehensive staff
 - **AniDB**: Primary staff source (unique IDs, authoritative Japanese staff, clear role types)
 - **AniList**: Biographical enhancement (detailed biographies, professional images, career data)
 - **Jikan**: Studio/company information (producers, studios, licensors with MAL IDs)
+- **Offline-database**: Base studios and producers (merge with external data to avoid duplicates)
 
 ## INPUT DATA
 
@@ -26,6 +27,10 @@ Merge staff data from 3 sources (AniDB, AniList, Jikan) into comprehensive staff
 
 ### JIKAN COMPANY DATA:
 {jikan_company_data}
+
+### OFFLINE DATABASE COMPANY DATA:
+Studios: {offline_studios}
+Producers: {offline_producers}
 
 ## PROCESSING PROTOCOL
 
@@ -56,15 +61,19 @@ Merge staff data from 3 sources (AniDB, AniList, Jikan) into comprehensive staff
 - Add primary_occupations, years_active, gender, blood_type
 - Include community_favorites and alternative_names
 
-### STEP 3: ADD COMPANY INFORMATION FROM JIKAN
+### STEP 3: MERGE COMPANY INFORMATION FROM ALL SOURCES
 
 **Studio Processing**:
-- Extract name, url from studios array
-- Create animation_studio records
+- Start with offline database studios list
+- Extract name, url from studios array from other sources
+- Merge studios, avoiding duplicates by normalizing names (case-insensitive, punctuation removal)
+- Create animation_studio records with combined data
 
 **Producer Processing**:
-- Extract name, url from producers array  
-- Create producer records
+- Start with offline database producers list
+- Extract name, url from Jikan producers array from other sources
+- Merge producers, avoiding duplicates by normalizing names (case-insensitive, punctuation removal)
+- Create producer records with combined data
 
 **Licensor Processing**:
 - Extract name, url from licensors array

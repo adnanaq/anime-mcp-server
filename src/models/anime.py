@@ -237,8 +237,6 @@ class AnimeEntry(BaseModel):
     )
     synonyms: List[str] = Field(default_factory=list, description="Alternative titles")
     tags: List[str] = Field(default_factory=list, description="Original tags from offline database")
-    studios: List[str] = Field(default_factory=list, description="Animation studios")
-    producers: List[str] = Field(default_factory=list, description="Production companies")
 
     # =====================================================================
     # CURRENT ENRICHMENT FIELDS (Already Enhanced)

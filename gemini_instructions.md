@@ -10,11 +10,31 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 ## 2. Inputs
 
-- `offline_anime_data`: A JSON object representing a single anime. This will be provided at the start of the process.
+- `offline_anime_data`: A JSON object representing a single anime. This will be loaded from `data/current_anime.json` in Step 0 and used throughout the enrichment process.
 
 ## 3. The Process
 
 **CRITICAL RULE: I must not proceed to the next step unless the current step has been completed successfully.**
+
+### Step 0: Load Next Anime Entry
+
+1.  **Load Source Database:**
+
+    - Load `data/anime-offline-database.json` from the project root
+    - Extract the first anime entry from the `data` array
+    - If the `data` array is empty, all anime have been processed - stop here
+
+2.  **Prepare Current Anime:**
+
+    - Save the extracted anime entry to `data/current_anime.json`
+    - Override the existing entry if there is one already
+    - This file becomes the `offline_anime_data` for all subsequent processing steps
+    - The file enables manual review and debugging if needed
+
+3.  **Verification:**
+    - Confirm `data/current_anime.json` contains a valid anime object
+    - Verify the anime has required fields (title, sources, etc.)
+    - Log which anime is being processed (title and MAL ID if available)
 
 ### Step 1: Extract Platform IDs
 
@@ -70,11 +90,12 @@ The primary goal is to take a raw anime data object (from an offline database) a
     - **NEVER mock this data** - Always make real web scraping calls to Anime-Planet to get accurate information including ratings, images, rankings, and genre data.
 7.  **AniList Data:** Fetch comprehensive AniList data using the extracted AniList ID. Save in temporary file in temp/anilist.json to be used later
     - **ONLY if AniList ID was found in Step 1** - otherwise skip this step entirely
-    - URL: `https://graphql.anilist.co/` with GraphQL query to fetch anime details, characters, staff, relations, and statistics
+    - use the reusable script: `python src/batch_enrichment/anilist_helper.py`
     - **NEVER mock this data** - Always make real GraphQL calls to AniList to get accurate information including detailed character data, staff information, and comprehensive statistics.
 8.  **AniDB Data:** Fetch comprehensive AniDB data using the extracted AniDB ID. Save in temporary file in temp/anidb.json to be used later
+    - **IMPORTANT:**
     - **ONLY if AniDB ID was found in Step 1** - otherwise skip this step entirely
-    - Use WebFetch to scrape AniDB pages for detailed anime information including staff, episode details, and technical information
+    - Use the reusable script: `python src/batch_enrichment/anidb_helper.py`
     - **NEVER mock this data** - Always make real web scraping calls to AniDB to get accurate information including comprehensive staff data, episode information, and technical details.
 
 ### Step 3: Pre-process Episode Data
@@ -83,13 +104,14 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 ### Step 4: Execute 6-Stage Enrichment Pipeline (Multi-Agent Parallel Processing)
 
-This is the core of the process, where AI is used to process the collected data. Act as expert data scientist who is collecting, sanitizing and organizing anime data, and generate the expected JSON output for each stage based on the provided data and the logic in the corresponding prompt templates. **OPTIMIZATION: Run 4 concurrent agents to parallelize the 6 stages for maximum efficiency.** When creating script, DO NOT use ChatGPT or ANthropic API.
+This is the core of the process, where AI is used to process the collected data. Act as expert data scientist who is collecting, sanitizing and organizing anime data, and generate the expected JSON output for each stage based on the provided data and the logic in the corresponding prompt templates. **OPTIMIZATION: Run/Spawn 4 concurrent agents to parallelize the 6 stages.** When creating script, DO NOT use ChatGPT or ANthropic API.
 
 **IMPORTANT: Strictly follow AnimeEtry schema from `src/models/anime.py` at each stage**
 
 **AGENT EXECUTION REQUIREMENTS:**
 
 **CRITICAL INSTRUCTIONS FOR ALL AGENTS:**
+
 1. **Read Prompt Files Completely**: Each agent MUST read their assigned prompt file(s) from top to bottom before starting processing
 2. **Handle Large Data Files**: If input data files are large (>25k tokens), use chunking to read them completely - DO NOT skip data due to size limits
 3. **Process ALL Data Sources**: Every data source mentioned in the prompt must be processed - do not leave any arrays empty unless the source data is genuinely unavailable
@@ -97,8 +119,9 @@ This is the core of the process, where AI is used to process the collected data.
 5. **Verification Before Output**: Before saving stage output files, verify that all expected data sections contain actual data, not placeholders
 
 **COMPLETION VERIFICATION:**
+
 - Stage 1: Metadata must include themes from multiple sources, organized images, external links
-- Stage 2: Episode details must include data from all available episode sources  
+- Stage 2: Episode details must include data from all available episode sources
 - Stage 3: Relationships must process EVERY URL with intelligent title extraction
 - Stage 4: Statistics must include data from ALL available API sources
 - Stage 5: Characters must include data from multiple sources with proper matching
@@ -109,43 +132,26 @@ This is the core of the process, where AI is used to process the collected data.
 **AGENT DISTRIBUTION:**
 
 **Agent 1 - Metadata Specialist:**
+
 1.  **Stage 1: Metadata Extraction** PROMPT: src/services/prompts/stages/01_metadata_extraction.txt
     - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data, Kitsu data, Anime-Planet data, AniList data, AniDB data.
     - **Action:** Generate a JSON object containing `synopsis`, `genres`, `demographics`, `themes`, `source_material`, `rating`, `content_warnings`, `nsfw`, `title_japanese`, `title_english`, `background`, `aired_dates`, `broadcast`, `broadcast_schedule`, `premiere_dates`, `delay_information`, `episode_overrides`, `external_links`, `statistics`, `images`, `month`.
     - **Output:** `temp/stage1_metadata.json`
 
-**Agent 2 - Episode Specialist:**
-2.  **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing.txt
-    - **Inputs:** The pre-processed episode list.
-    - **Action:** Process episodes in batches. For each batch, generate a list of `episode_details`. DO NOT skip any episode
-    - **Output:** `temp/stage2_episodes.json`
+**Agent 2 - Episode Specialist:** 2. **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing.txt - **Inputs:** The pre-processed episode list. - **Action:** Process episodes in batches. For each batch, generate a list of `episode_details`. DO NOT skip any episode - **Output:** `temp/stage2_episodes.json`
 
-**Agent 3 - Relationship & Media Specialist:**
-3.  **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis.txt
-    - **Inputs:** `relatedAnime` URLs from `offline_anime_data`, and `relations` from Jikan data.
-    - **Action:** Generate a JSON object with `relatedAnime` and `relations` fields.
-    - **CRITICAL RULES:**
-      - Process EVERY URL. The number of output `relatedAnime` entries must exactly match the number of input URLs.
-      - Use "Intelligent Title Extraction":
-        - Scan all URLs to find explicit titles (e.g., from anime-planet).
-        - Visit each site to find the approprioate title and relation
-        - Do not use numeric ID from url as the title.
-      - **FORBIDDEN PATTERNS:** Do not use generic titles like "Anime [ID]", "Unknown Title", or "Anime 19060".
-    - **Output:** `temp/stage3_relationships.json`
+**Agent 3 - Relationship & Media Specialist:** 3. **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis.txt
+**Inputs:** `relatedAnime` URLs from `offline_anime_data`, and `relations` from Jikan data. - **Action:** Generate a JSON object with `relatedAnime` and `relations` fields. - **CRITICAL RULES:** - Process EVERY URL. The number of output `relatedAnime` entries must exactly match the number of input URLs. - Use "Intelligent Title Extraction": - Scan all URLs to find explicit titles (e.g., from anime-planet). - Visit each site to find the approprioate title and relation - Do not use numeric ID from url as the title. - **FORBIDDEN PATTERNS:** Do not use generic titles like "Anime [ID]", "Unknown Title", or "Anime 19060". - **Output:** `temp/stage3_relationships.json`
 
 4.  **Stage 4: Statistics and Media** PROMPT: src/services/prompts/stages/04_statistics_media.txt
-    - **Inputs:** Jikan statistics and media data, AniList statistics, AniDB statistics and staff data.
-    - **Action:** Generate a JSON object with `trailers`, `staff`, `opening_themes`, `ending_themes`, `streaming_info`, `licensors`, `streaming_licenses`, `awards`, `statistics`, `external_links`, and `images`.
-    - **CRITICAL RULES:**
-      - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu`, `animeplanet`, `anilist`, `anidb` key (e.g., `{"statistics": {"mal": {...}, "anilist": {...}, "anidb": {...}}}`). There could be multiple sources.
-      - Prioritize AniDB for comprehensive staff data merging including detailed roles and credits.
-    - **Output:** `temp/stage4_statistics_media.json`
+    **Inputs:** Jikan statistics and media data, AniList statistics, AniDB statistics and staff data.
+    **Action:** Generate a JSON object with `trailers`, `staff`, `opening_themes`, `ending_themes`, `streaming_info`, `licensors`, `streaming_licenses`, `awards`, `statistics`, `external_links`, and `images`.
+    **CRITICAL RULES:**
+    - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu`, `animeplanet`, `anilist`, `anidb` key (e.g., `{"statistics": {"mal": {...}, "anilist": {...}, "anidb": {...}}}`). There could be multiple sources.
+    - Prioritize AniDB for comprehensive staff data merging including detailed roles and credits.
+      **Output:** `temp/stage4_statistics_media.json`
 
-**Agent 4 - Character & Staff Specialist:**
-5.  **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing.txt
-    - **Inputs:** Jikan characters data, AniList characters data.
-    - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any character. Merge character data from multiple sources for comprehensive character profiles.
-    - **Output:** `temp/stage5_characters.json`
+**Agent 4 - Character & Staff Specialist:** 5. **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing.txt - **Inputs:** Jikan characters data, AniList characters data. - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any character. Merge character data from multiple sources for comprehensive character profiles. - **Output:** `temp/stage5_characters.json`
 
 6.  **Stage 6: Staff Processing** PROMPT: src/services/prompts/stages/06_staff_processing.txt
     - **Inputs:** AniDB staff data, AniList staff data, Jikan company data.
@@ -153,8 +159,9 @@ This is the core of the process, where AI is used to process the collected data.
     - **Output:** `temp/stage6_staff.json`
 
 **SYNCHRONIZATION POINT:** All 4 agents must complete their assigned stages before proceeding to Step 5. Verify all stage output files exist:
+
 - `temp/stage1_metadata.json`
-- `temp/stage2_episodes.json` 
+- `temp/stage2_episodes.json`
 - `temp/stage3_relationships.json`
 - `temp/stage4_statistics_media.json`
 - `temp/stage5_characters.json`
@@ -163,8 +170,9 @@ This is the core of the process, where AI is used to process the collected data.
 ### Step 5: Programmatic Assembly
 
 1.  **Synchronization Check:** Verify all 6 stage output files from the 4 agents exist before proceeding:
+
     - `temp/stage1_metadata.json` (Agent 1)
-    - `temp/stage2_episodes.json` (Agent 2) 
+    - `temp/stage2_episodes.json` (Agent 2)
     - `temp/stage3_relationships.json` (Agent 3)
     - `temp/stage4_statistics_media.json` (Agent 3)
     - `temp/stage5_characters.json` (Agent 4)
@@ -175,6 +183,41 @@ This is the core of the process, where AI is used to process the collected data.
 4.  Update the fields with the data from each stage's output following AnimeEtry schema from `src/models/anime.py`
 5.  Add an `enrichment_metadata` object.
 6.  **CRITICAL: Unicode Character Handling** - When saving the final JSON output, always use `ensure_ascii=False` and `encoding='utf-8'` to properly display international characters (Greek, Cyrillic, Japanese, etc.) instead of Unicode escape sequences.
+7.  Add "enrichment_metadata" property with the following schema, example:
+    json
+
+```
+"enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-24T19:42:09.282039Z",
+        "success": true, (if successful)
+        "error_message": null
+      }
+```
+
+### Step 6: Database Persistence & Cleanup
+
+1.  **Update Enriched Database:**
+
+    - Load `data/enriched_anime_database.json`
+    - If file doesn't exist, create with initial structure following anime-offline-database.json format
+    - Append the final enriched anime object to the `data` array
+    - Update `lastUpdate` field to current date (YYYY-MM-DD format)
+    - Increment `totalAnime` count in `enrichmentInfo`
+    - Save file with proper JSON formatting using `ensure_ascii=False` and `encoding='utf-8'`
+
+2.  **Update Source Database:**
+
+    - Load `anime-offline-database.json`
+    - Remove the processed anime entry (first entry) from the `data` array, make sure that it's the same anime that was just processed. Verify it against the title and url ids.
+    - Update `lastUpdate` field to current date (YYYY-MM-DD format)
+    - Decrement the total anime count in metadata if applicable
+    - Save the updated source database with proper JSON formatting
+
+3.  **Completion Confirmation:**
+    - Confirm the anime has been added to the enriched database
+    - Confirm the anime has been removed from the source database
+    - Report remaining anime count in the source database
 
 ## 4. Output Schema
 
