@@ -6,7 +6,7 @@
   "repository": "https://github.com/adnanaq/anime-mcp-server",
   "lastUpdate": "2025-07-28",
   "enrichmentInfo": {
-    "totalAnime": 10,
+    "totalAnime": 11,
     "enrichmentVersion": "1.0.0",
     "sources": [
       "jikan",
@@ -5736,6 +5736,192 @@
       "enrichment_metadata": {
         "source": "multi-source",
         "enriched_at": "2025-07-25T17:19:00.000Z",
+        "success": true
+      }
+    },
+    {
+      "episodes": 1,
+      "month": "April",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1168/93236.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Original",
+      "status": "Finished",
+      "synopsis": "A Calpis (Calpico in the US) commissioned short about the history of the company and how their product is made today. A few scenes use live-action footage. The short is animated by Takaharu Shimizu who used a Rube Goldberg style of story telling.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1168/93236t.jpg",
+      "title": "\"Calpis\" Hakkou Monogatari",
+      "title_japanese": "「カルピス」発酵ものがたり",
+      "type": "SPECIAL",
+      "characters": {
+        "characters": []
+      },
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": {
+        "episode_details": [
+          {
+            "episode_number": 1,
+            "season_number": 1,
+            "title": "\"Calpis\" Hakkou Monogatari",
+            "title_japanese": "「カルピス」発酵ものがたり",
+            "title_romaji": "\"Calpis\" Hakkou Monogatari",
+            "synopsis": "A Calpis (Calpico in the US) commissioned short about the history of the company and how their product is made today. A few scenes use live-action footage. The short is animated by Takaharu Shimizu who used a Rube Goldberg style of story telling.",
+            "aired": "2018-04-20T00:00:00+09:00",
+            "duration": 60,
+            "filler": false,
+            "recap": false,
+            "url": "https://myanimelist.net/anime/38045/Calpis_Hakkou_Monogatari",
+            "thumbnails": [],
+            "streaming": {}
+          }
+        ]
+      },
+      "genres": ["Food and Beverage", "Historical", "Promotional"],
+      "related_anime": [],
+      "relations": [],
+      "sources": [
+        "https://anilist.co/anime/138257",
+        "https://anime-planet.com/anime/calpis-hakkou-monogatari",
+        "https://anisearch.com/anime/18573",
+        "https://kitsu.app/anime/41893",
+        "https://myanimelist.net/anime/38045",
+        "https://notify.moe/anime/NeI-pv0iR"
+      ],
+      "synonyms": [
+        "\"Calpis\" Fermentation Story",
+        "Calpis Hakkou Monogatari",
+        "Calpis Hakkō Monogatari",
+        "Calpis: Hakkou Monogatari"
+      ],
+      "tags": [
+        "advertisement",
+        "food and beverage",
+        "historical",
+        "promotional"
+      ],
+      "themes": [
+        {
+          "name": "Historical"
+        },
+        {
+          "name": "Advertisement",
+          "description": "Produced in order to promote the products of a certain company."
+        }
+      ],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2018-04-20T00:00:00+00:00",
+        "string": "Apr 20, 2018"
+      },
+      "anime_season": {
+        "season": "SPRING",
+        "year": 2018
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {},
+      "duration": {
+        "value": 60,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {
+        "officialsite": "https://www.calpis.jp/quality/",
+        "wikipedia": "https://ja.wikipedia.org/wiki/%E3%82%AB%E3%83%AB%E3%83%94%E3%82%B9"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/41893/original.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1168/93236l.jpg",
+            "source": "jikan"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/calpis-hakkou-monogatari-1-190x266.jpg?t=1625908198",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://www.anime-planet.com/images/anime/screenshots/calpis-hakkou-monogatari-14682-1.jpg",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b138257-Fmpt13iBDfo8.png",
+            "source": "anilist"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "score": {
+        "arithmeticGeometricMean": 4.883875656788059,
+        "arithmeticMean": 4.94654025974026,
+        "median": 4.74
+      },
+      "staff_data": {
+        "staff_data": {
+          "production_staff": {
+            "animation_directors": [],
+            "character_designers": [],
+            "directors": [
+              {
+                "name": "Takaharu Shimizu",
+                "native_name": "清水貴栄",
+                "role": "Director",
+                "enhancement_status": "anilist_match_found",
+                "primary_occupations": [],
+                "years_active": [],
+                "staff_ids": {
+                  "anilist": "154865"
+                }
+              }
+            ],
+            "music_composers": [],
+            "original_creators": [],
+            "series_writers": []
+          },
+          "studios": [],
+          "producers": [],
+          "licensors": [],
+          "voice_actors": {
+            "japanese": []
+          }
+        }
+      },
+      "statistics": {
+        "anilist": {
+          "score": 3.6,
+          "popularity_rank": 189,
+          "favorites": 1,
+          "contextual_ranks": []
+        },
+        "animeplanet": {
+          "score": 5.964,
+          "scored_by": 32,
+          "rank": 1
+        },
+        "kitsu": {
+          "score": 6.158,
+          "rank": 10462,
+          "popularity_rank": 14777,
+          "members": 88,
+          "favorites": 0
+        },
+        "mal": {
+          "score": 4.73,
+          "scored_by": 376,
+          "popularity_rank": 15754,
+          "members": 735,
+          "favorites": 0
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-28T20:27:42.932946+00:00",
         "success": true
       }
     }

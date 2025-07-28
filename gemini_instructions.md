@@ -183,9 +183,24 @@ This is the core of the process, where AI is used to process the collected data.
 2.  Merge the results from all six stages into a single JSON object.
 3.  Start with the original `offline_anime_data`, and append animeschedule url for the relevent anime in the sources proeprty.
 4.  Update the fields with the data from each stage's output following AnimeEtry schema from `src/models/anime.py`
-5.  Add an `enrichment_metadata` object.
-6.  **CRITICAL: Unicode Character Handling** - When saving the final JSON output, always use `ensure_ascii=False` and `encoding='utf-8'` to properly display international characters (Greek, Cyrillic, Japanese, etc.) instead of Unicode escape sequences.
-7.  Add "enrichment_metadata" property with the following schema, example:
+5.  **CRITICAL: Schema-Compliant Field Ordering**
+    - Order all fields according to AnimeEntry schema from `src/models/anime.py`
+    - **Field Order**: SCALAR → ARRAY → OBJECT/DICT (alphabetical within each category)
+    - **SCALAR FIELDS**: background, episodes, month, nsfw, picture, rating, source_material, status, synopsis, thumbnail, title, title_english, title_japanese, type
+    - **ARRAY FIELDS**: awards, characters, content_warnings, demographics, ending_themes, episode_details, genres, licensors, opening_themes, related_anime, relations, sources, streaming_info, streaming_licenses, synonyms, tags, themes, trailers
+    - **OBJECT/DICT FIELDS**: aired_dates, anime_season, broadcast, broadcast_schedule, delay_information, duration, enhanced_metadata, episode_overrides, external_links, images, popularity_trends, premiere_dates, score, staff_data, statistics
+    - **FINAL FIELD**: enrichment_metadata (MUST ALWAYS BE LAST)
+    - **Nested Objects**: Ensure characters, staff_data, episode_details, etc. also follow their respective schema ordering
+6.  **CRITICAL: Data Quality Cleanup**
+    - **Remove null values**: Any property with `null` value must be removed from final output
+    - **Remove empty strings**: Any property with empty string `""` value must be removed from final output
+    - **Preserve empty collections**: Empty arrays `[]` and empty objects `{}` must be preserved as they indicate intentional empty state
+    - **Exception**: Required fields (title, status, type, episodes, sources) must never be removed even if empty
+    - **Nested cleanup**: Apply cleanup rules recursively to all nested objects and arrays
+    - **Character cleanup**: Remove null voice_actors, descriptions, ages, genders from character entries
+    - **Staff cleanup**: Remove null biographies, birth_dates, images from staff member entries
+7.  **CRITICAL: Unicode Character Handling** - When saving the final JSON output, always use `ensure_ascii=False` and `encoding='utf-8'` to properly display international characters (Greek, Cyrillic, Japanese, etc.) instead of Unicode escape sequences.
+8.  **CRITICAL: Final Field Placement** - Add "enrichment_metadata" property as the VERY LAST field in the JSON object with the following schema, example:
     json
 
 ```
