@@ -72,38 +72,25 @@ Extract statistics from ALL available data sources with standardized StatisticsE
 
 # OUTPUT SCHEMA
 Return ONLY statistics in JSON format:
+**CRITICAL: Statistics must be ordered exactly as shown below to match StatisticsEntry schema requirements.**
 
 {
     "statistics": {
-        "mal": {
-            "score": 8.11,
-            "scored_by": 916846,
-            "rank": 530,
-            "popularity_rank": 85,
-            "members": 1524895,
-            "favorites": 26442
-        },
-        "animeschedule": {
-            "score": 8.5,
-            "scored_by": 1200,
-            "members": 5000,
-            "rank": 45
-        },
-        "kitsu": {
-            "score": 8.214,
-            "members": 15000,
-            "favorites": 2500,
-            "popularity_rank": 120,
-            "rank": 67
-        },
-        "animeplanet": {
-            "score": 8.71,
-            "scored_by": 8500,
-            "rank": 78
+        "anidb": {
+            "score": 8.74,
+            "scored_by": 18699,
+            "rank": null,
+            "popularity_rank": null,
+            "members": null,
+            "favorites": null,
+            "contextual_ranks": null
         },
         "anilist": {
             "score": 8.6,
+            "scored_by": null,
+            "rank": null,
             "popularity_rank": 50,
+            "members": null,
             "favorites": 18500,
             "contextual_ranks": [
                 {
@@ -116,9 +103,41 @@ Return ONLY statistics in JSON format:
                 }
             ]
         },
-        "anidb": {
-            "score": 8.74,
-            "scored_by": 18699
+        "animeplanet": {
+            "score": 8.71,
+            "scored_by": 8500,
+            "rank": 78,
+            "popularity_rank": null,
+            "members": null,
+            "favorites": null,
+            "contextual_ranks": null
+        },
+        "animeschedule": {
+            "score": 8.5,
+            "scored_by": 1200,
+            "rank": 45,
+            "popularity_rank": null,
+            "members": 5000,
+            "favorites": null,
+            "contextual_ranks": null
+        },
+        "kitsu": {
+            "score": 8.214,
+            "scored_by": null,
+            "rank": 67,
+            "popularity_rank": 120,
+            "members": 15000,
+            "favorites": 2500,
+            "contextual_ranks": null
+        },
+        "mal": {
+            "score": 8.11,
+            "scored_by": 916846,
+            "rank": 530,
+            "popularity_rank": 85,  
+            "members": 1524895,
+            "favorites": 26442,
+            "contextual_ranks": null
         }
     }
 }

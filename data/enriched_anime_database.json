@@ -6,7 +6,7 @@
   "repository": "https://github.com/adnanaq/anime-mcp-server",
   "lastUpdate": "2025-07-28",
   "enrichmentInfo": {
-    "totalAnime": 9,
+    "totalAnime": 10,
     "enrichmentVersion": "1.0.0",
     "sources": [
       "jikan",
@@ -17,7 +17,7 @@
       "anidb"
     ],
     "description": "Comprehensive anime database enriched with multi-source data integration",
-    "lastEnrichment": "2025-07-25"
+    "lastEnrichment": "2025-07-28"
   },
   "data": [
     {
@@ -5109,6 +5109,633 @@
       "enrichment_metadata": {
         "source": "multi-source",
         "enriched_at": "2025-07-28T22:47:32.891024Z",
+        "success": true
+      }
+    },
+    {
+      "background": "\"Bungaku Shoujo\" Movie was announced with the release of the first manga volume and the first light novel in April 2009. The first trailer was included with the release of the \"Bungaku Shoujo\" Kyou no Oyatsu: Hatsukoi DVD episode. The movie adapts the events of \"Bungaku Shoujo\" to Doukoku no Palmier, the fifth volume in the light novel series. It went on to earn 59 million yen in the Japanese box office.",
+      "episodes": 1,
+      "month": "May",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/8/81162.jpg",
+      "rating": "PG-13 - Teens 13 or older",
+      "source_material": "Light novel",
+      "status": "Finished",
+      "synopsis": "The protagonist of the story, Konoha Inoue, is a seemingly normal senior high 2nd year student. His high school life, other than a hinted incident 2 years ago, can be summed up as normal- if one can dismiss the secret fact that he used to be a female bestselling romance author. Due to that incident, however, he has now vowed never to write again.\n\nThis continued on until he was forced to join the literary club by the literary club president, the 3rd year female student Amano Tooko, a beautiful girl who has a taste for eating literary works. Now he has been tasked with writing her snack every day after school.\n\n(Source: To Say Nothing of the Dog)",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/8/81162t.jpg",
+      "title": "\"Bungaku Shoujo\" Movie",
+      "title_japanese": "劇場版\"文学少女\"",
+      "type": "Movie",
+      "awards": [],
+      "characters": [
+        {
+          "name": "Amano, Tooko",
+          "role": "Main",
+          "name_variations": ["天野遠子"],
+          "name_kanji": "天野遠子",
+          "name_native": "天野遠子",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 28451
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/12/98993.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/40614.jpg"
+          },
+          "gender": "Female",
+          "voice_actors": [
+            {
+              "name": "Hanazawa, Kana",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Inoue, Konoha",
+          "role": "Main",
+          "name_variations": ["井上心葉"],
+          "name_kanji": "井上心葉",
+          "name_native": "井上心葉",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 28452
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/15/101327.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/40613.jpg"
+          },
+          "gender": "Male",
+          "voice_actors": [
+            {
+              "name": "Irino, Miyu",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Asakura, Miu",
+          "role": "Supporting",
+          "name_variations": ["朝倉美羽"],
+          "name_kanji": "朝倉美羽",
+          "name_native": "朝倉美羽",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 28453
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/13/85718.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/49496.jpg"
+          },
+          "gender": "Female",
+          "voice_actors": [
+            {
+              "name": "Hirano, Aya",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Kotobuki, Nanase",
+          "role": "Supporting",
+          "name_variations": ["琴吹七瀬"],
+          "name_kanji": "琴吹七瀬",
+          "name_native": "琴吹七瀬",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 28454
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/13/101326.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/40612.jpg"
+          },
+          "gender": "Female",
+          "voice_actors": [
+            {
+              "name": "Mizuki, Nana",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Akutagawa, Kazushi",
+          "role": "Supporting",
+          "name_variations": ["芥川一志"],
+          "name_kanji": "芥川一志",
+          "name_native": "芥川一志",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 28455
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/2/117552.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/40611.jpg"
+          },
+          "gender": "Male",
+          "voice_actors": [
+            {
+              "name": "Ono, Daisuke",
+              "language": "Japanese"
+            }
+          ]
+        }
+      ],
+      "content_warnings": ["Psychological themes", "Trauma"],
+      "demographics": [],
+      "ending_themes": ["\"Harukana Hibi (遥かな日々)\" by eufonius"],
+      "episode_details": [
+        {
+          "title": "\"Bungaku Shoujo\" Movie",
+          "title_japanese": "劇場版\"文学少女\"",
+          "aired": "2010-05-01",
+          "filler": false,
+          "recap": false,
+          "duration": 6000
+        }
+      ],
+      "genres": ["Drama", "Mystery", "Romance", "Psychological"],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [
+        {
+          "title": "\"Bungaku Shoujo\" Memoire",
+          "url": "https://myanimelist.net/anime/8481",
+          "relationship": "Prequel"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" Kyou no Oyatsu: Hatsukoi",
+          "url": "https://myanimelist.net/anime/7669",
+          "relationship": "Side Story"
+        }
+      ],
+      "relations": [
+        {
+          "title": "\"Bungaku Shoujo\" to Shinitagari no Pierrot",
+          "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot",
+          "relationship": "Adaptation"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" to Ue Kawaku Ghost",
+          "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost",
+          "relationship": "Adaptation"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" Series",
+          "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series",
+          "relationship": "Adaptation"
+        }
+      ],
+      "sources": [
+        "https://anidb.net/anime/6959",
+        "https://anilist.co/anime/6408",
+        "https://anime-planet.com/anime/bungaku-shoujo-movie",
+        "https://animecountdown.com/38239",
+        "https://animenewsnetwork.com/encyclopedia/anime.php?id=10815",
+        "https://anisearch.com/anime/5387",
+        "https://kitsu.app/anime/4550",
+        "https://livechart.me/anime/4198",
+        "https://myanimelist.net/anime/6408",
+        "https://notify.moe/anime/UUie5KimR",
+        "https://simkl.com/anime/38239",
+        "https://animeschedule.net/anime/bungaku-shoujo"
+      ],
+      "streaming_info": [
+        {
+          "name": "Crunchyroll",
+          "url": "http://www.crunchyroll.com/series-257075"
+        }
+      ],
+      "streaming_licenses": [
+        {
+          "name": "Crunchyroll",
+          "url": "http://www.crunchyroll.com/series-257075"
+        }
+      ],
+      "synonyms": [
+        "Book Girl",
+        "Literature Girl",
+        "A Literary Girl",
+        "La Chica de los Libros",
+        "A Garota dos Livros",
+        "Bungaku Shoujo - O Filme",
+        "Garota dos Livros: O Filme",
+        "Book Girl: La chica de los libros",
+        "Book Girl, La Chica que Devoraba Libros"
+      ],
+      "tags": [
+        "asia",
+        "based on a light novel",
+        "boy meets girl",
+        "childhood promise",
+        "classic literature",
+        "comedy",
+        "coming of age",
+        "death",
+        "dialogue driven",
+        "drama",
+        "earth",
+        "family life",
+        "following one's dream",
+        "indecisive",
+        "intact family",
+        "japan",
+        "japanese production",
+        "literature",
+        "love polygon",
+        "love triangle",
+        "male protagonist",
+        "mystery",
+        "novel",
+        "parental abandonment",
+        "place",
+        "present",
+        "promise",
+        "psychological",
+        "psychological drama",
+        "real-world location",
+        "romance",
+        "school",
+        "school club",
+        "school clubs",
+        "school life",
+        "storytelling",
+        "sudden girlfriend appearance",
+        "suicide",
+        "supernatural drama",
+        "the arts",
+        "the power of love",
+        "time",
+        "time skip",
+        "tragedy",
+        "yandere"
+      ],
+      "themes": [
+        {
+          "name": "School"
+        },
+        {
+          "name": "Present",
+          "description": "Somewhere between past and future"
+        },
+        {
+          "name": "Earth",
+          "description": "The Earth is the third planet from the Sun, and the densest and fifth-largest of the eight planets in the Solar System. It is in effect a ball of hot mud, but on the surface it's cold enough, so most of us live on it (or are supposed to). It is circa 4.5 billion years old, and, unless we humans succeed in destroying it over the next couple of centuries, it is expected to last for quite another while, though the changes in the Sun's emissions due to its aging will likely cause the extinction of everything; the species of earthlings are guaranteed to die, even if we fail to kill them -- unless, of course, we find ourselves another planet and figure out a way to take everything there. Our little planet on a corner of this galaxy may mean nothing in the grand scheme of things, but to its inhabitants it is their home, so, as a species, we cherish it dearly, to the point many cultures even to this day deify it. Being the home to the human civilizations, the Earth is the main setting of most fiction, be it anime or otherwise, but not only are many titles set in other places, such as unrelated fantasy worlds, in a considerable number of fictional titles the Earth is actually destroyed by aggressive alien invaders."
+        },
+        {
+          "name": "Asia",
+          "description": "Asia is Earth's largest and most populous continent, located primarily in the eastern and northern hemispheres and sharing the continental landmass of Eurasia with the continent of Europe. Asia covers an area of 44,579,000 square kilometers, about 30% of Earth's total land area and 8.7% of the Earth's total surface area. The continent, which has long been home to the majority of the human population, was the site of many of the first civilizations. Asia is notable for not only its overall large size and population, but also dense and large settlements as well as vast barely populated regions within the continent of 4.4 billion people.\n\nSource: Wikipedia"
+        },
+        {
+          "name": "Japan",
+          "description": "Last stronghold for humanity. If Tokyo falls, it's all over. Tokyo Tower will undoubtedly fall anyway."
+        },
+        {
+          "name": "Love Polygon",
+          "description": "A love polygon refers to a romantic relationship involving n people. Although a love triangle is not limited to just heterosexual relationships, in anime, it usually deals with two females liking one male and vice versa."
+        },
+        {
+          "name": "School Life",
+          "description": "Since a large part of the anime audience still takes part in school life or is visiting college, it is only natural to choose a setting the audience can identify with, be it elementary, middle, or high school. For the older viewers a college setting with more mature real-life problems is appropriate. And since clubs take up so much time in the lives of students, these are obviously also important."
+        },
+        {
+          "name": "Coming Of Age",
+          "description": "Shows the process of characters growing up or entering into adulthood."
+        },
+        {
+          "name": "indecisive",
+          "description": "This character has trouble taking their own decisions, and may rely on others to do that instead."
+        }
+      ],
+      "trailers": [
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=DrE1XD8bw6c",
+          "title": "Official Trailer"
+        },
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=72YA9IDwVQI",
+          "thumbnail_url": "https://i.ytimg.com/vi/72YA9IDwVQI/hqdefault.jpg",
+          "title": "Bungaku Shoujo (Book Girl～the Literature Girl～) "
+        }
+      ],
+      "aired_dates": {
+        "from": "2010-05-01T00:00:00+00:00",
+        "string": "May 1, 2010"
+      },
+      "anime_season": {
+        "season": "SPRING",
+        "year": 2010
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {
+        "delayed_timetable": false
+      },
+      "duration": {
+        "value": 6000,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {
+        "official": "http://www.bungakushoujo.jp/",
+        "mal": "https://myanimelist.net/anime/6408",
+        "anidb": "https://anidb.net/perl-bin/animedb.pl?show=anime&aid=6959",
+        "ann": "https://www.animenewsnetwork.com/encyclopedia/anime.php?id=10815",
+        "wikipedia": "http://en.wikipedia.org/wiki/Book_Girl_(film)",
+        "crunchyroll": "http://www.crunchyroll.com/series-257075",
+        "anilist": "https://anilist.co/anime/6408",
+        "kitsu": "https://kitsu.io/anime/4550"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/4550/original.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/8/81162l.jpg",
+            "source": "jikan"
+          },
+          {
+            "url": "https://img.animeschedule.net/production/assets/public/img/anime/jpg/default/bungaku-shoujo-bab9b005de.jpg",
+            "source": "animeschedule"
+          },
+          {
+            "url": "https://media.kitsu.app/anime/cover_images/4550/original.jpg",
+            "source": "kitsu"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/bungaku-shoujo-movie-1-190x271.jpg?t=1625886661",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://www.anime-planet.com/images/anime/screenshots/bungaku-shoujo-movie-3206-1.jpg",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx6408-UsXM2RcYTCZd.jpg",
+            "source": "anilist"
+          },
+          {
+            "url": "https://cdn.anidb.net/images/main/33980.jpg",
+            "source": "anidb"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {
+        "original": "2010-05-01"
+      },
+      "score": {
+        "arithmeticGeometricMean": 7.438897515292618,
+        "arithmeticMean": 7.440200695612987,
+        "median": 7.394
+      },
+      "staff_data": {
+        "production_staff": {
+          "directors": [
+            {
+              "staff_ids": {
+                "anidb": "2136",
+                "anilist": "100805"
+              },
+              "name": "Tada Shunsuke",
+              "native_name": "多田俊介",
+              "role": "Director",
+              "primary_occupations": ["Director"]
+            },
+            {
+              "staff_ids": {
+                "anilist": "118899"
+              },
+              "name": "Shinpei Ezaki",
+              "native_name": "江崎慎平",
+              "role": "Assistant_Director",
+              "primary_occupations": ["Assistant Director"]
+            }
+          ],
+          "music_composers": [
+            {
+              "staff_ids": {
+                "anidb": "2301",
+                "anilist": "103635"
+              },
+              "name": "Itou Masumi",
+              "native_name": "伊藤真澄",
+              "role": "Music_Composer",
+              "primary_occupations": ["Composer", "Musician"]
+            }
+          ],
+          "character_designers": [
+            {
+              "staff_ids": {
+                "anidb": "11238",
+                "anilist": "144001"
+              },
+              "name": "Matsumoto Keita",
+              "native_name": "松本圭太",
+              "role": "Character_Designer",
+              "primary_occupations": ["Character Designer"]
+            },
+            {
+              "staff_ids": {
+                "anilist": "102607"
+              },
+              "name": "Miho Takeoka",
+              "native_name": "竹岡美穂",
+              "role": "Original_Character_Designer",
+              "primary_occupations": ["Character Designer"]
+            }
+          ],
+          "animation_directors": [
+            {
+              "staff_ids": {
+                "anidb": "11238",
+                "anilist": "144001"
+              },
+              "name": "Matsumoto Keita",
+              "native_name": "松本圭太",
+              "role": "Animation_Director",
+              "primary_occupations": ["Animation Director"]
+            }
+          ],
+          "original_creators": [
+            {
+              "staff_ids": {
+                "anidb": "10252",
+                "anilist": "102606"
+              },
+              "name": "Nomura Mizuki",
+              "native_name": "野村美月",
+              "role": "Original_Creator",
+              "primary_occupations": ["Writer", "Novelist"]
+            }
+          ],
+          "series_writers": [
+            {
+              "staff_ids": {
+                "anilist": "119544"
+              },
+              "name": "Yuka Yamada",
+              "native_name": "山田由香",
+              "role": "Series_Writer",
+              "primary_occupations": ["Script Writer"]
+            }
+          ],
+          "art_directors": [
+            {
+              "staff_ids": {
+                "anilist": "105323"
+              },
+              "name": "Michie Suzuki",
+              "native_name": "鈴木路恵",
+              "role": "Art_Director",
+              "primary_occupations": ["Art Director"]
+            },
+            {
+              "staff_ids": {
+                "anilist": "211517"
+              },
+              "name": "Aya Kuginuki",
+              "native_name": "釘貫彩",
+              "role": "Assistant_Art_Director",
+              "primary_occupations": ["Assistant Art Director"]
+            }
+          ],
+          "sound_directors": [
+            {
+              "staff_ids": {
+                "anilist": "96346"
+              },
+              "name": "Toshihiko Nakajima",
+              "native_name": "中嶋聡彦",
+              "role": "Sound_Director",
+              "primary_occupations": ["Sound Director"]
+            }
+          ]
+        },
+        "studios": [
+          {
+            "name": "Production I.G",
+            "type": "animation_studio",
+            "url": "https://myanimelist.net/anime/producer/10/Production_IG"
+          }
+        ],
+        "producers": [
+          {
+            "name": "Lantis",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/104/Lantis"
+          },
+          {
+            "name": "Pony Canyon",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/144/Pony_Canyon"
+          },
+          {
+            "name": "Enterbrain",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/392/Enterbrain"
+          },
+          {
+            "name": "Kadokawa Contents Gate",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/685/Kadokawa_Contents_Gate"
+          },
+          {
+            "name": "T.O Entertainment",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/1015/TO_Entertainment"
+          }
+        ],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": [
+            {
+              "staff_ids": {
+                "anidb": "176"
+              },
+              "name": "Hanazawa Kana",
+              "native_name": "花澤香菜",
+              "character_assignments": ["Amano Tooko"],
+              "image": "https://cdn.anidb.net/images/main/275593.jpg"
+            },
+            {
+              "staff_ids": {
+                "anidb": "470"
+              },
+              "name": "Irino Miyu",
+              "native_name": "入野自由",
+              "character_assignments": ["Inoue Konoha"],
+              "image": "https://cdn.anidb.net/images/main/266725.jpg"
+            },
+            {
+              "staff_ids": {
+                "anidb": "4"
+              },
+              "name": "Hirano Aya",
+              "native_name": "平野綾",
+              "character_assignments": ["Asakura Miu"],
+              "image": "https://cdn.anidb.net/images/main/177060.jpg"
+            },
+            {
+              "staff_ids": {
+                "anidb": "18"
+              },
+              "name": "Mizuki Nana",
+              "native_name": "水樹奈々",
+              "character_assignments": ["Kotobuki Nanase"],
+              "image": "https://cdn.anidb.net/images/main/170423.jpg"
+            },
+            {
+              "staff_ids": {
+                "anidb": "250"
+              },
+              "name": "Ono Daisuke",
+              "native_name": "小野大輔",
+              "character_assignments": ["Akutagawa Kazushi"],
+              "image": "https://cdn.anidb.net/images/main/11257.jpeg"
+            }
+          ]
+        }
+      },
+      "statistics": {
+        "mal": {
+          "score": 7.31,
+          "scored_by": 28461,
+          "rank": 2830,
+          "popularity": 2849,
+          "members": 70024,
+          "favorites": 220
+        },
+        "animeschedule": {
+          "averageScore": 65.4971694946289,
+          "ratingCount": 20,
+          "trackedCount": 47,
+          "trackedRating": 3847
+        },
+        "kitsu": {
+          "averageRating": "72.8",
+          "userCount": 7236,
+          "favoritesCount": 35,
+          "popularityRank": 2116,
+          "ratingRank": 3476
+        },
+        "animeplanet": {
+          "ratingCount": 2919,
+          "ratingValue": 3.729,
+          "reviewCount": 6
+        },
+        "anilist": {
+          "averageScore": 69,
+          "meanScore": 69,
+          "popularity": 14320,
+          "favourites": 77
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-25T17:19:00.000Z",
         "success": true
       }
     }

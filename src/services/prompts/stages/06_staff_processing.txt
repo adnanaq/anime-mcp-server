@@ -93,62 +93,88 @@ Producers: {offline_producers}
 ### STEP 5: GENERATE FINAL OUTPUT
 
 Return staff_data object with this structure:
+**CRITICAL: Staff data fields must be ordered exactly as shown below to match StaffData schema requirements.**
+
 ```json
 {
   "staff_data": {
+    // =====================================================================
+    // OBJECT FIELDS (alphabetical - following StaffData schema order)
+    // =====================================================================
     "production_staff": {
+      // Production staff roles (alphabetical)
+      "animation_directors": [],
+      "character_designers": [
+        {
+          // StaffMember fields ordered: scalar → array → dict
+          "name": "Kawamoto Toshihiro",
+          "native_name": null,
+          "role": "Character_Designer",
+          "birth_date": null,
+          "hometown": null,
+          "gender": null,
+          "blood_type": null,
+          "community_favorites": null,
+          "enhancement_status": "anilist_match_pending",
+          "image": null,
+          "biography": null,
+          "primary_occupations": [],
+          "years_active": [],
+          "staff_ids": {
+            "anidb": "662"
+          }
+        }
+      ],
       "directors": [
         {
-          "staff_ids": {
-            "anidb": "129",
-            "anilist": "97009"
-          },
+          // StaffMember fields ordered: scalar → array → dict  
           "name": "Watanabe Shinichiro",
           "native_name": "渡辺信一郎",
           "role": "Director",
-          "image": "https://s4.anilist.co/file/anilistcdn/staff/large/...",
-          "biography": "Detailed career information...",
           "birth_date": "1965-05-24",
           "hometown": "Kyoto, Japan",
-          "primary_occupations": ["Director", "Producer"],
-          "years_active": [1987],
           "gender": "Male",
           "blood_type": null,
-          "community_favorites": 3810
+          "community_favorites": 3810,
+          "enhancement_status": null,
+          "image": "https://s4.anilist.co/file/anilistcdn/staff/large/...",
+          "biography": "Detailed career information...",
+          "primary_occupations": ["Director", "Producer"],
+          "years_active": [1987],
+          "staff_ids": {
+            "anidb": "129",
+            "anilist": "97009"
+          }
         }
       ],
       "music_composers": [
         {
+          // StaffMember fields ordered: scalar → array → dict
+          "name": "Kanno Yoko", 
+          "native_name": "菅野洋子",
+          "role": "Music_Composer",
+          "birth_date": "1963-03-18",
+          "hometown": "Sendai, Miyagi Prefecture, Japan",
+          "gender": null,
+          "blood_type": null,
+          "community_favorites": null,
+          "enhancement_status": null,
+          "image": "https://s4.anilist.co/file/anilistcdn/staff/large/...",
+          "biography": "Enhanced biographical data...",
+          "primary_occupations": ["Composer", "Musician"],
+          "years_active": [],
           "staff_ids": {
             "anidb": "241",
             "anilist": "95508"
-          },
-          "name": "Kanno Yoko",
-          "native_name": "菅野洋子",
-          "role": "Music_Composer",
-          "image": "https://s4.anilist.co/file/anilistcdn/staff/large/...",
-          "biography": "Enhanced biographical data...",
-          "birth_date": "1963-03-18",
-          "hometown": "Sendai, Miyagi Prefecture, Japan",
-          "primary_occupations": ["Composer", "Musician"]
+          }
         }
       ],
-      "character_designers": [
-        {
-          "staff_ids": {
-            "anidb": "662"
-          },
-          "name": "Kawamoto Toshihiro",
-          "native_name": null,
-          "role": "Character_Designer",
-          "image": null,
-          "biography": null,
-          "enhancement_status": "anilist_match_pending"
-        }
-      ]
+      "original_creators": [],
+      "series_writers": []
     },
     "studios": [
       {
+        // CompanyEntry fields ordered: scalar → scalar → scalar
         "name": "Sunrise",
         "type": "animation_studio",
         "url": "https://myanimelist.net/anime/producer/14/Sunrise"
@@ -156,25 +182,28 @@ Return staff_data object with this structure:
     ],
     "producers": [
       {
-        "name": "Bandai Visual", 
-        "type": "producer",
+        // CompanyEntry fields ordered: scalar → scalar → scalar
+        "name": "Bandai Visual",
+        "type": "producer", 
         "url": "https://myanimelist.net/anime/producer/23/Bandai_Visual"
       }
     ],
+    "licensors": [],
     "voice_actors": {
       "japanese": [
         {
+          // VoiceActor fields ordered: scalar → array → dict
+          "name": "Yamadera Kouichi",
+          "native_name": "山寺宏一",
+          "birth_date": "1961-06-17",
+          "blood_type": "A",
+          "image": "https://s4.anilist.co/file/anilistcdn/staff/large/...",
+          "biography": "Extensive voice acting career...",
+          "character_assignments": ["Spike Spiegel"],
           "staff_ids": {
             "anidb": "380",
             "anilist": "95011"
-          },
-          "name": "Yamadera Kouichi",
-          "native_name": "山寺宏一",
-          "character_assignments": ["Spike Spiegel"],
-          "image": "https://s4.anilist.co/file/anilistcdn/staff/large/...",
-          "biography": "Extensive voice acting career...",
-          "birth_date": "1961-06-17",
-          "blood_type": "A"
+          }
         }
       ]
     }

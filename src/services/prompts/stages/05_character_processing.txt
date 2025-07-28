@@ -115,13 +115,21 @@ Merge character data from 4 sources (Jikan, AniList, AniDB, Kitsu) into comprehe
 
 ## OUTPUT SCHEMA
 Return ONLY valid JSON with ALL characters processed:
+**CRITICAL: Character fields must be ordered exactly as shown below to match CharacterEntry schema requirements.**
 
 ```json
 {{
   "characters": [
     {{
+      // =====================================================================
+      // SCALAR FIELDS (alphabetical)
+      // =====================================================================
       "name": "Spike Spiegel",
       "role": "Main",
+      
+      // =====================================================================
+      // ARRAY FIELDS (alphabetical)
+      // =====================================================================
       "name_variations": [
         "スパイク・スピーゲル",
         "Spike Spike",
@@ -130,6 +138,20 @@ Return ONLY valid JSON with ALL characters processed:
       "name_kanji": "スパイク・スピーゲル",
       "name_native": "スパイク・スピーゲル",
       "nicknames": [],
+      "voice_actors": [
+        {{
+          "name": "Yamadera, Kouichi",
+          "language": "Japanese"
+        }},
+        {{
+          "name": "Blum, Steven",
+          "language": "English"
+        }}
+      ],
+
+      // =====================================================================
+      // OBJECT/DICT FIELDS (alphabetical)
+      // =====================================================================
       "character_ids": {{
         "mal": 1,
         "anilist": 1,
@@ -141,20 +163,13 @@ Return ONLY valid JSON with ALL characters processed:
         "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b1-ChxaldmieFlQ.png",
         "anidb": "https://cdn.anidb.net/images/main/14555.jpg"
       }},
-      "description": "Birthdate: June 26, 2044...",
-      "url": "https://myanimelist.net/character/1/Spike_Spiegel",
+      
+      // =====================================================================
+      // REMAINING SCALAR FIELDS (alphabetical)
+      // =====================================================================
       "age": "27",
-      "gender": "Male",
-      "voice_actors": [
-        {{
-          "name": "Yamadera, Kouichi",
-          "language": "Japanese"
-        }},
-        {{
-          "name": "Blum, Steven",
-          "language": "English"
-        }}
-      ]
+      "description": "Birthdate: June 26, 2044...",
+      "gender": "Male"
     }}
   ]
 }}

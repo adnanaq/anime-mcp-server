@@ -103,17 +103,31 @@ Merge episode data from 3 sources (Jikan, AniList, Kitsu) into comprehensive epi
 
 ## OUTPUT SCHEMA
 Return ONLY valid JSON with complete episode details:
+**CRITICAL: Episode fields must be ordered exactly as shown below to match EpisodeDetailEntry schema requirements.**
 
 ```json
 {{
   "episode_details": [
     {{
+      // =====================================================================
+      // SCALAR FIELDS (alphabetical within episode object)
+      // =====================================================================
       "episode_number": 1,
       "season_number": 1,
       "title": "Asteroid Blues",
       "title_japanese": "アステロイド・ブルース",
       "title_romaji": "Asteroid Blues",
       "synopsis": "Detailed episode synopsis from Jikan...",
+      "aired": "1998-10-24T00:00:00+09:00",
+      "duration": 1440,
+      "score": null,
+      "filler": false,
+      "recap": false,
+      "url": "https://myanimelist.net/anime/1/Cowboy_Bebop/episode/1",
+
+      // =====================================================================
+      // ARRAY FIELDS (alphabetical)
+      // =====================================================================
       "thumbnails": [
         {{
           "url": "https://img1.ak.crunchyroll.com/i/spire2-tmb/...",
@@ -125,15 +139,13 @@ Return ONLY valid JSON with complete episode details:
           "source": "kitsu"
         }}
       ],
+
+      // =====================================================================
+      // OBJECT/DICT FIELDS (alphabetical)
+      // =====================================================================
       "streaming": {{
         "crunchyroll": "http://www.crunchyroll.com/watch/G7PU4VJEJ/asteroid-blues"
-      }},
-      "aired": "1998-10-24T00:00:00+09:00",
-      "duration": 1440,
-      "score": null,
-      "filler": false,
-      "recap": false,
-      "url": "https://myanimelist.net/anime/1/Cowboy_Bebop/episode/1"
+      }}
     }}
   ]
 }}

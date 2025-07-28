@@ -212,29 +212,37 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 
 ## OUTPUT FORMAT
 **IMPORTANT: The values shown below are EXAMPLES ONLY. Extract actual data from the provided APIs.**
+**CRITICAL: Fields must be ordered exactly as shown below to match AnimeEntry schema requirements.**
 
 {
+  // =====================================================================
+  // SCALAR FIELDS (alphabetical)
+  // =====================================================================
+  "background": "Fullmetal Alchemist won the TV Feature Award...", // EXAMPLE - Extract actual background
+  "episodes": 26, // EXAMPLE - Cross-validate with offline database episode count
+  "month": "January", // EXAMPLE - Extract actual premiere month
+  "nsfw": false, // EXAMPLE - Extract actual nsfw flag from Kitsu
+  "rating": "R - 17+ (violence & profanity)", // EXAMPLE - Extract actual rating
+  "source_material": "Manga", // EXAMPLE - Extract from Jikan, fallback to AniList if null
+  "status": "Finished", // EXAMPLE - Cross-validate with offline database status
   "synopsis": "Edward Elric, a young, brilliant alchemist, has lost much in his twelve-year life...", // EXAMPLE - Extract actual synopsis
-  "genres": ["Action", "Adventure", "Fantasy", "Drama"], // EXAMPLE - Extract actual genre names from Jikan + AnimSchedule
+  "title": "Fullmetal Alchemist: Brotherhood", // EXAMPLE - Extract actual title from offline database
+  "title_english": "Fullmetal Alchemist", // EXAMPLE - Extract actual English title
+  "title_japanese": "鋼の錬金術師", // EXAMPLE - Extract actual Japanese title
+  "type": "TV", // EXAMPLE - Extract from Jikan type field, use AniList format as cross-validation/fallback
+
+  // =====================================================================
+  // ARRAY FIELDS (alphabetical)
+  // =====================================================================
+  "content_warnings": ["Violence", "Strong Language"], // EXAMPLE - Extract actual content warnings
   "demographics": ["Shounen"], // EXAMPLE - Extract actual demographic names from Jikan
+  "genres": ["Action", "Adventure", "Fantasy", "Drama"], // EXAMPLE - Extract actual genre names from Jikan + AnimSchedule
+  "synonyms": ["FMA", "Hagane no Renkinjutsushi", "강철의 연금술사"], // EXAMPLE - Extract actual synonyms from all sources, no duplicates
   "themes": [
     {"name": "Military", "description": null}, // EXAMPLE - From Jikan themes
     {"name": "Magic", "description": "Magic is the art of purportedly manipulating aspects of reality either by supernatural means or through knowledge of unknown occult laws."}, // EXAMPLE - From Kitsu categories
     {"name": "Violence", "description": "Physical force against self or other, compelling action against one's will on pain of being hurt."}
   ],
-  "source_material": "Manga", // EXAMPLE - Extract from Jikan, fallback to AniList if null
-  "type": "TV", // EXAMPLE - Extract from Jikan type field, use AniList format as cross-validation/fallback
-  "rating": "R - 17+ (violence & profanity)", // EXAMPLE - Extract actual rating
-  "content_warnings": ["Violence", "Strong Language"], // EXAMPLE - Extract actual content warnings
-  "nsfw": false, // EXAMPLE - Extract actual nsfw flag from Kitsu
-  "title_japanese": "鋼の錬金術師", // EXAMPLE - Extract actual Japanese title
-  "title_english": "Fullmetal Alchemist", // EXAMPLE - Extract actual English title
-  "synonyms": ["FMA", "Hagane no Renkinjutsushi", "강철의 연금술사"], // EXAMPLE - Extract actual synonyms from all sources, no duplicates
-  "background": "Fullmetal Alchemist won the TV Feature Award...", // EXAMPLE - Extract actual background
-  "episodes": 26, // EXAMPLE - Cross-validate with offline database episode count
-  "status": "Finished", // EXAMPLE - Cross-validate with offline database status
-  "anime_season": {"season": "SPRING", "year": 1998}, // EXAMPLE - Cross-validate offline database animeSeason with external sources
-  "duration": 1440, // EXAMPLE - Cross-validate with offline database duration (seconds or dict structure)
   "trailers": [
     {
       "youtube_url": "https://www.youtube.com/watch?v=qig4KOK2R2g",
@@ -242,11 +250,16 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
       "title": "Official Trailer"
     }
   ], // EXAMPLE - Extract actual trailers from Jikan, AniList, Kitsu with deduplication
+
+  // =====================================================================
+  // OBJECT/DICT FIELDS (alphabetical)
+  // =====================================================================
   "aired_dates": {
     "from": "2003-10-04T00:00:00+00:00",
     "to": "2004-10-02T00:00:00+00:00",
     "string": "Oct 4, 2003 to Oct 2, 2004"
   }, // EXAMPLE - Extract actual aired dates
+  "anime_season": {"season": "SPRING", "year": 1998}, // EXAMPLE - Cross-validate offline database animeSeason with external sources
   "broadcast": {
     "day": "Saturdays",
     "time": "18:00",
@@ -257,17 +270,13 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
     "sub_time": "2024-01-01T19:00:00+09:00",
     "dub_time": "2024-01-01T20:00:00+09:00"
   }, // EXAMPLE - Extract actual AnimSchedule timing
-  "premiere_dates": {
-    "original": "2024-01-01",
-    "sub": "2024-01-01",
-    "dub": "2024-01-15"
-  }, // EXAMPLE - Extract actual premiere dates
   "delay_information": {
     "delayed_timetable": false,
     "delayed_from": null,
     "delayed_until": null,
     "delay_reason": null
   }, // EXAMPLE - Extract actual delay info
+  "duration": 1440, // EXAMPLE - Cross-validate with offline database duration (seconds or dict structure)
   "episode_overrides": {
     "main_override": null,
     "sub_override": null,
@@ -298,7 +307,11 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
       }
     ]
   }, // EXAMPLE - Organize by image type: "posters", "covers", "banners", etc. Multiple sources can contribute to each type
-  "month": "January" // EXAMPLE - Extract actual premiere month
+  "premiere_dates": {
+    "original": "2024-01-01",
+    "sub": "2024-01-01",
+    "dub": "2024-01-15"
+  } // EXAMPLE - Extract actual premiere dates
 }
 
 **CRITICAL: Use actual data from the APIs, not the example values shown above.**
