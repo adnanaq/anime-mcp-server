@@ -1794,39 +1794,167 @@
       }
     },
     {
-      "sources": [
-        "https://anime-planet.com/anime/ayakai-shima-e-youkoso-mitaman-no-ayakashima-kankou-annai",
-        "https://kitsu.app/anime/47667",
-        "https://livechart.me/anime/12190",
-        "https://myanimelist.net/anime/55754"
-      ],
-      "title": "\"Ayakai Shima\" e Youkoso! Mitaman no Ayakashima Kankou Annai",
-      "type": "ONA",
       "episodes": 16,
-      "status": "FINISHED",
-      "anime_season": {
-        "season": "SPRING",
-        "year": 2023
-      },
+      "nsfw": false,
       "picture": "https://cdn.myanimelist.net/images/anime/1580/136658.jpg",
+      "rating": "PG-13 - Teens 13 or older",
+      "source_material": "Original",
+      "status": "FINISHED",
+      "synopsis": "Chibi shorts for Ayaka that were published on the official Twitter and YouTube accounts for the series.",
       "thumbnail": "https://cdn.myanimelist.net/images/anime/1580/136658t.jpg",
-      "duration": {
-        "value": 120,
-        "unit": "SECONDS"
-      },
-      "score": {
-        "arithmeticGeometricMean": 5.85,
-        "arithmeticMean": 5.85,
-        "median": 5.85
-      },
-      "synonyms": [
-        "\"あやかい島\"へようこそ！ミタマンの綾ヵ島観光案内",
-        "AYAKA Mini Anime",
-        "AYAKA ‐あやか‐ ミニアニメ",
-        "Ayaka Mini Anime"
+      "title": "\"Ayakai Shima\" e Youkoso! Mitaman no Ayakashima Kankou Annai",
+      "title_japanese": "\"あやかい島\"へようこそ！ミタマンの綾ヵ島観光案内",
+      "type": "ONA",
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/1"
+        },
+        {
+          "episode_number": 2,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/2"
+        },
+        {
+          "episode_number": 3,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/3"
+        },
+        {
+          "episode_number": 4,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/4"
+        },
+        {
+          "episode_number": 5,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/5"
+        },
+        {
+          "episode_number": 6,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/6"
+        },
+        {
+          "episode_number": 7,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/7"
+        },
+        {
+          "episode_number": 8,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/8"
+        },
+        {
+          "episode_number": 9,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/9"
+        },
+        {
+          "episode_number": 10,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/10"
+        },
+        {
+          "episode_number": 11,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/11"
+        },
+        {
+          "episode_number": 12,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/12"
+        },
+        {
+          "episode_number": 13,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/13"
+        },
+        {
+          "episode_number": 14,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/14"
+        },
+        {
+          "episode_number": 15,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/15"
+        },
+        {
+          "episode_number": 16,
+          "season_number": 1,
+          "thumbnails": [],
+          "streaming": {},
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/16"
+        }
       ],
-      "tags": ["chibi", "chibi style", "comedy", "fantasy", "short episodes"],
-      "studios": ["aqua aris"],
+      "genres": ["Comedy", "Fantasy", "Chibi"],
       "producers": [],
       "related_anime": [
         {
@@ -1860,9 +1988,21 @@
           "relationship": "Other"
         }
       ],
-      "synopsis": "Chibi shorts for Ayaka that were published on the official Twitter and YouTube accounts for the series.",
-      "genres": ["Comedy", "Fantasy", "Chibi"],
-      "demographics": [],
+      "relations": [],
+      "sources": [
+        "https://anime-planet.com/anime/ayakai-shima-e-youkoso-mitaman-no-ayakashima-kankou-annai",
+        "https://kitsu.app/anime/47667",
+        "https://livechart.me/anime/12190",
+        "https://myanimelist.net/anime/55754"
+      ],
+      "studios": ["aqua aris"],
+      "synonyms": [
+        "\"あやかい島\"へようこそ！ミタマンの綾ヵ島観光案内",
+        "AYAKA Mini Anime",
+        "AYAKA ‐あやか‐ ミニアニメ",
+        "Ayaka Mini Anime"
+      ],
+      "tags": ["chibi", "chibi style", "comedy", "fantasy", "short episodes"],
       "themes": [
         {
           "name": "Short Episodes"
@@ -1872,18 +2012,21 @@
           "description": "Fantasy is a genre of fiction that uses magic and other supernatural phenomena as a primary element of plot, theme, or setting. Many works within the genre take place in fictional worlds where magic is common. Fantasy is generally distinguished from science fiction and horror by the expectation that it steers clear of (pseudo-)scientific and macabre themes, respectively, though there is a great deal of overlap between the three (which are subgenres of speculative fiction)."
         }
       ],
-      "source_material": "Original",
-      "rating": "PG-13 - Teens 13 or older",
-      "content_warnings": [],
-      "nsfw": false,
-      "title_japanese": "\"あやかい島\"へようこそ！ミタマンの綾ヵ島観光案内",
       "aired_dates": {
         "from": "2023-06-23T00:00:00+00:00",
         "to": "2023-10-03T00:00:00+00:00",
         "string": "Jun 23, 2023 to Oct 3, 2023"
       },
+      "anime_season": {
+        "season": "SPRING",
+        "year": 2023
+      },
       "delay_information": {
         "delayed_timetable": false
+      },
+      "duration": {
+        "value": 120,
+        "unit": "SECONDS"
       },
       "external_links": {
         "@ayaka_animepr": "https://twitter.com/AYAKA_animePR"
@@ -1907,155 +2050,27 @@
         ],
         "banners": []
       },
-      "episode_details": {
-        "episode_details": [
-          {
-            "episode_number": 1,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/1"
-          },
-          {
-            "episode_number": 2,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/2"
-          },
-          {
-            "episode_number": 3,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/3"
-          },
-          {
-            "episode_number": 4,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/4"
-          },
-          {
-            "episode_number": 5,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/5"
-          },
-          {
-            "episode_number": 6,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/6"
-          },
-          {
-            "episode_number": 7,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/7"
-          },
-          {
-            "episode_number": 8,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/8"
-          },
-          {
-            "episode_number": 9,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/9"
-          },
-          {
-            "episode_number": 10,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/10"
-          },
-          {
-            "episode_number": 11,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/11"
-          },
-          {
-            "episode_number": 12,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/12"
-          },
-          {
-            "episode_number": 13,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/13"
-          },
-          {
-            "episode_number": 14,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/14"
-          },
-          {
-            "episode_number": 15,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/15"
-          },
-          {
-            "episode_number": 16,
-            "season_number": 1,
-            "thumbnails": [],
-            "streaming": {},
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/16"
-          }
-        ]
+      "score": {
+        "arithmeticGeometricMean": 5.85,
+        "arithmeticMean": 5.85,
+        "median": 5.85
       },
-      "relations": [],
+      "staff_data": {
+        "studios": [
+          {
+            "name": "AQUA ARIS",
+            "type": "animation_studio",
+            "url": "https://myanimelist.net/anime/producer/2071/AQUA_ARIS"
+          }
+        ],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": [],
+          "english": [],
+          "other_languages": []
+        }
+      },
       "statistics": {
         "mal": {
           "score": 5.85,
@@ -2075,26 +2090,6 @@
           "members": 21,
           "favorites": 0,
           "popularity_rank": 20443
-        }
-      },
-      "characters": {
-        "characters": []
-      },
-      "staff_data": {
-        "studios": [
-          {
-            "name": "AQUA ARIS",
-            "type": "animation_studio",
-            "url": "https://myanimelist.net/anime/producer/2071/AQUA_ARIS",
-            "source": "jikan"
-          }
-        ],
-        "producers": [],
-        "licensors": [],
-        "voice_actors": {
-          "japanese": [],
-          "english": [],
-          "other_languages": []
         }
       },
       "enrichment_metadata": {
