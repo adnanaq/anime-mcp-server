@@ -1433,9 +1433,55 @@
           "relationship": "Other"
         }
       ],
-      "synopsis": "The anime depicts the \"smart city\" envisioned by Kyocera, where everyone can comfortably and safely live with the use of advanced technology, and it also depicts the worries of job seekers. The anime's title and theme reflect both the vexing issue of how to describe Kyocera's extensive business in just one word, and the mood of job seekers vexed by the interview question, \"If you had to describe yourself in one word, what would it be?\"\n\n(Source: ANN)",
-      "genres": ["Sci-Fi"],
-      "demographics": [],
+      "relations": [],
+      "sources": [
+        "https://anidb.net/anime/17129",
+        "https://anilist.co/anime/143612",
+        "https://anime-planet.com/anime/anata-wo-hitokoto-de-arawashite-kudasai-no-shitsumon-ga-nigate-da",
+        "https://animecountdown.com/1824792",
+        "https://animenewsnetwork.com/encyclopedia/anime.php?id=25117",
+        "https://anisearch.com/anime/17000",
+        "https://kitsu.app/anime/45982",
+        "https://livechart.me/anime/11017",
+        "https://myanimelist.net/anime/50762",
+        "https://simkl.com/anime/1824792",
+        "https://animeschedule.net/anime/anata-wo-hitokoto-de-arawashite-kudasai-no-shitsumon-ga-nigate-da"
+      ],
+      "studios": ["sunrise inc."],
+      "synonyms": [
+        "Anahito",
+        "AnaHito",
+        "\"Please Describe Yourself in One Word\": I'm Bad at the Question.",
+        "Kyocera CM",
+        "I'm Bad at the Question \"Please Describe Yourself in One Word\"",
+        "あなひと",
+        "\"Anata o Hitokoto de Arawashite Kudasai\" no Shitsumon ga Nigate da.",
+        "\"Anata wo Hitokoto de Arawashite Kudasai\" no Shitsumon ga Nigate da",
+        "Anata wo Hitokoto de Arawashite Kudasai: no Shitsumon ga Nigate da.",
+        "Anita",
+        "京セラ株式会社 CM",
+        "京セラ発オリジナルアニメ第1弾",
+        "「あなたを一言で表してください」の質問が苦手だ。",
+        "『あなたを一言で表してください』の質問が苦手だ.",
+        "『あなたを一言で表してください』の質問が苦手だ。",
+        "あなたを一言で表してください の質問が苦手だ。"
+      ],
+      "tags": [
+        "advertisement",
+        "fishing",
+        "japanese production",
+        "photography",
+        "present",
+        "promotional",
+        "sci-fi",
+        "science fiction",
+        "short episodes",
+        "shorts",
+        "slice of life",
+        "work",
+        "working life",
+        "workplace"
+      ],
       "themes": [
         {
           "name": "Workplace"
@@ -1465,22 +1511,28 @@
           "description": "Centers around the use of cameras to capture photos."
         }
       ],
-      "source_material": "Original",
-      "rating": "G - All Ages",
-      "content_warnings": [],
-      "nsfw": false,
-      "title_japanese": "『あなたを一言で表してください』の質問が苦手だ。",
+      "trailers": [
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=N5_Un6xLA6g",
+          "title": "​Official Trailer"
+        }
+      ],
       "aired_dates": {
         "from": "2022-01-11T00:00:00+00:00",
         "string": "Jan 11, 2022"
       },
-      "premiere_dates": {
-        "original": "2022-01-11",
-        "sub": "0001-01-01",
-        "dub": "0001-01-01"
+      "anime_season": {
+        "season": "WINTER",
+        "year": 2022
       },
+      "broadcast": {},
+      "broadcast_schedule": {},
       "delay_information": {
         "delayed_timetable": false
+      },
+      "duration": {
+        "value": 300,
+        "unit": "SECONDS"
       },
       "episode_overrides": {
         "main_override": {
@@ -1534,128 +1586,16 @@
         ],
         "banners": []
       },
-      "month": "January",
-      "trailers": [
-        {
-          "youtube_url": "https://www.youtube.com/watch?v=N5_Un6xLA6g",
-          "title": "​Official Trailer"
-        }
-      ],
-      "episode_details": [
-        {
-          "episode_number": 1,
-          "season_number": 1,
-          "title": "Episode 1",
-          "thumbnails": [],
-          "streaming": {},
-          "aired": "2022-01-11T00:00:00+09:00",
-          "duration": 300,
-          "filler": false,
-          "recap": false,
-          "url": "https://myanimelist.net/anime/50762"
-        }
-      ],
-      "relations": [],
-      "statistics": {
-        "mal": {
-          "score": 6.17,
-          "scored_by": 593,
-          "popularity_rank": 12651,
-          "members": 1721,
-          "favorites": 3
-        },
-        "animeschedule": {
-          "score": 6.416,
-          "scored_by": 4,
-          "members": 4,
-          "rank": 10114
-        },
-        "kitsu": {
-          "members": 86,
-          "favorites": 0,
-          "popularity_rank": 14868
-        },
-        "animeplanet": {
-          "score": 6.348,
-          "scored_by": 95
-        },
-        "anilist": {
-          "score": 5.7,
-          "popularity_rank": 836,
-          "favorites": 4,
-          "contextual_ranks": []
-        },
-        "anidb": {
-          "score": 5.24,
-          "scored_by": 45
-        }
+      "premiere_dates": {
+        "original": "2022-01-11",
+        "sub": "0001-01-01",
+        "dub": "0001-01-01"
       },
-      "characters": [
-        {
-          "name": "Michiru",
-          "role": "Main",
-          "name_variations": ["ミチル", "Michiru"],
-          "name_native": "ミチル",
-          "nicknames": [],
-          "character_ids": {
-            "mal": 205191,
-            "anilist": 261205,
-            "anidb": 121607
-          },
-          "images": {
-            "jikan": "https://cdn.myanimelist.net/images/characters/9/487737.jpg",
-            "anidb": "https://cdn.anidb.net/images/main/268755.jpg"
-          },
-          "url": "https://myanimelist.net/character/205191/Michiru",
-          "gender": "Female",
-          "voice_actors": [
-            {
-              "name": "Kitou, Akari",
-              "language": "Japanese"
-            }
-          ]
-        },
-        {
-          "name": "Yuuki",
-          "role": "Main",
-          "name_variations": ["ユウキ", "Yuuki"],
-          "name_native": "ユウキ",
-          "nicknames": [],
-          "character_ids": {
-            "mal": 205187,
-            "anilist": 261204,
-            "anidb": 121608
-          },
-          "images": {
-            "jikan": "https://cdn.myanimelist.net/images/characters/2/487738.jpg",
-            "anidb": "https://cdn.anidb.net/images/main/268756.jpg"
-          },
-          "url": "https://myanimelist.net/character/205187/Yuuki",
-          "gender": "Male",
-          "voice_actors": [
-            {
-              "name": "Shimono, Hiro",
-              "language": "Japanese"
-            }
-          ]
-        },
-        {
-          "name": "Ryoushi",
-          "role": "Supporting",
-          "name_variations": ["漁師", "Ryoushi"],
-          "name_native": "漁師",
-          "nicknames": [],
-          "character_ids": {
-            "anilist": 346277
-          },
-          "voice_actors": [
-            {
-              "name": "Katsuhisa Houki",
-              "language": "Japanese"
-            }
-          ]
-        }
-      ],
+      "score": {
+        "arithmeticGeometricMean": 6.204015433344115,
+        "arithmeticMean": 6.205748917748918,
+        "median": 6.263999999999999
+      },
       "staff_data": {
         "production_staff": {
           "directors": [
@@ -1811,6 +1751,40 @@
               "character_assignments": ["Ryoushi"]
             }
           ]
+        }
+      },
+      "statistics": {
+        "mal": {
+          "score": 6.17,
+          "scored_by": 593,
+          "popularity_rank": 12651,
+          "members": 1721,
+          "favorites": 3
+        },
+        "animeschedule": {
+          "score": 6.416,
+          "scored_by": 4,
+          "members": 4,
+          "rank": 10114
+        },
+        "kitsu": {
+          "members": 86,
+          "favorites": 0,
+          "popularity_rank": 14868
+        },
+        "animeplanet": {
+          "score": 6.348,
+          "scored_by": 95
+        },
+        "anilist": {
+          "score": 5.7,
+          "popularity_rank": 836,
+          "favorites": 4,
+          "contextual_ranks": []
+        },
+        "anidb": {
+          "score": 5.24,
+          "scored_by": 45
         }
       },
       "enrichment_metadata": {
