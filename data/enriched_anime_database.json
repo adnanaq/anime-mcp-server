@@ -736,71 +736,84 @@
       }
     },
     {
-      "sources": [
-        "https://anisearch.com/anime/20004",
-        "https://myanimelist.net/anime/60629"
-      ],
-      "title": "\"1-punkan dake Furete mo Ii yo...\" Share House no Himitsu Rule.",
-      "type": "ONA",
       "episodes": 8,
-      "status": "FINISHED",
-      "anime_season": {
-        "season": "WINTER",
-        "year": 2025
-      },
       "picture": "https://cdn.myanimelist.net/images/anime/1602/147203.jpg",
-      "thumbnail": "https://cdn.myanimelist.net/images/anime/1602/147203t.jpg",
-      "duration": {
-        "value": 360,
-        "unit": "SECONDS"
-      },
-      "score": {
-        "arithmeticGeometricMean": 5.553123023932788,
-        "arithmeticMean": 5.554081632653061,
-        "median": 5.554081632653061
-      },
-      "synonyms": [
-        "La règle secrète de la coloc",
-        "The Share House's Secret Rule",
-        "\"1-funkan dake Furete mo Ii yo...\" Share House no Himitsu Rule.",
-        "\"1-punkan dake Furete mo Ii yo...\" Share House no Himitsu Rule.",
-        "\"1-punkan dake Furete mo Ī yo...\" Share House no Himitsu Rule.",
-        "\"Ippunkan dake Furete mo Ii yo...\" Share House no Himitsu Rule.",
-        "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール.",
-        "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール。"
-      ],
-      "tags": ["adult audience only", "hentai", "love polygon", "present"],
-      "studios": ["studio leo"],
-      "producers": ["suiseisha"],
-      "related_anime": [],
+      "rating": "Rx - Hentai",
+      "source_material": "Manga",
+      "status": "FINISHED",
       "synopsis": "After moving into a new share house, Ryota Ochi meets two beautiful housemates who order him to do housework, with an unusual arrangement.",
-      "genres": ["Hentai"],
-      "demographics": [],
-      "themes": [
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1602/147203t.jpg",
+      "title": "\"1-punkan dake Furete mo Ii yo...\" Share House no Himitsu Rule.",
+      "title_english": "The Share House's Secret Rule",
+      "title_japanese": "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール。",
+      "type": "ONA",
+      "characters": [
         {
-          "name": "Love Polygon"
+          "name": "Kanade AYASE",
+          "role": "Main",
+          "name_variations": ["綾瀬 奏"],
+          "name_kanji": "綾瀬 奏",
+          "name_native": "綾瀬 奏",
+          "nicknames": [],
+          "character_ids": {
+            "anisearch": 133080
+          },
+          "images": {
+            "anisearch": "https://cdn.anisearch.com/images/character/cover/133/133080_400.webp"
+          },
+          "gender": "Female",
+          "voice_actors": [
+            {
+              "name": "Hikaru Isshiki",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Momoka HANAOKA",
+          "role": "Main",
+          "name_variations": ["花岡 桃香"],
+          "name_kanji": "花岡 桃香",
+          "name_native": "花岡 桃香",
+          "nicknames": [],
+          "character_ids": {
+            "anisearch": 133115
+          },
+          "images": {
+            "anisearch": "https://cdn.anisearch.com/images/character/cover/133/133115_400.webp"
+          },
+          "gender": "Female",
+          "voice_actors": [
+            {
+              "name": "三浦さとみ",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Ryouta OCHI",
+          "role": "Main",
+          "name_variations": ["越智 遼太"],
+          "name_kanji": "越智 遼太",
+          "name_native": "越智 遼太",
+          "nicknames": [],
+          "character_ids": {
+            "anisearch": 133114
+          },
+          "images": {
+            "anisearch": "https://cdn.anisearch.com/images/character/cover/133/133114_400.webp"
+          },
+          "gender": "Female",
+          "voice_actors": [
+            {
+              "name": "豆坊主",
+              "language": "Japanese"
+            }
+          ]
         }
       ],
-      "source_material": "Manga",
-      "rating": "Rx - Hentai",
       "content_warnings": ["Adult Content", "Explicit Sexual Content"],
-      "title_japanese": "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール。",
-      "title_english": "The Share House's Secret Rule",
-      "trailers": [],
-      "aired_dates": {
-        "from": "2025-01-05T00:00:00+00:00",
-        "to": "2025-03-10T00:00:00+00:00"
-      },
-      "images": {
-        "posters": [],
-        "covers": [
-          {
-            "url": "https://cdn.myanimelist.net/images/anime/1602/147203l.jpg",
-            "source": "jikan"
-          }
-        ],
-        "banners": []
-      },
+      "demographics": [],
       "episode_details": [
         {
           "episode_number": 1,
@@ -892,78 +905,65 @@
           "url": "https://myanimelist.net/anime/60629/1-punkan_dake_Furete_mo_Ii_yo_Share_House_no_Himitsu_Rule/episode/8"
         }
       ],
+      "genres": ["Hentai"],
+      "producers": ["suiseisha"],
+      "related_anime": [],
       "relations": [
         {
-          "title": "The Share House’s Secret Rule",
+          "title": "The Share House's Secret Rule",
           "url": "https://anisearch.com/manga/91400,the-share-houses-secret-rule",
           "relationship": "Original Work"
         }
       ],
-      "characters": [
+      "sources": [
+        "https://anisearch.com/anime/20004",
+        "https://myanimelist.net/anime/60629"
+      ],
+      "studios": ["studio leo"],
+      "synonyms": [
+        "La règle secrète de la coloc",
+        "The Share House's Secret Rule",
+        "\"1-funkan dake Furete mo Ii yo...\" Share House no Himitsu Rule.",
+        "\"1-punkan dake Furete mo Ii yo...\" Share House no Himitsu Rule.",
+        "\"1-punkan dake Furete mo Ī yo...\" Share House no Himitsu Rule.",
+        "\"Ippunkan dake Furete mo Ii yo...\" Share House no Himitsu Rule.",
+        "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール.",
+        "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール。"
+      ],
+      "tags": ["adult audience only", "hentai", "love polygon", "present"],
+      "themes": [
         {
-          "name": "Kanade AYASE",
-          "role": "Main",
-          "name_variations": ["綾瀬 奏"],
-          "name_kanji": "綾瀬 奏",
-          "name_native": "綾瀬 奏",
-          "nicknames": [],
-          "character_ids": {
-            "anisearch": 133080
-          },
-          "images": {
-            "anisearch": "https://cdn.anisearch.com/images/character/cover/133/133080_400.webp"
-          },
-          "gender": "Female",
-          "voice_actors": [
-            {
-              "name": "Hikaru Isshiki",
-              "language": "Japanese"
-            }
-          ]
-        },
-        {
-          "name": "Momoka HANAOKA",
-          "role": "Main",
-          "name_variations": ["花岡 桃香"],
-          "name_kanji": "花岡 桃香",
-          "name_native": "花岡 桃香",
-          "nicknames": [],
-          "character_ids": {
-            "anisearch": 133115
-          },
-          "images": {
-            "anisearch": "https://cdn.anisearch.com/images/character/cover/133/133115_400.webp"
-          },
-          "gender": "Female",
-          "voice_actors": [
-            {
-              "name": "三浦さとみ",
-              "language": "Japanese"
-            }
-          ]
-        },
-        {
-          "name": "Ryouta OCHI",
-          "role": "Main",
-          "name_variations": ["越智 遼太"],
-          "name_kanji": "越智 遼太",
-          "name_native": "越智 遼太",
-          "nicknames": [],
-          "character_ids": {
-            "anisearch": 133114
-          },
-          "images": {
-            "anisearch": "https://cdn.anisearch.com/images/character/cover/133/133114_400.webp"
-          },
-          "gender": "Female",
-          "voice_actors": [
-            {
-              "name": "豆坊主",
-              "language": "Japanese"
-            }
-          ]
+          "name": "Love Polygon"
         }
       ],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2025-01-05T00:00:00+00:00",
+        "to": "2025-03-10T00:00:00+00:00"
+      },
+      "anime_season": {
+        "season": "WINTER",
+        "year": 2025
+      },
+      "duration": {
+        "value": 360,
+        "unit": "SECONDS"
+      },
+      "images": {
+        "posters": [],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1602/147203l.jpg",
+            "source": "jikan"
+          }
+        ],
+        "banners": []
+      },
+      "score": {
+        "arithmeticGeometricMean": 5.553123023932788,
+        "arithmeticMean": 5.554081632653061,
+        "median": 5.554081632653061
+      },
       "staff_data": {
         "studios": [
           {
@@ -995,6 +995,41 @@
       }
     },
     {
+      "episodes": 1,
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/3/65151.jpg",
+      "rating": "PG - Children",
+      "source_material": "Unknown",
+      "status": "FINISHED",
+      "synopsis": "Based on Aesop's Fables.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/3/65151t.jpg",
+      "title": "\"Aesop\" no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu",
+      "title_japanese": "\"いそっぷ\"のおはなしより 牛とかえる, よくばった犬",
+      "type": "MOVIE",
+      "characters": [],
+      "content_warnings": [],
+      "demographics": ["Kids"],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "title": "\"Aesop\" no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu",
+          "title_japanese": "\"いそっぷ\"のおはなしより 牛とかえる, よくばった犬",
+          "title_romaji": "\"Aesop\" no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu",
+          "synopsis": "Based on Aesop's Fables. This movie presents two classic tales: The Bull and the Frog, and The Greedy Dog, adapted for children from the timeless Aesop's collection of moral stories.",
+          "thumbnails": [],
+          "streaming": {},
+          "aired": "1970-03-21T00:00:00+09:00",
+          "duration": 720,
+          "score": 5.57,
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/25627/Aesop_no_Ohanashi_yori__Ushi_to_Kaeru_Yokubatta_Inu"
+        }
+      ],
+      "genres": ["Family Friendly", "Frogs"],
+      "producers": [],
+      "related_anime": [],
+      "relations": [],
       "sources": [
         "https://anidb.net/anime/3689",
         "https://anilist.co/anime/185879",
@@ -1006,34 +1041,16 @@
         "https://notify.moe/anime/eM1-pKmiR",
         "https://simkl.com/anime/41243"
       ],
-      "title": "\"Aesop\" no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu",
-      "type": "MOVIE",
-      "episodes": 1,
-      "status": "FINISHED",
-      "anime_season": {
-        "season": "WINTER",
-        "year": 1970
-      },
-      "picture": "https://cdn.myanimelist.net/images/anime/3/65151.jpg",
-      "thumbnail": "https://cdn.myanimelist.net/images/anime/3/65151t.jpg",
-      "duration": {
-        "value": 720,
-        "unit": "SECONDS"
-      },
-      "score": {
-        "arithmeticGeometricMean": 5.078269583554134,
-        "arithmeticMean": 5.220118738404453,
-        "median": 5.0
-      },
+      "studios": [],
       "synonyms": [
         "\"いそっぷ\"のおはなしより 牛とかえる",
         "\"いそっぷ\"のおはなしより 牛とかえる, よくばった犬",
         "From Aesop's Tales: The Bull and the Frog / The Greedy Dog",
-        "From Aesop’s Tales: The Bull and the Frog / The Greedy Dog",
+        "From Aesop's Tales: The Bull and the Frog / The Greedy Dog",
         "Yokubatta Inu",
-        "“Aesop” no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu",
-        "“いそっぷ”のおはなしより 牛とかえる、よくばった犬",
-        "“いそっぷ”のおはなしより　牛とかえる、よくばった犬",
+        "\"Aesop\" no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu",
+        "\"いそっぷ\"のおはなしより 牛とかえる、よくばった犬",
+        "\"いそっぷ\"のおはなしより　牛とかえる、よくばった犬",
         "よくばった犬"
       ],
       "tags": [
@@ -1044,12 +1061,6 @@
         "kids",
         "speculative fiction"
       ],
-      "studios": [],
-      "producers": [],
-      "related_anime": [],
-      "synopsis": "Based on Aesop's Fables.",
-      "genres": ["Family Friendly", "Frogs"],
-      "demographics": ["Kids"],
       "themes": [
         {
           "name": "Fantasy",
@@ -1064,18 +1075,21 @@
           "description": "Speculative fiction is an umbrella genre encompassing fiction with certain elements that do not exist in the real world, often in the context of supernatural, futuristic or other imaginative themes. This includes, but is not limited to, science fiction, fantasy, superhero fiction, horror, utopian and dystopian fiction, fairytale fantasy, supernatural fiction, as well as combinations thereof."
         }
       ],
-      "source_material": "Unknown",
-      "rating": "PG - Children",
-      "content_warnings": [],
-      "nsfw": false,
-      "title_japanese": "\"いそっぷ\"のおはなしより 牛とかえる, よくばった犬",
       "aired_dates": {
         "from": "1970-03-21T00:00:00+00:00",
         "to": "1970-03-21T00:00:00+00:00",
         "string": "Mar 21, 1970"
       },
+      "anime_season": {
+        "season": "WINTER",
+        "year": 1970
+      },
       "delay_information": {
         "delayed_timetable": false
+      },
+      "duration": {
+        "value": 720,
+        "unit": "SECONDS"
       },
       "external_links": {
         "anidb": "https://anidb.net/perl-bin/animedb.pl?show=anime&aid=3689"
@@ -1107,26 +1121,49 @@
         ],
         "banners": []
       },
-      "episode_details": {
-        "episode_details": [
-          {
-            "episode_number": 1,
-            "title": "\"Aesop\" no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu",
-            "title_japanese": "\"いそっぷ\"のおはなしより 牛とかえる, よくばった犬",
-            "title_romanji": "\"Aesop\" no Ohanashi yori: Ushi to Kaeru, Yokubatta Inu",
-            "synopsis": "Based on Aesop's Fables. This movie presents two classic tales: The Bull and the Frog, and The Greedy Dog, adapted for children from the timeless Aesop's collection of moral stories.",
-            "thumbnails": [],
-            "streaming": {},
-            "aired": "1970-03-21T00:00:00+09:00",
-            "duration": 720,
-            "score": 5.57,
-            "filler": false,
-            "recap": false,
-            "url": "https://myanimelist.net/anime/25627/Aesop_no_Ohanashi_yori__Ushi_to_Kaeru_Yokubatta_Inu"
-          }
-        ]
+      "score": {
+        "arithmeticGeometricMean": 5.078269583554134,
+        "arithmeticMean": 5.220118738404453,
+        "median": 5.0
       },
-      "relations": [],
+      "staff_data": {
+        "production_staff": {
+          "directors": [
+            {
+              "staff_ids": {
+                "anilist": "144269"
+              },
+              "name": "Katsuo Takahashi",
+              "native_name": "高橋克雄",
+              "role": "Director",
+              "primary_occupations": ["Director"],
+              "enhancement_status": "anilist_basic_data_only"
+            }
+          ],
+          "music_composers": [],
+          "character_designers": [],
+          "series_writers": [
+            {
+              "staff_ids": {
+                "anilist": "144269"
+              },
+              "name": "Katsuo Takahashi",
+              "native_name": "高橋克雄",
+              "role": "Script",
+              "primary_occupations": ["Script Writer"],
+              "enhancement_status": "anilist_basic_data_only"
+            }
+          ],
+          "animation_directors": [],
+          "original_creators": []
+        },
+        "studios": [],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": []
+        }
+      },
       "statistics": {
         "mal": {
           "score": 5.57,
@@ -1149,49 +1186,6 @@
           "popularity_rank": 15575,
           "members": 73,
           "favorites": 0
-        }
-      },
-      "characters": {
-        "characters": []
-      },
-      "staff_data": {
-        "staff_data": {
-          "production_staff": {
-            "directors": [
-              {
-                "staff_ids": {
-                  "anilist": "144269"
-                },
-                "name": "Katsuo Takahashi",
-                "native_name": "高橋克雄",
-                "role": "Director",
-                "primary_occupations": ["Director"],
-                "enhancement_status": "anilist_basic_data_only"
-              }
-            ],
-            "music_composers": [],
-            "character_designers": [],
-            "series_writers": [
-              {
-                "staff_ids": {
-                  "anilist": "144269"
-                },
-                "name": "Katsuo Takahashi",
-                "native_name": "高橋克雄",
-                "role": "Script",
-                "primary_occupations": ["Script Writer"],
-                "enhancement_status": "anilist_basic_data_only"
-              }
-            ],
-            "animation_directors": [],
-            "original_creators": []
-          },
-          "studios": [],
-          "producers": [],
-          "licensors": [],
-          "voice_actors": {
-            "japanese": []
-          }
         }
       },
       "enrichment_metadata": {
