@@ -218,97 +218,64 @@ class AnimeEntry(BaseModel):
     """Anime entry from anime-offline-database with comprehensive enhancement support"""
 
     # =====================================================================
-    # EXISTING ANIME-OFFLINE-DATABASE FIELDS (Standardized to snake_case)
+    # SCALAR FIELDS (alphabetical)
     # =====================================================================
-    sources: List[str] = Field(..., description="Source URLs from various providers")
-    title: str = Field(..., description="Primary anime title")
-    type: str = Field(..., description="TV, Movie, OVA, etc.")
+    background: Optional[str] = Field(None, description="Background information from MAL")
     episodes: int = Field(default=0, description="Number of episodes")
-    status: str = Field(..., description="Airing status")
-    anime_season: Optional[Dict[str, Any]] = Field(None, description="Season and year")
+    month: Optional[str] = Field(None, description="Premiere month from AnimSchedule")
+    nsfw: Optional[bool] = Field(None, description="Not Safe For Work flag from Kitsu")
     picture: Optional[str] = Field(None, description="Cover image URL")
+    rating: Optional[str] = Field(None, description="Content rating (PG-13, R, etc.)")
+    source_material: Optional[str] = Field(None, description="Source material (manga, light novel, etc.)")
+    status: str = Field(..., description="Airing status")
+    synopsis: Optional[str] = Field(None, description="Detailed anime synopsis from external sources")
     thumbnail: Optional[str] = Field(None, description="Thumbnail URL")
-    duration: Optional[Union[int, Dict[str, Any]]] = Field(
-        None, description="Episode duration in seconds"
-    )
-    score: Optional[Dict[str, float]] = Field(
-        None,
-        description="Anime scoring data with arithmeticGeometricMean, arithmeticMean, median",
-    )
+    title: str = Field(..., description="Primary anime title")
+    title_english: Optional[str] = Field(None, description="English title")
+    title_japanese: Optional[str] = Field(None, description="Japanese title")
+    type: str = Field(..., description="TV, Movie, OVA, etc.")
+
+    # =====================================================================
+    # ARRAY FIELDS (alphabetical)
+    # =====================================================================
+    awards: List[Dict[str, Any]] = Field(default_factory=list, description="Awards and recognition")
+    characters: List[CharacterEntry] = Field(default_factory=list, description="Character information with multi-source support")
+    content_warnings: List[str] = Field(default_factory=list, description="Content warnings")
+    demographics: List[str] = Field(default_factory=list, description="Target demographics (Shounen, Seinen, etc.)")
+    ending_themes: List[Dict[str, Any]] = Field(default_factory=list, description="Ending theme songs")
+    episode_details: List[EpisodeDetailEntry] = Field(default_factory=list, description="Detailed episode information with multi-source integration")
+    genres: List[str] = Field(default_factory=list, description="Anime genres from AniList/other sources")
+    licensors: List[str] = Field(default_factory=list, description="Licensing companies")
+    opening_themes: List[Dict[str, Any]] = Field(default_factory=list, description="Opening theme songs")
+    related_anime: List[RelatedAnimeEntry] = Field(default_factory=list, description="Related anime entries from URL processing")
+    relations: List[RelationEntry] = Field(default_factory=list, description="Related anime with platform URLs")
+    sources: List[str] = Field(..., description="Source URLs from various providers")
+    streaming_info: List[StreamingEntry] = Field(default_factory=list, description="Streaming platform information")
+    streaming_licenses: List[str] = Field(default_factory=list, description="Streaming licenses")
     synonyms: List[str] = Field(default_factory=list, description="Alternative titles")
     tags: List[str] = Field(default_factory=list, description="Original tags from offline database")
-
-    # =====================================================================
-    # CURRENT ENRICHMENT FIELDS (Already Enhanced)
-    # =====================================================================
-    synopsis: Optional[str] = Field(None, description="Detailed anime synopsis from external sources")
-    characters: List[CharacterEntry] = Field(default_factory=list, description="Character information with multi-source support")
-    trailers: List[TrailerEntry] = Field(default_factory=list, description="Trailer information from external APIs")
-    enrichment_metadata: Optional[EnrichmentMetadata] = Field(None, description="Metadata about enrichment process")
-
-    # =====================================================================
-    # NEW ENHANCEMENT FIELDS (Add to existing structure)
-    # =====================================================================
-    genres: List[str] = Field(default_factory=list, description="Anime genres from AniList/other sources")
-    demographics: List[str] = Field(default_factory=list, description="Target demographics (Shounen, Seinen, etc.)")
     themes: List[ThemeEntry] = Field(default_factory=list, description="Thematic elements with descriptions")
-    source_material: Optional[str] = Field(None, description="Source material (manga, light novel, etc.)")
-    rating: Optional[str] = Field(None, description="Content rating (PG-13, R, etc.)")
-    content_warnings: List[str] = Field(default_factory=list, description="Content warnings")
-    nsfw: Optional[bool] = Field(None, description="Not Safe For Work flag from Kitsu")
-    
-    # Title variations from different sources
-    title_japanese: Optional[str] = Field(None, description="Japanese title")
-    title_english: Optional[str] = Field(None, description="English title")
-    
-    # Detailed timing information
+    trailers: List[TrailerEntry] = Field(default_factory=list, description="Trailer information from external APIs")
+
+    # =====================================================================
+    # OBJECT/DICT FIELDS (alphabetical)
+    # =====================================================================
     aired_dates: Optional[Dict[str, Any]] = Field(None, description="Detailed airing dates")
+    anime_season: Optional[Dict[str, Any]] = Field(None, description="Season and year")
     broadcast: Optional[Dict[str, Any]] = Field(None, description="Broadcast schedule information")
-    month: Optional[str] = Field(None, description="Premiere month from AnimSchedule")
-    background: Optional[str] = Field(None, description="Background information from MAL")
-    
-    # Broadcast scheduling from AnimSchedule
     broadcast_schedule: Optional[Dict[str, Any]] = Field(None, description="Broadcast timing for different versions (jpn_time, sub_time, dub_time)")
-    premiere_dates: Optional[Dict[str, Any]] = Field(None, description="Premiere dates for different versions (original, sub, dub)")
     delay_information: Optional[Dict[str, Any]] = Field(None, description="Current delay status and reasons")
-    episode_overrides: Optional[Dict[str, Any]] = Field(None, description="Episode override information for different versions (main_override, sub_override, dub_override)")
-    
-    # Streaming and availability
-    streaming_info: List[StreamingEntry] = Field(default_factory=list, description="Streaming platform information")
-    licensors: List[str] = Field(default_factory=list, description="Licensing companies")
-    streaming_licenses: List[str] = Field(default_factory=list, description="Streaming licenses")
-    
-    # Staff and music
-    staff_data: Optional[StaffData] = Field(None, description="Comprehensive staff data with multi-source integration")
-    opening_themes: List[Dict[str, Any]] = Field(default_factory=list, description="Opening theme songs")
-    ending_themes: List[Dict[str, Any]] = Field(default_factory=list, description="Ending theme songs")
-    
-    # Statistics from multiple platforms with standardized schema
-    statistics: Dict[str, StatisticsEntry] = Field(default_factory=dict, description="Standardized statistics from different platforms (mal, anilist, kitsu, animeschedule)")
-    
-    # External links
-    external_links: Dict[str, str] = Field(default_factory=dict, description="External links (official site, social media)")
-    
-    # Enhanced images with source attribution
-    images: Dict[str, List[ImageEntry]] = Field(default_factory=dict, description="Images from multiple sources")
-    
-    # Episode details with multi-source support
-    episode_details: List[EpisodeDetailEntry] = Field(default_factory=list, description="Detailed episode information with multi-source integration")
-    
-    # Relations with multi-platform URLs
-    relations: List[RelationEntry] = Field(default_factory=list, description="Related anime with platform URLs")
-    
-    # Related anime from URL processing (different from relations)
-    related_anime: List[RelatedAnimeEntry] = Field(default_factory=list, description="Related anime entries from URL processing")
-    
-    # Awards and recognition
-    awards: List[Dict[str, Any]] = Field(default_factory=list, description="Awards and recognition")
-    
-    # Popularity trends
-    popularity_trends: Optional[Dict[str, Any]] = Field(None, description="Popularity trend data")
-    
-    # Enhanced metadata
+    duration: Optional[Union[int, Dict[str, Any]]] = Field(None, description="Episode duration in seconds")
     enhanced_metadata: Optional[Dict[str, Any]] = Field(None, description="Enhanced enrichment metadata")
+    enrichment_metadata: Optional[EnrichmentMetadata] = Field(None, description="Metadata about enrichment process")
+    episode_overrides: Optional[Dict[str, Any]] = Field(None, description="Episode override information for different versions (main_override, sub_override, dub_override)")
+    external_links: Dict[str, str] = Field(default_factory=dict, description="External links (official site, social media)")
+    images: Dict[str, List[ImageEntry]] = Field(default_factory=dict, description="Images from multiple sources")
+    popularity_trends: Optional[Dict[str, Any]] = Field(None, description="Popularity trend data")
+    premiere_dates: Optional[Dict[str, Any]] = Field(None, description="Premiere dates for different versions (original, sub, dub)")
+    score: Optional[Dict[str, float]] = Field(None, description="Anime scoring data with arithmeticGeometricMean, arithmeticMean, median")
+    staff_data: Optional[StaffData] = Field(None, description="Comprehensive staff data with multi-source integration")
+    statistics: Dict[str, StatisticsEntry] = Field(default_factory=dict, description="Standardized statistics from different platforms (mal, anilist, kitsu, animeschedule)")
     
     def has_enrichment_data(self) -> bool:
         """Check if this entry has any enrichment data"""
@@ -324,21 +291,6 @@ class AnimeEntry(BaseModel):
             len(self.relations) > 0 or
             len(self.related_anime) > 0
         )
-    
-    def is_enrichable(self) -> bool:
-        """Check if this entry can be enriched (has MAL or AniList sources)"""
-        if not self.platform_ids:
-            return any('myanimelist.net' in source or 'anilist.co' in source for source in self.sources)
-        return self.platform_ids.get('mal_id') is not None or self.platform_ids.get('anilist_id') is not None
-    
-    def get_primary_enrichment_id(self) -> Optional[Tuple[str, int]]:
-        """Get the primary ID for enrichment (prefer MAL, fallback to AniList)"""
-        if self.platform_ids:
-            if self.platform_ids.get('mal_id'):
-                return ('mal', self.platform_ids['mal_id'])
-            elif self.platform_ids.get('anilist_id'):
-                return ('anilist', self.platform_ids['anilist_id'])
-        return None
     
     def should_update_enrichment(self, max_age_days: int = 30) -> bool:
         """Check if enrichment data should be updated"""
