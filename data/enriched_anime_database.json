@@ -1195,49 +1195,67 @@
       }
     },
     {
+      "episodes": 1,
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1948/136272.jpg",
+      "rating": "PG - Children",
+      "source_material": "Original",
+      "status": "Finished",
+      "synopsis": "Graduate Work 2018 by Yuuta Watanabe, Tokyo Polytechnic University, Faculty of Arts, Department of Animation.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1948/136272t.jpg",
+      "title": "\"Ai\" wo Taberu",
+      "title_english": "Eating \"Love & Sorrow\"",
+      "title_japanese": "「あい」をたべる",
+      "type": "Movie",
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "season_number": 1,
+          "title": "Movie",
+          "title_japanese": "「あい」をたべる",
+          "synopsis": "Graduate Work 2018 by Yuuta Watanabe, Tokyo Polytechnic University, Faculty of Arts, Department of Animation.",
+          "thumbnails": [],
+          "aired": "2018-01-01T00:00:00+00:00",
+          "duration": 480,
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/54496/Ai_wo_Taberu",
+          "title_romaji": "\"Ai\" wo Taberu"
+        }
+      ],
+      "genres": ["Drama"],
+      "producers": [],
+      "related_anime": [],
+      "relations": [],
       "sources": [
         "https://anime-planet.com/anime/ai-wo-taberu",
         "https://kitsu.app/anime/47627",
         "https://myanimelist.net/anime/54496"
       ],
-      "title": "\"Ai\" wo Taberu",
-      "type": "Movie",
-      "episodes": 1,
-      "status": "Finished",
-      "anime_season": {
-        "season": "WINTER",
-        "year": 2018
-      },
-      "picture": "https://cdn.myanimelist.net/images/anime/1948/136272.jpg",
-      "thumbnail": "https://cdn.myanimelist.net/images/anime/1948/136272t.jpg",
-      "duration": {
-        "value": 480,
-        "unit": "SECONDS"
-      },
+      "studios": [],
       "synonyms": ["Eating \"Love & Sorrow\"", "「あい」をたべる"],
       "tags": ["drama", "shorts", "stop motion animation"],
-      "studios": [],
-      "producers": [],
-      "related_anime": [],
-      "synopsis": "Graduate Work 2018 by Yuuta Watanabe, Tokyo Polytechnic University, Faculty of Arts, Department of Animation.",
-      "genres": ["Drama"],
-      "demographics": [],
       "themes": [
         {
           "name": "Drama",
           "description": "Drama is a form of narrative fiction (or semi-fiction) intended to be more serious than humorous in tone."
         }
       ],
-      "source_material": "Original",
-      "rating": "PG - Children",
-      "content_warnings": [],
-      "nsfw": false,
-      "title_japanese": "「あい」をたべる",
-      "title_english": "Eating \"Love & Sorrow\"",
       "trailers": [],
       "aired_dates": {
         "from": "2018-01-01T00:00:00+00:00",
         "string": "2018"
+      },
+      "anime_season": {
+        "season": "WINTER",
+        "year": 2018
+      },
+      "duration": {
+        "value": 480,
+        "unit": "SECONDS"
       },
       "external_links": {
         "youtube": "https://www.youtube.com/watch?v=ulctA34qbCo"
@@ -1261,37 +1279,6 @@
         ],
         "banners": []
       },
-      "episode_details": [
-        {
-          "episode_number": 1,
-          "season_number": 1,
-          "title": "Movie",
-          "title_japanese": "「あい」をたべる",
-          "synopsis": "Graduate Work 2018 by Yuuta Watanabe, Tokyo Polytechnic University, Faculty of Arts, Department of Animation.",
-          "thumbnails": [],
-          "aired": "2018-01-01T00:00:00+00:00",
-          "duration": 480,
-          "filler": false,
-          "recap": false,
-          "url": "https://myanimelist.net/anime/54496/Ai_wo_Taberu",
-          "title_romaji": "\"Ai\" wo Taberu"
-        }
-      ],
-      "relations": [],
-      "statistics": {
-        "mal": {
-          "rank": 16891,
-          "popularity_rank": 22258,
-          "members": 196,
-          "favorites": 0
-        },
-        "kitsu": {
-          "members": 14,
-          "favorites": 0,
-          "popularity_rank": 21457
-        }
-      },
-      "characters": [],
       "staff_data": {
         "studios": [],
         "producers": [
@@ -1308,6 +1295,19 @@
           "other": []
         }
       },
+      "statistics": {
+        "mal": {
+          "rank": 16891,
+          "popularity_rank": 22258,
+          "members": 196,
+          "favorites": 0
+        },
+        "kitsu": {
+          "members": 14,
+          "favorites": 0,
+          "popularity_rank": 21457
+        }
+      },
       "enrichment_metadata": {
         "source": "multi-source",
         "enriched_at": "2025-07-25T15:57:47.063849Z",
@@ -1315,73 +1315,101 @@
       }
     },
     {
-      "sources": [
-        "https://anidb.net/anime/17129",
-        "https://anilist.co/anime/143612",
-        "https://anime-planet.com/anime/anata-wo-hitokoto-de-arawashite-kudasai-no-shitsumon-ga-nigate-da",
-        "https://animecountdown.com/1824792",
-        "https://animenewsnetwork.com/encyclopedia/anime.php?id=25117",
-        "https://anisearch.com/anime/17000",
-        "https://kitsu.app/anime/45982",
-        "https://livechart.me/anime/11017",
-        "https://myanimelist.net/anime/50762",
-        "https://simkl.com/anime/1824792",
-        "https://animeschedule.net/anime/anata-wo-hitokoto-de-arawashite-kudasai-no-shitsumon-ga-nigate-da"
-      ],
-      "title": "\"Anata wo Hitokoto de Arawashite Kudasai\" no Shitsumon ga Nigate da.",
-      "type": "OVA",
       "episodes": 1,
-      "status": "FINISHED",
-      "anime_season": {
-        "season": "WINTER",
-        "year": 2022
-      },
+      "month": "January",
+      "nsfw": false,
       "picture": "https://cdn.myanimelist.net/images/anime/1336/120560.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Original",
+      "status": "FINISHED",
+      "synopsis": "The anime depicts the \"smart city\" envisioned by Kyocera, where everyone can comfortably and safely live with the use of advanced technology, and it also depicts the worries of job seekers. The anime's title and theme reflect both the vexing issue of how to describe Kyocera's extensive business in just one word, and the mood of job seekers vexed by the interview question, \"If you had to describe yourself in one word, what would it be?\"\n\n(Source: ANN)",
       "thumbnail": "https://cdn.myanimelist.net/images/anime/1336/120560t.jpg",
-      "duration": {
-        "value": 300,
-        "unit": "SECONDS"
-      },
-      "score": {
-        "arithmeticGeometricMean": 6.204015433344115,
-        "arithmeticMean": 6.205748917748918,
-        "median": 6.263999999999999
-      },
-      "synonyms": [
-        "Anahito",
-        "AnaHito",
-        "\"Please Describe Yourself in One Word\": I'm Bad at the Question.",
-        "Kyocera CM",
-        "I'm Bad at the Question \"Please Describe Yourself in One Word\"",
-        "あなひと",
-        "\"Anata o Hitokoto de Arawashite Kudasai\" no Shitsumon ga Nigate da.",
-        "\"Anata wo Hitokoto de Arawashite Kudasai\" no Shitsumon ga Nigate da",
-        "Anata wo Hitokoto de Arawashite Kudasai: no Shitsumon ga Nigate da.",
-        "Anita",
-        "京セラ株式会社 CM",
-        "京セラ発オリジナルアニメ第1弾",
-        "「あなたを一言で表してください」の質問が苦手だ。",
-        "『あなたを一言で表してください』の質問が苦手だ.",
-        "『あなたを一言で表してください』の質問が苦手だ。",
-        "あなたを一言で表してください の質問が苦手だ。"
+      "title": "\"Anata wo Hitokoto de Arawashite Kudasai\" no Shitsumon ga Nigate da.",
+      "title_japanese": "『あなたを一言で表してください』の質問が苦手だ。",
+      "type": "OVA",
+      "characters": [
+        {
+          "name": "Michiru",
+          "role": "Main",
+          "name_variations": ["ミチル", "Michiru"],
+          "name_native": "ミチル",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 205191,
+            "anilist": 261205,
+            "anidb": 121607
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/9/487737.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/268755.jpg"
+          },
+          "url": "https://myanimelist.net/character/205191/Michiru",
+          "gender": "Female",
+          "voice_actors": [
+            {
+              "name": "Kitou, Akari",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Yuuki",
+          "role": "Main",
+          "name_variations": ["ユウキ", "Yuuki"],
+          "name_native": "ユウキ",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 205187,
+            "anilist": 261204,
+            "anidb": 121608
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/2/487738.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/268756.jpg"
+          },
+          "url": "https://myanimelist.net/character/205187/Yuuki",
+          "gender": "Male",
+          "voice_actors": [
+            {
+              "name": "Shimono, Hiro",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Ryoushi",
+          "role": "Supporting",
+          "name_variations": ["漁師", "Ryoushi"],
+          "name_native": "漁師",
+          "nicknames": [],
+          "character_ids": {
+            "anilist": 346277
+          },
+          "voice_actors": [
+            {
+              "name": "Katsuhisa Houki",
+              "language": "Japanese"
+            }
+          ]
+        }
       ],
-      "tags": [
-        "advertisement",
-        "fishing",
-        "japanese production",
-        "photography",
-        "present",
-        "promotional",
-        "sci-fi",
-        "science fiction",
-        "short episodes",
-        "shorts",
-        "slice of life",
-        "work",
-        "working life",
-        "workplace"
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "season_number": 1,
+          "title": "Episode 1",
+          "thumbnails": [],
+          "streaming": {},
+          "aired": "2022-01-11T00:00:00+09:00",
+          "duration": 300,
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/50762"
+        }
       ],
-      "studios": ["sunrise inc."],
+      "genres": ["Sci-Fi"],
       "producers": ["kyocera"],
       "related_anime": [
         {
