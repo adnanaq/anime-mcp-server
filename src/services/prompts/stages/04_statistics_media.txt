@@ -57,7 +57,7 @@ Extract statistics from ALL available data sources with standardized StatisticsE
   - averageScore → score (÷10 for 0-10 scale, e.g., 86 → 8.6)
   - favourites → favorites
   - popularity → popularity_rank
-  - rankings → contextual_ranks (extract array of ranking objects with rank, type, format, year, season, allTime)
+  - rankings → contextual_ranks (extract array of ranking objects with rank, type, format, year, season, all_time)
 
 - **ANIDB**:
   - ratings.permanent.value → score (already 0-10 scale)
@@ -112,7 +112,7 @@ Return ONLY statistics in JSON format:
                     "format": "TV",
                     "year": 2021,
                     "season": "FALL",
-                    "allTime": false
+                    "all_time": false
                 }
             ]
         },

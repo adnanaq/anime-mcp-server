@@ -78,7 +78,7 @@ class JikanDetailedFetcher:
                     'url': episode_detail.get('url'),
                     'title': episode_detail.get('title'),
                     'title_japanese': episode_detail.get('title_japanese'),
-                    'title_romanji': episode_detail.get('title_romanji'),
+                    'title_romaji': episode_detail.get('title_romaji'),
                     'aired': episode_detail.get('aired'),
                     'score': episode_detail.get('score'),
                     'filler': episode_detail.get('filler', False),

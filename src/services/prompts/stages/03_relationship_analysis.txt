@@ -29,14 +29,14 @@ Merge relationship data from 4 sources (Jikan, AnimePlanet, AnimSchedule, Offlin
 {animeschedule_relations_data}
 
 ### OFFLINE RELATED ANIME URLS:
-{related_anime_urls}
+{relatedAnime}
 
 ## PROCESSING PROTOCOL
 
 ### STEP 1: JIKAN RELATIONS PROCESSING (Primary Source)
 
 **Anime Relations Extraction**:
-- Extract all entries with `type: "anime"` → goes to `relatedAnime` array
+- Extract all entries with `type: "anime"` → goes to `related_anime` array
 - Extract all entries with `type: "manga"` → goes to `relations` array
 - Use `entry.name` for title field
 - Use `entry.url` for url field
@@ -240,7 +240,7 @@ Return ONLY valid JSON with this exact structure:
 
 ```json
 {{
-  "relatedAnime": [
+  "related_anime": [
     {{
       "title": "Cowboy Bebop: Tengoku no Tobira",
       "url": "https://myanimelist.net/anime/5/Cowboy_Bebop__Tengoku_no_Tobira",

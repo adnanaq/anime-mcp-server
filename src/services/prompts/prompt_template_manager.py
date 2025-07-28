@@ -53,7 +53,7 @@ class PromptTemplateManager:
             },
             3: {
                 "file": "03_relationship_analysis.txt",
-                "description": "Analyze relatedAnime URLs with intelligent title extraction",
+                "description": "Analyze related_anime URLs with intelligent title extraction",
                 "token_reduction": "95%"
             },
             4: {

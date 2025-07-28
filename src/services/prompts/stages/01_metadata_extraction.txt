@@ -138,7 +138,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
 ### CROSS-VALIDATION PROPERTIES:
 - **episodes**: Cross-validate across all sources with offline database episode count (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → Kitsu)
 - **status**: Cross-validate across sources with offline database status (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → Kitsu)
-- **animeSeason**: Cross-validate existing offline database animeSeason.season and animeSeason.year with external sources (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → AnimSchedule)
+- **anime_season**: Cross-validate existing offline database animeSeason.season and animeSeason.year with external sources (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → AnimSchedule)
 - **duration**: Cross-validate existing offline database duration (int seconds or dict with value/unit) with external sources (use offline DB if consistent, otherwise hierarchy: Offline DB → Jikan → AniList → Kitsu)
 
 ### ANIME-PLANET ENHANCEMENTS:
@@ -233,7 +233,7 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
   "background": "Fullmetal Alchemist won the TV Feature Award...", // EXAMPLE - Extract actual background
   "episodes": 26, // EXAMPLE - Cross-validate with offline database episode count
   "status": "Finished", // EXAMPLE - Cross-validate with offline database status
-  "animeSeason": {"season": "SPRING", "year": 1998}, // EXAMPLE - Cross-validate offline database animeSeason with external sources
+  "anime_season": {"season": "SPRING", "year": 1998}, // EXAMPLE - Cross-validate offline database animeSeason with external sources
   "duration": 1440, // EXAMPLE - Cross-validate with offline database duration (seconds or dict structure)
   "trailers": [
     {

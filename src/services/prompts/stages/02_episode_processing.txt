@@ -63,7 +63,7 @@ Merge episode data from 3 sources (Jikan, AniList, Kitsu) into comprehensive epi
 **For Each Successfully Matched Episode**:
 
 **Primary Metadata** (from Jikan):
-- episode_number, title, title_japanese, title_romanji
+- episode_number, title, title_japanese, title_romaji
 - synopsis (detailed content)
 - aired (with timezone), duration (seconds)
 - score, filler, recap (boolean flags)
@@ -112,7 +112,7 @@ Return ONLY valid JSON with complete episode details:
       "season_number": 1,
       "title": "Asteroid Blues",
       "title_japanese": "アステロイド・ブルース",
-      "title_romanji": "Asteroid Blues",
+      "title_romaji": "Asteroid Blues",
       "synopsis": "Detailed episode synopsis from Jikan...",
       "thumbnails": [
         {{

@@ -51,7 +51,7 @@ class EpisodeDetailEntry(BaseModel):
     # Episode titles from different sources
     title: str = Field(..., description="Primary episode title")
     title_japanese: Optional[str] = Field(None, description="Japanese episode title")
-    title_romanji: Optional[str] = Field(None, description="Romanized episode title")
+    title_romaji: Optional[str] = Field(None, description="Romanized episode title")
     
     # Episode content
     synopsis: Optional[str] = Field(None, description="Episode synopsis/description")
@@ -200,7 +200,7 @@ class ContextualRank(BaseModel):
     format: Optional[str] = Field(None, description="Format context (TV, Movie, etc.)")
     year: Optional[int] = Field(None, description="Year context")
     season: Optional[str] = Field(None, description="Season context (SPRING, SUMMER, FALL, WINTER)")
-    allTime: Optional[bool] = Field(None, description="Whether this is an all-time ranking")
+    all_time: Optional[bool] = Field(None, description="Whether this is an all-time ranking")
 
 
 class StatisticsEntry(BaseModel):
@@ -218,14 +218,14 @@ class AnimeEntry(BaseModel):
     """Anime entry from anime-offline-database with comprehensive enhancement support"""
 
     # =====================================================================
-    # EXISTING ANIME-OFFLINE-DATABASE FIELDS (Keep Unchanged)
+    # EXISTING ANIME-OFFLINE-DATABASE FIELDS (Standardized to snake_case)
     # =====================================================================
     sources: List[str] = Field(..., description="Source URLs from various providers")
     title: str = Field(..., description="Primary anime title")
     type: str = Field(..., description="TV, Movie, OVA, etc.")
     episodes: int = Field(default=0, description="Number of episodes")
     status: str = Field(..., description="Airing status")
-    animeSeason: Optional[Dict[str, Any]] = Field(None, description="Season and year")
+    anime_season: Optional[Dict[str, Any]] = Field(None, description="Season and year")
     picture: Optional[str] = Field(None, description="Cover image URL")
     thumbnail: Optional[str] = Field(None, description="Thumbnail URL")
     duration: Optional[Union[int, Dict[str, Any]]] = Field(
@@ -299,7 +299,7 @@ class AnimeEntry(BaseModel):
     relations: List[RelationEntry] = Field(default_factory=list, description="Related anime with platform URLs")
     
     # Related anime from URL processing (different from relations)
-    relatedAnime: List[RelatedAnimeEntry] = Field(default_factory=list, description="Related anime entries from URL processing")
+    related_anime: List[RelatedAnimeEntry] = Field(default_factory=list, description="Related anime entries from URL processing")
     
     # Awards and recognition
     awards: List[Dict[str, Any]] = Field(default_factory=list, description="Awards and recognition")
@@ -322,7 +322,7 @@ class AnimeEntry(BaseModel):
             len(self.streaming_info) > 0 or
             self.staff_data is not None or
             len(self.relations) > 0 or
-            len(self.relatedAnime) > 0
+            len(self.related_anime) > 0
         )
     
     def is_enrichable(self) -> bool:
@@ -423,7 +423,7 @@ class AnimeEntry(BaseModel):
             "streaming_platform_count": len(self.streaming_info),
             "staff_count": self._get_staff_data_count(),
             "relation_count": len(self.relations),
-            "related_anime_count": len(self.relatedAnime),
+            "related_anime_count": len(self.related_anime),
             "award_count": len(self.awards),
             
             # Data quality indicators

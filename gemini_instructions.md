@@ -27,7 +27,9 @@ The primary goal is to take a raw anime data object (from an offline database) a
 2.  **Prepare Current Anime:**
 
     - Save the extracted anime entry to `data/current_anime.json`
-    - Override the existing entry if there is one already
+    - Add `processing: true` to the entry to indicate you are currently processing it.
+    - If there is entry with that property, meaning another agent is processing it, do not do anything with it. You only focus on what you are processing.
+    - If there is entry being processed, check if the title that you are going to fetch matches with the processed entry, if it, does, next take the next entry.
     - This file becomes the `offline_anime_data` for all subsequent processing steps
     - The file enables manual review and debugging if needed
 
@@ -62,37 +64,37 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 ### Step 2: Concurrent External API Data Fetching
 
-1.  **Jikan Anime Full Data:** Fetch full anime data from Jikan API using the MAL ID. Save in temporary file in temp/jikan.json to be used later
+1.  **Jikan Anime Full Data:** Fetch full anime data from Jikan API using the MAL ID. Save in temporary file in temp/<first word from anime title>/jikan.json to be used later
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/full`
-2.  **Jikan Episodes Data:** Fetch episode data from Jikan API. Use episodes property from the `offline_anime_data` (from base_anime_sample.json). Do not skip any episode. Save in temporary file in temp/episodes.json to be used later
-    - **FIRST:** Create temp/episodes.json with the episode count from offline_anime_data: `{"episodes": <episode_count>}`
+2.  **Jikan Episodes Data:** Fetch episode data from Jikan API. Use episodes property from the `offline_anime_data` (from base_anime_sample.json). Do not skip any episode. Save in temporary file in temp/<first word from anime title>/episodes.json to be used later
+    - **FIRST:** Create temp/<first word from anime title>/episodes.json with the episode count from offline_anime_data: `{"episodes": <episode_count>}`
     - **IMPORTANT:** For anime with >100 episodes, use the reusable script:
-      `python src/batch_enrichment/jikan_helper.py episodes {mal_id} temp/episodes.json temp/episodes_detailed.json`
+      `python src/batch_enrichment/jikan_helper.py episodes {mal_id} temp/<first word from anime title>/episodes.json temp/<first word from anime title>/episodes_detailed.json`
     - **CRITICAL:**
       - NEVER give up on fetching all episodes regardless of time taken. Wait for the reusable script to complete fully before proceeding. ALL episodes MUST be fetched - no exceptions.
-      - The reusable script will read the episode count from temp/episodes.json and fetch detailed data for each episode from the Jikan API endpoints
+      - The reusable script will read the episode count from temp/<first word from anime title>/episodes.json and fetch detailed data for each episode from the Jikan API endpoints
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/episodes/{episode_num}`
-3.  **Jikan Characters Data:** Fetch character data from Jikan API. Do not skip any character. Save in temporary file in temp/characters.json to be used later
-    - **IMPORTANT:** For anime with >50 characters, use the reusable script: `python src/batch_enrichment/jikan_helper.py characters {mal_id} temp/characters.json temp/characters_detailed.json`
+3.  **Jikan Characters Data:** Fetch character data from Jikan API. Do not skip any character. Save in temporary file in temp/<first word from anime title>/characters.json to be used later
+    - **IMPORTANT:** For anime with >50 characters, use the reusable script: `python src/batch_enrichment/jikan_helper.py characters {mal_id} temp/<first word from anime title>/characters.json temp/<first word from anime title>/characters_detailed.json`
     - **CRITICAL:** NEVER give up on fetching all characters regardless of time taken. Wait for the reusable script to complete fully before proceeding. ALL characters MUST be fetched - no exceptions.
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/characters`
-4.  **AnimSchedule Data:** Find a matching anime on AnimSchedule using REAL API calls. Save in temporary file in temp/as.json to be used later
+4.  **AnimSchedule Data:** Find a matching anime on AnimSchedule using REAL API calls. Save in temporary file in temp/<first word from anime title>/as.json to be used later
     - URL: `https://animeschedule.net/api/v3/anime?q={search_term}`
     - This involves a smart search using title, synonyms, and other metadata from `offline_anime_data`. Follow the logic in `animeschedule_helper.py` to implement proper search strategy.
     - **NEVER mock this data** - Always make real API calls to AnimSchedule to get accurate, up-to-date information including statistics, images, and external links.
-5.  **Kitsu Data:** Fetch comprehensive Kitsu data using the extracted Kitsu ID. Save in temporary file in temp/kitsu.json to be used later
+5.  **Kitsu Data:** Fetch comprehensive Kitsu data using the extracted Kitsu ID. Save in temporary file in temp/<first word from anime title>/kitsu.json to be used later
     - **ONLY if Kitsu ID was found in Step 1** - otherwise skip this step entirely
     - Use the `KitsuEnrichmentHelper.fetch_all_data(kitsu_id)` method from `src/batch_enrichment/kitsu_helper.py`
     - **NEVER mock this data** - Always make real API calls to Kitsu to get accurate information including categories, statistics, images, and NSFW flags.
-6.  **Anime-Planet Data:** Fetch comprehensive Anime-Planet data using web scraping. Save in temporary file in temp/animeplanet.json to be used later
+6.  **Anime-Planet Data:** Fetch comprehensive Anime-Planet data using web scraping. Save in temporary file in temp/<first word from anime title>/animeplanet.json to be used later
     - **ONLY if Anime-Planet URL was found in Step 1** - otherwise skip this step entirely
     - Use the `AnimePlanetEnrichmentHelper.fetch_all_data(offline_anime_data)` method from `src/batch_enrichment/animeplanet_helper.py`
     - **NEVER mock this data** - Always make real web scraping calls to Anime-Planet to get accurate information including ratings, images, rankings, and genre data.
-7.  **AniList Data:** Fetch comprehensive AniList data using the extracted AniList ID. Save in temporary file in temp/anilist.json to be used later
+7.  **AniList Data:** Fetch comprehensive AniList data using the extracted AniList ID. Save in temporary file in temp/<first word from anime title>/anilist.json to be used later
     - **ONLY if AniList ID was found in Step 1** - otherwise skip this step entirely
     - use the reusable script: `python src/batch_enrichment/anilist_helper.py`
     - **NEVER mock this data** - Always make real GraphQL calls to AniList to get accurate information including detailed character data, staff information, and comprehensive statistics.
-8.  **AniDB Data:** Fetch comprehensive AniDB data using the extracted AniDB ID. Save in temporary file in temp/anidb.json to be used later
+8.  **AniDB Data:** Fetch comprehensive AniDB data using the extracted AniDB ID. Save in temporary file in temp/<first word from anime title>/anidb.json to be used later
     - **IMPORTANT:**
     - **ONLY if AniDB ID was found in Step 1** - otherwise skip this step entirely
     - Use the reusable script: `python src/batch_enrichment/anidb_helper.py`
@@ -100,7 +102,7 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 ### Step 3: Pre-process Episode Data
 
-1.  From the fetched Jikan episodes data, create a simplified list of episodes, extracting only the following fields for each episode: `url`, `title`, `title_japanese`, `title_romanji`, `aired`, `score`, `filler`, `recap`, `duration`, `synopsis`.
+1.  From the fetched Jikan episodes data, create a simplified list of episodes, extracting only the following fields for each episode: `url`, `title`, `title_japanese`, `title_romaji`, `aired`, `score`, `filler`, `recap`, `duration`, `synopsis`.
 
 ### Step 4: Execute 6-Stage Enrichment Pipeline (Multi-Agent Parallel Processing)
 
@@ -136,12 +138,12 @@ This is the core of the process, where AI is used to process the collected data.
 1.  **Stage 1: Metadata Extraction** PROMPT: src/services/prompts/stages/01_metadata_extraction.txt
     - **Inputs:** `offline_anime_data`, core Jikan data, AnimSchedule data, Kitsu data, Anime-Planet data, AniList data, AniDB data.
     - **Action:** Generate a JSON object containing `synopsis`, `genres`, `demographics`, `themes`, `source_material`, `rating`, `content_warnings`, `nsfw`, `title_japanese`, `title_english`, `background`, `aired_dates`, `broadcast`, `broadcast_schedule`, `premiere_dates`, `delay_information`, `episode_overrides`, `external_links`, `statistics`, `images`, `month`.
-    - **Output:** `temp/stage1_metadata.json`
+    - **Output:** `temp/<first word from anime title>/stage1_metadata.json`
 
-**Agent 2 - Episode Specialist:** 2. **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing.txt - **Inputs:** The pre-processed episode list. - **Action:** Process episodes in batches. For each batch, generate a list of `episode_details`. DO NOT skip any episode - **Output:** `temp/stage2_episodes.json`
+**Agent 2 - Episode Specialist:** 2. **Stage 2: Episode Processing** PROMPT: src/services/prompts/stages/02_episode_processing.txt - **Inputs:** The pre-processed episode list. - **Action:** Process episodes in batches. For each batch, generate a list of `episode_details`. DO NOT skip any episode - **Output:** `temp/<first word from anime title>/stage2_episodes.json`
 
 **Agent 3 - Relationship & Media Specialist:** 3. **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis.txt
-**Inputs:** `relatedAnime` URLs from `offline_anime_data`, and `relations` from Jikan data. - **Action:** Generate a JSON object with `relatedAnime` and `relations` fields. - **CRITICAL RULES:** - Process EVERY URL. The number of output `relatedAnime` entries must exactly match the number of input URLs. - Use "Intelligent Title Extraction": - Scan all URLs to find explicit titles (e.g., from anime-planet). - Visit each site to find the approprioate title and relation - Do not use numeric ID from url as the title. - **FORBIDDEN PATTERNS:** Do not use generic titles like "Anime [ID]", "Unknown Title", or "Anime 19060". - **Output:** `temp/stage3_relationships.json`
+**Inputs:** `relatedAnime` URLs from `offline_anime_data`, and `relations` from Jikan data. - **Action:** Generate a JSON object with `relatedAnime` and `relations` fields. - **CRITICAL RULES:** - Process EVERY URL. The number of output `relatedAnime` entries must exactly match the number of input URLs. - Use "Intelligent Title Extraction": - Scan all URLs to find explicit titles (e.g., from anime-planet). - Visit each site to find the approprioate title and relation - Do not use numeric ID from url as the title. - **FORBIDDEN PATTERNS:** Do not use generic titles like "Anime [ID]", "Unknown Title", or "Anime 19060". - **Output:** `temp/<first word from anime title>/stage3_relationships.json`
 
 4.  **Stage 4: Statistics and Media** PROMPT: src/services/prompts/stages/04_statistics_media.txt
     **Inputs:** Jikan statistics and media data, AniList statistics, AniDB statistics and staff data.
@@ -149,34 +151,34 @@ This is the core of the process, where AI is used to process the collected data.
     **CRITICAL RULES:**
     - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu`, `animeplanet`, `anilist`, `anidb` key (e.g., `{"statistics": {"mal": {...}, "anilist": {...}, "anidb": {...}}}`). There could be multiple sources.
     - Prioritize AniDB for comprehensive staff data merging including detailed roles and credits.
-      **Output:** `temp/stage4_statistics_media.json`
+      **Output:** `temp/<first word from anime title>/stage4_statistics_media.json`
 
-**Agent 4 - Character & Staff Specialist:** 5. **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing.txt - **Inputs:** Jikan characters data, AniList characters data. - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any character. Merge character data from multiple sources for comprehensive character profiles. - **Output:** `temp/stage5_characters.json`
+**Agent 4 - Character & Staff Specialist:** 5. **Stage 5: Character Processing** PROMPT: src/services/prompts/stages/05_character_processing.txt - **Inputs:** Jikan characters data, AniList characters data. - **Action:** Process characters in batches. For each batch, generate a list of `characters`. DO NOT skip any character. Merge character data from multiple sources for comprehensive character profiles. - **Output:** `temp/<first word from anime title>/stage5_characters.json`
 
 6.  **Stage 6: Staff Processing** PROMPT: src/services/prompts/stages/06_staff_processing.txt
     - **Inputs:** AniDB staff data, AniList staff data, Jikan company data.
     - **Action:** Generate a JSON object with comprehensive `staff_data` including production staff (directors, music composers, character designers), studios, producers, and voice actors with multi-source integration and biographical enhancement.
-    - **Output:** `temp/stage6_staff.json`
+    - **Output:** `temp/<first word from anime title>/stage6_staff.json`
 
 **SYNCHRONIZATION POINT:** All 4 agents must complete their assigned stages before proceeding to Step 5. Verify all stage output files exist:
 
-- `temp/stage1_metadata.json`
-- `temp/stage2_episodes.json`
-- `temp/stage3_relationships.json`
-- `temp/stage4_statistics_media.json`
-- `temp/stage5_characters.json`
-- `temp/stage6_staff.json`
+- `temp/<first word from anime title>/stage1_metadata.json`
+- `temp/<first word from anime title>/stage2_episodes.json`
+- `temp/<first word from anime title>/stage3_relationships.json`
+- `temp/<first word from anime title>/stage4_statistics_media.json`
+- `temp/<first word from anime title>/stage5_characters.json`
+- `temp/<first word from anime title>/stage6_staff.json`
 
 ### Step 5: Programmatic Assembly
 
 1.  **Synchronization Check:** Verify all 6 stage output files from the 4 agents exist before proceeding:
 
-    - `temp/stage1_metadata.json` (Agent 1)
-    - `temp/stage2_episodes.json` (Agent 2)
-    - `temp/stage3_relationships.json` (Agent 3)
-    - `temp/stage4_statistics_media.json` (Agent 3)
-    - `temp/stage5_characters.json` (Agent 4)
-    - `temp/stage6_staff.json` (Agent 4)
+    - `temp/<first word from anime title>/stage1_metadata.json` (Agent 1)
+    - `temp/<first word from anime title>/stage2_episodes.json` (Agent 2)
+    - `temp/<first word from anime title>/stage3_relationships.json` (Agent 3)
+    - `temp/<first word from anime title>/stage4_statistics_media.json` (Agent 3)
+    - `temp/<first word from anime title>/stage5_characters.json` (Agent 4)
+    - `temp/<first word from anime title>/stage6_staff.json` (Agent 4)
 
 2.  Merge the results from all six stages into a single JSON object.
 3.  Start with the original `offline_anime_data`, and append animeschedule url for the relevent anime in the sources proeprty.

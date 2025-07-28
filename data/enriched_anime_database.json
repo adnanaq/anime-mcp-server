@@ -4,9 +4,9 @@
     "url": "https://github.com/adnanaq/anime-mcp-server/blob/main/LICENSE"
   },
   "repository": "https://github.com/adnanaq/anime-mcp-server",
-  "lastUpdate": "2025-07-25",
+  "lastUpdate": "2025-07-28",
   "enrichmentInfo": {
-    "totalAnime": 8,
+    "totalAnime": 9,
     "enrichmentVersion": "1.0.0",
     "sources": [
       "jikan",
@@ -32,7 +32,7 @@
       "type": "Music",
       "episodes": 1,
       "status": "FINISHED",
-      "animeSeason": {
+      "anime_season": {
         "season": "FALL",
         "year": 2020
       },
@@ -55,7 +55,7 @@
       ],
       "studios": [],
       "producers": [],
-      "relatedAnime": [
+      "related_anime": [
         {
           "title": "BanG Dream! 2nd Season",
           "url": "https://myanimelist.net/anime/37869",
@@ -85,9 +85,7 @@
         "primarily teen cast"
       ],
       "synopsis": "Animated music video for RAISE A SUILEN's song !NVADE SHOW!. It was first released on BanG Dream's official YouTube and was later included in the limited edition Blu-ray for RAISE A SUILEN's sixth single \"mind of Prominence\". (Source: AniList)",
-      "genres": [
-        "Music"
-      ],
+      "genres": ["Music"],
       "demographics": [],
       "themes": [
         {
@@ -112,49 +110,30 @@
       "content_warnings": [],
       "nsfw": false,
       "title_japanese": "!NVADE SHOW!",
-      "title_english": null,
-      "background": "",
       "aired_dates": {
         "from": "2020-10-07T00:00:00+00:00",
-        "to": null,
         "string": "Oct 7, 2020"
       },
-      "broadcast": {
-        "day": null,
-        "time": null,
-        "timezone": null
-      },
-      "broadcast_schedule": {
-        "jpn_time": "0001-01-01T00:00:00Z",
-        "sub_time": "0001-01-01T00:00:00Z",
-        "dub_time": "0001-01-01T00:00:00Z"
-      },
+      "broadcast": {},
+      "broadcast_schedule": {},
       "premiere_dates": {
-        "original": "2020-10-07T00:00:00Z",
-        "sub": "0001-01-01T00:00:00Z",
-        "dub": "0001-01-01T00:00:00Z"
+        "original": "2020-10-07T00:00:00Z"
       },
       "delay_information": {
-        "delayed_timetable": false,
-        "delayed_from": "0001-01-01T00:00:00Z",
-        "delayed_until": "0001-01-01T00:00:00Z",
-        "delay_reason": null
+        "delayed_timetable": false
       },
       "episode_overrides": {
         "main_override": {
-          "overrideDate": "0001-01-01T00:00:00Z",
-          "overrideEpisode": 0,
-          "episodesAired": 0
+          "override_episode": 0,
+          "episodes_aired": 0
         },
         "sub_override": {
-          "overrideDate": "0001-01-01T00:00:00Z",
-          "overrideEpisode": 0,
-          "episodesAired": 0
+          "override_episode": 0,
+          "episodes_aired": 0
         },
         "dub_override": {
-          "overrideDate": "0001-01-01T00:00:00Z",
-          "overrideEpisode": 0,
-          "episodesAired": 0
+          "override_episode": 0,
+          "episodes_aired": 0
         }
       },
       "external_links": {},
@@ -185,7 +164,6 @@
       "trailers": [
         {
           "youtube_url": "https://www.youtube.com/watch?v=1ipQ-_jcGyY",
-          "thumbnail_url": null,
           "title": "Official Trailer"
         }
       ],
@@ -195,16 +173,14 @@
           "season_number": 1,
           "title": "!NVADE SHOW!",
           "title_japanese": "!NVADE SHOW!",
-          "title_romanji": "!NVADE SHOW!",
+          "title_romaji": "!NVADE SHOW!",
           "synopsis": "Animated music video for RAISE A SUILEN's song !NVADE SHOW!. It was first released on BanG Dream's official YouTube and was later included in the limited edition Blu-ray for RAISE A SUILEN's sixth single \"mind of Prominence\".",
           "thumbnails": [],
           "streaming": {},
           "aired": "2020-10-07T00:00:00+09:00",
           "duration": 120,
-          "score": null,
           "filler": false,
-          "recap": false,
-          "url": null
+          "recap": false
         }
       ],
       "relations": [],
@@ -212,7 +188,6 @@
         "mal": {
           "score": 5.93,
           "scored_by": 543,
-          "rank": null,
           "popularity_rank": 14835,
           "members": 946,
           "favorites": 3
@@ -230,16 +205,13 @@
           "rank": 10125
         },
         "kitsu": {
-          "score": null,
           "members": 50,
           "favorites": 0,
-          "popularity_rank": 17350,
-          "rank": null
+          "popularity_rank": 17350
         },
         "animeplanet": {
           "score": 6.308,
-          "scored_by": 43,
-          "rank": null
+          "scored_by": 43
         }
       },
       "streaming_info": [],
@@ -252,29 +224,17 @@
         {
           "name": "Masuki Satou",
           "role": "Main",
-          "name_variations": [
-            "佐藤ますき",
-            "MASKING"
-          ],
+          "name_variations": ["佐藤ますき", "MASKING"],
           "name_kanji": "佐藤ますき",
           "name_native": "佐藤ますき",
-          "nicknames": [
-            "MASKING"
-          ],
+          "nicknames": ["MASKING"],
           "character_ids": {
-            "mal": null,
-            "anilist": 136984,
-            "anidb": null,
-            "kitsu": null
+            "anilist": 136984
           },
           "images": {
-            "jikan": null,
-            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b136984-8OOTRF4R5wcy.png",
-            "anidb": null
+            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b136984-8OOTRF4R5wcy.png"
           },
           "description": "__Height:__ 168 cm (5'6\")\n__Instrument:__ Pearl Reference Twilight Fade Drums\n\nA second-year high school student. She goes by the moniker MASKING and is the drummer for the band RAISE A SUILEN. Despite her sharp gaze and rough, delinquent-like appearance, she likes cute things and is skilled at baking cakes.\n\nShe is the daughter of the owner of Galaxy Live House. Masuki's longing for her father made her start playing the drums, which she plays violently and is called a \"mad dog\" because of that.\n\n(Source: BanG Dream Wikia, edited)",
-          "url": null,
-          "age": null,
           "gender": "Female",
           "voice_actors": [
             {
@@ -286,30 +246,17 @@
         {
           "name": "Chiyu Tamade",
           "role": "Main",
-          "name_variations": [
-            "玉出ちゆ",
-            "CHU²",
-            "CHUCHU"
-          ],
+          "name_variations": ["玉出ちゆ", "CHU²", "CHUCHU"],
           "name_kanji": "玉出ちゆ",
           "name_native": "玉出ちゆ",
-          "nicknames": [
-            "CHU²",
-            "CHUCHU"
-          ],
+          "nicknames": ["CHU²", "CHUCHU"],
           "character_ids": {
-            "mal": null,
-            "anilist": 136986,
-            "anidb": null,
-            "kitsu": null
+            "anilist": 136986
           },
           "images": {
-            "jikan": null,
-            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b136986-NjsHVOR1HXdB.png",
-            "anidb": null
+            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b136986-NjsHVOR1HXdB.png"
           },
           "description": "__Height:__ 140 cm (4'7\")\n__Instruments:__ Pioneer DJ XDJ-RX2 DJ System + PIONEER DJ TORAIZ SP-16\n\nA returnee who attends an international school. She goes by the moniker CHU² (read as CHUCHU) and is the leader and DJ for the band RAISE A SUILEN. She is also a music producer who uses DTM (Desktop Music) to compose music, and she's the one who scouted PAREO as a keyboardist.\n\nChiyu is 14 years old but due to her excellent grades, she is currently a 10th grader or a first year high school student. Chiyu is both very professional and confident of her band and ideas, and although she tends to be arrogant sometimes, she's not rude. She dreams of changing the world with the strongest music.\n\nAs a result of her studying in an international school, Chiyu often talks in English or adds English words to her sentences.",
-          "url": null,
           "age": "14",
           "gender": "Female",
           "voice_actors": [
@@ -322,29 +269,17 @@
         {
           "name": "Rei Wakana",
           "role": "Main",
-          "name_variations": [
-            "和奏レイ",
-            "LAYER"
-          ],
+          "name_variations": ["和奏レイ", "LAYER"],
           "name_kanji": "和奏レイ",
           "name_native": "和奏レイ",
-          "nicknames": [
-            "LAYER"
-          ],
+          "nicknames": ["LAYER"],
           "character_ids": {
-            "mal": null,
-            "anilist": 136983,
-            "anidb": null,
-            "kitsu": null
+            "anilist": 136983
           },
           "images": {
-            "jikan": null,
-            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b136983-cLucL6a6d9n2.png",
-            "anidb": null
+            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b136983-cLucL6a6d9n2.png"
           },
           "description": "__Height:__ 172 cm (5'8\")\n__Instrument:__ Spector EURO 4 LX RAS LAYER -Twilight Amber-\n\nA second-year high school student. She goes by the moniker LAYER and is the vocalist and bassist for the band RAISE A SUILEN. She is Tae's childhood friend. Due to Rei's mature attitude, she has a tendency keep a certain feeling of distance with others.\n\nShe has liked singing since she was young, and now she is a professional singer who can sing any song. In addition to temporary part-time singing jobs, she used to play bass in a back up band for famous artists. Rei had also attended the same music school as Tae and Arisa.\n\n(Source: BanG Dream Wikia, edited)",
-          "url": null,
-          "age": null,
           "gender": "Female",
           "voice_actors": [
             {
@@ -356,29 +291,17 @@
         {
           "name": "Rokka Asahi",
           "role": "Main",
-          "name_variations": [
-            "朝日六花",
-            "LOCK"
-          ],
+          "name_variations": ["朝日六花", "LOCK"],
           "name_kanji": "朝日六花",
           "name_native": "朝日六花",
-          "nicknames": [
-            "LOCK"
-          ],
+          "nicknames": ["LOCK"],
           "character_ids": {
-            "mal": null,
-            "anilist": 133744,
-            "anidb": null,
-            "kitsu": null
+            "anilist": 133744
           },
           "images": {
-            "jikan": null,
-            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b133744-zVyRXr4pkgXZ.jpg",
-            "anidb": null
+            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b133744-zVyRXr4pkgXZ.jpg"
           },
           "description": "__Height:__ 155 cm (5'1\")\n__Instrument:__ .strandberg* Boden J6 RAS LOCK Caribbean Light Blue Guitar\n\nA first year high-school student at Haneoka Girls' High School. She goes by the moniker LOCK as the guitarist for the band RAISE A SUILEN. She is a Poppin'Party fan. Rokka usually wears large glasses, but takes them off when she performs.\n\nShe is from Gifu Prefecture. She attends Haneoka instead of Hanasakigawa, the closer school, due to Haneoka's scholarship program. She in the same class as Asuka and Ako. Rokka works at Galaxy Live House, as well as her relative's bath house where she lives.\n\nEver since she was at elementary school, Rokka failed at everything she tried, including her studies. Playing guitar was the only thing she had worked hard at. Because of that, she formed a band with her fellow schoolmates Toriko, Berry, and Pat (all monikers). However, after Rokka went to see SPACE live house's last show in Tokyo, she fell in love with Poppin'Party (who performed their song \"Mae e Susume!\" there) and began dreaming of moving to Tokyo. Rokka's middle school band disbanded when she was finally able to move to Tokyo and make her dream come true.\n\nHer father was at first against her decision to study in Tokyo, but Rokka persuaded him by finding a place to live and a school that offered a scholarship that made the tuition cheaper than that her local high school's. After intense studying and hard work, Rokka later passed Haneoka High School's entrance exam and moved to Tokyo.\n\n(Source: BanG Dream Wikia, edited)",
-          "url": null,
-          "age": null,
           "gender": "Female",
           "voice_actors": [
             {
@@ -390,29 +313,17 @@
         {
           "name": "Reona Nyubara",
           "role": "Main",
-          "name_variations": [
-            "鳰原れおな",
-            "PAREO"
-          ],
+          "name_variations": ["鳰原れおな", "PAREO"],
           "name_kanji": "鳰原れおな",
           "name_native": "鳰原れおな",
-          "nicknames": [
-            "PAREO"
-          ],
+          "nicknames": ["PAREO"],
           "character_ids": {
-            "mal": null,
-            "anilist": 136985,
-            "anidb": null,
-            "kitsu": null
+            "anilist": 136985
           },
           "images": {
-            "jikan": null,
-            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b136985-LMgp0lUFzjTR.png",
-            "anidb": null
+            "anilist": "https://s4.anilist.co/file/anilistcdn/character/large/b136985-LMgp0lUFzjTR.png"
           },
           "description": "__Height:__ 162 cm (5'4\")\n__Instruments:__ ROLAND FA-06 / ROLAND FA-08\n\nAn energetic second-year middle school student. She goes by the moniker PAREO and is the keyboardist for the band RAISE A SUILEN. She adores CHU² and has said she admires her deeply, calling her \"CHU²-sama\" and sometimes even \"Goshujinsama\" (lit. Master).\n\nReona was originally learning the Electone, but switched to the keyboard when she was scouted by CHU². Reona's favorite band is Pastel*Palettes. \n\n(Source: BanG Dream Wikia, edited)",
-          "url": null,
-          "age": null,
           "gender": "Female",
           "voice_actors": [
             {
@@ -428,177 +339,105 @@
           "music_composers": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 110557
               },
               "name": "Junpei Fujita",
               "native_name": "藤田淳平",
               "role": "Music_Composition",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n110557-qBksrVgOrft3.png",
-              "biography": null,
-              "birth_date": null,
-              "hometown": null,
-              "primary_occupations": [
-                "Music Composer"
-              ],
-              "years_active": [],
-              "gender": null,
-              "blood_type": null,
-              "community_favorites": null
+              "primary_occupations": ["Music Composer"],
+              "years_active": []
             }
           ],
           "music_arrangers": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 110557
               },
               "name": "Junpei Fujita",
               "native_name": "藤田淳平",
               "role": "Music_Arrangement",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n110557-qBksrVgOrft3.png",
-              "biography": null,
-              "birth_date": null,
-              "hometown": null,
-              "primary_occupations": [
-                "Music Arranger"
-              ],
-              "years_active": [],
-              "gender": null,
-              "blood_type": null,
-              "community_favorites": null
+              "primary_occupations": ["Music Arranger"],
+              "years_active": []
             }
           ],
           "character_designers": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 128167
               },
               "name": "Hitowa",
               "native_name": "ひと和",
               "role": "Original_Character_Design",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n128167-TS7tbX7fzLmx.jpg",
-              "biography": null,
-              "birth_date": null,
-              "hometown": null,
-              "primary_occupations": [
-                "Character Designer"
-              ],
-              "years_active": [],
-              "gender": null,
-              "blood_type": null,
-              "community_favorites": null
+              "primary_occupations": ["Character Designer"],
+              "years_active": []
             }
           ],
           "original_creators": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 172860
               },
               "name": "Bushiroad",
               "native_name": "ブシロード",
               "role": "Original_Creator",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n172860-3qroKRVvlLDo.png",
-              "biography": null,
-              "birth_date": null,
-              "hometown": null,
-              "primary_occupations": [
-                "Company"
-              ],
-              "years_active": [],
-              "gender": null,
-              "blood_type": null,
-              "community_favorites": null
+              "primary_occupations": ["Company"],
+              "years_active": []
             }
           ],
           "original_story": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 131107
               },
               "name": "Kou Nakamura",
               "native_name": "中村航",
               "role": "Original_Story",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n131107-Kl0oeeJEG229.jpg",
-              "biography": null,
-              "birth_date": null,
-              "hometown": null,
-              "primary_occupations": [
-                "Writer"
-              ],
-              "years_active": [],
-              "gender": null,
-              "blood_type": null,
-              "community_favorites": null
+              "primary_occupations": ["Writer"],
+              "years_active": []
             }
           ],
           "music_lyrics": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 155968
               },
               "name": "Asuka Oda",
               "native_name": "織田あすか",
               "role": "Music_Lyrics",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n155968-x56YVGRMpQQk.jpg",
-              "biography": null,
-              "birth_date": null,
-              "hometown": null,
-              "primary_occupations": [
-                "Lyricist"
-              ],
-              "years_active": [],
-              "gender": null,
-              "blood_type": null,
-              "community_favorites": null
+              "primary_occupations": ["Lyricist"],
+              "years_active": []
             }
           ],
           "executive_producers": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 118419
               },
               "name": "Takaaki Kidani",
               "native_name": "木谷高明",
               "role": "Executive_Producer",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n118419-rXhZENutjbpy.png",
-              "biography": null,
-              "birth_date": null,
-              "hometown": null,
-              "primary_occupations": [
-                "Producer"
-              ],
-              "years_active": [],
-              "gender": null,
-              "blood_type": null,
-              "community_favorites": null
+              "primary_occupations": ["Producer"],
+              "years_active": []
             }
           ],
           "music_performers": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 153132
               },
               "name": "RAISE A SUILEN",
               "native_name": "RAISE A SUILEN",
               "role": "Music_Performance",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n153132-C9eL2Pdyj706.jpg",
-              "biography": null,
-              "birth_date": null,
-              "hometown": null,
-              "primary_occupations": [
-                "Music Group"
-              ],
-              "years_active": [],
-              "gender": null,
-              "blood_type": null,
-              "community_favorites": null
+              "primary_occupations": ["Music Group"],
+              "years_active": []
             }
           ]
         },
@@ -606,7 +445,6 @@
           {
             "name": "SANZIGEN",
             "type": "animation_studio",
-            "url": null,
             "studio_id": 537
           }
         ],
@@ -616,78 +454,48 @@
           "japanese": [
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 137052
               },
               "name": "Natsume",
               "native_name": "夏芽",
-              "character_assignments": [
-                "Masuki Satou (MASKING)"
-              ],
-              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137052-XHplE0rVVoLw.png",
-              "biography": null,
-              "birth_date": null,
-              "blood_type": null
+              "character_assignments": ["Masuki Satou (MASKING)"],
+              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137052-XHplE0rVVoLw.png"
             },
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 137054
               },
               "name": "Risa Tsumugi",
               "native_name": "紡木吏佐",
-              "character_assignments": [
-                "Chiyu Tamade (CHU²)"
-              ],
-              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137054-s95k2fao6PyR.png",
-              "biography": null,
-              "birth_date": null,
-              "blood_type": null
+              "character_assignments": ["Chiyu Tamade (CHU²)"],
+              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137054-s95k2fao6PyR.png"
             },
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 137051
               },
               "name": "Raychell",
               "native_name": "レイチェル",
-              "character_assignments": [
-                "Rei Wakana (LAYER)"
-              ],
-              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137051-JFU1AixP9Uk3.jpg",
-              "biography": null,
-              "birth_date": null,
-              "blood_type": null
+              "character_assignments": ["Rei Wakana (LAYER)"],
+              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137051-JFU1AixP9Uk3.jpg"
             },
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 120173
               },
               "name": "Riko Kohara",
               "native_name": "小原莉子",
-              "character_assignments": [
-                "Rokka Asahi (LOCK)"
-              ],
-              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n120173-99V6iyulRj7b.png",
-              "biography": null,
-              "birth_date": null,
-              "blood_type": null
+              "character_assignments": ["Rokka Asahi (LOCK)"],
+              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n120173-99V6iyulRj7b.png"
             },
             {
               "staff_ids": {
-                "anidb": null,
                 "anilist": 137053
               },
               "name": "Reo Kurachi",
               "native_name": "倉知玲鳳",
-              "character_assignments": [
-                "Reona Nyubara (PAREO)"
-              ],
-              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137053-02B83bHFJESk.jpg",
-              "biography": null,
-              "birth_date": null,
-              "blood_type": null
+              "character_assignments": ["Reona Nyubara (PAREO)"],
+              "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137053-02B83bHFJESk.jpg"
             }
           ]
         }
@@ -743,12 +551,8 @@
         "栗山千明 - 0",
         "栗山千明　『「0」ミュージックビデオ』"
       ],
-      "studios": [
-        "minakata laboratory"
-      ],
-      "producers": [
-        "sony music entertainment"
-      ],
+      "studios": ["minakata laboratory"],
+      "producers": ["sony music entertainment"],
       "relatedAnime": [],
       "tags": [
         "angst",
@@ -885,10 +689,7 @@
         {
           "name": "Kuriyama, Chiaki",
           "role": "Main",
-          "name_variations": [
-            "Kuriyama, Chiaki",
-            "栗山千明"
-          ],
+          "name_variations": ["Kuriyama, Chiaki", "栗山千明"],
           "name_kanji": null,
           "name_native": "栗山千明",
           "nicknames": [],
@@ -936,10 +737,7 @@
               "biography": "Japanese actress, singer, and model known for her roles in films like 'Battle Royale' and 'Kill Bill'. Also works as a voice actor and vocalist.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Vocalist",
-                "Voice Actor"
-              ],
+              "primary_occupations": ["Vocalist", "Voice Actor"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -973,17 +771,12 @@
               },
               "name": "Chiaki Kuriyama",
               "native_name": "栗山千明",
-              "character_assignments": [
-                "Music Video Performer"
-              ],
+              "character_assignments": ["Music Video Performer"],
               "image": null,
               "biography": "Japanese actress, singer, and model known for her roles in films like 'Battle Royale' and 'Kill Bill'. Also works as a voice actor and vocalist. In this music video, she performs the song '0'.",
               "birth_date": null,
               "blood_type": null,
-              "primary_occupations": [
-                "Vocalist",
-                "Voice Actor"
-              ],
+              "primary_occupations": ["Vocalist", "Voice Actor"],
               "language": "JAPANESE",
               "years_active": null,
               "gender": null,
@@ -1034,23 +827,12 @@
         "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール.",
         "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール。"
       ],
-      "studios": [
-        "studio leo"
-      ],
-      "producers": [
-        "suiseisha"
-      ],
+      "studios": ["studio leo"],
+      "producers": ["suiseisha"],
       "relatedAnime": [],
-      "tags": [
-        "adult audience only",
-        "hentai",
-        "love polygon",
-        "present"
-      ],
+      "tags": ["adult audience only", "hentai", "love polygon", "present"],
       "synopsis": "After moving into a new share house, Ryota Ochi meets two beautiful housemates who order him to do housework, with an unusual arrangement.",
-      "genres": [
-        "Hentai"
-      ],
+      "genres": ["Hentai"],
       "demographics": [],
       "themes": [
         {
@@ -1060,10 +842,7 @@
       ],
       "source_material": "Manga",
       "rating": "Rx - Hentai",
-      "content_warnings": [
-        "Adult Content",
-        "Explicit Sexual Content"
-      ],
+      "content_warnings": ["Adult Content", "Explicit Sexual Content"],
       "nsfw": null,
       "title_japanese": "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール。",
       "title_english": "The Share House's Secret Rule",
@@ -1253,9 +1032,7 @@
         {
           "name": "Kanade AYASE",
           "role": "Main",
-          "name_variations": [
-            "綾瀬 奏"
-          ],
+          "name_variations": ["綾瀬 奏"],
           "name_kanji": "綾瀬 奏",
           "name_native": "綾瀬 奏",
           "nicknames": [],
@@ -1286,9 +1063,7 @@
         {
           "name": "Momoka HANAOKA",
           "role": "Main",
-          "name_variations": [
-            "花岡 桃香"
-          ],
+          "name_variations": ["花岡 桃香"],
           "name_kanji": "花岡 桃香",
           "name_native": "花岡 桃香",
           "nicknames": [],
@@ -1319,9 +1094,7 @@
         {
           "name": "Ryouta OCHI",
           "role": "Main",
-          "name_variations": [
-            "越智 遼太"
-          ],
+          "name_variations": ["越智 遼太"],
           "name_kanji": "越智 遼太",
           "name_native": "越智 遼太",
           "nicknames": [],
@@ -1453,13 +1226,8 @@
         "speculative fiction"
       ],
       "synopsis": "Based on Aesop's Fables.",
-      "genres": [
-        "Family Friendly",
-        "Frogs"
-      ],
-      "demographics": [
-        "Kids"
-      ],
+      "genres": ["Family Friendly", "Frogs"],
+      "demographics": ["Kids"],
       "themes": [
         {
           "name": "Fantasy",
@@ -1616,9 +1384,7 @@
                 "biography": null,
                 "birth_date": null,
                 "hometown": null,
-                "primary_occupations": [
-                  "Director"
-                ],
+                "primary_occupations": ["Director"],
                 "years_active": null,
                 "gender": null,
                 "blood_type": null,
@@ -1640,9 +1406,7 @@
                 "biography": null,
                 "birth_date": null,
                 "hometown": null,
-                "primary_occupations": [
-                  "Script Writer"
-                ],
+                "primary_occupations": ["Script Writer"],
                 "years_active": null,
                 "gender": null,
                 "blood_type": null,
@@ -1689,22 +1453,13 @@
         "unit": "SECONDS"
       },
       "score": null,
-      "synonyms": [
-        "Eating \"Love & Sorrow\"",
-        "「あい」をたべる"
-      ],
+      "synonyms": ["Eating \"Love & Sorrow\"", "「あい」をたべる"],
       "studios": [],
       "producers": [],
       "relatedAnime": [],
-      "tags": [
-        "drama",
-        "shorts",
-        "stop motion animation"
-      ],
+      "tags": ["drama", "shorts", "stop motion animation"],
       "synopsis": "Graduate Work 2018 by Yuuta Watanabe, Tokyo Polytechnic University, Faculty of Arts, Department of Animation.",
-      "genres": [
-        "Drama"
-      ],
+      "genres": ["Drama"],
       "demographics": [],
       "themes": [
         {
@@ -1893,12 +1648,8 @@
         "『あなたを一言で表してください』の質問が苦手だ。",
         "あなたを一言で表してください の質問が苦手だ。"
       ],
-      "studios": [
-        "sunrise inc."
-      ],
-      "producers": [
-        "kyocera"
-      ],
+      "studios": ["sunrise inc."],
+      "producers": ["kyocera"],
       "relatedAnime": [
         {
           "title": "Watashi no Hashtag ga Baenakute.",
@@ -1938,9 +1689,7 @@
         "workplace"
       ],
       "synopsis": "The anime depicts the \"smart city\" envisioned by Kyocera, where everyone can comfortably and safely live with the use of advanced technology, and it also depicts the worries of job seekers. The anime's title and theme reflect both the vexing issue of how to describe Kyocera's extensive business in just one word, and the mood of job seekers vexed by the interview question, \"If you had to describe yourself in one word, what would it be?\"\n\n(Source: ANN)",
-      "genres": [
-        "Sci-Fi"
-      ],
+      "genres": ["Sci-Fi"],
       "demographics": [],
       "themes": [
         {
@@ -2129,10 +1878,7 @@
         {
           "name": "Michiru",
           "role": "Main",
-          "name_variations": [
-            "ミチル",
-            "Michiru"
-          ],
+          "name_variations": ["ミチル", "Michiru"],
           "name_kanji": null,
           "name_native": "ミチル",
           "nicknames": [],
@@ -2161,10 +1907,7 @@
         {
           "name": "Yuuki",
           "role": "Main",
-          "name_variations": [
-            "ユウキ",
-            "Yuuki"
-          ],
+          "name_variations": ["ユウキ", "Yuuki"],
           "name_kanji": null,
           "name_native": "ユウキ",
           "nicknames": [],
@@ -2193,10 +1936,7 @@
         {
           "name": "Ryoushi",
           "role": "Supporting",
-          "name_variations": [
-            "漁師",
-            "Ryoushi"
-          ],
+          "name_variations": ["漁師", "Ryoushi"],
           "name_kanji": null,
           "name_native": "漁師",
           "nicknames": [],
@@ -2238,9 +1978,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Director"
-              ],
+              "primary_occupations": ["Director"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2260,9 +1998,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Music"
-              ],
+              "primary_occupations": ["Music"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2282,9 +2018,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Character Design"
-              ],
+              "primary_occupations": ["Character Design"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2303,9 +2037,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Original Character Design"
-              ],
+              "primary_occupations": ["Original Character Design"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2325,9 +2057,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Art Director"
-              ],
+              "primary_occupations": ["Art Director"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2347,9 +2077,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Mechanical Design"
-              ],
+              "primary_occupations": ["Mechanical Design"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2367,9 +2095,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Mechanical Design"
-              ],
+              "primary_occupations": ["Mechanical Design"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2389,9 +2115,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Sound Director"
-              ],
+              "primary_occupations": ["Sound Director"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2411,9 +2135,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Director of Photography"
-              ],
+              "primary_occupations": ["Director of Photography"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2433,9 +2155,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Sound Effects"
-              ],
+              "primary_occupations": ["Sound Effects"],
               "years_active": null,
               "gender": null,
               "blood_type": null,
@@ -2465,9 +2185,7 @@
               },
               "name": "Akari Kitou",
               "native_name": "鬼頭明里",
-              "character_assignments": [
-                "Michiru"
-              ],
+              "character_assignments": ["Michiru"],
               "image": "https://cdn.anidb.net/images/main/242448.jpg",
               "biography": null,
               "birth_date": null,
@@ -2480,9 +2198,7 @@
               },
               "name": "Hiro Shimono",
               "native_name": "下野紘",
-              "character_assignments": [
-                "Yuuki"
-              ],
+              "character_assignments": ["Yuuki"],
               "image": "https://cdn.anidb.net/images/main/11109.jpeg",
               "biography": null,
               "birth_date": null,
@@ -2495,9 +2211,7 @@
               },
               "name": "Katsuhisa Houki",
               "native_name": "宝亀克寿",
-              "character_assignments": [
-                "Ryoushi"
-              ],
+              "character_assignments": ["Ryoushi"],
               "image": null,
               "biography": null,
               "birth_date": null,
@@ -2545,9 +2259,7 @@
         "AYAKA ‐あやか‐ ミニアニメ",
         "Ayaka Mini Anime"
       ],
-      "studios": [
-        "aqua aris"
-      ],
+      "studios": ["aqua aris"],
       "producers": [],
       "relatedAnime": [
         {
@@ -2581,19 +2293,9 @@
           "relationship": "Other"
         }
       ],
-      "tags": [
-        "chibi",
-        "chibi style",
-        "comedy",
-        "fantasy",
-        "short episodes"
-      ],
+      "tags": ["chibi", "chibi style", "comedy", "fantasy", "short episodes"],
       "synopsis": "Chibi shorts for Ayaka that were published on the official Twitter and YouTube accounts for the series.",
-      "genres": [
-        "Comedy",
-        "Fantasy",
-        "Chibi"
-      ],
+      "genres": ["Comedy", "Fantasy", "Chibi"],
       "demographics": [],
       "themes": [
         {
@@ -3034,9 +2736,7 @@
         "文学少女 今日のおやつ 〜はつ恋〜",
         "文学少女 今日的点心～初恋～"
       ],
-      "studios": [
-        "production i.g., inc."
-      ],
+      "studios": ["production i.g., inc."],
       "producers": [
         "enterbrain",
         "kadokawa contents gate",
@@ -3174,10 +2874,7 @@
         "time"
       ],
       "synopsis": "* Based on the short story \"Bungaku Shoujo\" to Ushi Maou (Minotaurus), published in volume 02 of FBSP.\nhttp://anidb.net/ch11667 Amano Tooko and http://anidb.net/ch11668 Inoue Konoha are the only members of their high school literature club. After school, they meet so that Tooko can assign topics that will guide Konoha in writing a short story — the Literature Girl Tooko`s daily \"snack\" — within fifty minutes.\nSource: ANN\nNote: Bundled with the second volume of the novel titled Bungaku Shoujo Minarai no, Shoushin.",
-      "genres": [
-        "Comedy",
-        "Fantasy"
-      ],
+      "genres": ["Comedy", "Fantasy"],
       "demographics": [],
       "themes": [
         {
@@ -3556,13 +3253,8 @@
               "biography": "Started off as a production manager at Ad Cosmo.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Director",
-                "Storyboard Artist"
-              ],
-              "years_active": [
-                1991
-              ],
+              "primary_occupations": ["Director", "Storyboard Artist"],
+              "years_active": [1991],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 7
@@ -3578,12 +3270,8 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
-              "years_active": [
-                2000
-              ],
+              "primary_occupations": ["Background Artist"],
+              "years_active": [2000],
               "gender": "Female",
               "blood_type": null,
               "community_favorites": 0
@@ -3599,9 +3287,7 @@
               "biography": "Affiliated with [Production I.G](https://anilist.co/studio/10/).\n\n_Note: Not to be confused with the [animator](https://anilist.co/staff/200070/)._",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -3635,14 +3321,8 @@
               "biography": null,
               "birth_date": "1962-08-12",
               "hometown": "Nagoya, Aichi Prefecture, Japan",
-              "primary_occupations": [
-                "Voice Actor",
-                "Audio Engineer"
-              ],
-              "years_active": [
-                1989,
-                2017
-              ],
+              "primary_occupations": ["Voice Actor", "Audio Engineer"],
+              "years_active": [1989, 2017],
               "gender": "Male",
               "blood_type": "A",
               "community_favorites": 0
@@ -3658,13 +3338,8 @@
               "biography": "[Twitter](https://twitter.com/glico_shinpe)\n\nOriginating from [Production I.G](https://anilist.co/studio/10/).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Director",
-                "Storyboard Artist"
-              ],
-              "years_active": [
-                2005
-              ],
+              "primary_occupations": ["Director", "Storyboard Artist"],
+              "years_active": [2005],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 15
@@ -3681,13 +3356,8 @@
               "biography": "Started off as a production manager at Ad Cosmo.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Director",
-                "Storyboard Artist"
-              ],
-              "years_active": [
-                1991
-              ],
+              "primary_occupations": ["Director", "Storyboard Artist"],
+              "years_active": [1991],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 7
@@ -3705,10 +3375,7 @@
               "biography": "Masumi Itou is a singer and composer. Ito has composed the soundtracks to many anime television shows and is part of the bands Oranges &amp; Lemons and Heart of Air. She graduated from Musashino College of Music, and her husband is music producer Yoshiyuki Ito.",
               "birth_date": null,
               "hometown": "Ibaraki Prefecture, Japan",
-              "primary_occupations": [
-                "Composer",
-                "Vocalist"
-              ],
+              "primary_occupations": ["Composer", "Vocalist"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -3727,9 +3394,7 @@
               "biography": "[Website](http://www.nezicaplant.com/)\n\nOlder sister of the novelist [Hazuki Takeoka](https://anilist.co/staff/115200).",
               "birth_date": null,
               "hometown": "Tokyo, Japan",
-              "primary_occupations": [
-                "Illustrator"
-              ],
+              "primary_occupations": ["Illustrator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -3747,9 +3412,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -3766,10 +3429,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator",
-                "Designer"
-              ],
+              "primary_occupations": ["Animator", "Designer"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -3789,12 +3449,8 @@
               "biography": "[Wiki (jp)](https://ja.wikipedia.org/wiki/山田由香)",
               "birth_date": "1968-03-16",
               "hometown": "Tokyo, Japan",
-              "primary_occupations": [
-                "Scriptwriter"
-              ],
-              "years_active": [
-                2002
-              ],
+              "primary_occupations": ["Scriptwriter"],
+              "years_active": [2002],
               "gender": "Female",
               "blood_type": null,
               "community_favorites": 3
@@ -3810,9 +3466,7 @@
               "biography": "Waseda University graduate.",
               "birth_date": null,
               "hometown": "Fukushima Prefecture, Japan",
-              "primary_occupations": [
-                "Scriptwriter"
-              ],
+              "primary_occupations": ["Scriptwriter"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -3831,9 +3485,7 @@
               "biography": "Animation Producer formerly affiliated with [Production I.G.](https://anilist.co/studio/10/Production-IG) Currently President of CUE.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Producer"
-              ],
+              "primary_occupations": ["Producer"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -3851,9 +3503,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -3870,9 +3520,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -3892,12 +3540,8 @@
               "biography": "[Twitter](https://twitter.com/Haruno_Soraha) | [Instagram](https://www.instagram.com/harunoasitaha/)",
               "birth_date": null,
               "hometown": "Fukushima Prefecture, Japan",
-              "primary_occupations": [
-                "Writer"
-              ],
-              "years_active": [
-                2002
-              ],
+              "primary_occupations": ["Writer"],
+              "years_active": [2002],
               "gender": "Female",
               "blood_type": null,
               "community_favorites": 25
@@ -3915,12 +3559,8 @@
               "biography": "[Twitter](https://twitter.com/i/user/108529192) | [Website](https://www.art-setting.com/) | [Nico Nico](https://www.nicovideo.jp/user/662388)",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Designer"
-              ],
-              "years_active": [
-                1997
-              ],
+              "primary_occupations": ["Designer"],
+              "years_active": [1997],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 9
@@ -3936,10 +3576,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Designer",
-                "Background Artist"
-              ],
+              "primary_occupations": ["Designer", "Background Artist"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -3956,9 +3593,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -3975,9 +3610,7 @@
               "biography": "Affiliated with [M.S.C](https://anilist.co/studio/463/MSC).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -3994,12 +3627,8 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
-              "years_active": [
-                2005
-              ],
+              "primary_occupations": ["Background Artist"],
+              "years_active": [2005],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 1
@@ -4015,12 +3644,8 @@
               "biography": "Affiliated with Bihou.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
-              "years_active": [
-                2005
-              ],
+              "primary_occupations": ["Background Artist"],
+              "years_active": [2005],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 6
@@ -4036,9 +3661,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4055,9 +3678,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4074,9 +3695,7 @@
               "biography": "Affiliated with FSE.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4093,9 +3712,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4112,9 +3729,7 @@
               "biography": "Vuong Vo is a Vietnamese background artist.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4131,9 +3746,7 @@
               "biography": "Thuy Nguyen is a Vietnamese background artist.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4150,9 +3763,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4169,9 +3780,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4188,9 +3797,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4207,9 +3814,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4226,9 +3831,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4245,9 +3848,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4264,9 +3865,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4285,12 +3884,8 @@
               "biography": "Affiliated with [Production I.G](https://anilist.co/studio/10/).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                2001
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [2001],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 0
@@ -4306,12 +3901,8 @@
               "biography": "[Twitter](https://twitter.com/koni_ko222)",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                1999
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [1999],
               "gender": "Female",
               "blood_type": null,
               "community_favorites": 4
@@ -4327,12 +3918,8 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                1999
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [1999],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 4
@@ -4348,9 +3935,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -4367,9 +3952,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4386,9 +3969,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -4405,9 +3986,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4424,9 +4003,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4443,12 +4020,8 @@
               "biography": "Originating from [Artland](https://anilist.co/studio/8/). Currently freelance with ties to [A-1 Pictures](https://anilist.co/studio/561/).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                2003
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [2003],
               "gender": "Male",
               "blood_type": null,
               "community_favorites": 15
@@ -4481,9 +4054,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4500,12 +4071,8 @@
               "biography": "[Twitter](https://twitter.com/Mihotine)\n\nOriginating from [Production I.G](https://anilist.co/studio/10/).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                2005
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [2005],
               "gender": "Female",
               "blood_type": null,
               "community_favorites": 0
@@ -4521,10 +4088,7 @@
               "biography": "[Twitter](https://twitter.com/i/user/2340158042)",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator",
-                "Director"
-              ],
+              "primary_occupations": ["Animator", "Director"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4541,9 +4105,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4560,9 +4122,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4579,9 +4139,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4598,10 +4156,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator",
-                "Designer"
-              ],
+              "primary_occupations": ["Animator", "Designer"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4618,9 +4173,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4637,9 +4190,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -4656,9 +4207,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4675,9 +4224,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4694,9 +4241,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4713,9 +4258,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4732,9 +4275,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -4751,9 +4292,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4787,9 +4326,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -4823,9 +4360,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4842,9 +4377,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4861,9 +4394,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4880,9 +4411,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4899,9 +4428,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -4918,9 +4445,7 @@
               "biography": "Affiliated with [M.S.C](https://anilist.co/studio/463/MSC).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -4937,9 +4462,7 @@
               "biography": "Affiliated with [M.S.C](https://anilist.co/studio/463/MSC).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -4956,9 +4479,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4975,9 +4496,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -4994,9 +4513,7 @@
               "biography": "Affiliated with [M.S.C](https://anilist.co/studio/463/MSC).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -5013,9 +4530,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -5032,9 +4547,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -5053,9 +4566,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5089,9 +4600,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Audio Engineer"
-              ],
+              "primary_occupations": ["Audio Engineer"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5108,9 +4617,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Production Manager"
-              ],
+              "primary_occupations": ["Production Manager"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -5127,9 +4634,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Production Manager"
-              ],
+              "primary_occupations": ["Production Manager"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5146,12 +4651,8 @@
               "biography": "Affiliated with [Production I.G](https://anilist.co/studio/10/). Often works with [Shunsuke Tada](https://anilist.co/staff/100805/).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Producer"
-              ],
-              "years_active": [
-                2008
-              ],
+              "primary_occupations": ["Producer"],
+              "years_active": [2008],
               "gender": "Female",
               "blood_type": null,
               "community_favorites": 1
@@ -5184,9 +4685,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "CG Artist"
-              ],
+              "primary_occupations": ["CG Artist"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5203,9 +4702,7 @@
               "biography": "__Yumiko Nakata__ is a Japanese director of photography, photographer and special effects artist.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -5222,9 +4719,7 @@
               "biography": "_Note: Not to be confused with the [animator](https://anilist.co/staff/217532/)._",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -5241,9 +4736,7 @@
               "biography": "Handles special effects.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5260,9 +4753,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5279,9 +4770,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "CG Artist"
-              ],
+              "primary_occupations": ["CG Artist"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -5298,10 +4787,7 @@
               "biography": "[Twitter](https://twitter.com/i/user/396443700)\n\nAffiliated with [Wit Studio](https://anilist.co/studio/858/).",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Composite Artist",
-                "Painter"
-              ],
+              "primary_occupations": ["Composite Artist", "Painter"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5318,9 +4804,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5337,9 +4821,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -5356,9 +4838,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Production Manager"
-              ],
+              "primary_occupations": ["Production Manager"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -5375,9 +4855,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Production Manager"
-              ],
+              "primary_occupations": ["Production Manager"],
               "years_active": [],
               "gender": "Female",
               "blood_type": null,
@@ -5394,9 +4872,7 @@
               "biography": null,
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Audio Engineer"
-              ],
+              "primary_occupations": ["Audio Engineer"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5447,9 +4923,7 @@
               "biography": "__Taeko Hamauzu__ is a Japanese editor.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "gender": null,
               "blood_type": null,
@@ -5466,9 +4940,7 @@
               "biography": "__Yoshinori Murakami__ is a Japanese editor.",
               "birth_date": null,
               "hometown": null,
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "gender": "Male",
               "blood_type": null,
@@ -5536,9 +5008,7 @@
               },
               "name": "Miyu Irino",
               "native_name": "入野自由",
-              "character_assignments": [
-                "Konoha Inoue"
-              ],
+              "character_assignments": ["Konoha Inoue"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95088-BHyqnkadBEqi.png",
               "biography": "[Agency Profile](https://junction99.com/?page_id=1134)\n\nHe joined a theater troupe when he was 4 years old, and two years later made his acting debut in the historical drama Korczak. He remained with the theater troupe until March 2006, when he moved to Junction.\n\nMade his voice acting debut in 1996 on [Taiho Shichauzo](https://anilist.co/anime/1577/). He auditioned and got the role of [Haku](https://anilist.co/character/385/) in the 2001 film [Spirited Away](https://anilist.co/anime/199/). The same year, he voiced the eponymous main character in [PaRappa The Rapper](https://anilist.co/anime/3736/), and the following year he started voicing Sora in the Kingdom Hearts video game series, a character who he still voices to this day.\n\nHe released his debut mini-album Soleil on June 26, 2009 and his first single album, Faith, on November 25, 2009. Since May 2010, he and [Hiroshi Kamiya](https://anilist.co/staff/95118/) formed a music duo called [KAmiYU](https://anilist.co/staff/116031/). Their first mini-album \"link-up\" was released on August 3, 2011.\n\nAnnounced his marriage with an unspecified woman on September 3, 2021.\n\n__Non-anime voice roles:__\n- Sora - *Kingdom Hearts* series (VG)\n- Cyno - *Genshin Impact* (VG) ",
               "birth_date": "1988-02-19",
@@ -5551,9 +5021,7 @@
               },
               "name": "Kana Hanazawa",
               "native_name": "花澤香菜",
-              "character_assignments": [
-                "Touko Amano"
-              ],
+              "character_assignments": ["Touko Amano"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95185-x8ZYvtN7SegC.png",
               "biography": "__Height:__ 156 cm (5'1\")\n\n[Profile](https://osawa-inc.co.jp/women/hanazawakana/) | [Website](http://www.hanazawakana-music.net/) | [Website 2](http://www.hanazawakana-music.net/) | [Twitter](https://twitter.com/hanazawa_staff) | [Instagram](https://www.instagram.com/hanazawa_kana.official/)  | [YouTube]( https://www.youtube.com/@hanazawa_kana/) | [Radio page](https://www.joqr.co.jp/qr/program/dekirukana/) | [TikTok](https://www.tiktok.com/@hanazawa_kana.official)\n\n__Introduction__\nKana Hanazawa is a voice actress, actress, singer, former child actress, and talent represented by Office Osawa. In July 2020, she married fellow voice actor [Kensho Ono](https://anilist.co/staff/95819), whom she had been dating since 2017. \n\n__Early Career__\nHanazawa originally became a child actress at the age of 8. Amongst other roles, she starred in the well-known TV school show _Appare Sanma Daisensei_ and the TV series _Gakkou no Sensei_. At that time she was contracted to Big Apple, and later to Five Eight and Smile Monkey.\n\n__Voice Acting Career__\nAt the age of 14, she made her voice acting debut in 2003 as Holly in _[Last Exile](https://anilist.co/anime/97/)_. Three years later in 2006, she was selected for a major role in TV Tokyo's anime mecha series _[Zegapain](https://anilist.co/anime/878/)_. She was playing the main character's childhood friend, [Kaminagi Ryouko](https://anilist.co/character/2578/), and her performance was one of the main reasons for the character's popularity amongst fans. It was afterwards that she came under contract at prestigious voice acting talent agency Office Osawa in 2007.\n\nHanazawa went to university in 2007, while at the same time, she began to make her mark as a voice actress. She was voted in 2010 as \"Best Female Voice Actress\" by listeners of the radio program Nonko and Nobita's Anime Scramble. She graduated from university in 2011, and in the same year became a full-time voice actress.\n\nHanazawa won Best Supporting Actress at the 9th Seiyuu Awards for her role as [Kosaki Onodera](https://anilist.co/character/52723/) in _[Nisekoi](https://anilist.co/anime/18897/)_. She also won Newtype's Best Voice Actress award in 2015 and later in 2018.\n\n__Music Career__\nOn February 23, 2012, it was announced that Hanazawa would launch her official website. A few days later, during the Kana Hanazawa Solo Debut Presentation Party event, it was announced that she would release four singles within a year: \"Hoshizora Destination\" on April 25, \"Hatsukoi no Oto\" released on July 18, \"Happy Endings\" on October 24 (an ending theme for _[Zetsuen no Tempest](https://anilist.co/anime/14075/)_), and \"Silent Snow\" on January 16, 2013. Her first album Claire was released on February 20, 2013, and her second album 25 was released on February 26, 2014. She released an album title Blue Avenue in April 2015 and went on a concert tour starting at the Nippon Budokan on May 3. The Blu-ray release of the show, Live Avenue Kana Hanazawa in Budokan, ranked number six in sales.\n\n__Trivia__\n- She was invited to Anime Festival Asia 2010 on stage.\n- She used to be a junior idol in Akihabara where hundreds of people came to watch her, which is how she got her breakthrough for her acting career in commercials before becoming a voice actress.\n\n**Non-anime roles:**\n- [Marie](https://anilist.co/character/89069/Marie) - Persona 4 Golden (VG)\n- Hakari Atsuko - Blue Archive (VG)\n- Illya - Memento Mori (VG)\n- Marian - Goddess of Victory: Nikke (VG)\n- Modernia - Goddess of Victory: Nikke (VG)\n- Alice Kuonji (Caster) - Fate/Grand Order (VG)",
               "birth_date": "1989-02-25",
@@ -5565,6 +5033,1506 @@
       "enrichment_metadata": {
         "source": "multi-source",
         "enriched_at": "2025-07-25T20:26:45.100539+00:00",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "sources": [
+        "https://anidb.net/anime/7441",
+        "https://anilist.co/anime/8481",
+        "https://anime-planet.com/anime/bungaku-shoujo-memoire",
+        "https://animecountdown.com/40553",
+        "https://anisearch.com/anime/6169",
+        "https://kitsu.app/anime/5352",
+        "https://livechart.me/anime/5640",
+        "https://myanimelist.net/anime/8481",
+        "https://notify.moe/anime/UBTmtKiiR",
+        "https://simkl.com/anime/40553",
+        "https://animeschedule.net/anime/bungaku-shoujo-memoire"
+      ],
+      "title": "\"Bungaku Shoujo\" Memoire",
+      "type": "OVA",
+      "episodes": 3,
+      "status": "FINISHED",
+      "animeSeason": {
+        "season": "SPRING",
+        "year": 2010
+      },
+      "picture": "https://cdn.myanimelist.net/images/anime/6/26770.jpg",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/6/26770t.jpg",
+      "duration": {
+        "value": 1440,
+        "unit": "SECONDS"
+      },
+      "score": {
+        "arithmeticGeometricMean": 7.1869361406374255,
+        "arithmeticMean": 7.189672669067627,
+        "median": 7.181818181818182
+      },
+      "synonyms": [
+        "\"文学少女\" メモワール",
+        "A Garota dos Livros: Memória",
+        "Book Girl Memories",
+        "Book Girl: Memoire",
+        "Bungaku Shoujo Memoire I Yume-Miru Shoujo no Prelude",
+        "Bungaku Shoujo: Memoire",
+        "Bungaku Shoujo: Mémoire",
+        "Bungaku Shōjo: Memoire",
+        "II Sora-Mau Tenshi no Requiem",
+        "III Koi Suru Otome no Rhapsody",
+        "Knihomolka",
+        "Literature Girl: Memoire",
+        "Буквоежка: Воспоминания",
+        "Записки літературної панянки",
+        "\"文学少女\" メモワール",
+        "\"文学少女\"メモワール",
+        "ぶんがくしょうじょめもわーる",
+        "文学少女 メモワール"
+      ],
+      "relatedAnime": [
+        {
+          "title": "Gekijouban Bungaku Shoujo",
+          "url": "https://anidb.net/anime/6959",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "\"Bungaku Shoujo\": Kyou no Oyatsu - Hatsukoi",
+          "url": "https://anidb.net/anime/7294",
+          "relationship": "Side story"
+        },
+        {
+          "title": "Bungaku Shoujo",
+          "url": "https://anilist.co/anime/6408",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
+          "url": "https://anime-planet.com/anime/bungaku-shoujo-kyou-no-oyatsu-hatsukoi",
+          "relationship": "Side story"
+        },
+        {
+          "title": "Bungaku Shoujo Movie",
+          "url": "https://anime-planet.com/anime/bungaku-shoujo-movie",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
+          "url": "https://animecountdown.com/37286",
+          "relationship": "Side story"
+        },
+        {
+          "title": "Gekijouban Bungaku Shoujo",
+          "url": "https://animecountdown.com/38239",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "Gekijouban Bungaku Shoujo",
+          "url": "https://anisearch.com/anime/5387",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
+          "url": "https://anisearch.com/anime/5970",
+          "relationship": "Side story"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" Movie",
+          "url": "https://kitsu.app/anime/4550",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" Movie",
+          "url": "https://livechart.me/anime/4198",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "\"Bungaku Shoujo\": Kyou no Oyatsu - Hatsukoi",
+          "url": "https://livechart.me/anime/5549",
+          "relationship": "Side story"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" Movie",
+          "url": "https://myanimelist.net/anime/6408",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" Movie",
+          "url": "https://notify.moe/anime/UUie5KimR",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
+          "url": "https://simkl.com/anime/37286",
+          "relationship": "Side story"
+        },
+        {
+          "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
+          "url": "https://simkl.com/anime/38239",
+          "relationship": "Sequel"
+        },
+        {
+          "title": "Gekijouban Bungaku Shoujo",
+          "url": "https://myanimelist.net/anime/6408/Bungaku_Shoujo_Movie",
+          "relationship": "Sequel"
+        }
+      ],
+      "tags": [
+        "angst",
+        "asia",
+        "based on a light novel",
+        "boy meets girl",
+        "childhood promise",
+        "classic literature",
+        "comedy",
+        "coming of age",
+        "contemporary fantasy",
+        "death",
+        "dialogue driven",
+        "drama",
+        "dysfunctional family",
+        "earth",
+        "ecchi",
+        "ensemble cast",
+        "episodic",
+        "family life",
+        "female protagonist",
+        "following one's dream",
+        "japan",
+        "japanese production",
+        "literature",
+        "love polygon",
+        "mystery",
+        "night on the galactic railroad",
+        "novel",
+        "parental abandonment",
+        "place",
+        "present",
+        "primarily female cast",
+        "promise",
+        "psychological",
+        "real-world location",
+        "romance",
+        "school",
+        "school clubs",
+        "school life",
+        "school swimsuit",
+        "seinen",
+        "shoujo",
+        "slapstick",
+        "slice of life",
+        "slice of life drama",
+        "storytelling",
+        "suicide",
+        "tales",
+        "the arts",
+        "the power of love",
+        "time",
+        "tragedy",
+        "trauma"
+      ],
+      "synopsis": "Episodes which depict the background stories of \"Bungaku Shoujo\" Movie's main heroines.",
+      "genres": ["Drama", "School", "Shoujo"],
+      "demographics": ["Shoujo"],
+      "themes": [
+        {
+          "name": "School",
+          "description": null
+        },
+        {
+          "name": "Drama",
+          "description": null
+        },
+        {
+          "name": "Literature",
+          "description": null
+        }
+      ],
+      "source_material": "Light novel",
+      "rating": "PG-13 - Teens 13 or older",
+      "content_warnings": [],
+      "nsfw": false,
+      "title_japanese": "\"文学少女\"メモワール",
+      "title_english": null,
+      "background": "Each episode of \"Bungaku Shoujo\" Memoire received a limited one-week run in movie theaters in May 2010.",
+      "trailers": [
+        {
+          "url": "https://www.youtube.com/watch?v=exYR42-P_Ok",
+          "thumbnail_url": "https://img.youtube.com/vi/exYR42-P_Ok/maxresdefault.jpg",
+          "title": "Official Trailer"
+        }
+      ],
+      "aired_dates": {
+        "from": "2010-06-25T00:00:00+00:00",
+        "to": "2010-12-24T00:00:00+00:00",
+        "string": "Jun 25, 2010 to Dec 24, 2010"
+      },
+      "broadcast": {
+        "day": null,
+        "time": null,
+        "timezone": null,
+        "string": null
+      },
+      "broadcast_schedule": {
+        "jpn_time": "0001-01-01T00:00:00Z",
+        "sub_time": "0001-01-01T00:00:00Z",
+        "dub_time": "0001-01-01T00:00:00Z"
+      },
+      "premiere_dates": {
+        "original": "2010-06-25T00:00:00Z",
+        "sub": "0001-01-01T00:00:00Z",
+        "dub": "0001-01-01T00:00:00Z"
+      },
+      "delay_information": {
+        "delayed_timetable": false,
+        "delayed_from": "0001-01-01T00:00:00Z",
+        "delayed_until": "0001-01-01T00:00:00Z",
+        "delay_reason": null
+      },
+      "episode_overrides": {
+        "main_override": {
+          "overrideDate": "0001-01-01T00:00:00Z",
+          "overrideEpisode": 0,
+          "episodesAired": 0
+        },
+        "sub_override": {
+          "overrideDate": "0001-01-01T00:00:00Z",
+          "overrideEpisode": 0,
+          "episodesAired": 0
+        },
+        "dub_override": {
+          "overrideDate": "0001-01-01T00:00:00Z",
+          "overrideEpisode": 0,
+          "episodesAired": 0
+        }
+      },
+      "external_links": [],
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/5352/original.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/6/26770l.jpg",
+            "source": "jikan"
+          },
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/8481.jpg",
+            "source": "anilist"
+          },
+          {
+            "url": "https://cdn.anidb.net/images/main/288281.jpg",
+            "source": "anidb"
+          }
+        ],
+        "banners": []
+      },
+      "month": "June",
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "season_number": 1,
+          "title": "Prelude to the Dreaming Girl",
+          "title_japanese": "夢見る少女の前奏曲（プレリュード）",
+          "title_romanji": "Yumemiru Shoujo no Prelude",
+          "synopsis": "Episode 1",
+          "thumbnails": [],
+          "streaming": {},
+          "aired": "2010-06-25T00:00:00+09:00",
+          "duration": 1460,
+          "score": null,
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/8481/Bungaku_Shoujo_Memoire/episode/1"
+        },
+        {
+          "episode_number": 2,
+          "season_number": 1,
+          "title": "Requiem of the Angel Dancing in the Sky",
+          "title_japanese": "ソラ舞う天使の鎮魂曲（レクイエム）",
+          "title_romanji": "Sora Mau Tenshi no Requiem",
+          "synopsis": "Episode 2",
+          "thumbnails": [],
+          "streaming": {},
+          "aired": "2010-10-29T00:00:00+09:00",
+          "duration": 1460,
+          "score": null,
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/8481/Bungaku_Shoujo_Memoire/episode/2"
+        },
+        {
+          "episode_number": 3,
+          "season_number": 1,
+          "title": "Rhapsody of the Maiden in Love",
+          "title_japanese": "恋する乙女のラプソディー",
+          "title_romanji": "Koisuru Otome no Rhapsody",
+          "synopsis": "Episode 3",
+          "thumbnails": [],
+          "streaming": {},
+          "aired": "2010-12-24T00:00:00+09:00",
+          "duration": 1460,
+          "score": null,
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/8481/Bungaku_Shoujo_Memoire/episode/3"
+        }
+      ],
+      "relations": [
+        {
+          "title": "\"Bungaku Shoujo\" to Shinitagari no Pierrot",
+          "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot",
+          "relation": "Adaptation"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" to Ue Kawaku Ghost",
+          "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost",
+          "relation": "Adaptation"
+        },
+        {
+          "title": "\"Bungaku Shoujo\" Series",
+          "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series",
+          "relation": "Adaptation"
+        }
+      ],
+      "opening_themes": [],
+      "ending_themes": [],
+      "streaming_info": [],
+      "licensors": [],
+      "streaming_licenses": [],
+      "awards": [],
+      "statistics": {
+        "mal": {
+          "score": 7.24,
+          "scored_by": 13960,
+          "rank": 3215,
+          "popularity_rank": 4421,
+          "members": 30296,
+          "favorites": 31
+        },
+        "animeschedule": {
+          "score": null,
+          "scored_by": null,
+          "members": null,
+          "rank": null
+        },
+        "kitsu": {
+          "score": 7.32,
+          "members": 4829,
+          "favorites": 118,
+          "popularity_rank": null,
+          "rank": null
+        },
+        "animeplanet": {
+          "score": 7.8,
+          "scored_by": 847,
+          "rank": null
+        },
+        "anilist": {
+          "score": 7.3,
+          "favourites": 74,
+          "popularity_rank": null,
+          "contextual_ranks": []
+        },
+        "anidb": {
+          "score": 7.19,
+          "scored_by": 2742
+        }
+      },
+      "characters": [
+        {
+          "name": "Konoha Inoue",
+          "role": "Main",
+          "name_variations": ["井上心葉"],
+          "name_kanji": "井上 心葉",
+          "name_native": "井上 心葉",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 24792,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/15/101327.jpg"
+          },
+          "description": "He used to write a novel called \"Sora ni Niteiru\" (Looks Alike to the Sky) using penname Miu Inoue when he was in junior high school and sent to a magazine.  The novel was received an award and too famous that it became drama and movie.  The name was very feminine that people thought it was written by a mysterious girl.\n\nThere was an accident happened to a girl he likes (Miu Asakura) that caused him to have difficulty in breathing so he closed himself until he met Touko in high school, who was reading and eating what she read, so she forced him to join literature club.\n\n\n\nBungaku Shoujo Series is in his point of view, while Bungaku Shoujo: Minarai Series is in Nano Hinosaka's point of view.",
+          "url": "https://myanimelist.net/character/24792/Konoha_Inoue",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Saitou, Chiwa",
+              "language": "Japanese"
+            },
+            {
+              "name": "Irino, Miyu",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Miu Asakura",
+          "role": "Main",
+          "name_variations": ["朝倉美羽"],
+          "name_kanji": "朝倉 美羽",
+          "name_native": "朝倉 美羽",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 30494,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/13/85718.jpg"
+          },
+          "description": "She is a childhood friend of Konoha, who he loved very much until she attempted suicide by falling off the school building.",
+          "url": "https://myanimelist.net/character/30494/Miu_Asakura",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Hirano, Aya",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Nanase Kotobuki",
+          "role": "Main",
+          "name_variations": ["琴吹ななせ"],
+          "name_kanji": "琴吹 ななせ",
+          "name_native": "琴吹 ななせ",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 28937,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/13/101326.jpg"
+          },
+          "description": "Kotobuki is a girl in Konoha's class.  She doesn't like Konoha's way of being nice to people.  She thinks that he's faking.",
+          "url": "https://myanimelist.net/character/28937/Nanase_Kotobuki",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Mizuki, Nana",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Tooko Amano",
+          "role": "Main",
+          "name_variations": [],
+          "name_kanji": "天野 遠子",
+          "name_native": "天野 遠子",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": null,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/12/98993.jpg"
+          },
+          "description": "Birthdate: March 15\n\nTooko is Konoha's upperclassman that's one year older than him and the president of the literature club. She likes literature to the extent that she eats what she reads and cannot taste normal food. When Konoha saw her eating the pages of a novel, she forced him to join the literature club so that she could \"watch over him\" and keep him from telling others about it.",
+          "url": "https://myanimelist.net/character/28451/Tooko_Amano",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Hanazawa, Kana",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": " Haruguchi",
+          "role": "Supporting",
+          "name_variations": [],
+          "name_kanji": "春口",
+          "name_native": "春口",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": null,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": null
+          },
+          "description": null,
+          "url": "https://myanimelist.net/character/140297/Haruguchi",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Yahagi, Sayuri",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": " Sasaki",
+          "role": "Supporting",
+          "name_variations": ["Sasaki"],
+          "name_kanji": "佐々木",
+          "name_native": "佐々木",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 36481,
+            "anidb": "19882",
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/4/99158.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/238836.jpg"
+          },
+          "description": null,
+          "url": "https://myanimelist.net/character/36481/Sasaki",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Chiba, Susumu",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Chia Takeda",
+          "role": "Supporting",
+          "name_variations": ["竹田千愛"],
+          "name_kanji": "竹田 千愛",
+          "name_native": "竹田 千愛",
+          "nicknames": ["Chee"],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 28933,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/14/101328.jpg"
+          },
+          "description": "A girl who requested to literature club to write a love letter for her. She's a first year. She works as a librarian.\n\nHer nickname is Chee (ちぃ).",
+          "url": "https://myanimelist.net/character/28933/Chia_Takeda",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Toyosaki, Aki",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Eri",
+          "role": "Supporting",
+          "name_variations": [],
+          "name_kanji": "絵里",
+          "name_native": "絵里",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": null,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": null
+          },
+          "description": null,
+          "url": "https://myanimelist.net/character/140293/Eri",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Nishigaki, Yuka",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Father Asakura",
+          "role": "Supporting",
+          "name_variations": [],
+          "name_kanji": "美羽の父",
+          "name_native": "美羽の父",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": null,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": null
+          },
+          "description": null,
+          "url": "https://myanimelist.net/character/140296/Father_Asakura",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Umezu, Hideyuki",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Fumiharu Amano",
+          "role": "Supporting",
+          "name_variations": ["天野文陽"],
+          "name_kanji": "天野 文陽",
+          "name_native": "天野 文陽",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 36482,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/5/99159.jpg"
+          },
+          "description": "Touko's father.",
+          "url": "https://myanimelist.net/character/36482/Fumiharu_Amano",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Fujiwara, Keiji",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Kanako Sakurai",
+          "role": "Supporting",
+          "name_variations": ["桜井叶子"],
+          "name_kanji": "桜井 叶子",
+          "name_native": "桜井 叶子",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 36480,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/3/99157.jpg"
+          },
+          "description": null,
+          "url": "https://myanimelist.net/character/36480/Kanako_Sakurai",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Mitsuishi, Kotono",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Kurara Mori",
+          "role": "Supporting",
+          "name_variations": ["森紅楽々"],
+          "name_kanji": "森 紅楽々",
+          "name_native": "森 紅楽々",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 28934,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/13/109246.jpg"
+          },
+          "description": "Kotobuki's friend and classmate.  She doesn't want people to call her by her first name, so she goes by her nickname \"Mori-chan\".",
+          "url": "https://myanimelist.net/character/28934/Kurara_Mori",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Shimoda, Asami",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Miki",
+          "role": "Supporting",
+          "name_variations": [],
+          "name_kanji": "ミキ",
+          "name_native": "ミキ",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": null,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": null
+          },
+          "description": null,
+          "url": "https://myanimelist.net/character/140294/Miki",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Tamura, Chika",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Mother Asakura",
+          "role": "Supporting",
+          "name_variations": [],
+          "name_kanji": "美羽の母",
+          "name_native": "美羽の母",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": null,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": null
+          },
+          "description": null,
+          "url": "https://myanimelist.net/character/140290/Mother_Asakura",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Yamagata, Kaori",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Mother Inoue",
+          "role": "Supporting",
+          "name_variations": [],
+          "name_kanji": "心葉の母",
+          "name_native": "心葉の母",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": null,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": null
+          },
+          "description": null,
+          "url": "https://myanimelist.net/character/140291/Mother_Inoue",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Hisakawa, Aya",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Ryuuto Sakurai",
+          "role": "Supporting",
+          "name_variations": ["桜井流人"],
+          "name_kanji": "桜井 流人",
+          "name_native": "桜井 流人",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 28936,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/5/99156.jpg"
+          },
+          "description": "He is like a brother to Touko.  He's from a family who adopted Touko.  He is actually a 1st year in high school who likes to play with multiple girls at the same time.",
+          "url": "https://myanimelist.net/character/28936/Ryuuto_Sakurai",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Miyano, Mamoru",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Yui Amano",
+          "role": "Supporting",
+          "name_variations": ["天野結衣"],
+          "name_kanji": "天野 結衣",
+          "name_native": "天野 結衣",
+          "nicknames": [],
+          "character_ids": {
+            "mal": 0,
+            "anilist": 36483,
+            "anidb": null,
+            "kitsu": null
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/3/99160.jpg"
+          },
+          "description": "Touko's mother.",
+          "url": "https://myanimelist.net/character/36483/Yui_Amano",
+          "age": null,
+          "gender": null,
+          "voice_actors": [
+            {
+              "name": "Inoue, Kikuko",
+              "language": "Japanese"
+            }
+          ]
+        }
+      ],
+      "staff_data": {
+        "production_staff": {
+          "directors": [
+            {
+              "staff_ids": {
+                "anidb": "2136",
+                "anilist": 100805
+              },
+              "name": "Shunsuke Tada",
+              "native_name": "多田俊介",
+              "role": "Director",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Director"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": ["Tada Shunsuke"]
+            }
+          ],
+          "music_composers": [
+            {
+              "staff_ids": {
+                "anidb": "2301",
+                "anilist": 103635
+              },
+              "name": "Masumi Itou",
+              "native_name": "伊藤真澄",
+              "role": "Music",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Music", "Music Composer"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": ["Itou Masumi"]
+            }
+          ],
+          "character_designers": [
+            {
+              "staff_ids": {
+                "anidb": "11238",
+                "anilist": null
+              },
+              "name": "Matsumoto Keita",
+              "native_name": null,
+              "role": "Character Designer",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": [
+                "Character Designer",
+                "Animation Director"
+              ],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ],
+          "series_writers": [
+            {
+              "staff_ids": {
+                "anidb": "2178",
+                "anilist": null
+              },
+              "name": "Yamada Yuka",
+              "native_name": null,
+              "role": "Series Writer",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Series Writer"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ],
+          "original_creators": [
+            {
+              "staff_ids": {
+                "anidb": "10252",
+                "anilist": 102606
+              },
+              "name": "Mizuki Nomura",
+              "native_name": "野村美月",
+              "role": "Original Creator",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Original Creator"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": ["Nomura Mizuki"]
+            },
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 102607
+              },
+              "name": "Miho Takeoka",
+              "native_name": "竹岡美穂",
+              "role": "Original Character Design",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Original Character Design"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ],
+          "studios": [
+            {
+              "staff_ids": {
+                "anidb": "721",
+                "anilist": null
+              },
+              "name": "Production I.G",
+              "native_name": null,
+              "role": "Animation Studio",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Animation Studio"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ],
+          "episode_directors": [
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 102561
+              },
+              "name": "Itsurou Kawasaki",
+              "native_name": "川崎逸朗",
+              "role": "Episode Director",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Episode Director"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ],
+          "storyboard_artists": [
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 102268
+              },
+              "name": "Kanta Kamei",
+              "native_name": "亀井幹太",
+              "role": "Storyboard",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Storyboard"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            },
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 110911
+              },
+              "name": "Hideyo Yamamoto",
+              "native_name": "山本秀世",
+              "role": "Storyboard",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Storyboard"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ],
+          "key_animators": [
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 101327
+              },
+              "name": "Youko Kikuchi",
+              "native_name": "菊地洋子",
+              "role": "Key Animation",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Key Animation"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ],
+          "theme_song_performers": [
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 100235
+              },
+              "name": "KOKIA",
+              "native_name": "コキア ",
+              "role": "Theme Song Performance (ED: ep 1)",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Theme Song Performance (ED: ep 1)"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            },
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 101323
+              },
+              "name": "CooRie",
+              "native_name": "クーリエ",
+              "role": "Theme Song Performance (OP, ED: ep 3)",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Theme Song Performance (OP, ED: ep 3)"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            },
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 96532
+              },
+              "name": "Rino",
+              "native_name": "りの",
+              "role": "Theme Song Composition (OP, ED: ep 3)",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Theme Song Composition (OP, ED: ep 3)"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            },
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 150930
+              },
+              "name": "Kaoru Ookubo",
+              "native_name": "大久保薫",
+              "role": "Theme Song Arrangement (OP, ED: ep 3)",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Theme Song Arrangement (OP, ED: ep 3)"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ],
+          "producers": [
+            {
+              "staff_ids": {
+                "anidb": null,
+                "anilist": 104903
+              },
+              "name": "Rui Kuroki",
+              "native_name": "黒木るい",
+              "role": "Producer",
+              "image": null,
+              "biography": null,
+              "birth_date": null,
+              "hometown": null,
+              "primary_occupations": ["Producer"],
+              "years_active": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": 0,
+              "alternative_names": []
+            }
+          ]
+        },
+        "producers": [
+          {
+            "name": "enterbrain",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/392/Enterbrain"
+          },
+          {
+            "name": "kadokawa contents gate",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/685/Kadokawa_Contents_Gate"
+          },
+          {
+            "name": "lantis",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/104/Lantis"
+          },
+          {
+            "name": "pony canyon",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/144/Pony_Canyon"
+          },
+          {
+            "name": "production i.g",
+            "type": "producer",
+            "url": null
+          },
+          {
+            "name": "t.o entertainment",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/1015/TO_Entertainment"
+          }
+        ],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": [
+            {
+              "staff_ids": {
+                "mal": 61,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Saitou, Chiwa",
+              "native_name": null,
+              "character_assignments": ["Konoha Inoue"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/3/79603.jpg?s=102f06b9af377a674d4aeb2b7ab1f018",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 88,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Irino, Miyu",
+              "native_name": null,
+              "character_assignments": ["Konoha Inoue"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/2/80313.jpg?s=9dce08c51de682061b953fd6d2cf263f",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 185,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Hanazawa, Kana",
+              "native_name": null,
+              "character_assignments": ["Tooko Amano"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/3/69318.jpg?s=afd1edec82f25a1c57b35262f417412c",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 599,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Toyosaki, Aki",
+              "native_name": null,
+              "character_assignments": ["Chia Takeda"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/1/82665.jpg?s=99afe51dc4545149bd78358ed6d942c7",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 1696,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Shimoda, Asami",
+              "native_name": null,
+              "character_assignments": ["Kurara Mori"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/1/57443.jpg?s=cadefb75f1807b7ccce8dedee1ba4c62",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 65,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Miyano, Mamoru",
+              "native_name": null,
+              "character_assignments": ["Ryuuto Sakurai"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/1/66414.jpg?s=8880db148c2eb5fffd3724f381eec784",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 81,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Mizuki, Nana",
+              "native_name": null,
+              "character_assignments": ["Nanase Kotobuki"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/2/79687.jpg?s=8ca4fb9247ff66ab2446fe6afdab9bb5",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 4,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Hirano, Aya",
+              "native_name": null,
+              "character_assignments": ["Miu Asakura"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/3/78608.jpg?s=38b29d5c7ac8810fcadb50be79c87eb9",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 9,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Mitsuishi, Kotono",
+              "native_name": null,
+              "character_assignments": ["Kanako Sakurai"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/2/75738.jpg?s=0a5dc28c215fd63def12e226bbde9305",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 260,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Chiba, Susumu",
+              "native_name": null,
+              "character_assignments": [" Sasaki"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/2/55045.jpg?s=b573e4450ea0f18317111fc14be0de01",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 63,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Fujiwara, Keiji",
+              "native_name": null,
+              "character_assignments": ["Fumiharu Amano"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/3/57226.jpg?s=9e305f6687d1e7e02a732c8f7fbe58ba",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 195,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Inoue, Kikuko",
+              "native_name": null,
+              "character_assignments": ["Yui Amano"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/3/69603.jpg?s=6c60774638656f054f2a686a580d85b4",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 6725,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Yamagata, Kaori",
+              "native_name": null,
+              "character_assignments": ["Mother Asakura"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/2/74515.jpg?s=90019e75c38f9b70900eab74a43e14e5",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 80,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Hisakawa, Aya",
+              "native_name": null,
+              "character_assignments": ["Mother Inoue"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/1/55009.jpg?s=0a90d5fa92cd90c29ff395e341e21a0a",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 10045,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Nishigaki, Yuka",
+              "native_name": null,
+              "character_assignments": ["Eri"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/2/40124.jpg?s=1f092c2fdb5e73ce778313d0db712599",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 41235,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Tamura, Chika",
+              "native_name": null,
+              "character_assignments": ["Miki"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/3/44218.jpg?s=fbb503d15a120776b7ed7c8ae59fc83d",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 6602,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Umezu, Hideyuki",
+              "native_name": null,
+              "character_assignments": ["Father Asakura"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/3/80554.jpg?s=fac93cd952f05480a0b591335b8637bf",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            },
+            {
+              "staff_ids": {
+                "mal": 380,
+                "anidb": null,
+                "anilist": null
+              },
+              "name": "Yahagi, Sayuri",
+              "native_name": null,
+              "character_assignments": [" Haruguchi"],
+              "image": "https://cdn.myanimelist.net/images/voiceactors/2/67462.jpg?s=d426577b5c3d07f472cac6fcb002b68a",
+              "biography": null,
+              "birth_date": null,
+              "blood_type": null
+            }
+          ]
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-28T22:47:32.891024Z",
         "success": true,
         "error_message": null
       }
