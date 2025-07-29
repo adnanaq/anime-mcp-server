@@ -1,10 +1,10 @@
 # Gemini Self-Instruction Manual for Anime Data Enrichment
 
-This document outlines the PRODUCTION-LEVEL process for enriching anime data.
+This document outlines the PRODUCTION-LEVEL process for enriching anime data with **MULTI-AGENT CONCURRENT PROCESSING** capabilities.
 
 ## 1. Objective
 
-The primary goal is to take a raw anime data object (from an offline database) and enrich it with additional information from external APIs (Jikan, AnimSchedule, Kitsu, Anime-Planet, AniList, AniDB) and AI processing. This is a PRODUCTION implementation of the `enrich_anime_from_offline_data` method.
+The primary goal is to take a raw anime data object (from an offline database) and enrich it with additional information from external APIs (Jikan, AnimSchedule, Kitsu, Anime-Planet, AniList, AniDB) and AI processing. This is a PRODUCTION implementation of the `enrich_anime_from_offline_data` method with **concurrent multi-agent support** for enhanced performance.
 
 **CRITICAL: This is NOT a simulation. This is a production-level enrichment process that must use REAL API calls and REAL data.**
 
@@ -16,27 +16,36 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 **CRITICAL RULE: I must not proceed to the next step unless the current step has been completed successfully.**
 
-### Step 0: Load Next Anime Entry
+### Step 0: Load Next Anime Entry (Multi-Agent Concurrent Processing)
 
-1.  **Load Source Database:**
+**MULTI-AGENT PROCESSING MODEL**: This system supports concurrent processing by multiple agents using numbered processing files to prevent conflicts and enable scalability.
+
+1.  **Agent Slot Detection:**
+
+    - Scan for existing processing files: `current_anime.json`, `current_anime_2.json`, `current_anime_3.json`, etc.
+    - Determine next available agent slot (e.g., if `current_anime.json` and `current_anime_2.json` exist, create `current_anime_3.json`)
+    - This enables multiple agents to work simultaneously without conflicts
+
+2.  **Load Source Database:**
 
     - Load `data/anime-offline-database.json` from the project root
-    - Extract the first anime entry from the `data` array
+    - Extract anime entries sequentially from the `data` array (first available entry not being processed)
     - If the `data` array is empty, all anime have been processed - stop here
+    - Skip entries that match any currently processing anime (check against all existing `current_anime*.json` files)
 
-2.  **Prepare Current Anime:**
+3.  **Prepare Current Anime (Agent-Specific):**
 
-    - Save the extracted anime entry to `data/current_anime.json`
-    - Add `processing: true` to the entry to indicate you are currently processing it.
-    - If there is entry with that property, meaning another agent is processing it, do not do anything with it. You only focus on what you are processing.
-    - If there is entry being processed, check if the title that you are going to fetch matches with the processed entry, if it, does, next take the next entry.
-    - This file becomes the `offline_anime_data` for all subsequent processing steps
+    - Save the extracted anime entry to your agent's numbered file (e.g., `data/current_anime_2.json`)
+    - Add `processing: true` to the entry to indicate this agent is currently processing it
+    - This numbered file becomes the `offline_anime_data` for all subsequent processing steps
+    - Each agent has its own processing file, enabling parallel processing without conflicts
     - The file enables manual review and debugging if needed
 
-3.  **Verification:**
-    - Confirm `data/current_anime.json` contains a valid anime object
+4.  **Verification:**
+    - Confirm your agent's processing file contains a valid anime object
     - Verify the anime has required fields (title, sources, etc.)
-    - Log which anime is being processed (title and MAL ID if available)
+    - Log which anime is being processed and which agent slot is being used
+    - Create temp directory using agent-specific naming: `temp/<first word from anime title>_agent<N>/`
 
 ### Step 1: Extract Platform IDs
 
@@ -44,7 +53,7 @@ The primary goal is to take a raw anime data object (from an offline database) a
 2.  **MAL ID Extraction:**
     - Find the URL containing "myanimelist.net/anime/".
     - Extract the numerical ID from this URL.
-    - If no MAL ID is found, the process stops, and the original `offline_anime_data` is returned.
+    - If no MAL ID is found, Jikan data fetching will be skipped.
 3.  **Kitsu ID Extraction:**
     - Find the URL containing "kitsu.io/anime/" or "kitsu.app/anime/".
     - Extract the numerical ID from this URL.
@@ -212,7 +221,9 @@ This is the core of the process, where AI is used to process the collected data.
       }
 ```
 
-### Step 6: Database Persistence & Cleanup
+### Step 6: Database Persistence & Cleanup (Multi-Agent Safe)
+
+Receive confirmation from user before procesing this step.
 
 1.  **Update Enriched Database:**
 
@@ -223,18 +234,35 @@ This is the core of the process, where AI is used to process the collected data.
     - Increment `totalAnime` count in `enrichmentInfo`
     - Save file with proper JSON formatting using `ensure_ascii=False` and `encoding='utf-8'`
 
-2.  **Update Source Database:**
+2.  **Update Source Database (Agent-Safe Removal):**
 
     - Load `anime-offline-database.json`
-    - Remove the processed anime entry (first entry) from the `data` array, make sure that it's the same anime that was just processed. Verify it against the title and url ids.
+    - **CRITICAL**: Remove the processed anime entry by matching against the exact anime from your agent's processing file
+    - **Verification**: Verify removal by matching both `title` and `sources` array against your processed anime
+    - **Safety Check**: Ensure you're removing the correct anime - not just the first entry
     - Update `lastUpdate` field to current date (YYYY-MM-DD format)
-    - Decrement the total anime count in metadata if applicable
     - Save the updated source database with proper JSON formatting
 
-3.  **Completion Confirmation:**
+3.  **Agent Cleanup (Multi-Agent Environment):**
+
+    - Remove your agent's processing file (e.g., `data/current_anime_2.json`)
+    - Clean up your agent's temp directory (e.g., `temp/<anime_title>/`)
+    - **Do NOT** remove other agents' processing files or temp directories
+    - Verify cleanup completed successfully
+
+4.  **Completion Confirmation:**
     - Confirm the anime has been added to the enriched database
-    - Confirm the anime has been removed from the source database
+    - Confirm the anime has been removed from the source database (with title verification)
     - Report remaining anime count in the source database
+    - Confirm agent-specific cleanup completed
+    - Log successful completion for this agent's processing session
+
+**MULTI-AGENT COORDINATION:**
+
+- Each agent manages its own processing files and cleanup
+- Database updates are atomic and safe for concurrent access
+- Verification prevents accidental removal of wrong anime entries
+- Clean separation ensures agents don't interfere with each other
 
 ## 4. Output Schema
 

@@ -6,7 +6,7 @@
   "repository": "https://github.com/adnanaq/anime-mcp-server",
   "lastUpdate": "2025-07-29",
   "enrichmentInfo": {
-    "totalAnime": 15,
+    "totalAnime": 17,
     "enrichmentVersion": "1.0.0",
     "sources": [
       "jikan",
@@ -8023,6 +8023,290 @@
       "enrichment_metadata": {
         "source": "multi-source",
         "enriched_at": "2025-07-29T18:28:15.020637Z",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "episodes": 1,
+      "nsfw": false,
+      "picture": "https://cdn.anime-planet.com/anime/primary/hitman-bang-i-equals-fantasy-1.jpg",
+      "rating": "G",
+      "source_material": "Original",
+      "status": "FINISHED",
+      "synopsis": "Music video for the song \"I=Fantasy\" by \"hitman\" bang. featuring SeeU.",
+      "thumbnail": "https://cdn.anime-planet.com/anime/primary/hitman-bang-i-equals-fantasy-1-190x266.jpg",
+      "title": "\"hitman\" bang: I=Fantasy",
+      "title_english": "I=Fantasy",
+      "type": "SPECIAL",
+      "awards": [],
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "ending_themes": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "season_number": 1,
+          "title": "\"hitman\" bang: I=Fantasy",
+          "aired": "2011-10-21T00:00:00+09:00",
+          "duration": 240,
+          "filler": false,
+          "recap": false,
+          "thumbnails": [],
+          "streaming": {}
+        }
+      ],
+      "genres": [
+        "CG Animation",
+        "Korean Animation",
+        "Vocaloid",
+        "Music",
+        "The Arts"
+      ],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [],
+      "relations": [],
+      "sources": [
+        "https://anime-planet.com/anime/hitman-bang-i-equals-fantasy",
+        "https://kitsu.app/anime/45635"
+      ],
+      "streaming_info": [],
+      "streaming_licenses": [],
+      "synonyms": [
+        "I=Fantasy",
+        "\"hitman\" bang: I=Fantasy",
+        "FANTASY"
+      ],
+      "tags": [
+        "cg animation",
+        "korean animation",
+        "music",
+        "the arts",
+        "vocaloid"
+      ],
+      "themes": [
+        {
+          "name": "Music",
+          "description": "Music anime generally revolves around people concerned with music in their everyday lives. In addition they often adhere to certain genre conventions, the emphasis on training and practice in preparation for competitions, characters desire for self improvement, and pursuit of a specific goal. This is not unlike the Sports category."
+        },
+        {
+          "name": "The Arts",
+          "description": "The arts represent an outlet of human expression, usually influenced by culture, and driven by human creative impulse. Major constituents of the arts include literature – including poetry, novels and short stories, and epics; performing arts – among them music, dance, and theatre; culinary arts such as baking, chocolatiering, and winemaking; media arts like photography and film, and visual arts – including drawing, painting, and sculpting. Some art forms combine a visual element with performance (e.g. film) and the written word (e.g. comics).\n\nFrom prehistoric cave paintings to modern day films, art serves as a vessel for storytelling and conveying mankind's relationship with its environment.\nSource: Wiki"
+        }
+      ],
+      "trailers": [
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=luWgq7_ZgnY",
+          "title": "Official Trailer"
+        }
+      ],
+      "aired_dates": {
+        "from": "2011-10-21T00:00:00+00:00",
+        "to": "2011-10-21T00:00:00+00:00",
+        "string": "Oct 21, 2011"
+      },
+      "anime_season": {
+        "season": "FALL",
+        "year": 2011
+      },
+      "broadcast_schedule": {},
+      "delay_information": {
+        "delayed_timetable": false
+      },
+      "duration": {
+        "value": 240,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {
+        "official": "https://kmzktmm.tumblr.com/"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/45635/poster_image/c50fb8dc787c4309328a7c5cb6dd70b0.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/hitman-bang-i-equals-fantasy-1.jpg?t=1625789879",
+            "source": "animeplanet"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "score": {
+        "arithmeticGeometricMean": 6.584,
+        "arithmeticMean": 6.584,
+        "median": 6.584
+      },
+      "staff_data": {
+        "production_staff": {
+          "animation_directors": [],
+          "character_designers": [],
+          "directors": [],
+          "music_composers": [
+            {
+              "name": "\"hitman\" bang",
+              "role": "Music_Composer",
+              "enhancement_status": "no_external_data_available",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anime_planet": "hitman-bang"
+              }
+            }
+          ],
+          "original_creators": [],
+          "series_writers": []
+        },
+        "studios": [],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": []
+        }
+      },
+      "statistics": {
+        "animeplanet": {
+          "score": 6.584,
+          "scored_by": 42,
+          "rank": 1
+        },
+        "animeschedule": {
+          "score": 0.0,
+          "scored_by": 0,
+          "rank": 14433,
+          "members": 1
+        },
+        "kitsu": {
+          "popularity_rank": 21477,
+          "members": 14,
+          "favorites": 1
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-29T19:15:35.465131Z",
+        "success": true
+      }
+    },
+    {
+      "episodes": 1,
+      "picture": "https://cdn.anisearch.com/images/anime/cover/18/18676_600_300.webp",
+      "status": "FINISHED",
+      "synopsis": null,
+      "thumbnail": "https://cdn.anisearch.com/images/anime/cover/18/18676_600.webp",
+      "title": "\"Hitori de Ikirare Sou\" tte Sore tte Nee, Homete Iru no?",
+      "title_english": null,
+      "title_japanese": null,
+      "type": "SPECIAL",
+      "awards": [],
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "ending_themes": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "title": "\"Hitori de Ikirare Sou\" tte Sore tte Nee, Homete Iru no?",
+          "title_japanese": "「ひとりで生きられそう」って それってねえ、褒めているの？",
+          "title_romaji": null,
+          "synopsis": null,
+          "duration": 180,
+          "filler": false,
+          "recap": false,
+          "thumbnails": [],
+          "streaming": {}
+        }
+      ],
+      "genres": [],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [],
+      "relations": [],
+      "sources": [
+        "https://anisearch.com/anime/18676"
+      ],
+      "streaming_info": [],
+      "streaming_licenses": [],
+      "synonyms": [
+        "\"Hitori de Ikirare Sō\" tte Sore tte Nee, Homete Iru no?",
+        "Juice=Juice - \"Hitori de Ikirare Sou\" tte Sore tte Nee, Homete Iru no?",
+        "Juice=Juice - 「ひとりで生きられそう」って それってねえ、褒めているの？",
+        "「ひとりで生きられそう」って それってねえ、褒めているの？"
+      ],
+      "tags": [
+        "indefinite",
+        "present",
+        "slice of life"
+      ],
+      "themes": [
+        {
+          "name": "indefinite"
+        },
+        {
+          "name": "present"
+        },
+        {
+          "name": "slice of life"
+        }
+      ],
+      "trailers": [],
+      "anime_season": {
+        "season": "FALL",
+        "year": 2019
+      },
+      "delay_information": {},
+      "duration": {
+        "value": 180,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {},
+      "images": {
+        "posters": [],
+        "covers": [
+          {
+            "url": "https://cdn.anisearch.com/images/anime/cover/18/18676_600_300.webp",
+            "source": "offline"
+          },
+          {
+            "url": "https://cdn.anisearch.com/images/anime/cover/18/18676_600.webp",
+            "source": "offline"
+          }
+        ],
+        "banners": []
+      },
+      "score": {
+        "arithmeticGeometricMean": 6.326530612244898,
+        "arithmeticMean": 6.326530612244898,
+        "median": 6.326530612244898
+      },
+      "staff_data": {
+        "production_staff": {
+          "animation_directors": [],
+          "character_designers": [],
+          "directors": [],
+          "music_composers": [],
+          "original_creators": [],
+          "series_writers": []
+        },
+        "studios": [],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": []
+        }
+      },
+      "statistics": {},
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-29T14:58:45.123456Z",
         "success": true,
         "error_message": null
       }
