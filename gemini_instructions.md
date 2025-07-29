@@ -145,9 +145,9 @@ This is the core of the process, where AI is used to process the collected data.
 **Agent 3 - Relationship & Media Specialist:** 3. **Stage 3: Relationship Analysis** PROMPT: src/services/prompts/stages/03_relationship_analysis.txt
 **Inputs:** `relatedAnime` URLs from `offline_anime_data`, and `relations` from Jikan data. - **Action:** Generate a JSON object with `relatedAnime` and `relations` fields. - **CRITICAL RULES:** - Process EVERY URL. The number of output `relatedAnime` entries must exactly match the number of input URLs. - Use "Intelligent Title Extraction": - Scan all URLs to find explicit titles (e.g., from anime-planet). - Visit each site to find the approprioate title and relation - Do not use numeric ID from url as the title. - **FORBIDDEN PATTERNS:** Do not use generic titles like "Anime [ID]", "Unknown Title", or "Anime 19060". - **Output:** `temp/<first word from anime title>/stage3_relationships.json`
 
-4.  **Stage 4: Statistics and Media** PROMPT: src/services/prompts/stages/04_statistics_media.txt
+4.  **Stage 4: Statistics** PROMPT: src/services/prompts/stages/04_statistics_media.txt
     **Inputs:** Jikan statistics and media data, AniList statistics, AniDB statistics and staff data.
-    **Action:** Generate a JSON object with `trailers`, `staff`, `opening_themes`, `ending_themes`, `streaming_info`, `licensors`, `streaming_licenses`, `awards`, `statistics`, `external_links`, and `images`.
+    **Action:** Generate a JSON object with `statistics`.
     **CRITICAL RULES:**
     - The `statistics` field must be a nested object with source as a key, like `mal`, `animeschedule`, `kitsu`, `animeplanet`, `anilist`, `anidb` key (e.g., `{"statistics": {"mal": {...}, "anilist": {...}, "anidb": {...}}}`). There could be multiple sources.
     - Prioritize AniDB for comprehensive staff data merging including detailed roles and credits.

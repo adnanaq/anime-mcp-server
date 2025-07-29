@@ -4,9 +4,9 @@
     "url": "https://github.com/adnanaq/anime-mcp-server/blob/main/LICENSE"
   },
   "repository": "https://github.com/adnanaq/anime-mcp-server",
-  "lastUpdate": "2025-07-28",
+  "lastUpdate": "2025-07-29",
   "enrichmentInfo": {
-    "totalAnime": 12,
+    "totalAnime": 15,
     "enrichmentVersion": "1.0.0",
     "sources": [
       "jikan",
@@ -17,7 +17,7 @@
       "anidb"
     ],
     "description": "Comprehensive anime database enriched with multi-source data integration",
-    "lastEnrichment": "2025-07-28"
+    "lastEnrichment": "2025-07-29"
   },
   "data": [
     {
@@ -6912,6 +6912,1117 @@
       "enrichment_metadata": {
         "source": "multi-source",
         "enriched_at": "2025-07-28T16:53:16.183106Z",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "episodes": 2,
+      "status": "FINISHED",
+      "title": "\"Eikou Naki Tensai-tachi\" Kara no Monogatari",
+      "type": "SPECIAL",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/4/84552.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Manga",
+      "synopsis": "An anime/documentary series about athletes presented by NHK. The first episode adapts material from Itou Tomoyoshi and Morita Shingo's Weekly Young Jump biographical manga Eikou Naki Tensai-tachi (Geniuses Without Glory) — specifically the story about Furuhashi Hironoshin, the swimmer also known as \"the flying fish of Fujiyama.\" The episode also includes interviews with Olympic swimmer Kitajima Kousuke and other Japanese swimmers about the how Furuhashi changed the Japanese competitive swimming world, as well as what sort of training is required to be an Olympic swimmer. Source: ANN",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/4/84552t.jpg",
+      "title_japanese": "\"栄光なき天才たち\"からの物語",
+      "characters": {
+        "characters": []
+      },
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": {
+        "episode_details": [
+          {
+            "episode_number": 1,
+            "season_number": 1,
+            "title": "",
+            "title_japanese": null,
+            "title_romaji": null,
+            "synopsis": null,
+            "duration": 2940,
+            "filler": false,
+            "recap": false,
+            "url": "https://myanimelist.net/anime/35025/Eikou_Naki_Tensai-tachi_Kara_no_Monogatari/episode/1",
+            "thumbnails": [],
+            "streaming": {}
+          },
+          {
+            "episode_number": 2,
+            "season_number": 1,
+            "title": "",
+            "title_japanese": null,
+            "title_romaji": null,
+            "synopsis": null,
+            "duration": 2940,
+            "filler": false,
+            "recap": false,
+            "url": "https://myanimelist.net/anime/35025/Eikou_Naki_Tensai-tachi_Kara_no_Monogatari/episode/2",
+            "thumbnails": [],
+            "streaming": {}
+          }
+        ]
+      },
+      "genres": [
+        "Sports",
+        "Based on a Manga",
+        "Running",
+        "Swimming",
+        "Track and Field"
+      ],
+      "related_anime": [],
+      "relations": [],
+      "sources": [
+        "https://anidb.net/anime/12936",
+        "https://anime-planet.com/anime/eikou-naki-tensai-tachi-kara-no-monogatari",
+        "https://animecountdown.com/666595",
+        "https://anisearch.com/anime/12361",
+        "https://kitsu.app/anime/40654",
+        "https://livechart.me/anime/2696",
+        "https://myanimelist.net/anime/35025",
+        "https://notify.moe/anime/tZ-DhFmmR",
+        "https://simkl.com/anime/666595"
+      ],
+      "synonyms": [
+        "Stories From \"Geniuses Without Glory\"",
+        "\"Eikou Naki Tensai-tachi\" kara no Monogatari",
+        "\"栄光なき天才たち\"からの物語",
+        "\"Eikou Naki Tensai-tachi\" kara no Monogatari",
+        "\"Eikō Naki Tensai-tachi\" kara no Monogatari",
+        "\"栄光なき天才たち\"からの物語"
+      ],
+      "tags": [
+        "athletics",
+        "based on a manga",
+        "japanese production",
+        "manga",
+        "present",
+        "running",
+        "seinen",
+        "sports",
+        "swimming",
+        "track and field",
+        "water sports"
+      ],
+      "themes": [
+        {
+          "name": "athletics",
+          "description": "Athletic competition and sports"
+        },
+        {
+          "name": "sports",
+          "description": "Sports-related content"
+        },
+        {
+          "name": "swimming",
+          "description": "Swimming activities"
+        },
+        {
+          "name": "running",
+          "description": "Running and track activities"
+        },
+        {
+          "name": "biography",
+          "description": "Biographical content"
+        },
+        {
+          "name": "documentary",
+          "description": "Documentary-style presentation"
+        }
+      ],
+      "anime_season": {
+        "season": "WINTER",
+        "year": 2017
+      },
+      "duration": {
+        "value": 2940,
+        "unit": "SECONDS"
+      },
+      "score": {
+        "arithmeticGeometricMean": 6.3,
+        "arithmeticMean": 6.3,
+        "median": 6.3
+      },
+      "aired_dates": {
+        "from": "2017-03-25",
+        "to": "2017-05-28"
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "external_links": [],
+      "images": {
+        "posters": [],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/4/84552l.jpg",
+            "source": "jikan"
+          }
+        ],
+        "banners": []
+      },
+      "statistics": {
+        "anidb": {
+          "score": 1.94,
+          "scored_by": 6
+        },
+        "kitsu": {
+          "popularity_rank": 16665,
+          "members": 59,
+          "favorites": 0
+        },
+        "mal": {
+          "rank": 19457,
+          "popularity_rank": 15241,
+          "members": 846,
+          "favorites": 1
+        }
+      },
+      "staff_data": {
+        "production_staff": {
+          "animation_directors": [
+            {
+              "name": "Yaegashi Youhei",
+              "role": "Animation_Director",
+              "enhancement_status": "anilist_match_pending",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "22244"
+              }
+            }
+          ],
+          "character_designers": [
+            {
+              "name": "Yaegashi Youhei",
+              "role": "Character_Designer",
+              "enhancement_status": "anilist_match_pending",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "22244"
+              }
+            }
+          ],
+          "directors": [
+            {
+              "name": "Fukushima Toshinori",
+              "role": "Director",
+              "enhancement_status": "anilist_match_pending",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "7764"
+              }
+            }
+          ],
+          "music_composers": [
+            {
+              "name": "Matsutani Suguru",
+              "role": "Music_Composer",
+              "enhancement_status": "anilist_match_pending",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "4906"
+              }
+            }
+          ],
+          "original_creators": [
+            {
+              "name": "Itou Tomoyoshi",
+              "role": "Original_Creator",
+              "enhancement_status": "anilist_match_pending",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "49173"
+              }
+            },
+            {
+              "name": "Morita Shingo",
+              "role": "Original_Creator",
+              "enhancement_status": "anilist_match_pending",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "49174"
+              }
+            }
+          ],
+          "series_writers": []
+        },
+        "studios": [
+          {
+            "name": "J.C.Staff",
+            "type": "animation_studio",
+            "url": "https://myanimelist.net/anime/producer/7/JCStaff"
+          }
+        ],
+        "producers": [
+          {
+            "name": "NHK",
+            "type": "producer",
+            "url": "https://myanimelist.net/anime/producer/111/NHK"
+          },
+          {
+            "name": "NHK Enterprises",
+            "type": "producer"
+          }
+        ],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": []
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-29T12:41:22.631259Z",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "episodes": 1,
+      "month": "November",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1192/112238.jpg",
+      "rating": "PG-13 - Teens 13 or older",
+      "source_material": "Light novel",
+      "status": "FINISHED",
+      "synopsis": "The story centers on a boy named Yamada Uro, and a 17-year old girl named Karon. Both work as part of the \"Hero Retirement and Return to Everyday Life Assistance Agency,\" which takes heroes from another world back to Earth and helps them reintegrate into everyday life. Karon, a former hero herself, works under Uro as they tackle cases, and also lives with him, with Uro constantly failing to rein in Karon`s hero-like behavior even as he tries to ingrain the behavior of common people into her.\nSource: ANN",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1192/112238t.jpg",
+      "title": "\"Eiyuu\" Kaitai",
+      "title_english": "Eiyu Kaitai",
+      "title_japanese": "「英雄」解体",
+      "type": "OVA",
+      "awards": [],
+      "characters": [
+        {
+          "name": "Uro Yamada",
+          "role": "Main",
+          "name_variations": [
+            "山田 烏鷺",
+            "Uro  Yamada",
+            "山田烏鷺",
+            "Yamada Uro"
+          ],
+          "name_kanji": "山田 烏鷺",
+          "name_native": "山田烏鷺",
+          "nicknames": [],
+          "voice_actors": [
+            {
+              "name": "Umehara, Yuuichirou",
+              "language": "Japanese"
+            }
+          ],
+          "character_ids": {
+            "mal": 142363,
+            "anilist": 135754,
+            "anidb": 84799
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/4/319921.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/307364.jpg"
+          },
+          "gender": "male"
+        },
+        {
+          "name": "Karon Yamada",
+          "role": "Supporting",
+          "name_variations": [
+            "山田 カロン",
+            "山田カロン",
+            "Karon"
+          ],
+          "name_kanji": "山田 カロン",
+          "name_native": "山田カロン",
+          "nicknames": [],
+          "voice_actors": [
+            {
+              "name": "Seto, Asami",
+              "language": "Japanese"
+            }
+          ],
+          "character_ids": {
+            "mal": 147446,
+            "anilist": 135760,
+            "anidb": 84796
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/12/319918.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/307366.jpg"
+          },
+          "gender": "female"
+        },
+        {
+          "name": "Airo Kurashiki",
+          "role": "Supporting",
+          "name_variations": [
+            "倉敷 隘路 / アイロ",
+            "倉敷隘路",
+            "Kurashiki Airo"
+          ],
+          "name_kanji": "倉敷 隘路 / アイロ",
+          "name_native": "倉敷隘路",
+          "nicknames": [],
+          "voice_actors": [
+            {
+              "name": "Uesaka, Sumire",
+              "language": "Japanese"
+            }
+          ],
+          "character_ids": {
+            "mal": 147447,
+            "anilist": 135759,
+            "anidb": 84797
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/14/319919.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/307367.jpg"
+          },
+          "gender": "female"
+        },
+        {
+          "name": "Reca Kanae",
+          "role": "Supporting",
+          "name_variations": [
+            "叶 レカ",
+            "叶レカ",
+            "Kanae Reka"
+          ],
+          "name_kanji": "叶 レカ",
+          "name_native": "叶レカ",
+          "nicknames": [],
+          "voice_actors": [
+            {
+              "name": "Satou, Satomi",
+              "language": "Japanese"
+            }
+          ],
+          "character_ids": {
+            "mal": 147448,
+            "anilist": 135761,
+            "anidb": 84798
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/3/319923.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/307365.jpg"
+          },
+          "gender": "female"
+        },
+        {
+          "name": "Hakua Tsuranari",
+          "role": "Main",
+          "name_variations": [
+            "面鳴 白亜",
+            "面鳴白亜",
+            "Tsuranari Hakua"
+          ],
+          "name_kanji": "面鳴 白亜",
+          "name_native": "面鳴白亜",
+          "nicknames": [],
+          "voice_actors": [
+            {
+              "name": "Uchiyama, Yumi",
+              "language": "Japanese"
+            }
+          ],
+          "character_ids": {
+            "mal": 147449,
+            "anilist": 135756,
+            "anidb": 84801
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/9/319984.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/307362.jpg"
+          },
+          "gender": "female"
+        },
+        {
+          "name": "Kougyoku Tsuranari",
+          "role": "Main",
+          "name_variations": [
+            "面鳴 紅玉",
+            "面鳴紅玉",
+            "Tsuranari Kougyoku"
+          ],
+          "name_kanji": "面鳴 紅玉",
+          "name_native": "面鳴紅玉",
+          "nicknames": [],
+          "voice_actors": [
+            {
+              "name": "Komatsu, Mikako",
+              "language": "Japanese"
+            }
+          ],
+          "character_ids": {
+            "mal": 147450,
+            "anilist": 135757,
+            "anidb": 84802
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/15/319926.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/307363.jpg"
+          },
+          "gender": "female"
+        },
+        {
+          "name": "Megane",
+          "role": "Supporting",
+          "name_variations": [
+            "眼鏡",
+            "Megane "
+          ],
+          "name_kanji": "眼鏡",
+          "name_native": "眼鏡",
+          "nicknames": [],
+          "voice_actors": [
+            {
+              "name": "Namikawa, Daisuke",
+              "language": "Japanese"
+            }
+          ],
+          "character_ids": {
+            "mal": 147451,
+            "anilist": 135755,
+            "anidb": 84800
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/4/319924.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/307368.jpg"
+          },
+          "gender": "male"
+        },
+        {
+          "name": "Alice",
+          "role": "Supporting",
+          "name_variations": [
+            "アリス",
+            "Alice "
+          ],
+          "name_kanji": "アリス",
+          "name_native": "アリス",
+          "nicknames": [],
+          "voice_actors": [
+            {
+              "name": "Kitamura, Eri",
+              "language": "Japanese"
+            }
+          ],
+          "character_ids": {
+            "mal": 147452,
+            "anilist": 135758,
+            "anidb": 84795
+          },
+          "images": {
+            "jikan": "https://cdn.myanimelist.net/images/characters/6/331178.jpg",
+            "anidb": "https://cdn.anidb.net/images/main/307219.jpg"
+          },
+          "gender": "female"
+        }
+      ],
+      "content_warnings": [],
+      "demographics": [],
+      "ending_themes": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "title": "\"Eiyuu\" Kaitai",
+          "title_japanese": "「英雄」解体",
+          "title_romaji": "\"Eiyuu\" Kaitai",
+          "synopsis": "Uro Yamada works as part of the \"Hero Retirement and Return to Everyday Life Assistance Agency,\" which takes heroes from another world back to Earth and helps them reintegrate into everyday life. The story centers on a boy named Yamada Uro, and a 17-year old girl named Karon. Both work as part of the \"Hero Retirement and Return to Everyday Life Assistance Agency,\" which takes heroes from another world back to Earth and helps them reintegrate into everyday life. Karon, a former hero herself, works under Uro as they tackle cases, and also lives with him, with Uro constantly failing to rein in Karon's hero-like behavior even as he tries to ingrain the behavior of common people into her.",
+          "aired": "2016-11-23T00:00:00+09:00",
+          "duration": 1620,
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/33363/Eiyuu_Kaitai",
+          "thumbnails": []
+        }
+      ],
+      "genres": [
+        "Comedy",
+        "Drama",
+        "Fantasy",
+        "Based on a Light Novel",
+        "Game Elements",
+        "Person in a Strange World",
+        "Reverse Isekai",
+        "Siblings",
+        "Slice of Life"
+      ],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [],
+      "relations": [
+        {
+          "relation_type": "Adaptation",
+          "title": "\"Eiyuu\" Kaitai",
+          "url": "https://myanimelist.net/manga/101385/Eiyuu_Kaitai"
+        }
+      ],
+      "sources": [
+        "https://anidb.net/anime/12142",
+        "https://anilist.co/anime/21829",
+        "https://anime-planet.com/anime/eiyuu-kaitai",
+        "https://animecountdown.com/588987",
+        "https://animenewsnetwork.com/encyclopedia/anime.php?id=18735",
+        "https://anisearch.com/anime/11499",
+        "https://kitsu.app/anime/12654",
+        "https://livechart.me/anime/2200",
+        "https://myanimelist.net/anime/33363",
+        "https://notify.moe/anime/cLhmhFiiR",
+        "https://simkl.com/anime/588987"
+      ],
+      "streaming_info": [],
+      "streaming_licenses": [],
+      "synonyms": [
+        "\"Eiyū\" Kaitai",
+        "\"Heroes\" Dismissed",
+        "Eiyu Kaitai",
+        "Heroes Retirement",
+        "Herors Retirement",
+        "「英雄」解体"
+      ],
+      "tags": [
+        "alternative present",
+        "asia",
+        "based on a light novel",
+        "comedy",
+        "daily life",
+        "drama",
+        "earth",
+        "fantasy",
+        "fictional location",
+        "game elements",
+        "isekai",
+        "japan",
+        "japanese production",
+        "novel",
+        "ojou-sama",
+        "person in a strange world",
+        "place",
+        "predominantly female cast",
+        "present",
+        "primarily adult cast",
+        "rehabilitation",
+        "reverse isekai",
+        "seinen",
+        "siblings",
+        "slice of life",
+        "super power",
+        "time"
+      ],
+      "themes": [
+        {
+          "name": "Isekai"
+        },
+        {
+          "name": "Primarily Adult Cast",
+          "description": "Main cast is mostly composed of characters above a high school age."
+        },
+        {
+          "name": "Rehabilitation",
+          "description": "Prominently features the recovery of a character who became incapable of social life or work."
+        },
+        {
+          "name": "Ojou-sama",
+          "description": "Features a wealthy, high-class, oftentimes stuck up and demanding female character."
+        },
+        {
+          "name": "Alternative Present",
+          "description": "Anime that fit in the alternative present category usually have technology and society that is very similar to ours, but with differences in both, history and culture, which sometimes are blatantly obvious, but sometimes harder to place; this one can at times be very subjective."
+        },
+        {
+          "name": "Fictional Location",
+          "description": "A fictional location is a place or world which is run by different set of rules than our common and ordinary world. This may include completely fictional worlds with no semblance of Earth, computer-generated worlds, fantasy worlds, magical worlds, parallel worlds accessible through portals, and so on."
+        },
+        {
+          "name": "Daily Life",
+          "description": "The antics of the protagonists do not take place in some exotic setting or time, but in everyday life. When not \"at the job\" this means getting up in the morning, making meals, house cleaning, going shopping or out to eat, visiting the bath house or spa, leisure activities in the spare time, etc."
+        },
+        {
+          "name": "Predominantly Female Cast",
+          "description": "A show with a predominantly female cast has mostly females as main and secondary cast members while few if any male characters have major roles. This also applies when a male lead is surrounded by females of lesser individual plot relevance, such as in a harem setting."
+        },
+        {
+          "name": "Seinen",
+          "description": "Seinen, literally \"young man\", is one of the main demographic classifications applied to manga, and, by extension, to anime, especially manga-based ones. As the name implies, seinen works are marketed primarily to an audience of young men; the age range commonly understood to be the target of such works goes roughly from 17 to somewhere in the 40s."
+        }
+      ],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2016-11-23T00:00:00+00:00",
+        "string": "Nov 23, 2016"
+      },
+      "anime_season": {
+        "season": "FALL",
+        "year": 2016
+      },
+      "duration": {
+        "value": 1620,
+        "unit": "SECONDS"
+      },
+      "external_links": {
+        "officialsite": "http://king-cr.jp/special/eiyukaitai/"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/12654/original.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1192/112238l.jpg",
+            "source": "jikan"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/eiyuu-kaitai-1.jpg?t=1625780008",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/21829-8iXZsPRh9bZ3.jpg",
+            "source": "anilist"
+          },
+          {
+            "url": "https://cdn.anidb.net/images/main/221947.jpg",
+            "source": "anidb"
+          }
+        ],
+        "banners": []
+      },
+      "score": {
+        "arithmeticGeometricMean": 6.050887528647611,
+        "arithmeticMean": 6.057183123754553,
+        "median": 6.0
+      },
+      "staff_data": {
+        "production_staff": {
+          "animation_directors": [
+            {
+              "name": "Mitsuru Chiba",
+              "native_name": "千葉充",
+              "role": "Animation_Director",
+              "enhancement_status": "anilist_match_pending",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "24683",
+                "anilist": "152890"
+              }
+            }
+          ],
+          "character_designers": [
+            {
+              "name": "Mitsuru Chiba",
+              "native_name": "千葉充",
+              "role": "Character_Designer",
+              "enhancement_status": "anilist_match_pending",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "24683",
+                "anilist": "152890"
+              }
+            }
+          ],
+          "directors": [
+            {
+              "name": "Toshimasa Kuroyanagi",
+              "native_name": "黒柳トシマサ",
+              "role": "Director",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "11235",
+                "anilist": "120280"
+              }
+            }
+          ],
+          "music_composers": [
+            {
+              "name": "Kouhei Segawa",
+              "native_name": "瀬川浩平",
+              "role": "Music_Composer",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "16749",
+                "anilist": "150793"
+              }
+            }
+          ],
+          "original_creators": [
+            {
+              "name": "Kyouhei Koyama",
+              "native_name": "小山恭平",
+              "role": "Original_Creator",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "46940",
+                "anilist": "221717"
+              }
+            }
+          ],
+          "series_writers": [
+            {
+              "name": "Kyouhei Koyama",
+              "native_name": "小山恭平",
+              "role": "Series_Writer",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anidb": "46940",
+                "anilist": "221717"
+              }
+            }
+          ]
+        },
+        "studios": [
+          {
+            "name": "ZEXCS",
+            "type": "animation_studio",
+            "url": "https://myanimelist.net/anime/producer/218/Zexcs"
+          }
+        ],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": [
+            {
+              "name": "Yuuichirou Umehara",
+              "native_name": "梅原裕一郎",
+              "character_assignments": [
+                "Uro Yamada"
+              ],
+              "staff_ids": {
+                "anidb": "39792",
+                "anilist": "118908"
+              }
+            },
+            {
+              "name": "Asami Seto",
+              "native_name": "瀬戸麻沙美",
+              "character_assignments": [
+                "Karon Yamada"
+              ],
+              "staff_ids": {
+                "anidb": "21733",
+                "anilist": "106787"
+              }
+            },
+            {
+              "name": "Sumire Uesaka",
+              "native_name": "上坂すみれ",
+              "character_assignments": [
+                "Airo Kurashiki"
+              ],
+              "staff_ids": {
+                "anidb": "28602",
+                "anilist": "109441"
+              }
+            },
+            {
+              "name": "Satomi Satou",
+              "native_name": "佐藤聡美",
+              "character_assignments": [
+                "Reca Kanae"
+              ],
+              "staff_ids": {
+                "anidb": "162",
+                "anilist": "101560"
+              }
+            },
+            {
+              "name": "Yumi Uchiyama",
+              "native_name": "内山夕実",
+              "character_assignments": [
+                "Hakua Tsuranari"
+              ],
+              "staff_ids": {
+                "anidb": "23686",
+                "anilist": "106784"
+              }
+            },
+            {
+              "name": "Mikako Komatsu",
+              "native_name": "小松未可子",
+              "character_assignments": [
+                "Kougyoku Tsuranari"
+              ],
+              "staff_ids": {
+                "anidb": "16085",
+                "anilist": "105071"
+              }
+            },
+            {
+              "name": "Daisuke Namikawa",
+              "native_name": "浪川大輔",
+              "character_assignments": [
+                "Megane"
+              ],
+              "staff_ids": {
+                "anidb": "265",
+                "anilist": "95087"
+              }
+            },
+            {
+              "name": "Eri Kitamura",
+              "native_name": "喜多村英梨",
+              "character_assignments": [
+                "Alice"
+              ],
+              "staff_ids": {
+                "anidb": "401",
+                "anilist": "95413"
+              }
+            }
+          ]
+        }
+      },
+      "statistics": {
+        "anidb": {
+          "score": 4.36,
+          "scored_by": 202
+        },
+        "anilist": {
+          "score": 5.4,
+          "popularity_rank": 1930,
+          "favorites": 3,
+          "contextual_ranks": []
+        },
+        "animeplanet": {
+          "score": 6.164,
+          "scored_by": 196,
+          "rank": 1
+        },
+        "kitsu": {
+          "score": 6.273,
+          "rank": 9973,
+          "popularity_rank": 8657,
+          "members": 477,
+          "favorites": 1
+        },
+        "mal": {
+          "score": 5.9,
+          "scored_by": 2397,
+          "rank": 10692,
+          "popularity_rank": 8744,
+          "members": 5673,
+          "favorites": 2
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-29T18:31:50.491902Z",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "episodes": 1,
+      "month": "August",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1390/136923.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Original",
+      "status": "FINISHED",
+      "synopsis": "It's been almost 100 years since the \"salaryman\" type of office worker first appeared in Japan back in the 1920s.\n\nAs our society faces a major turning point, SmartHR decided to create a brand film to reflect upon how work styles have changed with time over the past century.\n\nWe hope that by looking back on history, we inspire people to think about how they want to work going forward.\n\n(Source: Official YouTube channel)",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1390/136923t.jpg",
+      "title": "\"Hataraku\" no 100-nenshi",
+      "title_english": "100 Years of Work in Japan",
+      "title_japanese": "\"働く\"の100年史",
+      "type": "SPECIAL",
+      "characters": {
+        "characters": []
+      },
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [],
+      "genres": [
+        "Slice of Life"
+      ],
+      "related_anime": [],
+      "relations": [],
+      "sources": [
+        "https://anilist.co/anime/140882",
+        "https://anime-planet.com/anime/hataraku-no-100-nenshi",
+        "https://anisearch.com/anime/17481",
+        "https://kitsu.app/anime/45470",
+        "https://myanimelist.net/anime/49668",
+        "https://animeschedule.net/anime/hataraku-no-100-nenshi"
+      ],
+      "synonyms": [
+        "\"働く\"の100年史",
+        "100 Years of Work in Japan",
+        "SmartHR \"Hataraku\" no 100-nen-shi",
+        "SmartHR \"働く\"の100年史"
+      ],
+      "tags": [
+        "historical",
+        "shorts",
+        "slice of life",
+        "work",
+        "work life",
+        "working life"
+      ],
+      "themes": [
+        {
+          "name": "Slice of Life",
+          "description": "The antics of the protagonists do not take place in some exotic setting or time, but in everyday life. When not \"at the job\" this means getting up in the morning, making meals, house cleaning, going shopping or out to eat, visiting the bath house or spa, leisure activities in the spare time, etc. The time \"on the job\" for students is School Life, for others working in their profession. Daily Life is basically a synonym for everything normal, repetitive, and trivial happening to your average person."
+        },
+        {
+          "name": "Working Life",
+          "description": "The life of someone actually working on a often less than glamorous job is depicted in this anime. The job is taxing and the pay is low, not really the dream job one would choose to work in.\n\nExamples: Working as salesperson in a department store, or as a waitress in a family restaurant."
+        },
+        {
+          "name": "Work",
+          "description": "Centers around the activities of a certain occupation."
+        },
+        {
+          "name": "Historical",
+          "description": "Partly or completely set during a real period of world history."
+        }
+      ],
+      "trailers": [
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=kNQMX--3E5Q",
+          "thumbnail_url": "https://i.ytimg.com/vi/kNQMX--3E5Q/hqdefault.jpg",
+          "title": "100 YEARS of WORK in JAPAN"
+        }
+      ],
+      "aired_dates": {
+        "from": "2021-08-18T00:00:00+00:00",
+        "string": "Aug 18, 2021"
+      },
+      "anime_season": {
+        "season": "SUMMER",
+        "year": 2021
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {
+        "delayed_timetable": false
+      },
+      "duration": {
+        "value": 120,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {
+        "official": "https://100years-movie.smarthr.jp/"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/45470/poster_image/799ebbb960faef68e5d263fc96f22491.png",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1390/136923l.jpg",
+            "source": "mal"
+          },
+          {
+            "url": "https://img.animeschedule.net/production/assets/public/img/anime/jpg/default/hataraku-no-100-nenshi-b2128b6e40.jpg",
+            "source": "animeschedule"
+          },
+          {
+            "url": "https://media.kitsu.app/anime/45470/cover_image/b91afe8ade83f620c1eceef3fb541cf3.png",
+            "source": "kitsu"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/hataraku-no-100-nenshi-1.webp?t=1654277046",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b140882-PGlyYvG4bNco.png",
+            "source": "anilist"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {
+        "original": "2021-08-18"
+      },
+      "score": {
+        "arithmeticGeometricMean": 5.857452738666607,
+        "arithmeticMean": 5.892130797773655,
+        "median": 6.126363636363637
+      },
+      "staff_data": {
+        "production_staff": {
+          "animation_directors": [],
+          "character_designers": [],
+          "directors": [
+            {
+              "name": "Sou Ootsuki",
+              "native_name": "大月壮",
+              "role": "Director",
+              "enhancement_status": "anilist_match_found",
+              "primary_occupations": [],
+              "years_active": [],
+              "staff_ids": {
+                "anilist": "146029"
+              }
+            }
+          ],
+          "music_composers": [],
+          "original_creators": [],
+          "series_writers": []
+        },
+        "studios": [
+          {
+            "name": "Gyorai Eizo Inc.",
+            "type": "animation_studio",
+            "url": "https://myanimelist.net/anime/producer/2311/Gyorai_Eizo_Inc"
+          }
+        ],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": []
+        }
+      },
+      "statistics": {
+        "anilist": {
+          "score": 5.5,
+          "popularity_rank": 445,
+          "favorites": 2,
+          "contextual_ranks": []
+        },
+        "animeplanet": {
+          "score": 6.83,
+          "scored_by": 43,
+          "rank": 1
+        },
+        "animeschedule": {
+          "score": 6.29,
+          "scored_by": 1,
+          "rank": 12237,
+          "members": 1
+        },
+        "kitsu": {
+          "popularity_rank": 15945,
+          "members": 68,
+          "favorites": 0
+        },
+        "mal": {
+          "score": 5.98,
+          "scored_by": 396,
+          "popularity_rank": 15640,
+          "members": 757,
+          "favorites": 0
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-29T18:28:15.020637Z",
         "success": true,
         "error_message": null
       }
