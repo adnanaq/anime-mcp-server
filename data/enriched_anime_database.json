@@ -4,9 +4,9 @@
     "url": "https://github.com/adnanaq/anime-mcp-server/blob/main/LICENSE"
   },
   "repository": "https://github.com/adnanaq/anime-mcp-server",
-  "lastUpdate": "2025-07-29",
+  "lastUpdate": "2025-07-30",
   "enrichmentInfo": {
-    "totalAnime": 17,
+    "totalAnime": 20,
     "enrichmentVersion": "1.0.0",
     "sources": [
       "jikan",
@@ -17,7 +17,7 @@
       "anidb"
     ],
     "description": "Comprehensive anime database enriched with multi-source data integration",
-    "lastEnrichment": "2025-07-29"
+    "lastEnrichment": "2025-07-30"
   },
   "data": [
     {
@@ -8307,6 +8307,463 @@
       "enrichment_metadata": {
         "source": "multi-source",
         "enriched_at": "2025-07-29T14:58:45.123456Z",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "episodes": 1,
+      "month": "October",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1033/105399.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Other",
+      "status": "FINISHED",
+      "synopsis": "A collaboration between Inochi Sketch and Mameshiba.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1033/105399t.jpg",
+      "title": "\"Inochi Sketch\" Movie Jabow x Mameshiba Collab CM",
+      "title_japanese": "映画『いのちスケッチ』ジャー坊×豆しばコラボCM",
+      "type": "SPECIAL",
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "title": "\"Inochi Sketch\" Movie Jabow x Mameshiba Collab CM",
+          "title_japanese": "映画『いのちスケッチ』ジャー坊×豆しばコラボCM",
+          "aired": "2019-10-02T00:00:00+00:00",
+          "duration": 30,
+          "synopsis": "A collaboration between Inochi Sketch and Mameshiba.",
+          "filler": false,
+          "recap": false,
+          "title_romaji": null
+        }
+      ],
+      "genres": [
+        "Comedy",
+        "Parody"
+      ],
+      "related_anime": [
+        {
+          "title": "Mameshiba",
+          "url": "https://myanimelist.net/anime/7261/Mameshiba",
+          "relationship": "Special"
+        },
+        {
+          "title": "Mameshiba",
+          "url": "https://anime-planet.com/anime/mameshiba",
+          "relationship": "Special"
+        },
+        {
+          "title": "Mameshiba",
+          "url": "https://kitsu.app/anime/4918",
+          "relationship": "Special"
+        },
+        {
+          "title": "Mameshiba",
+          "url": "https://kitsu.app/anime/4918",
+          "relationship": "Special"
+        }
+      ],
+      "relations": [],
+      "sources": [
+        "https://anime-planet.com/anime/inochi-sketch-x-mameshiba",
+        "https://kitsu.app/anime/47870",
+        "https://myanimelist.net/anime/41060"
+      ],
+      "synonyms": [
+        "Inochi Sketch x Mameshiba",
+        "ねえ知ってる？豆しばが映画「いのちスケッチ」とコラボしたんだって",
+        "映画『いのちスケッチ』ジャー坊×豆しばコラボCM",
+        "変なお豆さん",
+        "Mameshiba"
+      ],
+      "themes": [
+        {
+          "name": "Commercials",
+          "description": null
+        },
+        {
+          "name": "Comedy",
+          "description": "Anime whose central struggle causes hilarious results. These stories are built upon funny characters, situations and events. A comedy anime is laced with humour and sets out to provoke laughter from the audience.\n\nJapanese humour can be a bit strange to westerners, so if you're new to this type of humour, just bear with it; it'll most likely grow on you if you're a fan of other kinds of comedy."
+        }
+      ],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2019-10-02T00:00:00+00:00",
+        "to": null
+      },
+      "anime_season": {
+        "season": "FALL",
+        "year": 2019
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {
+        "delayed_timetable": false
+      },
+      "duration": {
+        "value": 30,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {
+        "official": "https://dogatch.jp/feature/mameshiba/movie.html"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/47870/poster_image/c83f60d65f8cd72e9a8d5cfcdca73693.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1033/105399l.jpg",
+            "source": "mal"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/inochi-sketch-x-mameshiba-1.webp?t=1640913409",
+            "source": "animeplanet"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "score": {
+        "arithmeticGeometricMean": 5.285680835051567,
+        "arithmeticMean": 5.287,
+        "median": 5.287
+      },
+      "staff_data": {
+        "production_staff": [],
+        "studios": [],
+        "producers": [],
+        "voice_actors": []
+      },
+      "statistics": {
+        "mal": {
+          "score": 5.29,
+          "scored_by": 35,
+          "popularity_rank": 24104,
+          "members": 179,
+          "favorites": 0
+        },
+        "kitsu": {
+          "members": 17,
+          "favorites": 0,
+          "popularity_rank": 20970
+        },
+        "animeplanet": {
+          "score": 2.706,
+          "scored_by": 42,
+          "rank": 1
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-30T16:07:13.183864Z",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "background": "",
+      "episodes": 1,
+      "month": "July",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/6/85893.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Other",
+      "status": "FINISHED",
+      "synopsis": "A collaboration between Mameshiba and Kinako, a 2010 Japanese film based on a true story of a dog trainer, meant to promote the latter's release the following month.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/6/85893t.jpg",
+      "title": "\"Kinako\" Movie x Mameshiba",
+      "title_english": null,
+      "title_japanese": "映画『きな子』×豆しば",
+      "type": "SPECIAL",
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [],
+      "genres": [
+        "Comedy"
+      ],
+      "related_anime": [
+        {
+          "title": "Mameshiba",
+          "url": "https://anime-planet.com/anime/mameshiba",
+          "relation": "Special"
+        },
+        {
+          "title": "Mameshiba",
+          "url": "https://myanimelist.net/anime/7261",
+          "relation": "Special"
+        }
+      ],
+      "relations": [],
+      "sources": [
+        "https://anime-planet.com/anime/kinako-movie-x-mameshiba",
+        "https://kitsu.app/anime/41577",
+        "https://myanimelist.net/anime/35632"
+      ],
+      "synonyms": [
+        "\"Kinako\" x Mameshiba Movie",
+        "Eiga \"Kinako\" x Mameshiba",
+        "Kinako Movie x Mameshiba",
+        "映画『きな子』×豆しば"
+      ],
+      "tags": [
+        "based on a movie",
+        "comedy",
+        "crossover",
+        "dogs",
+        "parody"
+      ],
+      "themes": [
+        {
+          "name": "Parody",
+          "description": null
+        }
+      ],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2010-07-06T00:00:00+00:00",
+        "string": "Jul 6, 2010"
+      },
+      "anime_season": {
+        "season": "SUMMER",
+        "year": 2010
+      },
+      "broadcast": {},
+      "duration": {
+        "value": 15,
+        "unit": "SECONDS"
+      },
+      "external_links": {
+        "official": "http://dogatch.jp/feature/mameshiba/",
+        "wikipedia": "https://ja.wikipedia.org/wiki/%E8%B1%86%E3%81%97%E3%81%B0#.E3.82.B3.E3.83.A9.E3.83.9C.E3.83.AC.E3.83.BC.E3.82.B7.E3.83.A7.E3.83.B3"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/41577/original.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/6/85893l.jpg",
+            "source": "mal"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/kinako-movie-x-mameshiba-1.jpg?t=1625789402",
+            "source": "animeplanet"
+          }
+        ],
+        "banners": []
+      },
+      "score": {
+        "arithmeticGeometricMean": 5.364611492721679,
+        "arithmeticMean": 5.37,
+        "median": 5.37
+      },
+      "staff_data": {
+        "studios": [],
+        "producers": [],
+        "licensors": [],
+        "production_staff": [],
+        "voice_actors": []
+      },
+      "statistics": {
+        "mal": {
+          "score": 4.99,
+          "scored_by": 285,
+          "rank": 13564,
+          "popularity_rank": 15960,
+          "members": 702,
+          "favorites": 1
+        },
+        "kitsu": {
+          "members": 56,
+          "popularity_rank": 16853
+        },
+        "animeplanet": {
+          "score": 2.868,
+          "scored_by": 37
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-30T19:42:09.282039Z",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "episodes": 2,
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1168/92670.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Other",
+      "status": "FINISHED",
+      "synopsis": "Two televised specials collaborating the Mameshiba franchise and the feature film Kiss Dekiru Gyoza being released June 2018. \n\nThe film is about Yoko Fujita as a single mother who goes through a divorce. Afterwards, she returns to her parents' home and struggles to raise her child, also attempts to revive her parents' gyoza restaurant. She falls in love with pro golfer Ryo Iwahara.\n\nThe specials focus on shiba-ified Yoko and Ryo as they talked to Edamame. Special collaborative goods will be sold as well, including a bentou meal sold at specific train stations.\n\n(Source: IMDB)",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1168/92670t.jpg",
+      "title": "\"Kiss Dekiru Gyouza\" Movie x Mameshiba",
+      "title_japanese": "映画『キスできる餃子』×豆しば",
+      "type": "SPECIAL",
+      "awards": [],
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "ending_themes": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "season_number": 1,
+          "title": "Episode 1",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/37843/Kiss_Dekiru_Gyouza_Movie_x_Mameshiba/episode/1",
+          "thumbnails": [],
+          "streaming": {}
+        },
+        {
+          "episode_number": 2,
+          "season_number": 1,
+          "title": "Episode 2",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/37843/Kiss_Dekiru_Gyouza_Movie_x_Mameshiba/episode/2",
+          "thumbnails": [],
+          "streaming": {}
+        }
+      ],
+      "genres": [
+        "Comedy",
+        "Commercials",
+        "Promotional",
+        "Short Episodes"
+      ],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [
+        {
+          "relation_type": "Special",
+          "title": "Mameshiba",
+          "url": "https://anime-planet.com/anime/mameshiba"
+        },
+        {
+          "relation_type": "Special",
+          "title": "Mameshiba",
+          "url": "https://kitsu.app/anime/4918"
+        },
+        {
+          "relation_type": "Special",
+          "title": "Mameshiba",
+          "url": "https://myanimelist.net/anime/7261"
+        },
+        {
+          "relation_type": "Special",
+          "title": "Mameshiba",
+          "url": "https://notify.moe/anime/JpERpKiiR"
+        }
+      ],
+      "relations": [],
+      "sources": [
+        "https://anime-planet.com/anime/kiss-dekiru-gyoza-x-mameshiba-movie",
+        "https://kitsu.app/anime/41274",
+        "https://myanimelist.net/anime/37843",
+        "https://notify.moe/anime/ZmJVj6niR"
+      ],
+      "streaming_info": [],
+      "streaming_licenses": [],
+      "synonyms": [
+        "Kiss Dekiru Gyoza x Mameshiba Movie"
+      ],
+      "tags": [
+        "comedy",
+        "commercials",
+        "parody",
+        "promotional",
+        "short episodes"
+      ],
+      "themes": [],
+      "trailers": [],
+      "anime_season": {
+        "season": "SPRING",
+        "year": 2018
+      },
+      "duration": {
+        "value": 30,
+        "unit": "SECONDS"
+      },
+      "enhanced_metadata": {},
+      "external_links": {},
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/41274/large.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1168/92670l.jpg",
+            "source": "mal"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/kiss-dekiru-gyoza-x-mameshiba-movie-1-190x266.jpg?t=1625898882",
+            "source": "animeplanet"
+          }
+        ],
+        "banners": []
+      },
+      "popularity_trends": {},
+      "score": {
+        "arithmeticGeometricMean": 4.7969976530219665,
+        "arithmeticMean": 4.8,
+        "median": 4.8
+      },
+      "staff_data": {
+        "production_staff": {
+          "animation_directors": [],
+          "character_designers": [],
+          "directors": [],
+          "music_composers": [],
+          "original_creators": [],
+          "series_writers": []
+        },
+        "studios": [],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": []
+        }
+      },
+      "statistics": {
+        "mal": {
+          "score": 4.55,
+          "scored_by": 349,
+          "popularity_rank": 15691,
+          "members": 744,
+          "favorites": 0
+        },
+        "kitsu": {
+          "popularity_rank": 15617,
+          "members": 73,
+          "favorites": 0
+        },
+        "animeplanet": {
+          "score": 5.04,
+          "scored_by": 71,
+          "rank": 2
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-30T16:23:24.769332+00:00",
         "success": true,
         "error_message": null
       }
