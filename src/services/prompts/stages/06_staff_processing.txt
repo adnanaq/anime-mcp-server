@@ -121,7 +121,7 @@ Return staff_data object with this structure:
           "primary_occupations": [],
           "years_active": [],
           "staff_ids": {
-            "anidb": "662"
+            "anidb": 662
           }
         }
       ],
@@ -142,8 +142,8 @@ Return staff_data object with this structure:
           "primary_occupations": ["Director", "Producer"],
           "years_active": [1987],
           "staff_ids": {
-            "anidb": "129",
-            "anilist": "97009"
+            "anidb": 129,
+            "anilist": 97009
           }
         }
       ],
@@ -164,8 +164,8 @@ Return staff_data object with this structure:
           "primary_occupations": ["Composer", "Musician"],
           "years_active": [],
           "staff_ids": {
-            "anidb": "241",
-            "anilist": "95508"
+            "anidb": 241,
+            "anilist": 95508
           }
         }
       ],
@@ -201,8 +201,8 @@ Return staff_data object with this structure:
           "biography": "Extensive voice acting career...",
           "character_assignments": ["Spike Spiegel"],
           "staff_ids": {
-            "anidb": "380",
-            "anilist": "95011"
+            "anidb": 380,
+            "anilist": 95011
           }
         }
       ]

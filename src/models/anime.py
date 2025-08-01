@@ -98,11 +98,17 @@ class DelayInformation(BaseModel):
     delay_reason: Optional[str] = Field(None, description="Reason for delay")
 
 
+class EpisodeOverrideEntry(BaseModel):
+    """Individual episode override entry"""
+    override_episode: Optional[int] = Field(None, description="Override episode number")
+    episodes_aired: Optional[int] = Field(None, description="Number of episodes aired")
+
+
 class EpisodeOverrides(BaseModel):
     """Episode override information for different versions"""
-    main_override: Optional[str] = Field(None, description="Main version override information")
-    sub_override: Optional[str] = Field(None, description="Subtitle version override information")
-    dub_override: Optional[str] = Field(None, description="Dub version override information")
+    main_override: Optional[EpisodeOverrideEntry] = Field(None, description="Main version override information")
+    sub_override: Optional[EpisodeOverrideEntry] = Field(None, description="Subtitle version override information")
+    dub_override: Optional[EpisodeOverrideEntry] = Field(None, description="Dub version override information")
 
 
 class PremiereDates(BaseModel):
@@ -212,7 +218,7 @@ class VoiceActorEntry(BaseModel):
 
 class StaffMember(BaseModel):
     """Individual staff member with multi-source integration"""
-    staff_ids: Dict[str, str] = Field(default_factory=dict, description="Staff IDs across platforms (anidb, anilist)")
+    staff_ids: Dict[str, int] = Field(default_factory=dict, description="Staff IDs across platforms (anidb, anilist)")
     name: str = Field(..., description="Staff member name")
     native_name: Optional[str] = Field(None, description="Native language name")
     role: str = Field(..., description="Primary role")
@@ -230,7 +236,7 @@ class StaffMember(BaseModel):
 
 class VoiceActor(BaseModel):
     """Voice actor with character assignments"""
-    staff_ids: Dict[str, str] = Field(default_factory=dict, description="Staff IDs across platforms")
+    staff_ids: Dict[str, int] = Field(default_factory=dict, description="Staff IDs across platforms")
     name: str = Field(..., description="Voice actor name")
     native_name: Optional[str] = Field(None, description="Native language name")
     character_assignments: List[str] = Field(default_factory=list, description="Characters voiced")

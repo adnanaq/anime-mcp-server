@@ -278,9 +278,18 @@ Extract metadata from Jikan, AnimSchedule, Kitsu, Anime-Planet, and AniList APIs
   }, // EXAMPLE - Extract actual delay info
   "duration": 1440, // EXAMPLE - Cross-validate with offline database duration (seconds or dict structure)
   "episode_overrides": {
-    "main_override": null,
-    "sub_override": null,
-    "dub_override": null
+    "main_override": {
+      overrideEpisode: 0,
+      episodesAired
+    },
+    "sub_override": {
+      overrideEpisode: 0,
+      episodesAired
+    },
+    "dub_override": {
+      overrideEpisode: 0,
+      episodesAired
+    }
   }, // EXAMPLE - Extract actual episode overrides
   "external_links": {
     "mal": "https://myanimelist.net/anime/121",
