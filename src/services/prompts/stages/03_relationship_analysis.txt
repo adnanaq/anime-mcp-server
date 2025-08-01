@@ -165,6 +165,9 @@ notify.moe:
 1. **Primary Deduplication Rule**: Use URL as the main deduplication key
    - **Same URL** → Deduplicate (same anime entry, just categorized differently by sources)
    - **Different URL** → Keep both (valuable cross-platform references)
+   - Example: These are same urls
+      https://anime-planet.com/anime/star-blazers-space-battleship-yamato-2199
+      https://www.anime-planet.com/anime/star-blazers-space-battleship-yamato-2199
 
 2. **URL-Based Grouping**:
    ```yaml
