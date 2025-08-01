@@ -29,8 +29,11 @@ class CharacterEntry(BaseModel):
     age: Optional[str] = Field(None, description="Character age")
     gender: Optional[str] = Field(None, description="Character gender")
     
+    # URLs from different sources
+    urls: Dict[str, str] = Field(default_factory=dict, description="Character URLs from different sources (source: url)")
+    
     # Voice actors from all sources
-    voice_actors: List[Dict[str, Any]] = Field(default_factory=list, description="Voice actor information")
+    voice_actors: List["SimpleVoiceActor"] = Field(default_factory=list, description="Voice actor information")
 
 
 class EpisodeThumbnail(BaseModel):
@@ -62,7 +65,6 @@ class EpisodeDetailEntry(BaseModel):
     
     # Technical metadata
     aired: Optional[str] = Field(None, description="Episode air date with timezone")
-    duration: Optional[int] = Field(None, description="Episode duration in seconds")
     score: Optional[float] = Field(None, description="Episode rating score")
     
     # Episode flags
@@ -79,6 +81,49 @@ class TrailerEntry(BaseModel):
     youtube_url: Optional[str] = Field(None, description="YouTube video URL")
     title: Optional[str] = Field(None, description="Trailer title")
     thumbnail_url: Optional[str] = Field(None, description="Trailer thumbnail URL")
+
+
+class BroadcastSchedule(BaseModel):
+    """Broadcast timing for different versions"""
+    jpn_time: Optional[str] = Field(None, description="Japanese broadcast time with timezone")
+    sub_time: Optional[str] = Field(None, description="Subtitle broadcast time with timezone")
+    dub_time: Optional[str] = Field(None, description="Dub broadcast time with timezone")
+
+
+class DelayInformation(BaseModel):
+    """Current delay status and reasons"""
+    delayed_timetable: bool = Field(default=False, description="Whether timetable is delayed")
+    delayed_from: Optional[str] = Field(None, description="Delay start date")
+    delayed_until: Optional[str] = Field(None, description="Delay end date")
+    delay_reason: Optional[str] = Field(None, description="Reason for delay")
+
+
+class EpisodeOverrides(BaseModel):
+    """Episode override information for different versions"""
+    main_override: Optional[str] = Field(None, description="Main version override information")
+    sub_override: Optional[str] = Field(None, description="Subtitle version override information")
+    dub_override: Optional[str] = Field(None, description="Dub version override information")
+
+
+class PremiereDates(BaseModel):
+    """Premiere dates for different versions"""
+    original: Optional[str] = Field(None, description="Original premiere date")
+    sub: Optional[str] = Field(None, description="Subtitle premiere date")
+    dub: Optional[str] = Field(None, description="Dub premiere date")
+
+
+class AiredDates(BaseModel):
+    """Detailed airing dates"""
+    from_date: Optional[str] = Field(None, alias="from", description="Start date with timezone")
+    to: Optional[str] = Field(None, description="End date with timezone")
+    string: Optional[str] = Field(None, description="Human readable date range")
+
+
+class Broadcast(BaseModel):
+    """Broadcast schedule information"""
+    day: Optional[str] = Field(None, description="Broadcast day")
+    time: Optional[str] = Field(None, description="Broadcast time")
+    timezone: Optional[str] = Field(None, description="Broadcast timezone")
 
 
 class EnrichmentMetadata(BaseModel):
@@ -124,10 +169,45 @@ class StreamingEntry(BaseModel):
     subtitle_languages: List[str] = Field(default_factory=list, description="Available subtitle languages")
 
 
+class DurationEntry(BaseModel):
+    """Duration with value and unit"""
+    value: int = Field(..., description="Duration value")
+    unit: str = Field(..., description="Duration unit (SECONDS, MINUTES, HOURS)")
+
+
 class ThemeEntry(BaseModel):
     """Theme entry with description"""
     name: str = Field(..., description="Theme name")
     description: Optional[str] = Field(None, description="Theme description")
+
+
+class ThemeSong(BaseModel):
+    """Opening or ending theme song entry"""
+    title: str = Field(..., description="Theme song title")
+    artist: Optional[str] = Field(None, description="Artist name")
+    episodes: Optional[str] = Field(None, description="Episode range (e.g., '1-26')")
+
+
+class Award(BaseModel):
+    """Award or recognition entry"""
+    name: str = Field(..., description="Award name")
+    category: Optional[str] = Field(None, description="Award category")
+    year: Optional[int] = Field(None, description="Award year")
+    source: Optional[str] = Field(None, description="Award source/organization")
+
+
+class SimpleVoiceActor(BaseModel):
+    """Simple voice actor reference for character entries"""
+    name: str = Field(..., description="Voice actor name")
+    language: str = Field(..., description="Voice acting language (Japanese, English, etc.)")
+
+
+class VoiceActorEntry(BaseModel):
+    """Voice actor entry for characters"""
+    name: str = Field(..., description="Voice actor name")
+    native_name: Optional[str] = Field(None, description="Native language name")
+    language: str = Field(..., description="Voice acting language (Japanese, English, etc.)")
+    image: Optional[str] = Field(None, description="Voice actor image URL")
 
 
 class StaffMember(BaseModel):
@@ -168,13 +248,11 @@ class CompanyEntry(BaseModel):
 
 
 class ProductionStaff(BaseModel):
-    """Production staff organized by role"""
-    directors: List[StaffMember] = Field(default_factory=list, description="Directors")
-    music_composers: List[StaffMember] = Field(default_factory=list, description="Music composers")
-    character_designers: List[StaffMember] = Field(default_factory=list, description="Character designers")
-    series_writers: List[StaffMember] = Field(default_factory=list, description="Series writers")
-    animation_directors: List[StaffMember] = Field(default_factory=list, description="Animation directors")
-    original_creators: List[StaffMember] = Field(default_factory=list, description="Original creators")
+    """Production staff organized by role - supports any role dynamically"""
+    roles: Dict[str, List[StaffMember]] = Field(
+        default_factory=dict,
+        description="Staff members organized by role (role_name: [staff_members])"
+    )
 
 
 class VoiceActors(BaseModel):
@@ -238,15 +316,15 @@ class AnimeEntry(BaseModel):
     # =====================================================================
     # ARRAY FIELDS (alphabetical)
     # =====================================================================
-    awards: List[Dict[str, Any]] = Field(default_factory=list, description="Awards and recognition")
+    awards: List["Award"] = Field(default_factory=list, description="Awards and recognition")
     characters: List[CharacterEntry] = Field(default_factory=list, description="Character information with multi-source support")
     content_warnings: List[str] = Field(default_factory=list, description="Content warnings")
     demographics: List[str] = Field(default_factory=list, description="Target demographics (Shounen, Seinen, etc.)")
-    ending_themes: List[Dict[str, Any]] = Field(default_factory=list, description="Ending theme songs")
+    ending_themes: List["ThemeSong"] = Field(default_factory=list, description="Ending theme songs")
     episode_details: List[EpisodeDetailEntry] = Field(default_factory=list, description="Detailed episode information with multi-source integration")
     genres: List[str] = Field(default_factory=list, description="Anime genres from AniList/other sources")
     licensors: List[str] = Field(default_factory=list, description="Licensing companies")
-    opening_themes: List[Dict[str, Any]] = Field(default_factory=list, description="Opening theme songs")
+    opening_themes: List["ThemeSong"] = Field(default_factory=list, description="Opening theme songs")
     related_anime: List[RelatedAnimeEntry] = Field(default_factory=list, description="Related anime entries from URL processing")
     relations: List[RelationEntry] = Field(default_factory=list, description="Related anime with platform URLs")
     sources: List[str] = Field(..., description="Source URLs from various providers")
@@ -260,225 +338,22 @@ class AnimeEntry(BaseModel):
     # =====================================================================
     # OBJECT/DICT FIELDS (alphabetical)
     # =====================================================================
-    aired_dates: Optional[Dict[str, Any]] = Field(None, description="Detailed airing dates")
+    aired_dates: Optional["AiredDates"] = Field(None, description="Detailed airing dates")
     anime_season: Optional[Dict[str, Any]] = Field(None, description="Season and year")
-    broadcast: Optional[Dict[str, Any]] = Field(None, description="Broadcast schedule information")
-    broadcast_schedule: Optional[Dict[str, Any]] = Field(None, description="Broadcast timing for different versions (jpn_time, sub_time, dub_time)")
-    delay_information: Optional[Dict[str, Any]] = Field(None, description="Current delay status and reasons")
-    duration: Optional[Union[int, Dict[str, Any]]] = Field(None, description="Episode duration in seconds")
+    broadcast: Optional["Broadcast"] = Field(None, description="Broadcast schedule information")
+    broadcast_schedule: Optional["BroadcastSchedule"] = Field(None, description="Broadcast timing for different versions (jpn_time, sub_time, dub_time)")
+    delay_information: Optional["DelayInformation"] = Field(None, description="Current delay status and reasons")
+    duration: Optional[Union[int, DurationEntry]] = Field(None, description="Episode duration in seconds or structured duration with value/unit")
     enhanced_metadata: Optional[Dict[str, Any]] = Field(None, description="Enhanced enrichment metadata")
     enrichment_metadata: Optional[EnrichmentMetadata] = Field(None, description="Metadata about enrichment process")
-    episode_overrides: Optional[Dict[str, Any]] = Field(None, description="Episode override information for different versions (main_override, sub_override, dub_override)")
+    episode_overrides: Optional["EpisodeOverrides"] = Field(None, description="Episode override information for different versions (main_override, sub_override, dub_override)")
     external_links: Dict[str, str] = Field(default_factory=dict, description="External links (official site, social media)")
     images: Dict[str, List[ImageEntry]] = Field(default_factory=dict, description="Images from multiple sources")
     popularity_trends: Optional[Dict[str, Any]] = Field(None, description="Popularity trend data")
-    premiere_dates: Optional[Dict[str, Any]] = Field(None, description="Premiere dates for different versions (original, sub, dub)")
+    premiere_dates: Optional["PremiereDates"] = Field(None, description="Premiere dates for different versions (original, sub, dub)")
     score: Optional[Dict[str, float]] = Field(None, description="Anime scoring data with arithmeticGeometricMean, arithmeticMean, median")
     staff_data: Optional[StaffData] = Field(None, description="Comprehensive staff data with multi-source integration")
     statistics: Dict[str, StatisticsEntry] = Field(default_factory=dict, description="Standardized statistics from different platforms (mal, anilist, kitsu, animeschedule)")
-    
-    def has_enrichment_data(self) -> bool:
-        """Check if this entry has any enrichment data"""
-        return (
-            self.synopsis is not None or 
-            len(self.characters) > 0 or 
-            len(self.trailers) > 0 or
-            len(self.episode_details) > 0 or
-            len(self.genres) > 0 or
-            len(self.themes) > 0 or
-            len(self.streaming_info) > 0 or
-            self.staff_data is not None or
-            len(self.relations) > 0 or
-            len(self.related_anime) > 0
-        )
-    
-    def should_update_enrichment(self, max_age_days: int = 30) -> bool:
-        """Check if enrichment data should be updated"""
-        if not self.enrichment_metadata:
-            return True
-        
-        # Check age
-        age_days = (datetime.utcnow() - self.enrichment_metadata.enriched_at).days
-        if age_days > max_age_days:
-            return True
-        
-        # Check if previous enrichment failed
-        if not self.enrichment_metadata.success:
-            return True
-        
-        # Check if no data was actually enriched
-        if not self.has_enrichment_data():
-            return True
-        
-        return False
-    
-    def get_enrichment_sources(self) -> List[str]:
-        """Get list of sources that contributed to enrichment"""
-        sources = set()
-        
-        # Check metadata source
-        if self.enrichment_metadata and self.enrichment_metadata.source:
-            sources.add(self.enrichment_metadata.source)
-        
-        # Check character sources (from character_ids platforms)
-        for character in self.characters:
-            sources.update(character.character_ids.keys())
-        
-        # Check streaming info sources
-        for stream in self.streaming_info:
-            if hasattr(stream, 'source'):
-                sources.add(stream.source)
-        
-        # Check image sources
-        for image_list in self.images.values():
-            for image in image_list:
-                sources.add(image.source)
-        
-        
-        return list(sources)
-    
-    def get_character_stats(self) -> Dict[str, Any]:
-        """Get statistics about character data"""
-        total_chars = len(self.characters)
-        merged_chars = sum(1 for char in self.characters if len(char.character_ids) > 1)
-        chars_with_description = sum(1 for char in self.characters if char.description)
-        chars_with_voice_actors = sum(1 for char in self.characters if char.voice_actors)
-        main_chars = sum(1 for char in self.characters if char.role.lower() in ['main', 'protagonist'])
-        
-        return {
-            "total_characters": total_chars,
-            "merged_characters": merged_chars,
-            "characters_with_description": chars_with_description,
-            "characters_with_voice_actors": chars_with_voice_actors,
-            "main_characters": main_chars,
-            "merge_rate": merged_chars / total_chars if total_chars > 0 else 0.0,
-        }
-    
-    def has_multi_source_enrichment(self) -> bool:
-        """Check if this anime has data from multiple enrichment sources"""
-        sources = self.get_enrichment_sources()
-        return len(sources) > 1 or any(len(char.character_ids) > 1 for char in self.characters)
-    
-    def get_comprehensive_stats(self) -> Dict[str, Any]:
-        """Get comprehensive statistics about all enhanced data"""
-        return {
-            # Basic stats
-            "has_enrichment": self.has_enrichment_data(),
-            "enrichment_sources": self.get_enrichment_sources(),
-            "multi_source_enriched": self.has_multi_source_enrichment(),
-            
-            # Content counts
-            "character_count": len(self.characters),
-            "trailer_count": len(self.trailers),
-            "genre_count": len(self.genres),
-            "theme_count": len(self.themes),
-            "streaming_platform_count": len(self.streaming_info),
-            "staff_count": self._get_staff_data_count(),
-            "relation_count": len(self.relations),
-            "related_anime_count": len(self.related_anime),
-            "award_count": len(self.awards),
-            
-            # Data quality indicators
-            "has_synopsis": self.synopsis is not None,
-            "has_detailed_timing": self.aired_dates is not None and self.broadcast is not None,
-            "has_broadcast_schedule": self.broadcast_schedule is not None,
-            "has_premiere_dates": self.premiere_dates is not None,
-            "has_delay_information": self.delay_information is not None,
-            "has_episode_overrides": self.episode_overrides is not None,
-            "has_streaming_info": len(self.streaming_info) > 0,
-            "has_staff_info": self.staff_data is not None,
-            "has_theme_info": len(self.opening_themes) > 0 or len(self.ending_themes) > 0,
-            "has_episode_details": len(self.episode_details) > 0,
-            "has_external_links": len(self.external_links) > 0,
-            "has_multi_platform_images": sum(len(imgs) for imgs in self.images.values()) > 1,
-            "has_content_warnings": len(self.content_warnings) > 0,
-            
-            # Platform coverage
-            "platform_statistics_count": len(self.statistics),
-            "relation_platform_coverage": sum(len(rel.urls) for rel in self.relations),
-            "image_source_count": len(set(img.source for imgs in self.images.values() for img in imgs)),
-            
-            # Completeness score (0-1)
-            "completeness_score": self._calculate_completeness_score()
-        }
-    
-    def _calculate_completeness_score(self) -> float:
-        """Calculate overall data completeness score (0-1)"""
-        score = 0.0
-        total_possible = 24.0  # Total possible enhancement areas
-        
-        # Basic enrichment (5 points)
-        if self.synopsis: score += 1.0
-        if len(self.characters) > 0: score += 1.0
-        if len(self.trailers) > 0: score += 1.0
-        if len(self.episode_details) > 0: score += 1.0
-        if len(self.genres) > 0: score += 1.0
-        
-        # Detailed metadata (9 points)
-        if len(self.themes) > 0: score += 1.0
-        if self.source_material: score += 1.0
-        if self.rating: score += 1.0
-        if self.aired_dates and self.broadcast: score += 1.0
-        if len(self.demographics) > 0: score += 1.0
-        if len(self.content_warnings) > 0: score += 1.0
-        if self.broadcast_schedule: score += 1.0
-        if self.premiere_dates: score += 1.0
-        if self.episode_overrides: score += 1.0
-        
-        # Rich content (5 points)
-        if len(self.streaming_info) > 0: score += 1.0
-        if self.staff_data is not None: score += 1.0
-        if len(self.opening_themes) > 0 or len(self.ending_themes) > 0: score += 1.0
-        if len(self.episode_details) > 0: score += 1.0
-        if len(self.relations) > 0: score += 1.0
-        
-        # External integration (3 points)
-        if len(self.external_links) > 0: score += 1.0
-        if len(self.statistics) > 1: score += 1.0  # Multiple platform stats
-        if sum(len(imgs) for imgs in self.images.values()) > 2: score += 1.0  # Multiple images
-        
-        # Quality indicators (2 points)
-        if len(self.awards) > 0: score += 1.0
-        if self.popularity_trends: score += 1.0
-        
-        return min(score / total_possible, 1.0)
-    
-    def _get_staff_data_count(self) -> int:
-        """Get total count of staff members in comprehensive staff data"""
-        if not self.staff_data:
-            return 0
-        
-        count = 0
-        # Production staff
-        production = self.staff_data.production_staff
-        count += len(production.directors)
-        count += len(production.music_composers)
-        count += len(production.character_designers)
-        count += len(production.series_writers)
-        count += len(production.animation_directors)
-        count += len(production.original_creators)
-        
-        # Voice actors
-        count += len(self.staff_data.voice_actors.japanese)
-        
-        # Companies
-        count += len(self.staff_data.studios)
-        count += len(self.staff_data.producers)
-        count += len(self.staff_data.licensors)
-        
-        return count
-
-    @field_validator("duration")
-    @classmethod
-    def validate_duration(cls, v):
-        """Convert duration dict to int seconds"""
-        if v is None:
-            return None
-        if isinstance(v, int):
-            return v
-        if isinstance(v, dict) and "value" in v:
-            return v["value"]
-        return None
 
 
 

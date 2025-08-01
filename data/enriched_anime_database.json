@@ -4,9 +4,9 @@
     "url": "https://github.com/adnanaq/anime-mcp-server/blob/main/LICENSE"
   },
   "repository": "https://github.com/adnanaq/anime-mcp-server",
-  "lastUpdate": "2025-07-30",
+  "lastUpdate": "2025-07-31",
   "enrichmentInfo": {
-    "totalAnime": 20,
+    "totalAnime": 28,
     "enrichmentVersion": "1.0.0",
     "sources": [
       "jikan",
@@ -17,7 +17,7 @@
       "anidb"
     ],
     "description": "Comprehensive anime database enriched with multi-source data integration",
-    "lastEnrichment": "2025-07-30"
+    "lastEnrichment": "2025-07-31"
   },
   "data": [
     {
@@ -38,15 +38,10 @@
         {
           "name": "Masuki Satou",
           "role": "Main",
-          "name_variations": [
-            "佐藤ますき",
-            "MASKING"
-          ],
+          "name_variations": ["佐藤ますき", "MASKING"],
           "name_kanji": "佐藤ますき",
           "name_native": "佐藤ますき",
-          "nicknames": [
-            "MASKING"
-          ],
+          "nicknames": ["MASKING"],
           "character_ids": {
             "anilist": 136984
           },
@@ -65,17 +60,10 @@
         {
           "name": "Chiyu Tamade",
           "role": "Main",
-          "name_variations": [
-            "玉出ちゆ",
-            "CHU²",
-            "CHUCHU"
-          ],
+          "name_variations": ["玉出ちゆ", "CHU²", "CHUCHU"],
           "name_kanji": "玉出ちゆ",
           "name_native": "玉出ちゆ",
-          "nicknames": [
-            "CHU²",
-            "CHUCHU"
-          ],
+          "nicknames": ["CHU²", "CHUCHU"],
           "character_ids": {
             "anilist": 136986
           },
@@ -95,15 +83,10 @@
         {
           "name": "Rei Wakana",
           "role": "Main",
-          "name_variations": [
-            "和奏レイ",
-            "LAYER"
-          ],
+          "name_variations": ["和奏レイ", "LAYER"],
           "name_kanji": "和奏レイ",
           "name_native": "和奏レイ",
-          "nicknames": [
-            "LAYER"
-          ],
+          "nicknames": ["LAYER"],
           "character_ids": {
             "anilist": 136983
           },
@@ -122,15 +105,10 @@
         {
           "name": "Rokka Asahi",
           "role": "Main",
-          "name_variations": [
-            "朝日六花",
-            "LOCK"
-          ],
+          "name_variations": ["朝日六花", "LOCK"],
           "name_kanji": "朝日六花",
           "name_native": "朝日六花",
-          "nicknames": [
-            "LOCK"
-          ],
+          "nicknames": ["LOCK"],
           "character_ids": {
             "anilist": 133744
           },
@@ -149,15 +127,10 @@
         {
           "name": "Reona Nyubara",
           "role": "Main",
-          "name_variations": [
-            "鳰原れおな",
-            "PAREO"
-          ],
+          "name_variations": ["鳰原れおな", "PAREO"],
           "name_kanji": "鳰原れおな",
           "name_native": "鳰原れおな",
-          "nicknames": [
-            "PAREO"
-          ],
+          "nicknames": ["PAREO"],
           "character_ids": {
             "anilist": 136985
           },
@@ -193,31 +166,29 @@
           "recap": false
         }
       ],
-      "genres": [
-        "Music"
-      ],
+      "genres": ["Music"],
       "licensors": [],
       "opening_themes": [],
       "related_anime": [
         {
           "title": "BanG Dream! 2nd Season",
           "url": "https://myanimelist.net/anime/37869",
-          "relationship": "Character"
+          "relation_type": "Character"
         },
         {
           "title": "BanG Dream! 2nd Season",
           "url": "https://anilist.co/anime/101633",
-          "relationship": "Character"
+          "relation_type": "Character"
         },
         {
           "title": "BanG Dream!",
           "url": "https://kitsu.io/api/edge/anime/12330",
-          "relationship": "Character"
+          "relation_type": "Character"
         },
         {
           "title": "BanG Dream!",
           "url": "https://myanimelist.net/anime/33573",
-          "relationship": "Character"
+          "relation_type": "Character"
         }
       ],
       "relations": [],
@@ -342,9 +313,7 @@
               "native_name": "藤田淳平",
               "role": "Music_Composition",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n110557-qBksrVgOrft3.png",
-              "primary_occupations": [
-                "Music Composer"
-              ],
+              "primary_occupations": ["Music Composer"],
               "years_active": []
             }
           ],
@@ -357,9 +326,7 @@
               "native_name": "藤田淳平",
               "role": "Music_Arrangement",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n110557-qBksrVgOrft3.png",
-              "primary_occupations": [
-                "Music Arranger"
-              ],
+              "primary_occupations": ["Music Arranger"],
               "years_active": []
             }
           ],
@@ -372,9 +339,7 @@
               "native_name": "ひと和",
               "role": "Original_Character_Design",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n128167-TS7tbX7fzLmx.jpg",
-              "primary_occupations": [
-                "Character Designer"
-              ],
+              "primary_occupations": ["Character Designer"],
               "years_active": []
             }
           ],
@@ -387,9 +352,7 @@
               "native_name": "ブシロード",
               "role": "Original_Creator",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n172860-3qroKRVvlLDo.png",
-              "primary_occupations": [
-                "Company"
-              ],
+              "primary_occupations": ["Company"],
               "years_active": []
             }
           ],
@@ -402,9 +365,7 @@
               "native_name": "中村航",
               "role": "Original_Story",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n131107-Kl0oeeJEG229.jpg",
-              "primary_occupations": [
-                "Writer"
-              ],
+              "primary_occupations": ["Writer"],
               "years_active": []
             }
           ],
@@ -417,9 +378,7 @@
               "native_name": "織田あすか",
               "role": "Music_Lyrics",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n155968-x56YVGRMpQQk.jpg",
-              "primary_occupations": [
-                "Lyricist"
-              ],
+              "primary_occupations": ["Lyricist"],
               "years_active": []
             }
           ],
@@ -432,9 +391,7 @@
               "native_name": "木谷高明",
               "role": "Executive_Producer",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n118419-rXhZENutjbpy.png",
-              "primary_occupations": [
-                "Producer"
-              ],
+              "primary_occupations": ["Producer"],
               "years_active": []
             }
           ],
@@ -447,9 +404,7 @@
               "native_name": "RAISE A SUILEN",
               "role": "Music_Performance",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n153132-C9eL2Pdyj706.jpg",
-              "primary_occupations": [
-                "Music Group"
-              ],
+              "primary_occupations": ["Music Group"],
               "years_active": []
             }
           ]
@@ -458,7 +413,7 @@
           {
             "name": "SANZIGEN",
             "type": "animation_studio",
-            "studio_id": 537
+            "url": "https://myanimelist.net/anime/producer/537/SANZIGEN"
           }
         ],
         "producers": [],
@@ -471,9 +426,7 @@
               },
               "name": "Natsume",
               "native_name": "夏芽",
-              "character_assignments": [
-                "Masuki Satou (MASKING)"
-              ],
+              "character_assignments": ["Masuki Satou (MASKING)"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137052-XHplE0rVVoLw.png"
             },
             {
@@ -482,9 +435,7 @@
               },
               "name": "Risa Tsumugi",
               "native_name": "紡木吏佐",
-              "character_assignments": [
-                "Chiyu Tamade (CHU²)"
-              ],
+              "character_assignments": ["Chiyu Tamade (CHU²)"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137054-s95k2fao6PyR.png"
             },
             {
@@ -493,9 +444,7 @@
               },
               "name": "Raychell",
               "native_name": "レイチェル",
-              "character_assignments": [
-                "Rei Wakana (LAYER)"
-              ],
+              "character_assignments": ["Rei Wakana (LAYER)"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137051-JFU1AixP9Uk3.jpg"
             },
             {
@@ -504,9 +453,7 @@
               },
               "name": "Riko Kohara",
               "native_name": "小原莉子",
-              "character_assignments": [
-                "Rokka Asahi (LOCK)"
-              ],
+              "character_assignments": ["Rokka Asahi (LOCK)"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n120173-99V6iyulRj7b.png"
             },
             {
@@ -515,9 +462,7 @@
               },
               "name": "Reo Kurachi",
               "native_name": "倉知玲鳳",
-              "character_assignments": [
-                "Reona Nyubara (PAREO)"
-              ],
+              "character_assignments": ["Reona Nyubara (PAREO)"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137053-02B83bHFJESk.jpg"
             }
           ]
@@ -576,10 +521,7 @@
         {
           "name": "Kuriyama, Chiaki",
           "role": "Main",
-          "name_variations": [
-            "Kuriyama, Chiaki",
-            "栗山千明"
-          ],
+          "name_variations": ["Kuriyama, Chiaki", "栗山千明"],
           "name_native": "栗山千明",
           "nicknames": [],
           "character_ids": {
@@ -722,10 +664,7 @@
               "native_name": "栗山千明",
               "role": "Vocalist",
               "biography": "Japanese actress, singer, and model known for her roles in films like 'Battle Royale' and 'Kill Bill'. Also works as a voice actor and vocalist.",
-              "primary_occupations": [
-                "Vocalist",
-                "Voice Actor"
-              ],
+              "primary_occupations": ["Vocalist", "Voice Actor"],
               "language": "JAPANESE"
             }
           ]
@@ -752,14 +691,9 @@
               },
               "name": "Chiaki Kuriyama",
               "native_name": "栗山千明",
-              "character_assignments": [
-                "Music Video Performer"
-              ],
+              "character_assignments": ["Music Video Performer"],
               "biography": "Japanese actress, singer, and model known for her roles in films like 'Battle Royale' and 'Kill Bill'. Also works as a voice actor and vocalist. In this music video, she performs the song '0'.",
-              "primary_occupations": [
-                "Vocalist",
-                "Voice Actor"
-              ],
+              "primary_occupations": ["Vocalist", "Voice Actor"],
               "language": "JAPANESE"
             }
           ]
@@ -817,9 +751,7 @@
         {
           "name": "Kanade AYASE",
           "role": "Main",
-          "name_variations": [
-            "綾瀬 奏"
-          ],
+          "name_variations": ["綾瀬 奏"],
           "name_kanji": "綾瀬 奏",
           "name_native": "綾瀬 奏",
           "nicknames": [],
@@ -840,9 +772,7 @@
         {
           "name": "Momoka HANAOKA",
           "role": "Main",
-          "name_variations": [
-            "花岡 桃香"
-          ],
+          "name_variations": ["花岡 桃香"],
           "name_kanji": "花岡 桃香",
           "name_native": "花岡 桃香",
           "nicknames": [],
@@ -863,9 +793,7 @@
         {
           "name": "Ryouta OCHI",
           "role": "Main",
-          "name_variations": [
-            "越智 遼太"
-          ],
+          "name_variations": ["越智 遼太"],
           "name_kanji": "越智 遼太",
           "name_native": "越智 遼太",
           "nicknames": [],
@@ -884,10 +812,7 @@
           ]
         }
       ],
-      "content_warnings": [
-        "Adult Content",
-        "Explicit Sexual Content"
-      ],
+      "content_warnings": ["Adult Content", "Explicit Sexual Content"],
       "demographics": [],
       "episode_details": [
         {
@@ -980,15 +905,13 @@
           "url": "https://myanimelist.net/anime/60629/1-punkan_dake_Furete_mo_Ii_yo_Share_House_no_Himitsu_Rule/episode/8"
         }
       ],
-      "genres": [
-        "Hentai"
-      ],
+      "genres": ["Hentai"],
       "related_anime": [],
       "relations": [
         {
           "title": "The Share House's Secret Rule",
           "url": "https://anisearch.com/manga/91400,the-share-houses-secret-rule",
-          "relationship": "Original Work"
+          "relation_type": "Original Work"
         }
       ],
       "sources": [
@@ -1005,12 +928,7 @@
         "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール.",
         "「1分間だけ触れてもいいよ...」シェアハウスの秘密ルール。"
       ],
-      "tags": [
-        "adult audience only",
-        "hentai",
-        "love polygon",
-        "present"
-      ],
+      "tags": ["adult audience only", "hentai", "love polygon", "present"],
       "themes": [
         {
           "name": "Love Polygon"
@@ -1086,9 +1004,7 @@
       "type": "MOVIE",
       "characters": [],
       "content_warnings": [],
-      "demographics": [
-        "Kids"
-      ],
+      "demographics": ["Kids"],
       "episode_details": [
         {
           "episode_number": 1,
@@ -1106,10 +1022,7 @@
           "url": "https://myanimelist.net/anime/25627/Aesop_no_Ohanashi_yori__Ushi_to_Kaeru_Yokubatta_Inu"
         }
       ],
-      "genres": [
-        "Family Friendly",
-        "Frogs"
-      ],
+      "genres": ["Family Friendly", "Frogs"],
       "related_anime": [],
       "relations": [],
       "sources": [
@@ -1217,9 +1130,7 @@
               "name": "Katsuo Takahashi",
               "native_name": "高橋克雄",
               "role": "Director",
-              "primary_occupations": [
-                "Director"
-              ],
+              "primary_occupations": ["Director"],
               "enhancement_status": "anilist_basic_data_only"
             }
           ],
@@ -1233,9 +1144,7 @@
               "name": "Katsuo Takahashi",
               "native_name": "高橋克雄",
               "role": "Script",
-              "primary_occupations": [
-                "Script Writer"
-              ],
+              "primary_occupations": ["Script Writer"],
               "enhancement_status": "anilist_basic_data_only"
             }
           ],
@@ -1311,9 +1220,7 @@
           "title_romaji": "\"Ai\" wo Taberu"
         }
       ],
-      "genres": [
-        "Drama"
-      ],
+      "genres": ["Drama"],
       "related_anime": [],
       "relations": [],
       "sources": [
@@ -1321,15 +1228,8 @@
         "https://kitsu.app/anime/47627",
         "https://myanimelist.net/anime/54496"
       ],
-      "synonyms": [
-        "Eating \"Love & Sorrow\"",
-        "「あい」をたべる"
-      ],
-      "tags": [
-        "drama",
-        "shorts",
-        "stop motion animation"
-      ],
+      "synonyms": ["Eating \"Love & Sorrow\"", "「あい」をたべる"],
+      "tags": ["drama", "shorts", "stop motion animation"],
       "themes": [
         {
           "name": "Drama",
@@ -1423,10 +1323,7 @@
         {
           "name": "Michiru",
           "role": "Main",
-          "name_variations": [
-            "ミチル",
-            "Michiru"
-          ],
+          "name_variations": ["ミチル", "Michiru"],
           "name_native": "ミチル",
           "nicknames": [],
           "character_ids": {
@@ -1450,10 +1347,7 @@
         {
           "name": "Yuuki",
           "role": "Main",
-          "name_variations": [
-            "ユウキ",
-            "Yuuki"
-          ],
+          "name_variations": ["ユウキ", "Yuuki"],
           "name_native": "ユウキ",
           "nicknames": [],
           "character_ids": {
@@ -1477,10 +1371,7 @@
         {
           "name": "Ryoushi",
           "role": "Supporting",
-          "name_variations": [
-            "漁師",
-            "Ryoushi"
-          ],
+          "name_variations": ["漁師", "Ryoushi"],
           "name_native": "漁師",
           "nicknames": [],
           "character_ids": {
@@ -1510,29 +1401,27 @@
           "url": "https://myanimelist.net/anime/50762"
         }
       ],
-      "genres": [
-        "Sci-Fi"
-      ],
+      "genres": ["Sci-Fi"],
       "related_anime": [
         {
           "title": "Watashi no Hashtag ga Baenakute.",
           "url": "https://myanimelist.net/anime/54278/Watashi_no_Hashtag_ga_Baenakute",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "Ima wa Shourai ni Hairimasu ka.",
           "url": "https://myanimelist.net/anime/58141/Ima_wa_Shourai_ni_Hairimasu_ka",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "Watashi no Hashtag ga Baenakute.",
           "url": "https://anisearch.com/anime/18202",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "Ima wa shourai ni Hairimasu ka.",
           "url": "https://kitsu.app/anime/48562",
-          "relationship": "Other"
+          "relation_type": "Other"
         }
       ],
       "relations": [],
@@ -1549,9 +1438,7 @@
         "https://simkl.com/anime/1824792",
         "https://animeschedule.net/anime/anata-wo-hitokoto-de-arawashite-kudasai-no-shitsumon-ga-nigate-da"
       ],
-      "studios": [
-        "sunrise inc."
-      ],
+      "studios": ["sunrise inc."],
       "synonyms": [
         "Anahito",
         "AnaHito",
@@ -1711,9 +1598,7 @@
               "name": "Kouichi Chigira",
               "native_name": "千明孝一",
               "role": "Director",
-              "primary_occupations": [
-                "Director"
-              ]
+              "primary_occupations": ["Director"]
             }
           ],
           "music_composers": [
@@ -1725,9 +1610,7 @@
               "name": "The Songbards",
               "native_name": "ソングバーズ",
               "role": "Music_Composer",
-              "primary_occupations": [
-                "Music"
-              ]
+              "primary_occupations": ["Music"]
             }
           ],
           "character_designers": [
@@ -1737,9 +1620,7 @@
               },
               "name": "Tamura Emi",
               "role": "Character_Designer",
-              "primary_occupations": [
-                "Character Design"
-              ],
+              "primary_occupations": ["Character Design"],
               "enhancement_status": "anilist_match_pending"
             },
             {
@@ -1749,9 +1630,7 @@
               "name": "Yoshitoki Ooima",
               "native_name": "大今良時",
               "role": "Original_Character_Designer",
-              "primary_occupations": [
-                "Original Character Design"
-              ]
+              "primary_occupations": ["Original Character Design"]
             }
           ],
           "art_directors": [
@@ -1762,9 +1641,7 @@
               "name": "Hideki Nakamura",
               "native_name": "中村豪希",
               "role": "Art_Director",
-              "primary_occupations": [
-                "Art Director"
-              ]
+              "primary_occupations": ["Art Director"]
             }
           ],
           "mechanical_designers": [
@@ -1775,9 +1652,7 @@
               "name": "Juu Ishiguchi",
               "native_name": "石口十",
               "role": "Mechanical_Designer",
-              "primary_occupations": [
-                "Mechanical Design"
-              ]
+              "primary_occupations": ["Mechanical Design"]
             },
             {
               "staff_ids": {
@@ -1786,9 +1661,7 @@
               "name": "Baodong Li",
               "native_name": "李保東",
               "role": "Mechanical_Designer",
-              "primary_occupations": [
-                "Mechanical Design"
-              ]
+              "primary_occupations": ["Mechanical Design"]
             }
           ],
           "sound_directors": [
@@ -1799,9 +1672,7 @@
               "name": "Ryou Tanaka",
               "native_name": "田中亮",
               "role": "Sound_Director",
-              "primary_occupations": [
-                "Sound Director"
-              ]
+              "primary_occupations": ["Sound Director"]
             }
           ],
           "photography_directors": [
@@ -1812,9 +1683,7 @@
               "name": "Hiroyuki Chiba",
               "native_name": "千葉洋之",
               "role": "Director_of_Photography",
-              "primary_occupations": [
-                "Director of Photography"
-              ]
+              "primary_occupations": ["Director of Photography"]
             }
           ],
           "sound_effects": [
@@ -1825,9 +1694,7 @@
               "name": "Mutsuhiro Nishimura",
               "native_name": "西村睦弘",
               "role": "Sound_Effects",
-              "primary_occupations": [
-                "Sound Effects"
-              ]
+              "primary_occupations": ["Sound Effects"]
             }
           ]
         },
@@ -1854,9 +1721,7 @@
               },
               "name": "Akari Kitou",
               "native_name": "鬼頭明里",
-              "character_assignments": [
-                "Michiru"
-              ],
+              "character_assignments": ["Michiru"],
               "image": "https://cdn.anidb.net/images/main/242448.jpg"
             },
             {
@@ -1866,9 +1731,7 @@
               },
               "name": "Hiro Shimono",
               "native_name": "下野紘",
-              "character_assignments": [
-                "Yuuki"
-              ],
+              "character_assignments": ["Yuuki"],
               "image": "https://cdn.anidb.net/images/main/11109.jpeg"
             },
             {
@@ -1877,9 +1740,7 @@
               },
               "name": "Katsuhisa Houki",
               "native_name": "宝亀克寿",
-              "character_assignments": [
-                "Ryoushi"
-              ]
+              "character_assignments": ["Ryoushi"]
             }
           ]
         }
@@ -2085,41 +1946,37 @@
           "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/16"
         }
       ],
-      "genres": [
-        "Comedy",
-        "Fantasy",
-        "Chibi"
-      ],
+      "genres": ["Comedy", "Fantasy", "Chibi"],
       "related_anime": [
         {
           "title": "Ayaka",
           "url": "https://myanimelist.net/anime/53428/Ayaka",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "Ayaka",
           "url": "https://www.anime-planet.com/anime/ayaka",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "Ayaka",
           "url": "https://anime-planet.com/anime/ayaka",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "AYAKA",
           "url": "https://kitsu.app/anime/46685",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "AYAKA",
           "url": "https://livechart.me/anime/11577",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "Ayaka",
           "url": "https://myanimelist.net/anime/53428",
-          "relationship": "Other"
+          "relation_type": "Other"
         }
       ],
       "relations": [],
@@ -2129,22 +1986,14 @@
         "https://livechart.me/anime/12190",
         "https://myanimelist.net/anime/55754"
       ],
-      "studios": [
-        "aqua aris"
-      ],
+      "studios": ["aqua aris"],
       "synonyms": [
         "\"あやかい島\"へようこそ！ミタマンの綾ヵ島観光案内",
         "AYAKA Mini Anime",
         "AYAKA ‐あやか‐ ミニアニメ",
         "Ayaka Mini Anime"
       ],
-      "tags": [
-        "chibi",
-        "chibi style",
-        "comedy",
-        "fantasy",
-        "short episodes"
-      ],
+      "tags": ["chibi", "chibi style", "comedy", "fantasy", "short episodes"],
       "themes": [
         {
           "name": "Short Episodes"
@@ -2315,117 +2164,114 @@
           "url": "https://myanimelist.net/anime/7669/episode/1"
         }
       ],
-      "genres": [
-        "Comedy",
-        "Fantasy"
-      ],
+      "genres": ["Comedy", "Fantasy"],
       "related_anime": [
         {
           "title": "\"Bungaku Shoujo\" Movie",
           "url": "https://myanimelist.net/anime/6408/Bungaku_Shoujo_Movie",
-          "relationship": "Parent Story"
+          "relation_type": "Parent Story"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
           "url": "https://anidb.net/anime/6959",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Bungaku Shoujo: Memoire",
           "url": "https://anidb.net/anime/7441",
-          "relationship": "Parent story"
+          "relation_type": "Parent story"
         },
         {
           "title": "Bungaku Shoujo",
           "url": "https://anilist.co/anime/6408",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Bungaku Shoujo Memoire",
           "url": "https://anime-planet.com/anime/bungaku-shoujo-memoire",
-          "relationship": "Parent story"
+          "relation_type": "Parent story"
         },
         {
           "title": "Bungaku Shoujo Movie",
           "url": "https://anime-planet.com/anime/bungaku-shoujo-movie",
-          "relationship": "Parent Story"
+          "relation_type": "Parent Story"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
           "url": "https://animecountdown.com/38239",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Bungaku Shoujo Memoire",
           "url": "https://animecountdown.com/40553",
-          "relationship": "Parent story"
+          "relation_type": "Parent story"
         },
         {
           "title": "Bungaku Shoujo Movie",
           "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=10815",
-          "relationship": "Parent Story"
+          "relation_type": "Parent Story"
         },
         {
           "title": "Bungaku Shoujo Movie",
           "url": "https://kitsu.app/anime/4550",
-          "relationship": "Parent Story"
+          "relation_type": "Parent Story"
         },
         {
           "title": "Bungaku Shoujo Movie",
           "url": "https://livechart.me/anime/4198",
-          "relationship": "Parent Story"
+          "relation_type": "Parent Story"
         },
         {
           "title": "Bungaku Shoujo Memoire",
           "url": "https://livechart.me/anime/5640",
-          "relationship": "Parent story"
+          "relation_type": "Parent story"
         },
         {
           "title": "Bungaku Shoujo Movie",
           "url": "https://notify.moe/anime/UUie5KimR",
-          "relationship": "Parent Story"
+          "relation_type": "Parent Story"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
           "url": "https://simkl.com/anime/38239",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Bungaku Shoujo Memoire",
           "url": "https://simkl.com/anime/40553",
-          "relationship": "Parent story"
+          "relation_type": "Parent story"
         },
         {
           "title": "Bungaku Shōjo Memoir II - Sora-Mau Tenshi no Requiem OVA",
           "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=11682",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "Bungaku Shōjo Memoir III - Koi Suru Otome no Rhapsody OAV",
           "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=11683",
-          "relationship": "Other"
+          "relation_type": "Other"
         },
         {
           "title": "PENDING",
           "url": "https://anisearch.com/anime/6169",
-          "relationship": "Parent story"
+          "relation_type": "Parent story"
         }
       ],
       "relations": [
         {
           "title": "\"Bungaku Shoujo\" to Shinitagari no Pierrot",
           "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot",
-          "relationship": "Adaptation"
+          "relation_type": "Adaptation"
         },
         {
           "title": "\"Bungaku Shoujo\" to Ue Kawaku Ghost",
           "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost",
-          "relationship": "Adaptation"
+          "relation_type": "Adaptation"
         },
         {
           "title": "\"Bungaku Shoujo\" Series",
           "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series",
-          "relationship": "Adaptation"
+          "relation_type": "Adaptation"
         }
       ],
       "sources": [
@@ -2442,9 +2288,7 @@
         "https://animeschedule.net/anime/bungaku-shoujo-kyou-no-oyatsu-hatsukoi",
         "https://anisearch.com/anime/5970"
       ],
-      "studios": [
-        "production i.g., inc."
-      ],
+      "studios": ["production i.g., inc."],
       "synonyms": [
         "\"文学少女\"今日のおやつ ~はつ恋~",
         "A Garota dos Livros: Lanche de Hoje - Primeiro Amor",
@@ -2711,13 +2555,8 @@
               "role": "Director",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n100805-HMhAgyEZZqro.png",
               "biography": "Started off as a production manager at Ad Cosmo.",
-              "primary_occupations": [
-                "Director",
-                "Storyboard Artist"
-              ],
-              "years_active": [
-                1991
-              ],
+              "primary_occupations": ["Director", "Storyboard Artist"],
+              "years_active": [1991],
               "gender": "Male",
               "community_favorites": 7
             },
@@ -2729,12 +2568,8 @@
               "native_name": "鈴木路恵",
               "role": "Art_Director",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
-              "years_active": [
-                2000
-              ],
+              "primary_occupations": ["Background Artist"],
+              "years_active": [2000],
               "gender": "Female",
               "community_favorites": 0
             },
@@ -2747,9 +2582,7 @@
               "role": "Director_of_Photography",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n142484-t9MKzxY9Gcly.png",
               "biography": "Affiliated with [Production I.G](https://anilist.co/studio/10/).\n\n_Note: Not to be confused with the [animator](https://anilist.co/staff/200070/)._",
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 4
@@ -2776,14 +2609,8 @@
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/1346.jpg",
               "birth_date": "1962-08-12",
               "hometown": "Nagoya, Aichi Prefecture, Japan",
-              "primary_occupations": [
-                "Voice Actor",
-                "Audio Engineer"
-              ],
-              "years_active": [
-                1989,
-                2017
-              ],
+              "primary_occupations": ["Voice Actor", "Audio Engineer"],
+              "years_active": [1989, 2017],
               "gender": "Male",
               "blood_type": "A",
               "community_favorites": 0
@@ -2797,13 +2624,8 @@
               "role": "Unit_Director",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n118899-8Z3qiDmSCTDA.png",
               "biography": "[Twitter](https://twitter.com/glico_shinpe)\n\nOriginating from [Production I.G](https://anilist.co/studio/10/).",
-              "primary_occupations": [
-                "Director",
-                "Storyboard Artist"
-              ],
-              "years_active": [
-                2005
-              ],
+              "primary_occupations": ["Director", "Storyboard Artist"],
+              "years_active": [2005],
               "gender": "Male",
               "community_favorites": 15
             },
@@ -2817,13 +2639,8 @@
               "role": "Storyboard",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n100805-HMhAgyEZZqro.png",
               "biography": "Started off as a production manager at Ad Cosmo.",
-              "primary_occupations": [
-                "Director",
-                "Storyboard Artist"
-              ],
-              "years_active": [
-                1991
-              ],
+              "primary_occupations": ["Director", "Storyboard Artist"],
+              "years_active": [1991],
               "gender": "Male",
               "community_favorites": 7
             }
@@ -2839,10 +2656,7 @@
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/8635.jpg",
               "biography": "Masumi Itou is a singer and composer. Ito has composed the soundtracks to many anime television shows and is part of the bands Oranges &amp; Lemons and Heart of Air. She graduated from Musashino College of Music, and her husband is music producer Yoshiyuki Ito.",
               "hometown": "Ibaraki Prefecture, Japan",
-              "primary_occupations": [
-                "Composer",
-                "Vocalist"
-              ],
+              "primary_occupations": ["Composer", "Vocalist"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 91
@@ -2859,9 +2673,7 @@
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "[Website](http://www.nezicaplant.com/)\n\nOlder sister of the novelist [Hazuki Takeoka](https://anilist.co/staff/115200).",
               "hometown": "Tokyo, Japan",
-              "primary_occupations": [
-                "Illustrator"
-              ],
+              "primary_occupations": ["Illustrator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 4
@@ -2875,9 +2687,7 @@
               "native_name": "松本圭太",
               "role": "Character_Designer",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 1
@@ -2890,10 +2700,7 @@
               "native_name": "太田恵子",
               "role": "Prop_Design",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator",
-                "Designer"
-              ],
+              "primary_occupations": ["Animator", "Designer"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 3
@@ -2912,12 +2719,8 @@
               "biography": "[Wiki (jp)](https://ja.wikipedia.org/wiki/山田由香)",
               "birth_date": "1968-03-16",
               "hometown": "Tokyo, Japan",
-              "primary_occupations": [
-                "Scriptwriter"
-              ],
-              "years_active": [
-                2002
-              ],
+              "primary_occupations": ["Scriptwriter"],
+              "years_active": [2002],
               "gender": "Female",
               "community_favorites": 3
             },
@@ -2931,9 +2734,7 @@
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Waseda University graduate.",
               "hometown": "Fukushima Prefecture, Japan",
-              "primary_occupations": [
-                "Scriptwriter"
-              ],
+              "primary_occupations": ["Scriptwriter"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -2949,9 +2750,7 @@
               "role": "Animation_Producer",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n104903-zK3kpS17gTeQ.png",
               "biography": "Animation Producer formerly affiliated with [Production I.G.](https://anilist.co/studio/10/Production-IG) Currently President of CUE.",
-              "primary_occupations": [
-                "Producer"
-              ],
+              "primary_occupations": ["Producer"],
               "years_active": [],
               "community_favorites": 2
             },
@@ -2964,9 +2763,7 @@
               "native_name": "松本圭太",
               "role": "Chief_Animation_Director",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 1
@@ -2979,9 +2776,7 @@
               "native_name": "石川真理子",
               "role": "Animation_Director",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 8
@@ -2999,12 +2794,8 @@
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n102606-osV7cR5ZN2ho.jpg",
               "biography": "[Twitter](https://twitter.com/Haruno_Soraha) | [Instagram](https://www.instagram.com/harunoasitaha/)",
               "hometown": "Fukushima Prefecture, Japan",
-              "primary_occupations": [
-                "Writer"
-              ],
-              "years_active": [
-                2002
-              ],
+              "primary_occupations": ["Writer"],
+              "years_active": [2002],
               "gender": "Female",
               "community_favorites": 25
             }
@@ -3019,12 +2810,8 @@
               "role": "Art_Design",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n119826-WO3Ud2cdko8h.png",
               "biography": "[Twitter](https://twitter.com/i/user/108529192) | [Website](https://www.art-setting.com/) | [Nico Nico](https://www.nicovideo.jp/user/662388)",
-              "primary_occupations": [
-                "Designer"
-              ],
-              "years_active": [
-                1997
-              ],
+              "primary_occupations": ["Designer"],
+              "years_active": [1997],
               "gender": "Male",
               "community_favorites": 9
             },
@@ -3036,10 +2823,7 @@
               "native_name": "藤瀬智康",
               "role": "Art_Design",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Designer",
-                "Background Artist"
-              ],
+              "primary_occupations": ["Designer", "Background Artist"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3052,9 +2836,7 @@
               "native_name": "津守裕子",
               "role": "Color_Design",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3068,9 +2850,7 @@
               "role": "Color_Coordination",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Affiliated with [M.S.C](https://anilist.co/studio/463/MSC).",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3083,12 +2863,8 @@
               "native_name": "高峯義人",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
-              "years_active": [
-                2005
-              ],
+              "primary_occupations": ["Background Artist"],
+              "years_active": [2005],
               "gender": "Male",
               "community_favorites": 1
             },
@@ -3101,12 +2877,8 @@
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n120014-0kZqn22QXE1s.png",
               "biography": "Affiliated with Bihou.",
-              "primary_occupations": [
-                "Background Artist"
-              ],
-              "years_active": [
-                2005
-              ],
+              "primary_occupations": ["Background Artist"],
+              "years_active": [2005],
               "gender": "Male",
               "community_favorites": 6
             },
@@ -3118,9 +2890,7 @@
               "native_name": "加藤恵",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3132,9 +2902,7 @@
               "name": "Quan Pham",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3146,9 +2914,7 @@
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Affiliated with FSE.",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3159,9 +2925,7 @@
               "name": "Khoa Tran",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3173,9 +2937,7 @@
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Vuong Vo is a Vietnamese background artist.",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3187,9 +2949,7 @@
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Thuy Nguyen is a Vietnamese background artist.",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3201,9 +2961,7 @@
               "native_name": "成田優美子",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3215,9 +2973,7 @@
               "name": "Cuc Nguyen",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3229,9 +2985,7 @@
               "native_name": "市岡茉衣",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3243,9 +2997,7 @@
               "name": "Bao Nguy",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3256,9 +3008,7 @@
               "name": "Van Tran",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3269,9 +3019,7 @@
               "name": "Thu Pham",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3282,9 +3030,7 @@
               "name": "Trung Tran",
               "role": "Background_Art",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Background Artist"
-              ],
+              "primary_occupations": ["Background Artist"],
               "years_active": [],
               "community_favorites": 0
             }
@@ -3299,12 +3045,8 @@
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Affiliated with [Production I.G](https://anilist.co/studio/10/).",
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                2001
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [2001],
               "gender": "Male",
               "community_favorites": 0
             },
@@ -3317,12 +3059,8 @@
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n104501-Sz48bLMTTlhw.jpg",
               "biography": "[Twitter](https://twitter.com/koni_ko222)",
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                1999
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [1999],
               "gender": "Female",
               "community_favorites": 4
             },
@@ -3334,12 +3072,8 @@
               "native_name": "北村友幸",
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                1999
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [1999],
               "gender": "Male",
               "community_favorites": 4
             },
@@ -3351,9 +3085,7 @@
               "native_name": "片桐貴悠",
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 1
@@ -3366,9 +3098,7 @@
               "native_name": "山田裕子",
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3381,9 +3111,7 @@
               "native_name": "崎山知明",
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3396,9 +3124,7 @@
               "native_name": "山本祐子",
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3411,9 +3137,7 @@
               "native_name": "石川真理子",
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 8
@@ -3427,12 +3151,8 @@
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n137947-xrxU8o0ekHbC.png",
               "biography": "Originating from [Artland](https://anilist.co/studio/8/). Currently freelance with ties to [A-1 Pictures](https://anilist.co/studio/561/).",
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                2003
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [2003],
               "gender": "Male",
               "community_favorites": 15
             },
@@ -3456,9 +3176,7 @@
               "native_name": "岡田武士",
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3471,12 +3189,8 @@
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n155253-r7vi5W6gFz0k.jpg",
               "biography": "[Twitter](https://twitter.com/Mihotine)\n\nOriginating from [Production I.G](https://anilist.co/studio/10/).",
-              "primary_occupations": [
-                "Animator"
-              ],
-              "years_active": [
-                2005
-              ],
+              "primary_occupations": ["Animator"],
+              "years_active": [2005],
               "gender": "Female",
               "community_favorites": 0
             },
@@ -3489,10 +3203,7 @@
               "role": "Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n194605-aSi99IO6ZRry.jpg",
               "biography": "[Twitter](https://twitter.com/i/user/2340158042)",
-              "primary_occupations": [
-                "Animator",
-                "Director"
-              ],
+              "primary_occupations": ["Animator", "Director"],
               "years_active": [],
               "community_favorites": 1
             },
@@ -3504,9 +3215,7 @@
               "native_name": "式部美代子",
               "role": "2nd_Key_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3519,9 +3228,7 @@
               "native_name": "斉藤美香",
               "role": "In_Between_Check",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3534,9 +3241,7 @@
               "native_name": "斉藤美香",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3549,10 +3254,7 @@
               "native_name": "津坂美織",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator",
-                "Designer"
-              ],
+              "primary_occupations": ["Animator", "Designer"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 1
@@ -3565,9 +3267,7 @@
               "native_name": "久原陽子",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 1
@@ -3580,9 +3280,7 @@
               "native_name": "本田真之",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3595,9 +3293,7 @@
               "native_name": "八木澤修平",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3609,9 +3305,7 @@
               "native_name": "春日広子",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3624,9 +3318,7 @@
               "native_name": "沼田くみ子",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3639,9 +3331,7 @@
               "native_name": "酒井美佳",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3654,9 +3344,7 @@
               "native_name": "横山雄樹",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3669,9 +3357,7 @@
               "native_name": "山梶明美",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3696,9 +3382,7 @@
               "native_name": "橋本高明",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3724,9 +3408,7 @@
               "native_name": "鈴木野々子",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3739,9 +3421,7 @@
               "native_name": "水谷慶太",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3753,9 +3433,7 @@
               "native_name": "冨田恵子",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3768,9 +3446,7 @@
               "native_name": "小高梢",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3782,9 +3458,7 @@
               "native_name": "송영준",
               "role": "In_Between_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Animator"
-              ],
+              "primary_occupations": ["Animator"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3797,9 +3471,7 @@
               "role": "Finishing_Check",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Affiliated with [M.S.C](https://anilist.co/studio/463/MSC).",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3813,9 +3485,7 @@
               "role": "Digital_Paint",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Affiliated with [M.S.C](https://anilist.co/studio/463/MSC).",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3828,9 +3498,7 @@
               "native_name": "加藤玲子",
               "role": "Digital_Paint",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3843,9 +3511,7 @@
               "native_name": "末繁明佳",
               "role": "Digital_Paint",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3859,9 +3525,7 @@
               "role": "Digital_Paint",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Affiliated with [M.S.C](https://anilist.co/studio/463/MSC).",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3874,9 +3538,7 @@
               "native_name": "田中悠詩",
               "role": "Digital_Paint",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -3888,9 +3550,7 @@
               "native_name": "青木優佳",
               "role": "Digital_Paint",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Painter"
-              ],
+              "primary_occupations": ["Painter"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -3905,9 +3565,7 @@
               "native_name": "植松淳一",
               "role": "Editing",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 2
@@ -3932,9 +3590,7 @@
               "native_name": "緒方康恭",
               "role": "Sound_Effects",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Audio Engineer"
-              ],
+              "primary_occupations": ["Audio Engineer"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3947,9 +3603,7 @@
               "native_name": "橋本綾",
               "role": "Production_Desk",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Production Manager"
-              ],
+              "primary_occupations": ["Production Manager"],
               "years_active": [],
               "community_favorites": 1
             },
@@ -3961,9 +3615,7 @@
               "native_name": "志村卓紀",
               "role": "Design_Manager",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Production Manager"
-              ],
+              "primary_occupations": ["Production Manager"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -3977,12 +3629,8 @@
               "role": "Production_Assistant",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n277412-UrNHB0tkCuDS.png",
               "biography": "Affiliated with [Production I.G](https://anilist.co/studio/10/). Often works with [Shunsuke Tada](https://anilist.co/staff/100805/).",
-              "primary_occupations": [
-                "Producer"
-              ],
-              "years_active": [
-                2008
-              ],
+              "primary_occupations": ["Producer"],
+              "years_active": [2008],
               "gender": "Female",
               "community_favorites": 1
             },
@@ -4006,9 +3654,7 @@
               "native_name": "鈴木利明",
               "role": "CG_Animation",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "CG Artist"
-              ],
+              "primary_occupations": ["CG Artist"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -4022,9 +3668,7 @@
               "role": "Photography",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "__Yumiko Nakata__ is a Japanese director of photography, photographer and special effects artist.",
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "community_favorites": 1
             },
@@ -4037,9 +3681,7 @@
               "role": "Photography",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "_Note: Not to be confused with the [animator](https://anilist.co/staff/217532/)._",
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -4052,9 +3694,7 @@
               "role": "Special_Effects",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "Handles special effects.",
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -4067,9 +3707,7 @@
               "native_name": "荒井栄児",
               "role": "Visual_Effects",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n147676-1Qt8PSjHwzzn.jpg",
-              "primary_occupations": [
-                "Composite Artist"
-              ],
+              "primary_occupations": ["Composite Artist"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 2
@@ -4082,9 +3720,7 @@
               "native_name": "濱中亜希子",
               "role": "2D_Works",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "CG Artist"
-              ],
+              "primary_occupations": ["CG Artist"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -4098,10 +3734,7 @@
               "role": "Photography_Manager",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n155309-viaZsQqlAqoE.png",
               "biography": "[Twitter](https://twitter.com/i/user/396443700)\n\nAffiliated with [Wit Studio](https://anilist.co/studio/858/).",
-              "primary_occupations": [
-                "Composite Artist",
-                "Painter"
-              ],
+              "primary_occupations": ["Composite Artist", "Painter"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -4114,9 +3747,7 @@
               "native_name": "高木磨",
               "role": "Video_Editing",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n214004-UPFiYB7Eb09m.png",
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -4129,9 +3760,7 @@
               "native_name": "三上陽子",
               "role": "Video_Editing",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -4143,9 +3772,7 @@
               "native_name": "嶌村京子",
               "role": "Sound_Production",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Production Manager"
-              ],
+              "primary_occupations": ["Production Manager"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -4158,9 +3785,7 @@
               "native_name": "奥崎早紀子",
               "role": "Sound_Production",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Production Manager"
-              ],
+              "primary_occupations": ["Production Manager"],
               "years_active": [],
               "gender": "Female",
               "community_favorites": 0
@@ -4173,9 +3798,7 @@
               "native_name": "田上祐二",
               "role": "Recording",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
-              "primary_occupations": [
-                "Audio Engineer"
-              ],
+              "primary_occupations": ["Audio Engineer"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -4213,9 +3836,7 @@
               "role": "Editing_Assistant",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "__Taeko Hamauzu__ is a Japanese editor.",
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "community_favorites": 0
             },
@@ -4228,9 +3849,7 @@
               "role": "Editing_Assistant",
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/default.jpg",
               "biography": "__Yoshinori Murakami__ is a Japanese editor.",
-              "primary_occupations": [
-                "Editor"
-              ],
+              "primary_occupations": ["Editor"],
               "years_active": [],
               "gender": "Male",
               "community_favorites": 0
@@ -4292,9 +3911,7 @@
               },
               "name": "Miyu Irino",
               "native_name": "入野自由",
-              "character_assignments": [
-                "Konoha Inoue"
-              ],
+              "character_assignments": ["Konoha Inoue"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95088-BHyqnkadBEqi.png",
               "biography": "[Agency Profile](https://junction99.com/?page_id=1134)\n\nHe joined a theater troupe when he was 4 years old, and two years later made his acting debut in the historical drama Korczak. He remained with the theater troupe until March 2006, when he moved to Junction.\n\nMade his voice acting debut in 1996 on [Taiho Shichauzo](https://anilist.co/anime/1577/). He auditioned and got the role of [Haku](https://anilist.co/character/385/) in the 2001 film [Spirited Away](https://anilist.co/anime/199/). The same year, he voiced the eponymous main character in [PaRappa The Rapper](https://anilist.co/anime/3736/), and the following year he started voicing Sora in the Kingdom Hearts video game series, a character who he still voices to this day.\n\nHe released his debut mini-album Soleil on June 26, 2009 and his first single album, Faith, on November 25, 2009. Since May 2010, he and [Hiroshi Kamiya](https://anilist.co/staff/95118/) formed a music duo called [KAmiYU](https://anilist.co/staff/116031/). Their first mini-album \"link-up\" was released on August 3, 2011.\n\nAnnounced his marriage with an unspecified woman on September 3, 2021.\n\n__Non-anime voice roles:__\n- Sora - *Kingdom Hearts* series (VG)\n- Cyno - *Genshin Impact* (VG) ",
               "birth_date": "1988-02-19",
@@ -4307,9 +3924,7 @@
               },
               "name": "Kana Hanazawa",
               "native_name": "花澤香菜",
-              "character_assignments": [
-                "Touko Amano"
-              ],
+              "character_assignments": ["Touko Amano"],
               "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95185-x8ZYvtN7SegC.png",
               "biography": "__Height:__ 156 cm (5'1\")\n\n[Profile](https://osawa-inc.co.jp/women/hanazawakana/) | [Website](http://www.hanazawakana-music.net/) | [Website 2](http://www.hanazawakana-music.net/) | [Twitter](https://twitter.com/hanazawa_staff) | [Instagram](https://www.instagram.com/hanazawa_kana.official/)  | [YouTube]( https://www.youtube.com/@hanazawa_kana/) | [Radio page](https://www.joqr.co.jp/qr/program/dekirukana/) | [TikTok](https://www.tiktok.com/@hanazawa_kana.official)\n\n__Introduction__\nKana Hanazawa is a voice actress, actress, singer, former child actress, and talent represented by Office Osawa. In July 2020, she married fellow voice actor [Kensho Ono](https://anilist.co/staff/95819), whom she had been dating since 2017. \n\n__Early Career__\nHanazawa originally became a child actress at the age of 8. Amongst other roles, she starred in the well-known TV school show _Appare Sanma Daisensei_ and the TV series _Gakkou no Sensei_. At that time she was contracted to Big Apple, and later to Five Eight and Smile Monkey.\n\n__Voice Acting Career__\nAt the age of 14, she made her voice acting debut in 2003 as Holly in _[Last Exile](https://anilist.co/anime/97/)_. Three years later in 2006, she was selected for a major role in TV Tokyo's anime mecha series _[Zegapain](https://anilist.co/anime/878/)_. She was playing the main character's childhood friend, [Kaminagi Ryouko](https://anilist.co/character/2578/), and her performance was one of the main reasons for the character's popularity amongst fans. It was afterwards that she came under contract at prestigious voice acting talent agency Office Osawa in 2007.\n\nHanazawa went to university in 2007, while at the same time, she began to make her mark as a voice actress. She was voted in 2010 as \"Best Female Voice Actress\" by listeners of the radio program Nonko and Nobita's Anime Scramble. She graduated from university in 2011, and in the same year became a full-time voice actress.\n\nHanazawa won Best Supporting Actress at the 9th Seiyuu Awards for her role as [Kosaki Onodera](https://anilist.co/character/52723/) in _[Nisekoi](https://anilist.co/anime/18897/)_. She also won Newtype's Best Voice Actress award in 2015 and later in 2018.\n\n__Music Career__\nOn February 23, 2012, it was announced that Hanazawa would launch her official website. A few days later, during the Kana Hanazawa Solo Debut Presentation Party event, it was announced that she would release four singles within a year: \"Hoshizora Destination\" on April 25, \"Hatsukoi no Oto\" released on July 18, \"Happy Endings\" on October 24 (an ending theme for _[Zetsuen no Tempest](https://anilist.co/anime/14075/)_), and \"Silent Snow\" on January 16, 2013. Her first album Claire was released on February 20, 2013, and her second album 25 was released on February 26, 2014. She released an album title Blue Avenue in April 2015 and went on a concert tour starting at the Nippon Budokan on May 3. The Blu-ray release of the show, Live Avenue Kana Hanazawa in Budokan, ranked number six in sales.\n\n__Trivia__\n- She was invited to Anime Festival Asia 2010 on stage.\n- She used to be a junior idol in Akihabara where hundreds of people came to watch her, which is how she got her breakthrough for her acting career in commercials before becoming a voice actress.\n\n**Non-anime roles:**\n- [Marie](https://anilist.co/character/89069/Marie) - Persona 4 Golden (VG)\n- Hakari Atsuko - Blue Archive (VG)\n- Illya - Memento Mori (VG)\n- Marian - Goddess of Victory: Nikke (VG)\n- Modernia - Goddess of Victory: Nikke (VG)\n- Alice Kuonji (Caster) - Fate/Grand Order (VG)",
               "birth_date": "1989-02-25",
@@ -4392,9 +4007,7 @@
         {
           "name": "Konoha Inoue",
           "role": "Main",
-          "name_variations": [
-            "井上心葉"
-          ],
+          "name_variations": ["井上心葉"],
           "name_kanji": "井上 心葉",
           "name_native": "井上 心葉",
           "nicknames": [],
@@ -4421,9 +4034,7 @@
         {
           "name": "Miu Asakura",
           "role": "Main",
-          "name_variations": [
-            "朝倉美羽"
-          ],
+          "name_variations": ["朝倉美羽"],
           "name_kanji": "朝倉 美羽",
           "name_native": "朝倉 美羽",
           "nicknames": [],
@@ -4446,9 +4057,7 @@
         {
           "name": "Nanase Kotobuki",
           "role": "Main",
-          "name_variations": [
-            "琴吹ななせ"
-          ],
+          "name_variations": ["琴吹ななせ"],
           "name_kanji": "琴吹 ななせ",
           "name_native": "琴吹 ななせ",
           "nicknames": [],
@@ -4511,9 +4120,7 @@
         {
           "name": " Sasaki",
           "role": "Supporting",
-          "name_variations": [
-            "Sasaki"
-          ],
+          "name_variations": ["Sasaki"],
           "name_kanji": "佐々木",
           "name_native": "佐々木",
           "nicknames": [],
@@ -4537,14 +4144,10 @@
         {
           "name": "Chia Takeda",
           "role": "Supporting",
-          "name_variations": [
-            "竹田千愛"
-          ],
+          "name_variations": ["竹田千愛"],
           "name_kanji": "竹田 千愛",
           "name_native": "竹田 千愛",
-          "nicknames": [
-            "Chee"
-          ],
+          "nicknames": ["Chee"],
           "character_ids": {
             "mal": 0,
             "anilist": 28933
@@ -4600,9 +4203,7 @@
         {
           "name": "Fumiharu Amano",
           "role": "Supporting",
-          "name_variations": [
-            "天野文陽"
-          ],
+          "name_variations": ["天野文陽"],
           "name_kanji": "天野 文陽",
           "name_native": "天野 文陽",
           "nicknames": [],
@@ -4625,9 +4226,7 @@
         {
           "name": "Kanako Sakurai",
           "role": "Supporting",
-          "name_variations": [
-            "桜井叶子"
-          ],
+          "name_variations": ["桜井叶子"],
           "name_kanji": "桜井 叶子",
           "name_native": "桜井 叶子",
           "nicknames": [],
@@ -4649,9 +4248,7 @@
         {
           "name": "Kurara Mori",
           "role": "Supporting",
-          "name_variations": [
-            "森紅楽々"
-          ],
+          "name_variations": ["森紅楽々"],
           "name_kanji": "森 紅楽々",
           "name_native": "森 紅楽々",
           "nicknames": [],
@@ -4728,9 +4325,7 @@
         {
           "name": "Ryuuto Sakurai",
           "role": "Supporting",
-          "name_variations": [
-            "桜井流人"
-          ],
+          "name_variations": ["桜井流人"],
           "name_kanji": "桜井 流人",
           "name_native": "桜井 流人",
           "nicknames": [],
@@ -4753,9 +4348,7 @@
         {
           "name": "Yui Amano",
           "role": "Supporting",
-          "name_variations": [
-            "天野結衣"
-          ],
+          "name_variations": ["天野結衣"],
           "name_kanji": "天野 結衣",
           "name_native": "天野 結衣",
           "nicknames": [],
@@ -4777,9 +4370,7 @@
         }
       ],
       "content_warnings": [],
-      "demographics": [
-        "Shoujo"
-      ],
+      "demographics": ["Shoujo"],
       "ending_themes": [],
       "episode_details": [
         {
@@ -4827,98 +4418,94 @@
         }
       ],
       "external_links": [],
-      "genres": [
-        "Drama",
-        "School",
-        "Shoujo"
-      ],
+      "genres": ["Drama", "School", "Shoujo"],
       "licensors": [],
       "opening_themes": [],
       "related_anime": [
         {
           "title": "Gekijouban Bungaku Shoujo",
           "url": "https://anidb.net/anime/6959",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "\"Bungaku Shoujo\": Kyou no Oyatsu - Hatsukoi",
           "url": "https://anidb.net/anime/7294",
-          "relationship": "Side story"
+          "relation_type": "Side story"
         },
         {
           "title": "Bungaku Shoujo",
           "url": "https://anilist.co/anime/6408",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
           "url": "https://anime-planet.com/anime/bungaku-shoujo-kyou-no-oyatsu-hatsukoi",
-          "relationship": "Side story"
+          "relation_type": "Side story"
         },
         {
           "title": "Bungaku Shoujo Movie",
           "url": "https://anime-planet.com/anime/bungaku-shoujo-movie",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
           "url": "https://animecountdown.com/37286",
-          "relationship": "Side story"
+          "relation_type": "Side story"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
           "url": "https://animecountdown.com/38239",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
           "url": "https://anisearch.com/anime/5387",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
           "url": "https://anisearch.com/anime/5970",
-          "relationship": "Side story"
+          "relation_type": "Side story"
         },
         {
           "title": "\"Bungaku Shoujo\" Movie",
           "url": "https://kitsu.app/anime/4550",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "\"Bungaku Shoujo\" Movie",
           "url": "https://livechart.me/anime/4198",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "\"Bungaku Shoujo\": Kyou no Oyatsu - Hatsukoi",
           "url": "https://livechart.me/anime/5549",
-          "relationship": "Side story"
+          "relation_type": "Side story"
         },
         {
           "title": "\"Bungaku Shoujo\" Movie",
           "url": "https://myanimelist.net/anime/6408",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "\"Bungaku Shoujo\" Movie",
           "url": "https://notify.moe/anime/UUie5KimR",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
           "url": "https://simkl.com/anime/37286",
-          "relationship": "Side story"
+          "relation_type": "Side story"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
           "url": "https://simkl.com/anime/38239",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
           "url": "https://myanimelist.net/anime/6408/Bungaku_Shoujo_Movie",
-          "relationship": "Sequel"
+          "relation_type": "Sequel"
         }
       ],
       "relations": [
@@ -5058,7 +4645,7 @@
         "delayed_timetable": false
       },
       "duration": {
-        "value": 1440,
+        "value": 1460,
         "unit": "SECONDS"
       },
       "episode_overrides": {
@@ -5117,13 +4704,9 @@
               "name": "Shunsuke Tada",
               "native_name": "多田俊介",
               "role": "Director",
-              "primary_occupations": [
-                "Director"
-              ],
+              "primary_occupations": ["Director"],
               "community_favorites": 0,
-              "alternative_names": [
-                "Tada Shunsuke"
-              ]
+              "alternative_names": ["Tada Shunsuke"]
             }
           ],
           "music_composers": [
@@ -5135,14 +4718,9 @@
               "name": "Masumi Itou",
               "native_name": "伊藤真澄",
               "role": "Music",
-              "primary_occupations": [
-                "Music",
-                "Music Composer"
-              ],
+              "primary_occupations": ["Music", "Music Composer"],
               "community_favorites": 0,
-              "alternative_names": [
-                "Itou Masumi"
-              ]
+              "alternative_names": ["Itou Masumi"]
             }
           ],
           "character_designers": [
@@ -5167,9 +4745,7 @@
               },
               "name": "Yamada Yuka",
               "role": "Series Writer",
-              "primary_occupations": [
-                "Series Writer"
-              ],
+              "primary_occupations": ["Series Writer"],
               "community_favorites": 0,
               "alternative_names": []
             }
@@ -5183,13 +4759,9 @@
               "name": "Mizuki Nomura",
               "native_name": "野村美月",
               "role": "Original Creator",
-              "primary_occupations": [
-                "Original Creator"
-              ],
+              "primary_occupations": ["Original Creator"],
               "community_favorites": 0,
-              "alternative_names": [
-                "Nomura Mizuki"
-              ]
+              "alternative_names": ["Nomura Mizuki"]
             },
             {
               "staff_ids": {
@@ -5198,9 +4770,7 @@
               "name": "Miho Takeoka",
               "native_name": "竹岡美穂",
               "role": "Original Character Design",
-              "primary_occupations": [
-                "Original Character Design"
-              ],
+              "primary_occupations": ["Original Character Design"],
               "community_favorites": 0,
               "alternative_names": []
             }
@@ -5212,9 +4782,7 @@
               },
               "name": "Production I.G",
               "role": "Animation Studio",
-              "primary_occupations": [
-                "Animation Studio"
-              ],
+              "primary_occupations": ["Animation Studio"],
               "community_favorites": 0,
               "alternative_names": []
             }
@@ -5227,9 +4795,7 @@
               "name": "Itsurou Kawasaki",
               "native_name": "川崎逸朗",
               "role": "Episode Director",
-              "primary_occupations": [
-                "Episode Director"
-              ],
+              "primary_occupations": ["Episode Director"],
               "community_favorites": 0,
               "alternative_names": []
             }
@@ -5242,9 +4808,7 @@
               "name": "Kanta Kamei",
               "native_name": "亀井幹太",
               "role": "Storyboard",
-              "primary_occupations": [
-                "Storyboard"
-              ],
+              "primary_occupations": ["Storyboard"],
               "community_favorites": 0,
               "alternative_names": []
             },
@@ -5255,9 +4819,7 @@
               "name": "Hideyo Yamamoto",
               "native_name": "山本秀世",
               "role": "Storyboard",
-              "primary_occupations": [
-                "Storyboard"
-              ],
+              "primary_occupations": ["Storyboard"],
               "community_favorites": 0,
               "alternative_names": []
             }
@@ -5270,9 +4832,7 @@
               "name": "Youko Kikuchi",
               "native_name": "菊地洋子",
               "role": "Key Animation",
-              "primary_occupations": [
-                "Key Animation"
-              ],
+              "primary_occupations": ["Key Animation"],
               "community_favorites": 0,
               "alternative_names": []
             }
@@ -5285,9 +4845,7 @@
               "name": "KOKIA",
               "native_name": "コキア ",
               "role": "Theme Song Performance (ED: ep 1)",
-              "primary_occupations": [
-                "Theme Song Performance (ED: ep 1)"
-              ],
+              "primary_occupations": ["Theme Song Performance (ED: ep 1)"],
               "community_favorites": 0,
               "alternative_names": []
             },
@@ -5298,9 +4856,7 @@
               "name": "CooRie",
               "native_name": "クーリエ",
               "role": "Theme Song Performance (OP, ED: ep 3)",
-              "primary_occupations": [
-                "Theme Song Performance (OP, ED: ep 3)"
-              ],
+              "primary_occupations": ["Theme Song Performance (OP, ED: ep 3)"],
               "community_favorites": 0,
               "alternative_names": []
             },
@@ -5311,9 +4867,7 @@
               "name": "Rino",
               "native_name": "りの",
               "role": "Theme Song Composition (OP, ED: ep 3)",
-              "primary_occupations": [
-                "Theme Song Composition (OP, ED: ep 3)"
-              ],
+              "primary_occupations": ["Theme Song Composition (OP, ED: ep 3)"],
               "community_favorites": 0,
               "alternative_names": []
             },
@@ -5324,9 +4878,7 @@
               "name": "Kaoru Ookubo",
               "native_name": "大久保薫",
               "role": "Theme Song Arrangement (OP, ED: ep 3)",
-              "primary_occupations": [
-                "Theme Song Arrangement (OP, ED: ep 3)"
-              ],
+              "primary_occupations": ["Theme Song Arrangement (OP, ED: ep 3)"],
               "community_favorites": 0,
               "alternative_names": []
             }
@@ -5339,9 +4891,7 @@
               "name": "Rui Kuroki",
               "native_name": "黒木るい",
               "role": "Producer",
-              "primary_occupations": [
-                "Producer"
-              ],
+              "primary_occupations": ["Producer"],
               "community_favorites": 0,
               "alternative_names": []
             }
@@ -5386,9 +4936,7 @@
                 "mal": 61
               },
               "name": "Saitou, Chiwa",
-              "character_assignments": [
-                "Konoha Inoue"
-              ],
+              "character_assignments": ["Konoha Inoue"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/3/79603.jpg?s=102f06b9af377a674d4aeb2b7ab1f018"
             },
             {
@@ -5396,9 +4944,7 @@
                 "mal": 88
               },
               "name": "Irino, Miyu",
-              "character_assignments": [
-                "Konoha Inoue"
-              ],
+              "character_assignments": ["Konoha Inoue"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/2/80313.jpg?s=9dce08c51de682061b953fd6d2cf263f"
             },
             {
@@ -5406,9 +4952,7 @@
                 "mal": 185
               },
               "name": "Hanazawa, Kana",
-              "character_assignments": [
-                "Tooko Amano"
-              ],
+              "character_assignments": ["Tooko Amano"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/3/69318.jpg?s=afd1edec82f25a1c57b35262f417412c"
             },
             {
@@ -5416,9 +4960,7 @@
                 "mal": 599
               },
               "name": "Toyosaki, Aki",
-              "character_assignments": [
-                "Chia Takeda"
-              ],
+              "character_assignments": ["Chia Takeda"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/1/82665.jpg?s=99afe51dc4545149bd78358ed6d942c7"
             },
             {
@@ -5426,9 +4968,7 @@
                 "mal": 1696
               },
               "name": "Shimoda, Asami",
-              "character_assignments": [
-                "Kurara Mori"
-              ],
+              "character_assignments": ["Kurara Mori"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/1/57443.jpg?s=cadefb75f1807b7ccce8dedee1ba4c62"
             },
             {
@@ -5436,9 +4976,7 @@
                 "mal": 65
               },
               "name": "Miyano, Mamoru",
-              "character_assignments": [
-                "Ryuuto Sakurai"
-              ],
+              "character_assignments": ["Ryuuto Sakurai"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/1/66414.jpg?s=8880db148c2eb5fffd3724f381eec784"
             },
             {
@@ -5446,9 +4984,7 @@
                 "mal": 81
               },
               "name": "Mizuki, Nana",
-              "character_assignments": [
-                "Nanase Kotobuki"
-              ],
+              "character_assignments": ["Nanase Kotobuki"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/2/79687.jpg?s=8ca4fb9247ff66ab2446fe6afdab9bb5"
             },
             {
@@ -5456,9 +4992,7 @@
                 "mal": 4
               },
               "name": "Hirano, Aya",
-              "character_assignments": [
-                "Miu Asakura"
-              ],
+              "character_assignments": ["Miu Asakura"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/3/78608.jpg?s=38b29d5c7ac8810fcadb50be79c87eb9"
             },
             {
@@ -5466,9 +5000,7 @@
                 "mal": 9
               },
               "name": "Mitsuishi, Kotono",
-              "character_assignments": [
-                "Kanako Sakurai"
-              ],
+              "character_assignments": ["Kanako Sakurai"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/2/75738.jpg?s=0a5dc28c215fd63def12e226bbde9305"
             },
             {
@@ -5476,9 +5008,7 @@
                 "mal": 260
               },
               "name": "Chiba, Susumu",
-              "character_assignments": [
-                " Sasaki"
-              ],
+              "character_assignments": [" Sasaki"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/2/55045.jpg?s=b573e4450ea0f18317111fc14be0de01"
             },
             {
@@ -5486,9 +5016,7 @@
                 "mal": 63
               },
               "name": "Fujiwara, Keiji",
-              "character_assignments": [
-                "Fumiharu Amano"
-              ],
+              "character_assignments": ["Fumiharu Amano"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/3/57226.jpg?s=9e305f6687d1e7e02a732c8f7fbe58ba"
             },
             {
@@ -5496,9 +5024,7 @@
                 "mal": 195
               },
               "name": "Inoue, Kikuko",
-              "character_assignments": [
-                "Yui Amano"
-              ],
+              "character_assignments": ["Yui Amano"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/3/69603.jpg?s=6c60774638656f054f2a686a580d85b4"
             },
             {
@@ -5506,9 +5032,7 @@
                 "mal": 6725
               },
               "name": "Yamagata, Kaori",
-              "character_assignments": [
-                "Mother Asakura"
-              ],
+              "character_assignments": ["Mother Asakura"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/2/74515.jpg?s=90019e75c38f9b70900eab74a43e14e5"
             },
             {
@@ -5516,9 +5040,7 @@
                 "mal": 80
               },
               "name": "Hisakawa, Aya",
-              "character_assignments": [
-                "Mother Inoue"
-              ],
+              "character_assignments": ["Mother Inoue"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/1/55009.jpg?s=0a90d5fa92cd90c29ff395e341e21a0a"
             },
             {
@@ -5526,9 +5048,7 @@
                 "mal": 10045
               },
               "name": "Nishigaki, Yuka",
-              "character_assignments": [
-                "Eri"
-              ],
+              "character_assignments": ["Eri"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/2/40124.jpg?s=1f092c2fdb5e73ce778313d0db712599"
             },
             {
@@ -5536,9 +5056,7 @@
                 "mal": 41235
               },
               "name": "Tamura, Chika",
-              "character_assignments": [
-                "Miki"
-              ],
+              "character_assignments": ["Miki"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/3/44218.jpg?s=fbb503d15a120776b7ed7c8ae59fc83d"
             },
             {
@@ -5546,9 +5064,7 @@
                 "mal": 6602
               },
               "name": "Umezu, Hideyuki",
-              "character_assignments": [
-                "Father Asakura"
-              ],
+              "character_assignments": ["Father Asakura"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/3/80554.jpg?s=fac93cd952f05480a0b591335b8637bf"
             },
             {
@@ -5556,9 +5072,7 @@
                 "mal": 380
               },
               "name": "Yahagi, Sayuri",
-              "character_assignments": [
-                " Haruguchi"
-              ],
+              "character_assignments": [" Haruguchi"],
               "image": "https://cdn.myanimelist.net/images/voiceactors/2/67462.jpg?s=d426577b5c3d07f472cac6fcb002b68a"
             }
           ]
@@ -5617,9 +5131,7 @@
         {
           "name": "Amano, Tooko",
           "role": "Main",
-          "name_variations": [
-            "天野遠子"
-          ],
+          "name_variations": ["天野遠子"],
           "name_kanji": "天野遠子",
           "name_native": "天野遠子",
           "nicknames": [],
@@ -5641,9 +5153,7 @@
         {
           "name": "Inoue, Konoha",
           "role": "Main",
-          "name_variations": [
-            "井上心葉"
-          ],
+          "name_variations": ["井上心葉"],
           "name_kanji": "井上心葉",
           "name_native": "井上心葉",
           "nicknames": [],
@@ -5665,9 +5175,7 @@
         {
           "name": "Asakura, Miu",
           "role": "Supporting",
-          "name_variations": [
-            "朝倉美羽"
-          ],
+          "name_variations": ["朝倉美羽"],
           "name_kanji": "朝倉美羽",
           "name_native": "朝倉美羽",
           "nicknames": [],
@@ -5689,9 +5197,7 @@
         {
           "name": "Kotobuki, Nanase",
           "role": "Supporting",
-          "name_variations": [
-            "琴吹七瀬"
-          ],
+          "name_variations": ["琴吹七瀬"],
           "name_kanji": "琴吹七瀬",
           "name_native": "琴吹七瀬",
           "nicknames": [],
@@ -5713,9 +5219,7 @@
         {
           "name": "Akutagawa, Kazushi",
           "role": "Supporting",
-          "name_variations": [
-            "芥川一志"
-          ],
+          "name_variations": ["芥川一志"],
           "name_kanji": "芥川一志",
           "name_native": "芥川一志",
           "nicknames": [],
@@ -5735,14 +5239,9 @@
           ]
         }
       ],
-      "content_warnings": [
-        "Psychological themes",
-        "Trauma"
-      ],
+      "content_warnings": ["Psychological themes", "Trauma"],
       "demographics": [],
-      "ending_themes": [
-        "\"Harukana Hibi (遥かな日々)\" by eufonius"
-      ],
+      "ending_themes": ["\"Harukana Hibi (遥かな日々)\" by eufonius"],
       "episode_details": [
         {
           "title": "\"Bungaku Shoujo\" Movie",
@@ -5753,41 +5252,36 @@
           "duration": 6000
         }
       ],
-      "genres": [
-        "Drama",
-        "Mystery",
-        "Romance",
-        "Psychological"
-      ],
+      "genres": ["Drama", "Mystery", "Romance", "Psychological"],
       "licensors": [],
       "opening_themes": [],
       "related_anime": [
         {
           "title": "\"Bungaku Shoujo\" Memoire",
           "url": "https://myanimelist.net/anime/8481",
-          "relationship": "Prequel"
+          "relation_type": "Prequel"
         },
         {
           "title": "\"Bungaku Shoujo\" Kyou no Oyatsu: Hatsukoi",
           "url": "https://myanimelist.net/anime/7669",
-          "relationship": "Side Story"
+          "relation_type": "Side Story"
         }
       ],
       "relations": [
         {
           "title": "\"Bungaku Shoujo\" to Shinitagari no Pierrot",
           "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot",
-          "relationship": "Adaptation"
+          "relation_type": "Adaptation"
         },
         {
           "title": "\"Bungaku Shoujo\" to Ue Kawaku Ghost",
           "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost",
-          "relationship": "Adaptation"
+          "relation_type": "Adaptation"
         },
         {
           "title": "\"Bungaku Shoujo\" Series",
           "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series",
-          "relationship": "Adaptation"
+          "relation_type": "Adaptation"
         }
       ],
       "sources": [
@@ -6008,9 +5502,7 @@
               "name": "Tada Shunsuke",
               "native_name": "多田俊介",
               "role": "Director",
-              "primary_occupations": [
-                "Director"
-              ]
+              "primary_occupations": ["Director"]
             },
             {
               "staff_ids": {
@@ -6019,9 +5511,7 @@
               "name": "Shinpei Ezaki",
               "native_name": "江崎慎平",
               "role": "Assistant_Director",
-              "primary_occupations": [
-                "Assistant Director"
-              ]
+              "primary_occupations": ["Assistant Director"]
             }
           ],
           "music_composers": [
@@ -6033,10 +5523,7 @@
               "name": "Itou Masumi",
               "native_name": "伊藤真澄",
               "role": "Music_Composer",
-              "primary_occupations": [
-                "Composer",
-                "Musician"
-              ]
+              "primary_occupations": ["Composer", "Musician"]
             }
           ],
           "character_designers": [
@@ -6048,9 +5535,7 @@
               "name": "Matsumoto Keita",
               "native_name": "松本圭太",
               "role": "Character_Designer",
-              "primary_occupations": [
-                "Character Designer"
-              ]
+              "primary_occupations": ["Character Designer"]
             },
             {
               "staff_ids": {
@@ -6059,9 +5544,7 @@
               "name": "Miho Takeoka",
               "native_name": "竹岡美穂",
               "role": "Original_Character_Designer",
-              "primary_occupations": [
-                "Character Designer"
-              ]
+              "primary_occupations": ["Character Designer"]
             }
           ],
           "animation_directors": [
@@ -6073,9 +5556,7 @@
               "name": "Matsumoto Keita",
               "native_name": "松本圭太",
               "role": "Animation_Director",
-              "primary_occupations": [
-                "Animation Director"
-              ]
+              "primary_occupations": ["Animation Director"]
             }
           ],
           "original_creators": [
@@ -6087,10 +5568,7 @@
               "name": "Nomura Mizuki",
               "native_name": "野村美月",
               "role": "Original_Creator",
-              "primary_occupations": [
-                "Writer",
-                "Novelist"
-              ]
+              "primary_occupations": ["Writer", "Novelist"]
             }
           ],
           "series_writers": [
@@ -6101,9 +5579,7 @@
               "name": "Yuka Yamada",
               "native_name": "山田由香",
               "role": "Series_Writer",
-              "primary_occupations": [
-                "Script Writer"
-              ]
+              "primary_occupations": ["Script Writer"]
             }
           ],
           "art_directors": [
@@ -6114,9 +5590,7 @@
               "name": "Michie Suzuki",
               "native_name": "鈴木路恵",
               "role": "Art_Director",
-              "primary_occupations": [
-                "Art Director"
-              ]
+              "primary_occupations": ["Art Director"]
             },
             {
               "staff_ids": {
@@ -6125,9 +5599,7 @@
               "name": "Aya Kuginuki",
               "native_name": "釘貫彩",
               "role": "Assistant_Art_Director",
-              "primary_occupations": [
-                "Assistant Art Director"
-              ]
+              "primary_occupations": ["Assistant Art Director"]
             }
           ],
           "sound_directors": [
@@ -6138,9 +5610,7 @@
               "name": "Toshihiko Nakajima",
               "native_name": "中嶋聡彦",
               "role": "Sound_Director",
-              "primary_occupations": [
-                "Sound Director"
-              ]
+              "primary_occupations": ["Sound Director"]
             }
           ]
         },
@@ -6187,9 +5657,7 @@
               },
               "name": "Hanazawa Kana",
               "native_name": "花澤香菜",
-              "character_assignments": [
-                "Amano Tooko"
-              ],
+              "character_assignments": ["Amano Tooko"],
               "image": "https://cdn.anidb.net/images/main/275593.jpg"
             },
             {
@@ -6198,9 +5666,7 @@
               },
               "name": "Irino Miyu",
               "native_name": "入野自由",
-              "character_assignments": [
-                "Inoue Konoha"
-              ],
+              "character_assignments": ["Inoue Konoha"],
               "image": "https://cdn.anidb.net/images/main/266725.jpg"
             },
             {
@@ -6209,9 +5675,7 @@
               },
               "name": "Hirano Aya",
               "native_name": "平野綾",
-              "character_assignments": [
-                "Asakura Miu"
-              ],
+              "character_assignments": ["Asakura Miu"],
               "image": "https://cdn.anidb.net/images/main/177060.jpg"
             },
             {
@@ -6220,9 +5684,7 @@
               },
               "name": "Mizuki Nana",
               "native_name": "水樹奈々",
-              "character_assignments": [
-                "Kotobuki Nanase"
-              ],
+              "character_assignments": ["Kotobuki Nanase"],
               "image": "https://cdn.anidb.net/images/main/170423.jpg"
             },
             {
@@ -6231,9 +5693,7 @@
               },
               "name": "Ono Daisuke",
               "native_name": "小野大輔",
-              "character_assignments": [
-                "Akutagawa Kazushi"
-              ],
+              "character_assignments": ["Akutagawa Kazushi"],
               "image": "https://cdn.anidb.net/images/main/11257.jpeg"
             }
           ]
@@ -6292,9 +5752,7 @@
       "title": "\"Calpis\" Hakkou Monogatari",
       "title_japanese": "「カルピス」発酵ものがたり",
       "type": "SPECIAL",
-      "characters": {
-        "characters": []
-      },
+      "characters": [],
       "content_warnings": [],
       "demographics": [],
       "episode_details": {
@@ -6316,11 +5774,7 @@
           }
         ]
       },
-      "genres": [
-        "Food and Beverage",
-        "Historical",
-        "Promotional"
-      ],
+      "genres": ["Food and Beverage", "Historical", "Promotional"],
       "related_anime": [],
       "relations": [],
       "sources": [
@@ -6497,21 +5951,9 @@
         "arithmeticMean": 5.880999587713873,
         "median": 5.709181818181818
       },
-      "synonyms": [
-        "Eiji",
-        "「エイジ」",
-        "エイジ"
-      ],
-      "studios": [
-        "animate film",
-        "production i.g"
-      ],
-      "producers": [
-        "animate film",
-        "movic",
-        "pony canyon",
-        "shueisha"
-      ],
+      "synonyms": ["Eiji", "「エイジ」", "エイジ"],
+      "studios": ["animate film", "production i.g"],
+      "producers": ["animate film", "movic", "pony canyon", "shueisha"],
       "relatedAnime": [],
       "tags": [
         "achromatic",
@@ -6670,10 +6112,7 @@
           }
         }
       ],
-      "content_warnings": [
-        "Violence",
-        "Strong Language"
-      ],
+      "content_warnings": ["Violence", "Strong Language"],
       "demographics": [],
       "ending_themes": [],
       "episode_details": [
@@ -6692,11 +6131,7 @@
           "streaming": {}
         }
       ],
-      "genres": [
-        "Comedy",
-        "Drama",
-        "Sports"
-      ],
+      "genres": ["Comedy", "Drama", "Sports"],
       "licensors": [],
       "opening_themes": [],
       "related_anime": [],
@@ -6928,9 +6363,7 @@
       "synopsis": "An anime/documentary series about athletes presented by NHK. The first episode adapts material from Itou Tomoyoshi and Morita Shingo's Weekly Young Jump biographical manga Eikou Naki Tensai-tachi (Geniuses Without Glory) — specifically the story about Furuhashi Hironoshin, the swimmer also known as \"the flying fish of Fujiyama.\" The episode also includes interviews with Olympic swimmer Kitajima Kousuke and other Japanese swimmers about the how Furuhashi changed the Japanese competitive swimming world, as well as what sort of training is required to be an Olympic swimmer. Source: ANN",
       "thumbnail": "https://cdn.myanimelist.net/images/anime/4/84552t.jpg",
       "title_japanese": "\"栄光なき天才たち\"からの物語",
-      "characters": {
-        "characters": []
-      },
+      "characters": [],
       "content_warnings": [],
       "demographics": [],
       "episode_details": {
@@ -7231,11 +6664,7 @@
         {
           "name": "Karon Yamada",
           "role": "Supporting",
-          "name_variations": [
-            "山田 カロン",
-            "山田カロン",
-            "Karon"
-          ],
+          "name_variations": ["山田 カロン", "山田カロン", "Karon"],
           "name_kanji": "山田 カロン",
           "name_native": "山田カロン",
           "nicknames": [],
@@ -7287,11 +6716,7 @@
         {
           "name": "Reca Kanae",
           "role": "Supporting",
-          "name_variations": [
-            "叶 レカ",
-            "叶レカ",
-            "Kanae Reka"
-          ],
+          "name_variations": ["叶 レカ", "叶レカ", "Kanae Reka"],
           "name_kanji": "叶 レカ",
           "name_native": "叶レカ",
           "nicknames": [],
@@ -7315,11 +6740,7 @@
         {
           "name": "Hakua Tsuranari",
           "role": "Main",
-          "name_variations": [
-            "面鳴 白亜",
-            "面鳴白亜",
-            "Tsuranari Hakua"
-          ],
+          "name_variations": ["面鳴 白亜", "面鳴白亜", "Tsuranari Hakua"],
           "name_kanji": "面鳴 白亜",
           "name_native": "面鳴白亜",
           "nicknames": [],
@@ -7343,11 +6764,7 @@
         {
           "name": "Kougyoku Tsuranari",
           "role": "Main",
-          "name_variations": [
-            "面鳴 紅玉",
-            "面鳴紅玉",
-            "Tsuranari Kougyoku"
-          ],
+          "name_variations": ["面鳴 紅玉", "面鳴紅玉", "Tsuranari Kougyoku"],
           "name_kanji": "面鳴 紅玉",
           "name_native": "面鳴紅玉",
           "nicknames": [],
@@ -7371,10 +6788,7 @@
         {
           "name": "Megane",
           "role": "Supporting",
-          "name_variations": [
-            "眼鏡",
-            "Megane "
-          ],
+          "name_variations": ["眼鏡", "Megane "],
           "name_kanji": "眼鏡",
           "name_native": "眼鏡",
           "nicknames": [],
@@ -7398,10 +6812,7 @@
         {
           "name": "Alice",
           "role": "Supporting",
-          "name_variations": [
-            "アリス",
-            "Alice "
-          ],
+          "name_variations": ["アリス", "Alice "],
           "name_kanji": "アリス",
           "name_native": "アリス",
           "nicknames": [],
@@ -7696,9 +7107,7 @@
             {
               "name": "Yuuichirou Umehara",
               "native_name": "梅原裕一郎",
-              "character_assignments": [
-                "Uro Yamada"
-              ],
+              "character_assignments": ["Uro Yamada"],
               "staff_ids": {
                 "anidb": "39792",
                 "anilist": "118908"
@@ -7707,9 +7116,7 @@
             {
               "name": "Asami Seto",
               "native_name": "瀬戸麻沙美",
-              "character_assignments": [
-                "Karon Yamada"
-              ],
+              "character_assignments": ["Karon Yamada"],
               "staff_ids": {
                 "anidb": "21733",
                 "anilist": "106787"
@@ -7718,9 +7125,7 @@
             {
               "name": "Sumire Uesaka",
               "native_name": "上坂すみれ",
-              "character_assignments": [
-                "Airo Kurashiki"
-              ],
+              "character_assignments": ["Airo Kurashiki"],
               "staff_ids": {
                 "anidb": "28602",
                 "anilist": "109441"
@@ -7729,9 +7134,7 @@
             {
               "name": "Satomi Satou",
               "native_name": "佐藤聡美",
-              "character_assignments": [
-                "Reca Kanae"
-              ],
+              "character_assignments": ["Reca Kanae"],
               "staff_ids": {
                 "anidb": "162",
                 "anilist": "101560"
@@ -7740,9 +7143,7 @@
             {
               "name": "Yumi Uchiyama",
               "native_name": "内山夕実",
-              "character_assignments": [
-                "Hakua Tsuranari"
-              ],
+              "character_assignments": ["Hakua Tsuranari"],
               "staff_ids": {
                 "anidb": "23686",
                 "anilist": "106784"
@@ -7751,9 +7152,7 @@
             {
               "name": "Mikako Komatsu",
               "native_name": "小松未可子",
-              "character_assignments": [
-                "Kougyoku Tsuranari"
-              ],
+              "character_assignments": ["Kougyoku Tsuranari"],
               "staff_ids": {
                 "anidb": "16085",
                 "anilist": "105071"
@@ -7762,9 +7161,7 @@
             {
               "name": "Daisuke Namikawa",
               "native_name": "浪川大輔",
-              "character_assignments": [
-                "Megane"
-              ],
+              "character_assignments": ["Megane"],
               "staff_ids": {
                 "anidb": "265",
                 "anilist": "95087"
@@ -7773,9 +7170,7 @@
             {
               "name": "Eri Kitamura",
               "native_name": "喜多村英梨",
-              "character_assignments": [
-                "Alice"
-              ],
+              "character_assignments": ["Alice"],
               "staff_ids": {
                 "anidb": "401",
                 "anilist": "95413"
@@ -7837,15 +7232,11 @@
       "title_english": "100 Years of Work in Japan",
       "title_japanese": "\"働く\"の100年史",
       "type": "SPECIAL",
-      "characters": {
-        "characters": []
-      },
+      "characters": [],
       "content_warnings": [],
       "demographics": [],
       "episode_details": [],
-      "genres": [
-        "Slice of Life"
-      ],
+      "genres": ["Slice of Life"],
       "related_anime": [],
       "relations": [],
       "sources": [
@@ -8074,11 +7465,7 @@
       ],
       "streaming_info": [],
       "streaming_licenses": [],
-      "synonyms": [
-        "I=Fantasy",
-        "\"hitman\" bang: I=Fantasy",
-        "FANTASY"
-      ],
+      "synonyms": ["I=Fantasy", "\"hitman\" bang: I=Fantasy", "FANTASY"],
       "tags": [
         "cg animation",
         "korean animation",
@@ -8229,9 +7616,7 @@
       "opening_themes": [],
       "related_anime": [],
       "relations": [],
-      "sources": [
-        "https://anisearch.com/anime/18676"
-      ],
+      "sources": ["https://anisearch.com/anime/18676"],
       "streaming_info": [],
       "streaming_licenses": [],
       "synonyms": [
@@ -8240,11 +7625,7 @@
         "Juice=Juice - 「ひとりで生きられそう」って それってねえ、褒めているの？",
         "「ひとりで生きられそう」って それってねえ、褒めているの？"
       ],
-      "tags": [
-        "indefinite",
-        "present",
-        "slice of life"
-      ],
+      "tags": ["indefinite", "present", "slice of life"],
       "themes": [
         {
           "name": "indefinite"
@@ -8340,30 +7721,27 @@
           "title_romaji": null
         }
       ],
-      "genres": [
-        "Comedy",
-        "Parody"
-      ],
+      "genres": ["Comedy", "Parody"],
       "related_anime": [
         {
           "title": "Mameshiba",
           "url": "https://myanimelist.net/anime/7261/Mameshiba",
-          "relationship": "Special"
+          "relation_type": "Special"
         },
         {
           "title": "Mameshiba",
           "url": "https://anime-planet.com/anime/mameshiba",
-          "relationship": "Special"
+          "relation_type": "Special"
         },
         {
           "title": "Mameshiba",
           "url": "https://kitsu.app/anime/4918",
-          "relationship": "Special"
+          "relation_type": "Special"
         },
         {
           "title": "Mameshiba",
           "url": "https://kitsu.app/anime/4918",
-          "relationship": "Special"
+          "relation_type": "Special"
         }
       ],
       "relations": [],
@@ -8487,9 +7865,7 @@
       "content_warnings": [],
       "demographics": [],
       "episode_details": [],
-      "genres": [
-        "Comedy"
-      ],
+      "genres": ["Comedy"],
       "related_anime": [
         {
           "title": "Mameshiba",
@@ -8514,13 +7890,7 @@
         "Kinako Movie x Mameshiba",
         "映画『きな子』×豆しば"
       ],
-      "tags": [
-        "based on a movie",
-        "comedy",
-        "crossover",
-        "dogs",
-        "parody"
-      ],
+      "tags": ["based on a movie", "comedy", "crossover", "dogs", "parody"],
       "themes": [
         {
           "name": "Parody",
@@ -8640,12 +8010,7 @@
           "streaming": {}
         }
       ],
-      "genres": [
-        "Comedy",
-        "Commercials",
-        "Promotional",
-        "Short Episodes"
-      ],
+      "genres": ["Comedy", "Commercials", "Promotional", "Short Episodes"],
       "licensors": [],
       "opening_themes": [],
       "related_anime": [
@@ -8679,9 +8044,7 @@
       ],
       "streaming_info": [],
       "streaming_licenses": [],
-      "synonyms": [
-        "Kiss Dekiru Gyoza x Mameshiba Movie"
-      ],
+      "synonyms": ["Kiss Dekiru Gyoza x Mameshiba Movie"],
       "tags": [
         "comedy",
         "commercials",
@@ -8764,6 +8127,1775 @@
       "enrichment_metadata": {
         "source": "multi-source",
         "enriched_at": "2025-07-30T16:23:24.769332+00:00",
+        "success": true,
+        "error_message": null
+      }
+    },
+    {
+      "episodes": 1,
+      "month": "October",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1553/147281.jpg",
+      "rating": "PG-13 - Teens 13 or older",
+      "source_material": "Light novel",
+      "status": "FINISHED",
+      "synopsis": "A New Year's greetings to promote the release of Mahouka Koukou no Rettousei Movie: Yotsuba Keishou-hen.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1553/147281t.jpg",
+      "title": "\"Mahouka Koukou no Rettousei\" Yori Shinnen no Goaisatsu 2025",
+      "title_japanese": "「魔法科高校の劣等生」より新年のご挨拶 ２０２５",
+      "type": "PV",
+      "awards": [],
+      "characters": [
+        {
+          "name": "Shiba, Tatsuya",
+          "role": "Main",
+          "image_url": "https://cdn.myanimelist.net/images/characters/16/236781.jpg?s=9f7943dd885f0d2a4ad7fa63c3f110eb",
+          "voice_actors": []
+        },
+        {
+          "name": "Shiba, Miyuki",
+          "role": "Main",
+          "image_url": "https://cdn.myanimelist.net/images/characters/4/240187.jpg?s=8b2f548a4b9bd2dfbd7d06720c06c02a",
+          "voice_actors": []
+        }
+      ],
+      "content_warnings": [],
+      "demographics": [],
+      "ending_themes": [],
+      "episode_details": [],
+      "genres": [
+        "Comedy",
+        "Action",
+        "Magic",
+        "Romance",
+        "School",
+        "Sci-Fi",
+        "Supernatural"
+      ],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [
+        {
+          "title": "Mahouka Koukou no Rettousei Movie: Yotsuba Keishou-hen",
+          "url": "https://myanimelist.net/anime/59174",
+          "relation_type": "Movie"
+        }
+      ],
+      "relations": [],
+      "sources": [
+        "https://kitsu.app/anime/49471",
+        "https://myanimelist.net/anime/60669"
+      ],
+      "streaming_info": [],
+      "streaming_licenses": [],
+      "synonyms": ["「魔法科高校の劣等生」より新年のご挨拶 ２０２５"],
+      "tags": ["comedy"],
+      "themes": [],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2025-01-01T00:00:00+00:00",
+        "string": "Jan 1, 2025"
+      },
+      "anime_season": {
+        "season": "WINTER",
+        "year": 2025
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {},
+      "duration": 37,
+      "episode_overrides": {},
+      "external_links": {
+        "officialsite": "https://mahouka.jp/",
+        "wikipedia": "https://en.wikipedia.org/wiki/The_Irregular_at_Magic_High_School#Anime",
+        "official": "https://mahouka.jp",
+        "crunchyroll": "https://www.crunchyroll.com/the-irregular-at-magic-high-school",
+        "funimation": "https://www.funimation.com/shows/the-irregular-at-magic-high-school/",
+        "wakanim": "https://www.wakanim.tv/sc/v2/catalogue/show/207/the-irregular-at-magic-high-school/season/2322/season-2--visitor-arc",
+        "hulu": "https://www.hulu.com/series/the-irregular-at-magic-high-school-80e76834-7c30-45fe-bcaa-1f4ace6a99da",
+        "netflix": "https://www.netflix.com/title/80009361"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/49471/poster_image/large-0cbbf582aa8c46ff9e3660a46d50dbde.jpeg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1553/147281l.jpg",
+            "source": "mal"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "score": {
+        "arithmeticGeometricMean": 5.77,
+        "arithmeticMean": 5.77,
+        "median": 5.77
+      },
+      "staff_data": {
+        "production_staff": [],
+        "studios": [],
+        "producers": [],
+        "voice_actors": []
+      },
+      "statistics": {
+        "mal": {
+          "score": 5.75,
+          "scored_by": 111,
+          "popularity_rank": 19514,
+          "members": 351
+        },
+        "kitsu": {
+          "popularity_rank": 21008,
+          "members": 17
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-30T16:38:21.942639Z",
+        "success": true
+      }
+    },
+    {
+      "episodes": 1,
+      "month": 2,
+      "nsfw": false,
+      "picture": "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/pics/no_pic.png",
+      "rating": "G - All Ages",
+      "source_material": "Original",
+      "status": "FINISHED",
+      "synopsis": "Moving 3D stamps of Kensaku and Enjin are now on sale.\nLiven up the talk with greetings and easy-to-use reactions!\n\n(Source: Kensaku to Enji Official YouTube Channel; translated)",
+      "thumbnail": "https://raw.githubusercontent.com/manami-project/anime-offline-database/master/pics/no_pic_thumbnail.png",
+      "title": "\"Moving in 3D! Usable ♪ Kensaku and Engine",
+      "title_japanese": "LINEスタンプ登場！「3Dでうごく！使える♪けんさくとえんじん」",
+      "type": "ONA",
+      "awards": [],
+      "characters": [],
+      "content_warnings": [],
+      "demographics": ["Kids"],
+      "ending_themes": [],
+      "episode_details": [],
+      "genres": [],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [
+        {
+          "url": "https://myanimelist.net/anime/37017",
+          "title": "Kensaku to Enjin no ABC Days",
+          "relation_type": "ONA"
+        }
+      ],
+      "relations": [],
+      "sources": ["https://myanimelist.net/anime/59601"],
+      "streaming_info": [],
+      "streaming_licenses": [],
+      "synonyms": [
+        "LINE stamps are now available! \"Moving in 3D! Usable ♪ Kensaku and Engine\"",
+        "LINEスタンプ登場！「3Dでうごく！使える♪けんさくとえんじん」"
+      ],
+      "tags": ["anthropomorphic", "kids"],
+      "themes": [],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2021-02-22T00:00:00+00:00"
+      },
+      "anime_season": {
+        "season": "WINTER",
+        "year": 2021
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {},
+      "duration": {
+        "value": 15,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": [],
+      "images": {
+        "posters": [],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/img/sp/icon/apple-touch-icon-256.png",
+            "source": "mal"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "staff_data": {
+        "production_staff": [],
+        "voice_actors": [],
+        "studios": [],
+        "producers": [],
+        "licensors": []
+      },
+      "statistics": {
+        "mal": {}
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-30T16:38:41.063116Z",
+        "success": true
+      }
+    },
+    {
+      "episodes": 12,
+      "status": "UPCOMING",
+      "title": "\"Omae Gotoki ga Maou ni Kateru to Omouna\" to Yuusha Party wo Tsuihou sareta node, Outo de Kimama ni Kurashitai",
+      "picture": "https://cdn.myanimelist.net/images/anime/1248/150792.jpg",
+      "source_material": "Light novel",
+      "synopsis": "Flum Apricot was never meant to be a hero. Despite zero stats across the board and a power she can't even use, she somehow finds herself included in a party of heroes. But Flum's life hits rock bottom when the party's renowned sage, Jean Inteige, decides that the useless girl is dead weight, and arranges to have her sold into slavery. Tossed to monsters to be feasted upon for her master's entertainment, Flum makes the desperate choice to reach for a cursed weapon... and something new awakens within her. A grimdark tale about one woman's blood-soaked quest to reclaim her life!\n\n(Source: Seven Seas Entertainment)",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1248/150792t.jpg",
+      "title_japanese": "「お前ごときが魔王に勝てると思うな」と勇者パーティを追放されたので、王都で気ままに暮らしたい",
+      "type": "TV",
+      "characters": [
+        {
+          "name": "Apricot, Flum",
+          "url": "https://myanimelist.net/character/187661/Flum_Apricot",
+          "character_ids": {
+            "mal": 187661,
+            "anilist": 219037,
+            "anidb": 149412
+          },
+          "images": {
+            "mal": "https://cdn.myanimelist.net/images/characters/15/597780.jpg?s=ba30d6423a9f97223da7354d4b2bfc06"
+          },
+          "role": "Main",
+          "voice_actors": [
+            {
+              "name": "Nanase, Ayaka",
+              "language": "Japanese"
+            }
+          ]
+        },
+        {
+          "name": "Milkit",
+          "role": "MAIN",
+          "voice_actors": [],
+          "character_ids": {
+            "anilist": 219038
+          },
+          "images": {}
+        }
+      ],
+      "content_warnings": [],
+      "demographics": [],
+      "ending_themes": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "title": "Episode 1",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/1"
+        },
+        {
+          "episode_number": 2,
+          "title": "Episode 2",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/2"
+        },
+        {
+          "episode_number": 3,
+          "title": "Episode 3",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/3"
+        },
+        {
+          "episode_number": 4,
+          "title": "Episode 4",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/4"
+        },
+        {
+          "episode_number": 5,
+          "title": "Episode 5",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/5"
+        },
+        {
+          "episode_number": 6,
+          "title": "Episode 6",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/6"
+        },
+        {
+          "episode_number": 7,
+          "title": "Episode 7",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/7"
+        },
+        {
+          "episode_number": 8,
+          "title": "Episode 8",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/8"
+        },
+        {
+          "episode_number": 9,
+          "title": "Episode 9",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/9"
+        },
+        {
+          "episode_number": 10,
+          "title": "Episode 10",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/10"
+        },
+        {
+          "episode_number": 11,
+          "title": "Episode 11",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/11"
+        },
+        {
+          "episode_number": 12,
+          "title": "Episode 12",
+          "filler": false,
+          "recap": false,
+          "url": "https://myanimelist.net/anime/61587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai/episode/12"
+        }
+      ],
+      "genres": [
+        "Action",
+        "Adventure",
+        "Fantasy",
+        "Girls Love",
+        "Drama",
+        "Horror",
+        "Based on a Light Novel",
+        "Dark Fantasy",
+        "Game Elements",
+        "GL",
+        "Master-Servant Relationship",
+        "Monsters",
+        "Prophecy",
+        "Shoujo-ai"
+      ],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [],
+      "relations": [
+        {
+          "title": "\"Omae Gotoki ga Maou ni Kateru to Omouna\" to Yuusha Party wo Tsuihou sareta node, Outo de Kimama ni Kurashitai the Comic",
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/123365/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai_the_Comic"
+        },
+        {
+          "title": "\"Omae Gotoki ga Maou ni Kateru to Omouna\" to Yuusha Party wo Tsuihou sareta node, Outo de Kimama ni Kurashitai",
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/115587/Omae_Gotoki_ga_Maou_ni_Kateru_to_Omouna_to_Yuusha_Party_wo_Tsuihou_sareta_node_Outo_de_Kimama_ni_Kurashitai"
+        }
+      ],
+      "sources": [
+        "https://anidb.net/anime/19310",
+        "https://anilist.co/anime/191718",
+        "https://anime-planet.com/anime/roll-over-and-die-i-will-fight-for-an-ordinary-life-with-my-love-and-cursed-sword",
+        "https://animecountdown.com/2765276",
+        "https://anisearch.com/anime/20475",
+        "https://livechart.me/anime/13149",
+        "https://myanimelist.net/anime/61587",
+        "https://simkl.com/anime/2765276"
+      ],
+      "streaming_info": [],
+      "streaming_licenses": [],
+      "synonyms": [
+        "Outo de Kimama ni Kurashitai",
+        "おまごと",
+        "”Omae gotoki ga Maō ni Kateru to Omō na”to Yūsha Party o Tsuihō Sareta no de, Ōto de Kimama ni Kurashitai",
+        "”Omae gotoki ga Maou ni Kateru to Omou na” to Yuusha Party o Tsuihou Sareta no de, Outo de Kimama ni Kurashitai",
+        "「お前ごときが魔王に勝てると思うな」と勇者パーティを追放されたので, 王都で気ままに暮らしたい",
+        "omagoto",
+        "王都で気ままに暮らしたい",
+        "\"Omae Gotoki ga Maou ni Kateru to Omou na\" to Yuusha Party wo Tsuihou Sareta node, Outo de Kimama ni Kurashitai",
+        "Do You Think Someone Like You Can Defeat the Demon King?",
+        "”Omae gotoki ga Maou ni Kateru to Omou na” to Yuusha Party wo Tsuihou Sareta no de, Outo de Kimama ni Kurashitai",
+        "「お前ごときが魔王に勝てると思うな」と勇者パーティを追放されたので",
+        "\"Omae Gotoki ga Maou ni Kateru to Omou na\" to Yuusha Party wo Tsuihousareta node",
+        "\"Omae Gotoki ga Maou ni Kateru to Omou na\" to Yuusha Party o Tsuihou Sareta node, Outo de Kimama ni Kurashitai",
+        "\"Omae Gotoki ga Maou ni Kateru to Omouna\" to Yuusha Party wo Tsuihou sareta node",
+        "ROLL OVER AND DIE: I Will Fight for an Ordinary Life with My Love and Cursed Sword!",
+        "「お前ごときが魔王に勝てると思うな」と勇者パーティを追放されたので、王都で気ままに暮らしたい",
+        "Roll Over and Die: I Will Fight for an Ordinary Life with My Love and Cursed Sword!"
+      ],
+      "tags": [
+        "action",
+        "action drama",
+        "adventure",
+        "alternative world",
+        "based on a light novel",
+        "body horror",
+        "conspiracy",
+        "dark fantasy",
+        "demons",
+        "drama",
+        "fantasy",
+        "female protagonist",
+        "foreign",
+        "game elements",
+        "girls love",
+        "girls' love",
+        "gl",
+        "gore",
+        "horror",
+        "japanese production",
+        "magic",
+        "master-servant relationship",
+        "medieval",
+        "monsters",
+        "prophecy",
+        "religion",
+        "shoujo-ai",
+        "slavery",
+        "slice of life",
+        "swords & co",
+        "yuri"
+      ],
+      "themes": [
+        {
+          "name": "Female Protagonist",
+          "description": "Main character is female."
+        },
+        {
+          "name": "Yuri",
+          "description": "Prominently features romance between two females, not inherently sexual. Also known as Girls' Love."
+        },
+        {
+          "name": "Medieval",
+          "description": "Partially or completely set in the Middle Ages or a Middle Ages-inspired setting. Commonly features elements such as European castles and knights."
+        },
+        {
+          "name": "Magic",
+          "description": "Prominently features magical elements or the use of magic."
+        },
+        {
+          "name": "Gore",
+          "description": "Prominently features graphic bloodshed and violence."
+        },
+        {
+          "name": "Religion",
+          "description": "Centers on the belief that humanity is related to supernatural, transcendental, and spiritual elements."
+        },
+        {
+          "name": "Conspiracy",
+          "description": "Contains one or more factions controlling or attempting to control the world from the shadows."
+        },
+        {
+          "name": "Slavery",
+          "description": "Prominently features slaves, slavery, or slave trade."
+        },
+        {
+          "name": "Body Horror",
+          "description": "Features characters who undergo horrific transformations or disfigurement, often to their own detriment."
+        },
+        {
+          "name": "Demons",
+          "description": "Prominently features malevolent otherworldly creatures."
+        },
+        {
+          "name": "Foreign",
+          "description": "Partly or completely set in a country outside the country of origin."
+        }
+      ],
+      "trailers": [
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=JQj0-jRAAAk",
+          "thumbnail_url": "https://img.youtube.com/vi/JQj0-jRAAAk/maxresdefault.jpg",
+          "title": "Official Trailer"
+        }
+      ],
+      "aired_dates": {
+        "from": "2026-01-01T00:00:00+00:00",
+        "string": "2026 to ?"
+      },
+      "animeSeason": {
+        "season": "WINTER",
+        "year": 2026
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {},
+      "external_links": {
+        "officialsite": "https://omagoto.com/",
+        "@omagoto_anime": "https://twitter.com/omagoto_anime",
+        "wikipedia": "https://ja.wikipedia.org/wiki/「お前ごときが魔王に勝てると思うな」と勇者パーティを追放されたので、王都で気ままに暮らしたい",
+        "twitter": "https://x.com/omagoto_anime"
+      },
+      "images": {
+        "posters": [],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1248/150792l.jpg",
+            "source": "mal"
+          },
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx191718-CxERuSkmrKYc.png",
+            "source": "anilist"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/roll-over-and-die-i-will-fight-for-an-ordinary-life-with-my-love-and-cursed-sword-1.webp?t=1751300024",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://cdn.anidb.net/images/main/317821.jpg",
+            "source": "anidb"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "statistics": {
+        "mal": {
+          "popularity_rank": 11525,
+          "members": 2432,
+          "favorites": 8
+        },
+        "anilist": {
+          "popularity_rank": 1598,
+          "favorites": 16,
+          "contextual_ranks": [
+            {
+              "rank": 44,
+              "type": "POPULAR",
+              "format": "TV",
+              "year": 2026,
+              "all_time": false,
+              "context": "most popular"
+            }
+          ]
+        }
+      },
+      "staff_data": {
+        "production_staff": [
+          {
+            "name": "Kinta",
+            "role": "Original Character Design",
+            "url": "https://anilist.co/staff/132540"
+          }
+        ]
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-30T16:56:06.229636Z",
+        "success": true
+      }
+    },
+    {
+      "background": "French composer Erik Satie (1866-1925) created the ballet music piece \"Parade\" in 1916, at the age of 50, and it was first performed in 1917, with Jean Cocteau and Pablo Picasso taking part to its creation on the scene. The ballet was introduced by the poet Guillaume Apollinaire, who described it by using the term \"surrealism\" for the very first time. Mixing quotes from Satie's essays with the music performed by a Dutch jazz band, the Willem Breuker Kollektief, this film is an animated re-creation of \"realist ballet\" images going beyond reality.",
+      "episodes": 1,
+      "month": "May",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1714/102585.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Original",
+      "status": "FINISHED",
+      "synopsis": "A Parade for three managers and four performers. French composer Erik Satie (1866-1925) created the ballet music piece \"Parade\" in 1916, at the age of 50, and it was first performed in 1917, with Jean Cocteau and Pablo Picasso taking part to its creation on the scene. The ballet was introduced by the poet Guillaume Apollinaire, who described it by using the term \"surrealism\" for the very first time. Mixing quotes from Satie's essays with the music performed by a Dutch jazz band, the Willem Breuker Kollektief, this film is an animated re-creation of \"realist ballet\" images going beyond reality.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1714/102585t.jpg",
+      "title": "\"Parade\" de Satie",
+      "title_english": "\"Parade\" de Satie",
+      "title_japanese": "サティの「パラード」",
+      "type": "MOVIE",
+      "awards": [],
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "ending_themes": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "title": "\"Parade\" de Satie",
+          "aired": "2016-08-05",
+          "duration": 840,
+          "filler": false,
+          "recap": false,
+          "thumbnails": [],
+          "streaming": {}
+        }
+      ],
+      "genres": ["Avant Garde", "Music"],
+      "licensors": [],
+      "opening_themes": [],
+      "related_anime": [],
+      "relations": [],
+      "sources": [
+        "https://anidb.net/anime/14586",
+        "https://anilist.co/anime/101905",
+        "https://anime-planet.com/anime/parade-de-satie",
+        "https://animeschedule.net/anime/parade-de-satie",
+        "https://animecountdown.com/1190971",
+        "https://kitsu.app/anime/12943",
+        "https://myanimelist.net/anime/34595",
+        "https://notify.moe/anime/Kk-ZhKiiR",
+        "https://simkl.com/anime/1190971"
+      ],
+      "streaming_info": [],
+      "streaming_licenses": [],
+      "synonyms": [
+        "Parade de Satie",
+        "Satie no \"Parade\"",
+        "Satie's \"Parade\"",
+        "Satie's \"Parade\""
+      ],
+      "tags": [
+        "abstract",
+        "action",
+        "avant garde",
+        "classical music",
+        "comedy",
+        "dementia",
+        "drama",
+        "ecchi",
+        "fantasy",
+        "historical",
+        "japanese production",
+        "kids",
+        "magic",
+        "music",
+        "mystery",
+        "romance",
+        "school",
+        "school life",
+        "seinen",
+        "shorts",
+        "shoujo",
+        "slice of life",
+        "sports",
+        "supernatural",
+        "surreal comedy",
+        "thriller"
+      ],
+      "themes": [
+        {
+          "name": "Music",
+          "description": null
+        },
+        {
+          "name": "Magic",
+          "description": "Magic is the art of purportedly manipulating aspects of reality either by supernatural means or through knowledge of unknown occult laws."
+        },
+        {
+          "name": "Historical",
+          "description": "Historical anime have clear ties to our history and usually occur in a particular epoch."
+        },
+        {
+          "name": "Action",
+          "description": "Action anime usually involve a fairly straightforward story of good guys versus bad guys, where most disputes are resolved by using physical force. It often contains a lot of shooting, explosions and fighting."
+        },
+        {
+          "name": "Fantasy",
+          "description": "Fantasy is a genre of fiction that uses magic and other supernatural phenomena as a primary element of plot, theme, or setting. Many works within the genre take place in fictional worlds where magic is common. Fantasy is generally distinguished from science fiction and horror by the expectation that it steers clear of (pseudo-)scientific and macabre themes, respectively, though there is a great deal of overlap between the three (which are subgenres of speculative fiction)."
+        },
+        {
+          "name": "Thriller",
+          "description": "The thriller is a genre of fiction in which tough, resourceful, but essentially ordinary heroes are pitted against villains determined to destroy them, their country, or the stability of the free world. The hero of a typical thriller faces danger alone or in the company of a small band of companions."
+        },
+        {
+          "name": "Comedy",
+          "description": "Anime whose central struggle causes hilarious results. These stories are built upon funny characters, situations and events. A comedy anime is laced with humour and sets out to provoke laughter from the audience."
+        },
+        {
+          "name": "Ecchi",
+          "description": "Fan service is found in many anime, in many forms. When the service has a distinctly sexual slant to it, and it appears to be a major focus of the show, then it's safe to assume you're watching ecchi."
+        },
+        {
+          "name": "Romance",
+          "description": "Romance describes a story that deals with love between two or more characters typically also having an optimistic ending. Romance is also a difficulty encountered when creating a harem."
+        },
+        {
+          "name": "Surreal Comedy",
+          "description": "Prominently features comedic moments that defy casual reasoning, resulting in illogical events."
+        }
+      ],
+      "trailers": [
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=xkAoXy7C6dk",
+          "thumbnail_url": null,
+          "title": "Official Trailer"
+        }
+      ],
+      "aired_dates": {
+        "from": "2016-05-01T00:00:00+00:00",
+        "to": null,
+        "string": "May 2016"
+      },
+      "anime_season": {
+        "season": "SPRING",
+        "year": 2016
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {
+        "delayed_timetable": false
+      },
+      "duration": {
+        "value": 840,
+        "unit": "SECONDS"
+      },
+      "enhanced_metadata": {},
+      "episode_overrides": {},
+      "external_links": {
+        "official": "http://www.yamamura-animation.jp/parade.html",
+        "officialsite": "http://www.yamamura-animation.jp/parade.html",
+        "vimeo": "https://vimeo.com/ondemand/paradedesatiefr"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/12943/original.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1714/102585l.jpg",
+            "source": "mal"
+          },
+          {
+            "url": "https://img.animeschedule.net/production/assets/public/img/anime/jpg/default/parade-de-satie-0adff95730.jpg",
+            "source": "animeschedule"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/parade-de-satie-1.jpg?t=1625783287",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/101905-j7UJdMHBWtkN.jpg",
+            "source": "anilist"
+          },
+          {
+            "url": "https://cdn.anidb.net/images/main/228791.jpg",
+            "source": "anidb"
+          }
+        ],
+        "banners": []
+      },
+      "popularity_trends": {},
+      "premiere_dates": {
+        "original": "2016-05-01"
+      },
+      "score": {
+        "arithmeticGeometricMean": 5.596835011311798,
+        "arithmeticMean": 5.611168831168832,
+        "median": 5.363636363636363
+      },
+      "staff_data": {
+        "production_staff": {
+          "animation_directors": [],
+          "character_designers": [],
+          "directors": [
+            {
+              "name": "Kouji Yamamura",
+              "native_name": "山村浩二",
+              "role": "Director",
+              "birth_date": null,
+              "hometown": null,
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": null,
+              "enhancement_status": "anilist_matched",
+              "image": null,
+              "biography": null,
+              "primary_occupations": ["Director", "Animator"],
+              "years_active": [],
+              "staff_ids": {
+                "anilist": "101065"
+              }
+            }
+          ],
+          "music_composers": [
+            {
+              "name": "Erik Satie",
+              "native_name": "Éric Alfred Leslie Satie",
+              "role": "Music_Composer",
+              "birth_date": "1866-05-17",
+              "hometown": "Honfleur, France",
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": null,
+              "enhancement_status": "anilist_matched",
+              "image": null,
+              "biography": "French composer and pianist (1866-1925), known for his eccentric and minimalist style. Created the ballet music 'Parade' in 1916, which was first performed in 1917 with contributions from Jean Cocteau and Pablo Picasso.",
+              "primary_occupations": ["Composer", "Pianist"],
+              "years_active": [1884, 1925],
+              "staff_ids": {
+                "anilist": "104607"
+              }
+            }
+          ],
+          "original_creators": [
+            {
+              "name": "Jean Cocteau",
+              "native_name": null,
+              "role": "Original_Creator",
+              "birth_date": "1889-07-05",
+              "hometown": "Maisons-Laffitte, France",
+              "gender": null,
+              "blood_type": null,
+              "community_favorites": null,
+              "enhancement_status": "anilist_matched",
+              "image": null,
+              "biography": "French poet, playwright, novelist, designer, filmmaker, artist, and critic. Best known for his novel 'Les Enfants terribles' (1929), and the films 'Blood of a Poet' (1930), 'Beauty and the Beast' (1946), 'Les Parents terribles' (1948), and 'Testament of Orpheus' (1960).",
+              "primary_occupations": ["Writer", "Director", "Artist"],
+              "years_active": [1908, 1963],
+              "staff_ids": {
+                "anilist": "157265"
+              }
+            }
+          ],
+          "series_writers": []
+        },
+        "studios": [
+          {
+            "name": "Yamamura Animation, Inc.",
+            "type": "animation_studio",
+            "url": "https://myanimelist.net/anime/producer/1055/Yamamura_Animation_Inc"
+          }
+        ],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": []
+        }
+      },
+      "statistics": {
+        "mal": {
+          "score": 5.32,
+          "scored_by": 658,
+          "rank": 12938,
+          "popularity_rank": 13484,
+          "members": 1353,
+          "favorites": 2
+        },
+        "animeschedule": {
+          "score": 6.392170715332031,
+          "scored_by": 2,
+          "members": 7,
+          "favorites": 8134
+        },
+        "kitsu": {
+          "score": 6.364,
+          "scored_by": 136,
+          "favorites": 0,
+          "popularity_rank": 13062,
+          "rank": 9454
+        },
+        "anilist": {
+          "score": 4.8,
+          "scored_by": 49,
+          "popularity_rank": 563,
+          "favorites": 3
+        },
+        "anidb": {
+          "score": 4.72,
+          "scored_by": 48
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-30T20:42:09.282039Z",
+        "success": true
+      }
+    },
+    {
+      "episodes": 1,
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1206/141774.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Game",
+      "status": "FINISHED",
+      "synopsis": "From \"Pokemon shirts\" made by freely combining Pokemon patterns, \"Pokemon shirt sizing\", a body measurement service using a smartphone, is now available! A concept movie is now available to help you understand more about the service!\n\nA certain trainer tries to measure Pikachu in order to give him a shirt, but it seems like he's having a hard time.\nAt the end of the video, the secret of the \"Pokemon shirt\" logo is revealed?\n\nPlease pay attention to Pikachu's cute behavior.\n\n(Source: Pokemon official YouTube channel; translated)",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1206/141774t.jpg",
+      "title": "\"Pokemon Shirt Sizing\" Concept Movie",
+      "title_japanese": "「ポケモンシャツ サイジング」コンセプトムービー",
+      "type": "SPECIAL",
+      "characters": [
+        {
+          "name": "Pikachu",
+          "role": "Main",
+          "name_variations": [],
+          "nicknames": [],
+          "character_ids": {
+            "mal": 3891
+          },
+          "images": {
+            "mal": "https://cdn.myanimelist.net/images/characters/10/289627.jpg?s=b97db39e3126c4cc184a764059abe0f6"
+          },
+          "voice_actors": []
+        }
+      ],
+      "content_warnings": [],
+      "demographics": ["Kids"],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "title": "Episode 1",
+          "filler": false,
+          "recap": false,
+          "streaming_info": [],
+          "thumbnails": []
+        }
+      ],
+      "genres": ["Family Friendly"],
+      "related_anime": [
+        {
+          "relation_type": "Other",
+          "title": "Pokemon",
+          "url": "https://myanimelist.net/anime/527/Pokemon"
+        },
+        {
+          "relation_type": "Other",
+          "title": "Pokemon (Original Series)",
+          "url": "https://kitsu.app/anime/486"
+        },
+        {
+          "relation_type": "Other",
+          "title": "Pokemon (Original Series)",
+          "url": "https://myanimelist.net/anime/527"
+        }
+      ],
+      "relations": [],
+      "sources": [
+        "https://anime-planet.com/anime/pokemon-shirt-sizing-concept-movie",
+        "https://kitsu.app/anime/48739",
+        "https://myanimelist.net/anime/58288"
+      ],
+      "synonyms": ["「ポケモンシャツ サイジング」コンセプトムービー"],
+      "tags": ["family friendly", "kids"],
+      "themes": [
+        {
+          "name": "Kids"
+        }
+      ],
+      "trailers": [
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=JGUJB37z14M",
+          "title": "Official Trailer"
+        }
+      ],
+      "aired_dates": {
+        "from": "2022-11-04T00:00:00+00:00",
+        "string": "Nov 4, 2022"
+      },
+      "animeSeason": {
+        "season": "FALL",
+        "year": 2022
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {
+        "delayed_timetable": false
+      },
+      "duration": {
+        "value": 60,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {
+        "youtube": "https://www.youtube.com/watch?v=JGUJB37z14M"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/48739/poster_image/cdc106cd80f74fc2d8bb2123b370c24a.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1206/141774l.jpg",
+            "source": "jikan"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/pokemon-shirt-sizing-concept-movie-1-285x399.webp?t=1743888098",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/pokemon-shirt-sizing-concept-movie-1.webp?t=1743888097",
+            "source": "animeplanet"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "score": {
+        "arithmeticGeometricMean": 6.400639304289912,
+        "arithmeticMean": 6.417,
+        "median": 6.417
+      },
+      "staff_data": {
+        "production_staff": {
+          "animation_directors": [],
+          "character_designers": [],
+          "directors": [
+            {
+              "name": "Uekusa, Wataru",
+              "role": "Director",
+              "image": "https://cdn.myanimelist.net/images/voiceactors/2/54306.jpg?s=f86ee135ed9a6cf8dee71adf3fba3fc4",
+              "primary_occupations": ["Director"],
+              "years_active": [],
+              "staff_ids": {
+                "mal": "20609"
+              }
+            }
+          ],
+          "music_composers": [
+            {
+              "name": "Snail's House",
+              "role": "Music",
+              "image": "https://cdn.myanimelist.net/images/voiceactors/1/84542.jpg?s=991c584ddc948fd59f8339e9737ea85a",
+              "primary_occupations": ["Music"],
+              "years_active": [],
+              "staff_ids": {
+                "mal": "65499"
+              }
+            }
+          ],
+          "original_creators": [],
+          "series_writers": []
+        },
+        "studios": [
+          {
+            "name": "pie in the sky",
+            "type": "animation_studio"
+          }
+        ],
+        "producers": [],
+        "licensors": [],
+        "voice_actors": {
+          "japanese": []
+        }
+      },
+      "statistics": {
+        "mal": {
+          "score": 5.76,
+          "scored_by": 261,
+          "popularity_rank": 17502,
+          "members": 508,
+          "favorites": 1
+        },
+        "kitsu": {
+          "members": 20,
+          "popularity_rank": 20683
+        },
+        "animeplanet": {
+          "score": 7.064,
+          "scored_by": 17
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-31T15:57:00.759347Z",
+        "success": true
+      }
+    },
+    {
+      "episodes": 1,
+      "month": "October",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1135/92193.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Original",
+      "status": "FINISHED",
+      "synopsis": "A crossover collaboration commercial between the 2013 Japanese film R100 and the Mameshiba short anime series. The R100 film is about a man who enjoys being humiliated by dominatrixes.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1135/92193t.jpg",
+      "title": "\"R100\" x Mameshiba Original Manners",
+      "title_japanese": "映画『R100』×「豆しば」オリジナルマナ",
+      "type": "ONA",
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [
+        {
+          "episode_number": 1,
+          "season_number": 1,
+          "title": "\"R100\" x Mameshiba Original Manners",
+          "title_japanese": null,
+          "title_romaji": null,
+          "duration": 60,
+          "score": null,
+          "filler": false,
+          "recap": false,
+          "thumbnails": [],
+          "streaming": {}
+        }
+      ],
+      "genres": ["Comedy", "Based on a Movie", "Crossover", "Shorts"],
+      "related_anime": [
+        {
+          "relation_type": "Special",
+          "title": "Mameshiba",
+          "url": "https://myanimelist.net/anime/7261/Mameshiba"
+        },
+        {
+          "relation_type": "Special",
+          "title": "Mameshiba",
+          "url": "https://www.anime-planet.com/anime/mameshiba"
+        },
+        {
+          "relation_type": "Special",
+          "title": "Mameshiba",
+          "url": "https://anisearch.com/anime/8629"
+        }
+      ],
+      "sources": [
+        "https://anime-planet.com/anime/r100-x-mameshiba-original-manners",
+        "https://anisearch.com/anime/19915",
+        "https://kitsu.app/anime/41829",
+        "https://myanimelist.net/anime/37626"
+      ],
+      "synonyms": [
+        "R100 x Mameshiba Original Manners",
+        "R100 × Mameshiba Original Manners",
+        "R100 × 豆しば オリジナルマナ"
+      ],
+      "themes": [
+        {
+          "name": "Comedy",
+          "description": "Anime whose central struggle causes hilarious results. These stories are built upon funny characters, situations and events. A comedy anime is laced with humour and sets out to provoke laughter from the audience.\n\nJapanese humour can be a bit strange to westerners, so if you're new to this type of humour, just bear with it; it'll most likely grow on you if you're a fan of other kinds of comedy."
+        },
+        {
+          "name": "based on a movie",
+          "description": null
+        },
+        {
+          "name": "crossover",
+          "description": null
+        },
+        {
+          "name": "shorts",
+          "description": null
+        }
+      ],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2013-10-05T00:00:00+00:00",
+        "to": "2013-10-05T00:00:00+00:00"
+      },
+      "anime_season": {
+        "season": "SUMMER",
+        "year": 2013
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {},
+      "duration": {
+        "value": 60,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {},
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/41829/original.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1135/92193l.jpg",
+            "source": "mal"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/r100-x-mameshiba-original-manners-1.jpg?t=1625789403",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://cdn.anisearch.com/images/anime/cover/19/19915_600.webp",
+            "source": "anisearch"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "score": {
+        "arithmeticGeometricMean": 4.562772442755971,
+        "arithmeticMean": 4.5978095238095245,
+        "median": 4.75
+      },
+      "staff_data": {
+        "animation_studios": [],
+        "licensors": [],
+        "producers": [],
+        "production_staff": [],
+        "voice_actors": []
+      },
+      "statistics": {
+        "animeplanet": {
+          "score": 5.53,
+          "scored_by": 49,
+          "rank": 1
+        },
+        "kitsu": {
+          "popularity_rank": 16332,
+          "members": 63,
+          "favorites": 0
+        },
+        "mal": {
+          "score": 4.6,
+          "scored_by": 42,
+          "rank": 14946,
+          "popularity_rank": 20433,
+          "members": 232,
+          "favorites": 0
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-31T10:45:00.000000Z",
+        "success": true
+      }
+    },
+    {
+      "background": "Official music video for the song \" \"Star\"t\". It is the 46th song in the franchise. The song was included with the HaNaMiNa's CD of the same name, released on October 24, 2019.",
+      "episodes": 1,
+      "month": "October",
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1108/105484.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Original",
+      "status": "FINISHED",
+      "synopsis": "Official music video for the song \"Star\"t. It is the 46th song in the franchise. With a feature on Nanase Hagiwara, Nadeshiko Igarashi, and Minae Ono we assumed that it was once again about \"Maigahara Koukou Keion-bu,\" an after school club band with them. But they now have a new club member called Hana Katsuragi. Together the four of them have now renamed the band to HaNaMiNa which uses the first syllables of their names (in order: Hana, Nanase, Minae, and Nadeshiko).",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1108/105484t.jpg",
+      "title": "\"Star\"t",
+      "title_english": "\"Star\"t",
+      "title_japanese": "\"STAR\"T",
+      "type": "SPECIAL",
+      "characters": [
+        {
+          "name": "Hana KATSURAGI",
+          "role": "Main",
+          "name_variations": [],
+          "nicknames": [],
+          "voice_actors": [],
+          "character_ids": {},
+          "images": {}
+        },
+        {
+          "name": "Minae ONO",
+          "role": "Main",
+          "name_variations": [],
+          "nicknames": [],
+          "voice_actors": [],
+          "character_ids": {},
+          "images": {}
+        },
+        {
+          "name": "Nadeshiko IGARASHI",
+          "role": "Main",
+          "name_variations": [],
+          "nicknames": [],
+          "voice_actors": [],
+          "character_ids": {},
+          "images": {}
+        },
+        {
+          "name": "Nanase HAGIWARA",
+          "role": "Main",
+          "name_variations": [],
+          "nicknames": [],
+          "voice_actors": [],
+          "character_ids": {},
+          "images": {}
+        }
+      ],
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [
+        {
+          "title": "\"Star\"t",
+          "title_japanese": null,
+          "title_romaji": null,
+          "aired": "2019-10-01",
+          "filler": false,
+          "recap": false,
+          "duration": 120
+        }
+      ],
+      "genres": ["Music", "Idols"],
+      "related_anime": [
+        {
+          "relation_type": "Prequel",
+          "title": "Shout Our Evidence!",
+          "url": "https://myanimelist.net/anime/40360/Shout_Our_Evidence"
+        },
+        {
+          "relation_type": "Sequel",
+          "title": "Tanitsu Shikousei Overbloom",
+          "url": "https://myanimelist.net/anime/41091/Tanitsu_Shikousei_Overbloom"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori",
+          "url": "https://anisearch.com/anime/16720"
+        },
+        {
+          "relation_type": "Prequel",
+          "title": "Shout Our Evidence!",
+          "url": "https://kitsu.app/anime/43239"
+        },
+        {
+          "relation_type": "Sequel",
+          "title": "Tanitsu Shikousei Overbloom",
+          "url": "https://kitsu.app/anime/44891"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Agitation!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-agitation"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Bang Babang Bang!!!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-bang-babang-bang"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Black'n White JAMMIN' CATS",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-blackn-white-jammin-cats"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Brilliant Better",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-brilliant-better"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Change Our Mirai! (Our 7 Lights)",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-change-our-mirai-our-7-lights"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Change Our Mirai!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-change-our-mirai"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Crescendo Story",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-crescendo-story"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Detarame Rock & Roll Theory",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-detarame-rock-and-roll-theory"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Dokidoki Dream!!!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-dokidoki-dream"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Ever Green Never End",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-ever-green-never-end"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Fire Me Up",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-fire-me-up"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Fortissimo Bell",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-fortissimo-bell"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Heart Beat",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-heart-beat"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Irotoridori no Melody",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-irotoridori-no-melody"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Issei Kiyuukyoku",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-issei-kiyuukyoku-divertimento"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Light Speed Days",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-light-speed-days"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Minna e wo Check!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-minna-e-wo-check"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Moushin Soloist Life!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-moushin-soloist-life"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Muteki We Are One!!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-muteki-we-are-one"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: My Dearest Song",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-my-dearest-song"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Neko Matsuri",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-neko-matsuri"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Ok? Alright!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-ok-alright"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Outsider Requiem",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-outsider-requiem"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Polka Dot",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-polka-dot"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Prism",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-prism"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Sayonara Freeway",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-sayonara-freeway"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Session High⤴",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-session-high"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Shout Our Evidence!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-shout-our-evidence"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Sousha wa Tada Senaka to Teikin de Kataru Nomi",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-sousha-wa-tada-senaka-to-teikin-de-kataru-nomi"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Spicy Swingy Style",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-spicy-swingy-style"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Still",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-still"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Tanitsu Shikousei Overbloom",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-tanitsu-shikousei-overbloom"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Tic Tac DREAMIN’",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-tic-tac-dreamin"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Trust",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-trust"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Very! Merry!! Session!!!",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-very-merry-session"
+        },
+        {
+          "relation_type": "Music Video",
+          "title": "Irodorimidori: Watashi no Naka no Gensou-teki Sekaikan Oyobi Sono Kengen wo Souki Saseta Aru Genjitsu de no Dekigot",
+          "url": "https://www.anime-planet.com/anime/irodorimidori-watashi-no-naka-no-gensou-teki-sekaikan-oyobi-sono-kengen-wo-souki-saseta-aru-genjitsu-de-no-dekigot"
+        }
+      ],
+      "sources": [
+        "https://anime-planet.com/anime/irodorimidori-star-t",
+        "https://anisearch.com/anime/18459",
+        "https://kitsu.app/anime/44893",
+        "https://myanimelist.net/anime/41090"
+      ],
+      "synonyms": [
+        "\"STAR\"T",
+        "HaNaMiNa",
+        "HaNaMiNa - \"Star\"t",
+        "Irodorimidori",
+        "Irodorimidori - \"Star\"t",
+        "Irodorimidori: \"Star\"t",
+        "Start"
+      ],
+      "tags": ["idols", "music"],
+      "themes": [
+        {
+          "name": "Music"
+        }
+      ],
+      "trailers": [
+        {
+          "youtube_url": "https://www.youtube.com/watch?v=C4Q9Ibuw4So",
+          "title": "Official Trailer"
+        }
+      ],
+      "aired_dates": {
+        "from": "2019-10-21T00:00:00+00:00",
+        "to": null,
+        "string": "Oct 21, 2019"
+      },
+      "anime_season": {
+        "season": "FALL",
+        "year": 2019
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {},
+      "duration": {
+        "value": 120,
+        "unit": "SECONDS"
+      },
+      "episode_overrides": {},
+      "external_links": {
+        "official": "https://chunithm.sega.jp/irodorimidori/release/song046/",
+        "youtube": "https://www.youtube.com/watch?v=C4Q9Ibuw4So"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/44893/large.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1108/105484l.jpg",
+            "source": "mal"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/irodorimidori-star-t-1.jpg?t=1625789223",
+            "source": "animeplanet"
+          },
+          {
+            "url": "https://cdn.anisearch.com/images/anime/cover/18/18459_600.webp",
+            "source": "anisearch"
+          }
+        ],
+        "banners": []
+      },
+      "premiere_dates": {},
+      "score": {
+        "arithmeticGeometricMean": 5.807899142506913,
+        "arithmeticMean": 5.811727891156463,
+        "median": 5.959183673469387
+      },
+      "staff_data": {
+        "production_staff": [],
+        "studios": [
+          {
+            "name": "Akatsuki",
+            "role": "Animation Studio"
+          }
+        ],
+        "producers": [],
+        "voice_actors": []
+      },
+      "statistics": {
+        "mal": {
+          "score": 5.41,
+          "scored_by": 736,
+          "popularity": 13804,
+          "members": 1244,
+          "favorites": 0
+        },
+        "kitsu": {
+          "user_count": 78,
+          "favorites_count": 0,
+          "popularity_rank": 15290
+        },
+        "animeplanet": {
+          "scored_by": 75,
+          "score": 3.048
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-31T12:16:41.197388Z",
+        "success": true
+      }
+    },
+    {
+      "episodes": 1,
+      "nsfw": false,
+      "picture": "https://cdn.myanimelist.net/images/anime/1109/96789.jpg",
+      "rating": "G - All Ages",
+      "source_material": "Original",
+      "status": "Finished Airing",
+      "synopsis": "A short film spelling Tokyo in hiragana.",
+      "thumbnail": "https://cdn.myanimelist.net/images/anime/1109/96789t.jpg",
+      "title": "\"Tokyo\"",
+      "title_english": "Tokyo",
+      "title_japanese": "「とうきょう」- Tokyo",
+      "type": "Movie",
+      "characters": [],
+      "content_warnings": [],
+      "demographics": [],
+      "episode_details": [],
+      "genres": ["Avant Garde", "Psychological"],
+      "producers": [],
+      "related_anime": [],
+      "sources": [
+        "https://anilist.co/anime/113199",
+        "https://anime-planet.com/anime/tokyo",
+        "https://kitsu.app/anime/43145",
+        "https://myanimelist.net/anime/38748"
+      ],
+      "studios": [],
+      "synonyms": [],
+      "tags": ["agender", "avant garde", "dementia", "psychological", "shorts"],
+      "themes": [
+        {
+          "name": "Agender",
+          "description": "Prominently features agender characters."
+        }
+      ],
+      "trailers": [],
+      "aired_dates": {
+        "from": "2017-10-05T00:00:00+00:00",
+        "string": "Oct 5, 2017"
+      },
+      "anime_season": {
+        "season": "FALL",
+        "year": 2017
+      },
+      "broadcast": {},
+      "broadcast_schedule": {},
+      "delay_information": {
+        "delayed_timetable": false
+      },
+      "duration": 60,
+      "episode_overrides": {},
+      "external_links": {
+        "officialsite": "https://vimeo.com/236906001",
+        "vimeo": "https://vimeo.com/236906001"
+      },
+      "images": {
+        "posters": [
+          {
+            "url": "https://media.kitsu.app/anime/poster_images/43145/original.jpg",
+            "source": "kitsu"
+          }
+        ],
+        "covers": [
+          {
+            "url": "https://cdn.myanimelist.net/images/anime/1109/96789l.jpg",
+            "source": "jikan"
+          },
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b113199-OMQfdojQs71k.jpg",
+            "source": "anilist"
+          },
+          {
+            "url": "https://cdn.anime-planet.com/anime/primary/tokyo-1-190x266.jpg?t=1625898989",
+            "source": "animeplanet"
+          }
+        ],
+        "banners": [
+          {
+            "url": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/113199-PCDcpY5xAgNI.jpg",
+            "source": "anilist"
+          }
+        ]
+      },
+      "premiere_dates": {
+        "original": "2017-10-05",
+        "sub": "2017-10-05",
+        "dub": "2017-10-05"
+      },
+      "score": {
+        "arithmeticGeometricMean": 4.1432847839681575,
+        "arithmeticMean": 4.171515151515151,
+        "median": 3.94
+      },
+      "staff_data": {
+        "directors": [
+          {
+            "name": "Hana Ono",
+            "name_japanese": "小野ハナ",
+            "role": "Director"
+          }
+        ],
+        "producers": [],
+        "studios": [],
+        "voice_actors": []
+      },
+      "statistics": {
+        "anilist": {
+          "score": 3.1,
+          "popularity_rank": 322,
+          "favorites": 1,
+          "contextual_ranks": [
+            {
+              "rank": 98,
+              "type": "RATED",
+              "format": "MOVIE",
+              "year": 2017,
+              "all_time": false
+            },
+            {
+              "rank": 88,
+              "type": "POPULAR",
+              "format": "MOVIE",
+              "year": 2017,
+              "all_time": false
+            }
+          ]
+        },
+        "animeplanet": {
+          "score": 5.194,
+          "scored_by": 54
+        },
+        "kitsu": {
+          "popularity_rank": 14910,
+          "members": 85,
+          "favorites": 2
+        },
+        "mal": {
+          "score": 3.93,
+          "scored_by": 520,
+          "rank": 14135,
+          "popularity_rank": 14925,
+          "members": 927,
+          "favorites": 1
+        }
+      },
+      "enrichment_metadata": {
+        "source": "multi-source",
+        "enriched_at": "2025-07-31T17:51:57.181978+00:00",
         "success": true,
         "error_message": null
       }

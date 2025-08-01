@@ -73,6 +73,8 @@ The primary goal is to take a raw anime data object (from an offline database) a
 
 ### Step 2: Concurrent External API Data Fetching
 
+Use each services' respective helper funciton wheere possible.
+
 1.  **Jikan Anime Full Data:** Fetch full anime data from Jikan API using the MAL ID. Save in temporary file in temp/<first word from anime title>/jikan.json to be used later
     - URL: `https://api.jikan.moe/v4/anime/{mal_id}/full`
 2.  **Jikan Episodes Data:** Fetch episode data from Jikan API. Use episodes property from the `offline_anime_data` (from base_anime_sample.json). Do not skip any episode. Save in temporary file in temp/<first word from anime title>/episodes.json to be used later
@@ -196,7 +198,7 @@ This is the core of the process, where AI is used to process the collected data.
     - Order all fields according to AnimeEntry schema from `src/models/anime.py`
     - **Field Order**: SCALAR → ARRAY → OBJECT/DICT (alphabetical within each category)
     - **SCALAR FIELDS**: background, episodes, month, nsfw, picture, rating, source_material, status, synopsis, thumbnail, title, title_english, title_japanese, type
-    - **ARRAY FIELDS**: awards, characters, content_warnings, demographics, ending_themes, episode_details, genres, licensors, opening_themes, related_anime, relations, sources, streaming_info, streaming_licenses, synonyms, tags, themes, trailers
+    - **ARRAY FIELDS**: awards, characters, content_warnings, demographics, ending_themes, episode_details, genres, licensors, opening_themes, related_anime, relation_type, sources, streaming_info, streaming_licenses, synonyms, tags, themes, trailers
     - **OBJECT/DICT FIELDS**: aired_dates, anime_season, broadcast, broadcast_schedule, delay_information, duration, enhanced_metadata, episode_overrides, external_links, images, popularity_trends, premiere_dates, score, staff_data, statistics
     - **FINAL FIELD**: enrichment_metadata (MUST ALWAYS BE LAST)
     - **Nested Objects**: Ensure characters, staff_data, episode_details, etc. also follow their respective schema ordering
