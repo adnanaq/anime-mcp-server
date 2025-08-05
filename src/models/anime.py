@@ -150,17 +150,15 @@ class ImageEntry(BaseModel):
 
 class RelationEntry(BaseModel):
     """Related anime entry with multi-platform URLs"""
-    anime_id: str = Field(..., description="Related anime ID")
+    title: str = Field(..., description="Related anime title")
     relation_type: str = Field(..., description="Relation type (sequel, prequel, etc.)")
-    title: Optional[str] = Field(None, description="Related anime title")
-    title_english: Optional[str] = Field(None, description="Related anime English title")
-    urls: Dict[str, str] = Field(default_factory=dict, description="URLs from different platforms")
+    url: str = Field(..., description="Related anime URL")
 
 
 class RelatedAnimeEntry(BaseModel):
     """Related anime entry from URL processing"""
-    relation_type: str = Field(..., description="Relation type (Sequel, Prequel, Other, etc.)")
     title: str = Field(..., description="Related anime title extracted from URL")
+    relation_type: str = Field(..., description="Relation type (Sequel, Prequel, Other, etc.)")
     url: str = Field(..., description="Original URL")
 
 

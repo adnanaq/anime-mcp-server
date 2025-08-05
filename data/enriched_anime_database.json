@@ -195,23 +195,23 @@
       "related_anime": [
         {
           "title": "BanG Dream! 2nd Season",
-          "url": "https://myanimelist.net/anime/37869",
-          "relation_type": "Character"
+          "relation_type": "Character",
+          "url": "https://myanimelist.net/anime/37869"
         },
         {
           "title": "BanG Dream! 2nd Season",
-          "url": "https://anilist.co/anime/101633",
-          "relation_type": "Character"
+          "relation_type": "Character",
+          "url": "https://anilist.co/anime/101633"
         },
         {
           "title": "BanG Dream!",
-          "url": "https://kitsu.io/api/edge/anime/12330",
-          "relation_type": "Character"
+          "relation_type": "Character",
+          "url": "https://kitsu.io/api/edge/anime/12330"
         },
         {
           "title": "BanG Dream!",
-          "url": "https://myanimelist.net/anime/33573",
-          "relation_type": "Character"
+          "relation_type": "Character",
+          "url": "https://myanimelist.net/anime/33573"
         }
       ],
       "sources": [
@@ -962,8 +962,8 @@
       "relations": [
         {
           "title": "The Share House's Secret Rule",
-          "url": "https://anisearch.com/manga/91400,the-share-houses-secret-rule",
-          "relation_type": "Original Work"
+          "relation_type": "Original Work",
+          "url": "https://anisearch.com/manga/91400,the-share-houses-secret-rule"
         }
       ],
       "sources": [
@@ -1453,23 +1453,23 @@
       "related_anime": [
         {
           "title": "Watashi no Hashtag ga Baenakute.",
-          "url": "https://myanimelist.net/anime/54278/Watashi_no_Hashtag_ga_Baenakute",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://myanimelist.net/anime/54278/Watashi_no_Hashtag_ga_Baenakute"
         },
         {
           "title": "Ima wa Shourai ni Hairimasu ka.",
-          "url": "https://myanimelist.net/anime/58141/Ima_wa_Shourai_ni_Hairimasu_ka",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://myanimelist.net/anime/58141/Ima_wa_Shourai_ni_Hairimasu_ka"
         },
         {
           "title": "Watashi no Hashtag ga Baenakute.",
-          "url": "https://anisearch.com/anime/18202",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://anisearch.com/anime/18202"
         },
         {
           "title": "Ima wa shourai ni Hairimasu ka.",
-          "url": "https://kitsu.app/anime/48562",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://kitsu.app/anime/48562"
         }
       ],
       "sources": [
@@ -1877,7 +1877,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/1"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/1",
+          "title": "Episode 1"
         },
         {
           "episode_number": 2,
@@ -1886,7 +1887,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/2"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/2",
+          "title": "Episode 2"
         },
         {
           "episode_number": 3,
@@ -1895,7 +1897,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/3"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/3",
+          "title": "Episode 3"
         },
         {
           "episode_number": 4,
@@ -1904,7 +1907,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/4"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/4",
+          "title": "Episode 4"
         },
         {
           "episode_number": 5,
@@ -1913,7 +1917,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/5"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/5",
+          "title": "Episode 5"
         },
         {
           "episode_number": 6,
@@ -1922,7 +1927,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/6"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/6",
+          "title": "Episode 6"
         },
         {
           "episode_number": 7,
@@ -1931,7 +1937,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/7"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/7",
+          "title": "Episode 7"
         },
         {
           "episode_number": 8,
@@ -1940,7 +1947,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/8"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/8",
+          "title": "Episode 8"
         },
         {
           "episode_number": 9,
@@ -1949,7 +1957,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/9"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/9",
+          "title": "Episode 9"
         },
         {
           "episode_number": 10,
@@ -1958,7 +1967,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/10"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/10",
+          "title": "Episode 10"
         },
         {
           "episode_number": 11,
@@ -1967,7 +1977,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/11"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/11",
+          "title": "Episode 11"
         },
         {
           "episode_number": 12,
@@ -1976,7 +1987,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/12"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/12",
+          "title": "Episode 12"
         },
         {
           "episode_number": 13,
@@ -1985,7 +1997,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/13"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/13",
+          "title": "Episode 13"
         },
         {
           "episode_number": 14,
@@ -1994,7 +2007,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/14"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/14",
+          "title": "Episode 14"
         },
         {
           "episode_number": 15,
@@ -2003,7 +2017,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/15"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/15",
+          "title": "Episode 15"
         },
         {
           "episode_number": 16,
@@ -2012,7 +2027,8 @@
           "streaming": {},
           "filler": false,
           "recap": false,
-          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/16"
+          "url": "https://myanimelist.net/anime/55754/Ayakai_Shima_e_Youkoso_Mitaman_no_Ayakashima_Kankou_Annai/episode/16",
+          "title": "Episode 16"
         }
       ],
       "genres": [
@@ -2023,33 +2039,33 @@
       "related_anime": [
         {
           "title": "Ayaka",
-          "url": "https://myanimelist.net/anime/53428/Ayaka",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://myanimelist.net/anime/53428/Ayaka"
         },
         {
           "title": "Ayaka",
-          "url": "https://www.anime-planet.com/anime/ayaka",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://www.anime-planet.com/anime/ayaka"
         },
         {
           "title": "Ayaka",
-          "url": "https://anime-planet.com/anime/ayaka",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://anime-planet.com/anime/ayaka"
         },
         {
           "title": "AYAKA",
-          "url": "https://kitsu.app/anime/46685",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://kitsu.app/anime/46685"
         },
         {
           "title": "AYAKA",
-          "url": "https://livechart.me/anime/11577",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://livechart.me/anime/11577"
         },
         {
           "title": "Ayaka",
-          "url": "https://myanimelist.net/anime/53428",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://myanimelist.net/anime/53428"
         }
       ],
       "sources": [
@@ -2238,110 +2254,110 @@
       "related_anime": [
         {
           "title": "\"Bungaku Shoujo\" Movie",
-          "url": "https://myanimelist.net/anime/6408/Bungaku_Shoujo_Movie",
-          "relation_type": "Parent Story"
+          "relation_type": "Parent Story",
+          "url": "https://myanimelist.net/anime/6408/Bungaku_Shoujo_Movie"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
-          "url": "https://anidb.net/anime/6959",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://anidb.net/anime/6959"
         },
         {
           "title": "Bungaku Shoujo: Memoire",
-          "url": "https://anidb.net/anime/7441",
-          "relation_type": "Parent story"
+          "relation_type": "Parent story",
+          "url": "https://anidb.net/anime/7441"
         },
         {
           "title": "Bungaku Shoujo",
-          "url": "https://anilist.co/anime/6408",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://anilist.co/anime/6408"
         },
         {
           "title": "Bungaku Shoujo Memoire",
-          "url": "https://anime-planet.com/anime/bungaku-shoujo-memoire",
-          "relation_type": "Parent story"
+          "relation_type": "Parent story",
+          "url": "https://anime-planet.com/anime/bungaku-shoujo-memoire"
         },
         {
           "title": "Bungaku Shoujo Movie",
-          "url": "https://anime-planet.com/anime/bungaku-shoujo-movie",
-          "relation_type": "Parent Story"
+          "relation_type": "Parent Story",
+          "url": "https://anime-planet.com/anime/bungaku-shoujo-movie"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
-          "url": "https://animecountdown.com/38239",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://animecountdown.com/38239"
         },
         {
           "title": "Bungaku Shoujo Memoire",
-          "url": "https://animecountdown.com/40553",
-          "relation_type": "Parent story"
+          "relation_type": "Parent story",
+          "url": "https://animecountdown.com/40553"
         },
         {
           "title": "Bungaku Shoujo Movie",
-          "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=10815",
-          "relation_type": "Parent Story"
+          "relation_type": "Parent Story",
+          "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=10815"
         },
         {
           "title": "Bungaku Shoujo Movie",
-          "url": "https://kitsu.app/anime/4550",
-          "relation_type": "Parent Story"
+          "relation_type": "Parent Story",
+          "url": "https://kitsu.app/anime/4550"
         },
         {
           "title": "Bungaku Shoujo Movie",
-          "url": "https://livechart.me/anime/4198",
-          "relation_type": "Parent Story"
+          "relation_type": "Parent Story",
+          "url": "https://livechart.me/anime/4198"
         },
         {
           "title": "Bungaku Shoujo Memoire",
-          "url": "https://livechart.me/anime/5640",
-          "relation_type": "Parent story"
+          "relation_type": "Parent story",
+          "url": "https://livechart.me/anime/5640"
         },
         {
           "title": "Bungaku Shoujo Movie",
-          "url": "https://notify.moe/anime/UUie5KimR",
-          "relation_type": "Parent Story"
+          "relation_type": "Parent Story",
+          "url": "https://notify.moe/anime/UUie5KimR"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
-          "url": "https://simkl.com/anime/38239",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://simkl.com/anime/38239"
         },
         {
           "title": "Bungaku Shoujo Memoire",
-          "url": "https://simkl.com/anime/40553",
-          "relation_type": "Parent story"
+          "relation_type": "Parent story",
+          "url": "https://simkl.com/anime/40553"
         },
         {
           "title": "Bungaku Shōjo Memoir II - Sora-Mau Tenshi no Requiem OVA",
-          "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=11682",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=11682"
         },
         {
           "title": "Bungaku Shōjo Memoir III - Koi Suru Otome no Rhapsody OAV",
-          "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=11683",
-          "relation_type": "Other"
+          "relation_type": "Other",
+          "url": "https://animenewsnetwork.com/encyclopedia/anime.php?id=11683"
         },
         {
           "title": "PENDING",
-          "url": "https://anisearch.com/anime/6169",
-          "relation_type": "Parent story"
+          "relation_type": "Parent story",
+          "url": "https://anisearch.com/anime/6169"
         }
       ],
       "relations": [
         {
           "title": "\"Bungaku Shoujo\" to Shinitagari no Pierrot",
-          "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot",
-          "relation_type": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot"
         },
         {
           "title": "\"Bungaku Shoujo\" to Ue Kawaku Ghost",
-          "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost",
-          "relation_type": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost"
         },
         {
           "title": "\"Bungaku Shoujo\" Series",
-          "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series",
-          "relation_type": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series"
         }
       ],
       "sources": [
@@ -4716,7 +4732,6 @@
           "title_romaji": "Koisuru Otome no Rhapsody"
         }
       ],
-      "external_links": {},
       "genres": [
         "Drama",
         "School",
@@ -4725,105 +4740,105 @@
       "related_anime": [
         {
           "title": "Gekijouban Bungaku Shoujo",
-          "url": "https://anidb.net/anime/6959",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://anidb.net/anime/6959"
         },
         {
           "title": "\"Bungaku Shoujo\": Kyou no Oyatsu - Hatsukoi",
-          "url": "https://anidb.net/anime/7294",
-          "relation_type": "Side story"
+          "relation_type": "Side story",
+          "url": "https://anidb.net/anime/7294"
         },
         {
           "title": "Bungaku Shoujo",
-          "url": "https://anilist.co/anime/6408",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://anilist.co/anime/6408"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
-          "url": "https://anime-planet.com/anime/bungaku-shoujo-kyou-no-oyatsu-hatsukoi",
-          "relation_type": "Side story"
+          "relation_type": "Side story",
+          "url": "https://anime-planet.com/anime/bungaku-shoujo-kyou-no-oyatsu-hatsukoi"
         },
         {
           "title": "Bungaku Shoujo Movie",
-          "url": "https://anime-planet.com/anime/bungaku-shoujo-movie",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://anime-planet.com/anime/bungaku-shoujo-movie"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
-          "url": "https://animecountdown.com/37286",
-          "relation_type": "Side story"
+          "relation_type": "Side story",
+          "url": "https://animecountdown.com/37286"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
-          "url": "https://animecountdown.com/38239",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://animecountdown.com/38239"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
-          "url": "https://anisearch.com/anime/5387",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://anisearch.com/anime/5387"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
-          "url": "https://anisearch.com/anime/5970",
-          "relation_type": "Side story"
+          "relation_type": "Side story",
+          "url": "https://anisearch.com/anime/5970"
         },
         {
           "title": "\"Bungaku Shoujo\" Movie",
-          "url": "https://kitsu.app/anime/4550",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://kitsu.app/anime/4550"
         },
         {
           "title": "\"Bungaku Shoujo\" Movie",
-          "url": "https://livechart.me/anime/4198",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://livechart.me/anime/4198"
         },
         {
           "title": "\"Bungaku Shoujo\": Kyou no Oyatsu - Hatsukoi",
-          "url": "https://livechart.me/anime/5549",
-          "relation_type": "Side story"
+          "relation_type": "Side story",
+          "url": "https://livechart.me/anime/5549"
         },
         {
           "title": "\"Bungaku Shoujo\" Movie",
-          "url": "https://myanimelist.net/anime/6408",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://myanimelist.net/anime/6408"
         },
         {
           "title": "\"Bungaku Shoujo\" Movie",
-          "url": "https://notify.moe/anime/UUie5KimR",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://notify.moe/anime/UUie5KimR"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
-          "url": "https://simkl.com/anime/37286",
-          "relation_type": "Side story"
+          "relation_type": "Side story",
+          "url": "https://simkl.com/anime/37286"
         },
         {
           "title": "Bungaku Shoujo: Kyou no Oyatsu - Hatsukoi",
-          "url": "https://simkl.com/anime/38239",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://simkl.com/anime/38239"
         },
         {
           "title": "Gekijouban Bungaku Shoujo",
-          "url": "https://myanimelist.net/anime/6408/Bungaku_Shoujo_Movie",
-          "relation_type": "Sequel"
+          "relation_type": "Sequel",
+          "url": "https://myanimelist.net/anime/6408/Bungaku_Shoujo_Movie"
         }
       ],
       "relations": [
         {
           "title": "\"Bungaku Shoujo\" to Shinitagari no Pierrot",
-          "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot",
-          "relation": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot"
         },
         {
           "title": "\"Bungaku Shoujo\" to Ue Kawaku Ghost",
-          "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost",
-          "relation": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost"
         },
         {
           "title": "\"Bungaku Shoujo\" Series",
-          "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series",
-          "relation": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series"
         }
       ],
       "sources": [
@@ -5624,7 +5639,8 @@
           "aired": "2010-05-01",
           "filler": false,
           "recap": false,
-          "duration": 6000
+          "duration": 6000,
+          "episode_number": 1
         }
       ],
       "genres": [
@@ -5636,30 +5652,30 @@
       "related_anime": [
         {
           "title": "\"Bungaku Shoujo\" Memoire",
-          "url": "https://myanimelist.net/anime/8481",
-          "relation_type": "Prequel"
+          "relation_type": "Prequel",
+          "url": "https://myanimelist.net/anime/8481"
         },
         {
           "title": "\"Bungaku Shoujo\" Kyou no Oyatsu: Hatsukoi",
-          "url": "https://myanimelist.net/anime/7669",
-          "relation_type": "Side Story"
+          "relation_type": "Side Story",
+          "url": "https://myanimelist.net/anime/7669"
         }
       ],
       "relations": [
         {
           "title": "\"Bungaku Shoujo\" to Shinitagari no Pierrot",
-          "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot",
-          "relation_type": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/11776/Bungaku_Shoujo_to_Shinitagari_no_Pierrot"
         },
         {
           "title": "\"Bungaku Shoujo\" to Ue Kawaku Ghost",
-          "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost",
-          "relation_type": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/36037/Bungaku_Shoujo_to_Ue_Kawaku_Ghost"
         },
         {
           "title": "\"Bungaku Shoujo\" Series",
-          "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series",
-          "relation_type": "Adaptation"
+          "relation_type": "Adaptation",
+          "url": "https://myanimelist.net/manga/10000/Bungaku_Shoujo_Series"
         }
       ],
       "sources": [
@@ -5679,7 +5695,8 @@
       "streaming_info": [
         {
           "name": "Crunchyroll",
-          "url": "http://www.crunchyroll.com/series-257075"
+          "url": "http://www.crunchyroll.com/series-257075",
+          "platform": "Crunchyroll"
         }
       ],
       "streaming_licenses": [
@@ -6519,8 +6536,8 @@
       ],
       "relations": [
         {
-          "relation_type": "Adaptation",
           "title": "\"Eiji\"",
+          "relation_type": "Adaptation",
           "url": "https://myanimelist.net/manga/71013/Eiji"
         }
       ],
@@ -6845,7 +6862,6 @@
         "from": "2017-03-25",
         "to": "2017-05-28"
       },
-      "external_links": {},
       "images": {
         "posters": [],
         "covers": [
@@ -7231,8 +7247,8 @@
       ],
       "relations": [
         {
-          "relation_type": "Adaptation",
           "title": "\"Eiyuu\" Kaitai",
+          "relation_type": "Adaptation",
           "url": "https://myanimelist.net/manga/101385/Eiyuu_Kaitai"
         }
       ],
@@ -8036,23 +8052,23 @@
       "related_anime": [
         {
           "title": "Mameshiba",
-          "url": "https://myanimelist.net/anime/7261/Mameshiba",
-          "relation_type": "Special"
+          "relation_type": "Special",
+          "url": "https://myanimelist.net/anime/7261/Mameshiba"
         },
         {
           "title": "Mameshiba",
-          "url": "https://anime-planet.com/anime/mameshiba",
-          "relation_type": "Special"
+          "relation_type": "Special",
+          "url": "https://anime-planet.com/anime/mameshiba"
         },
         {
           "title": "Mameshiba",
-          "url": "https://kitsu.app/anime/4918",
-          "relation_type": "Special"
+          "relation_type": "Special",
+          "url": "https://kitsu.app/anime/4918"
         },
         {
           "title": "Mameshiba",
-          "url": "https://kitsu.app/anime/4918",
-          "relation_type": "Special"
+          "relation_type": "Special",
+          "url": "https://kitsu.app/anime/4918"
         }
       ],
       "sources": [
@@ -8165,13 +8181,13 @@
       "related_anime": [
         {
           "title": "Mameshiba",
-          "url": "https://anime-planet.com/anime/mameshiba",
-          "relation": "Special"
+          "relation_type": "Special",
+          "url": "https://anime-planet.com/anime/mameshiba"
         },
         {
           "title": "Mameshiba",
-          "url": "https://myanimelist.net/anime/7261",
-          "relation": "Special"
+          "relation_type": "Special",
+          "url": "https://myanimelist.net/anime/7261"
         }
       ],
       "sources": [
@@ -8305,23 +8321,23 @@
       ],
       "related_anime": [
         {
-          "relation_type": "Special",
           "title": "Mameshiba",
+          "relation_type": "Special",
           "url": "https://anime-planet.com/anime/mameshiba"
         },
         {
-          "relation_type": "Special",
           "title": "Mameshiba",
+          "relation_type": "Special",
           "url": "https://kitsu.app/anime/4918"
         },
         {
-          "relation_type": "Special",
           "title": "Mameshiba",
+          "relation_type": "Special",
           "url": "https://myanimelist.net/anime/7261"
         },
         {
-          "relation_type": "Special",
           "title": "Mameshiba",
+          "relation_type": "Special",
           "url": "https://notify.moe/anime/JpERpKiiR"
         }
       ],
@@ -8439,8 +8455,8 @@
       "related_anime": [
         {
           "title": "Mahouka Koukou no Rettousei Movie: Yotsuba Keishou-hen",
-          "url": "https://myanimelist.net/anime/59174",
-          "relation_type": "Movie"
+          "relation_type": "Movie",
+          "url": "https://myanimelist.net/anime/59174"
         }
       ],
       "sources": [
@@ -8530,9 +8546,9 @@
       "episode_details": [],
       "related_anime": [
         {
-          "url": "https://myanimelist.net/anime/37017",
           "title": "Kensaku to Enjin no ABC Days",
-          "relation_type": "ONA"
+          "relation_type": "ONA",
+          "url": "https://myanimelist.net/anime/37017"
         }
       ],
       "sources": [
@@ -8558,7 +8574,6 @@
         "value": 15,
         "unit": "SECONDS"
       },
-      "external_links": {},
       "images": {
         "posters": [],
         "covers": [
@@ -9275,18 +9290,18 @@
       ],
       "related_anime": [
         {
-          "relation_type": "Other",
           "title": "Pokemon",
+          "relation_type": "Other",
           "url": "https://myanimelist.net/anime/527/Pokemon"
         },
         {
-          "relation_type": "Other",
           "title": "Pokemon (Original Series)",
+          "relation_type": "Other",
           "url": "https://kitsu.app/anime/486"
         },
         {
-          "relation_type": "Other",
           "title": "Pokemon (Original Series)",
+          "relation_type": "Other",
           "url": "https://myanimelist.net/anime/527"
         }
       ],
@@ -9456,18 +9471,18 @@
       ],
       "related_anime": [
         {
-          "relation_type": "Special",
           "title": "Mameshiba",
+          "relation_type": "Special",
           "url": "https://myanimelist.net/anime/7261/Mameshiba"
         },
         {
-          "relation_type": "Special",
           "title": "Mameshiba",
+          "relation_type": "Special",
           "url": "https://www.anime-planet.com/anime/mameshiba"
         },
         {
-          "relation_type": "Special",
           "title": "Mameshiba",
+          "relation_type": "Special",
           "url": "https://anisearch.com/anime/8629"
         }
       ],
@@ -9607,7 +9622,8 @@
           "aired": "2019-10-01",
           "filler": false,
           "recap": false,
-          "duration": 120
+          "duration": 120,
+          "episode_number": 1
         }
       ],
       "genres": [
@@ -9616,208 +9632,208 @@
       ],
       "related_anime": [
         {
-          "relation_type": "Prequel",
           "title": "Shout Our Evidence!",
+          "relation_type": "Prequel",
           "url": "https://myanimelist.net/anime/40360/Shout_Our_Evidence"
         },
         {
-          "relation_type": "Sequel",
           "title": "Tanitsu Shikousei Overbloom",
+          "relation_type": "Sequel",
           "url": "https://myanimelist.net/anime/41091/Tanitsu_Shikousei_Overbloom"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori",
+          "relation_type": "Music Video",
           "url": "https://anisearch.com/anime/16720"
         },
         {
-          "relation_type": "Prequel",
           "title": "Shout Our Evidence!",
+          "relation_type": "Prequel",
           "url": "https://kitsu.app/anime/43239"
         },
         {
-          "relation_type": "Sequel",
           "title": "Tanitsu Shikousei Overbloom",
+          "relation_type": "Sequel",
           "url": "https://kitsu.app/anime/44891"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Agitation!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-agitation"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Bang Babang Bang!!!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-bang-babang-bang"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Black'n White JAMMIN' CATS",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-blackn-white-jammin-cats"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Brilliant Better",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-brilliant-better"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Change Our Mirai! (Our 7 Lights)",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-change-our-mirai-our-7-lights"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Change Our Mirai!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-change-our-mirai"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Crescendo Story",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-crescendo-story"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Detarame Rock & Roll Theory",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-detarame-rock-and-roll-theory"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Dokidoki Dream!!!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-dokidoki-dream"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Ever Green Never End",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-ever-green-never-end"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Fire Me Up",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-fire-me-up"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Fortissimo Bell",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-fortissimo-bell"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Heart Beat",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-heart-beat"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Irotoridori no Melody",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-irotoridori-no-melody"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Issei Kiyuukyoku",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-issei-kiyuukyoku-divertimento"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Light Speed Days",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-light-speed-days"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Minna e wo Check!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-minna-e-wo-check"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Moushin Soloist Life!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-moushin-soloist-life"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Muteki We Are One!!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-muteki-we-are-one"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: My Dearest Song",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-my-dearest-song"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Neko Matsuri",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-neko-matsuri"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Ok? Alright!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-ok-alright"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Outsider Requiem",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-outsider-requiem"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Polka Dot",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-polka-dot"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Prism",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-prism"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Sayonara Freeway",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-sayonara-freeway"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Session High⤴",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-session-high"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Shout Our Evidence!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-shout-our-evidence"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Sousha wa Tada Senaka to Teikin de Kataru Nomi",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-sousha-wa-tada-senaka-to-teikin-de-kataru-nomi"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Spicy Swingy Style",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-spicy-swingy-style"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Still",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-still"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Tanitsu Shikousei Overbloom",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-tanitsu-shikousei-overbloom"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Tic Tac DREAMIN’",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-tic-tac-dreamin"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Trust",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-trust"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Very! Merry!! Session!!!",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-very-merry-session"
         },
         {
-          "relation_type": "Music Video",
           "title": "Irodorimidori: Watashi no Naka no Gensou-teki Sekaikan Oyobi Sono Kengen wo Souki Saseta Aru Genjitsu de no Dekigot",
+          "relation_type": "Music Video",
           "url": "https://www.anime-planet.com/anime/irodorimidori-watashi-no-naka-no-gensou-teki-sekaikan-oyobi-sono-kengen-wo-souki-saseta-aru-genjitsu-de-no-dekigot"
         }
       ],
