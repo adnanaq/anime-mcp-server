@@ -196,17 +196,15 @@ class GenreEnhancementModel(nn.Module):
 class GenreEnhancementFinetuner:
     """Genre enhancement fine-tuner for anime genre understanding."""
     
-    def __init__(self, settings: Optional[Settings] = None):
+    def __init__(self, settings: Settings, text_processor: Any):
         """Initialize genre enhancement fine-tuner.
         
         Args:
             settings: Configuration settings instance
+            text_processor: Text processing utility
         """
-        if settings is None:
-            from ..config import get_settings
-            settings = get_settings()
-        
         self.settings = settings
+        self.text_processor = text_processor
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Model components
@@ -224,19 +222,18 @@ class GenreEnhancementFinetuner:
         
         logger.info(f"Genre enhancement fine-tuner initialized on {self.device}")
     
-    def setup_lora_model(self, lora_config: LoraConfig):
+    def setup_lora_model(self, lora_config: LoraConfig, fine_tuning_config: Any):
         """Setup LoRA model for parameter-efficient fine-tuning.
         
         Args:
             lora_config: LoRA configuration
+            fine_tuning_config: Fine-tuning configuration
         """
-        logger.info("Setting up LoRA model for genre enhancement")
+        self.fine_tuning_config = fine_tuning_config
         
         try:
             # Get text model info
-            from .text_processor import TextProcessor
-            text_processor = TextProcessor(self.settings)
-            model_info = text_processor.get_model_info()
+            model_info = self.text_processor.get_model_info()
             input_dim = model_info.get('embedding_size', 384)
             
             # Create genre enhancement model
@@ -307,8 +304,8 @@ class GenreEnhancementFinetuner:
             # Setup optimizer
             self.optimizer = torch.optim.AdamW(
                 self.enhancement_model.parameters(),
-                lr=1e-4,
-                weight_decay=1e-5
+                lr=self.fine_tuning_config.learning_rate,
+                weight_decay=self.fine_tuning_config.weight_decay
             )
         
         logger.info(f"Model prepared for training with {self.num_genres} genres")

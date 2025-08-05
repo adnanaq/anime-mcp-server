@@ -160,17 +160,17 @@ class MultimodalCharacterRecognizer(nn.Module):
 class CharacterRecognitionFinetuner:
     """Character recognition fine-tuner for anime characters."""
     
-    def __init__(self, settings: Optional[Settings] = None):
+    def __init__(self, settings: Settings, text_processor: Any, vision_processor: Any):
         """Initialize character recognition fine-tuner.
         
         Args:
             settings: Configuration settings instance
+            text_processor: Text processing utility
+            vision_processor: Vision processing utility
         """
-        if settings is None:
-            from ..config import get_settings
-            settings = get_settings()
-        
         self.settings = settings
+        self.text_processor = text_processor
+        self.vision_processor = vision_processor
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Model components
@@ -186,13 +186,14 @@ class CharacterRecognitionFinetuner:
         
         logger.info(f"Character recognition fine-tuner initialized on {self.device}")
     
-    def setup_lora_model(self, lora_config: LoraConfig):
+    def setup_lora_model(self, lora_config: LoraConfig, fine_tuning_config: Any):
         """Setup LoRA model for parameter-efficient fine-tuning.
         
         Args:
             lora_config: LoRA configuration
+            fine_tuning_config: Fine-tuning configuration
         """
-        logger.info("Setting up LoRA model for character recognition")
+        self.fine_tuning_config = fine_tuning_config
         
         # Load base model (using text processor's model as base)
         try:
@@ -200,13 +201,11 @@ class CharacterRecognitionFinetuner:
             text_processor = TextProcessor(self.settings)
             
             # Get model info
-            model_info = text_processor.get_model_info()
+            model_info = self.text_processor.get_model_info()
             text_dim = model_info.get('embedding_size', 384)
             
             # Load vision model info
-            from .vision_processor import VisionProcessor
-            vision_processor = VisionProcessor(self.settings)
-            vision_info = vision_processor.get_model_info()
+            vision_info = self.vision_processor.get_model_info()
             image_dim = vision_info.get('embedding_size', 512)
             
             # Create multimodal model
@@ -224,8 +223,8 @@ class CharacterRecognitionFinetuner:
             # Setup optimizer
             self.optimizer = torch.optim.AdamW(
                 self.recognition_model.parameters(),
-                lr=1e-4,
-                weight_decay=1e-5
+                lr=fine_tuning_config.learning_rate,
+                weight_decay=fine_tuning_config.weight_decay
             )
             
             # Setup loss function
@@ -269,8 +268,8 @@ class CharacterRecognitionFinetuner:
             # Setup optimizer
             self.optimizer = torch.optim.AdamW(
                 self.recognition_model.parameters(),
-                lr=1e-4,
-                weight_decay=1e-5
+                lr=self.fine_tuning_config.learning_rate,
+                weight_decay=self.fine_tuning_config.weight_decay
             )
         
         logger.info(f"Model prepared for training with {self.num_characters} characters")

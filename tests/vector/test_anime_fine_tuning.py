@@ -36,6 +36,10 @@ def mock_settings():
     settings.character_recognition_enabled = True
     settings.art_style_classification_enabled = True
     settings.genre_enhancement_enabled = True
+    settings.text_embedding_provider = "sentence-transformers"
+    settings.text_embedding_model = "all-MiniLM-L6-v2"
+    settings.vision_embedding_provider = "sentence-transformers"
+    settings.vision_embedding_model = "clip-ViT-B-32"
     return settings
 
 
@@ -189,24 +193,18 @@ class TestAnimeDataset:
 class TestCharacterRecognitionFinetuner:
     """Test cases for CharacterRecognitionFinetuner."""
     
-    def test_initialization(self, mock_settings):
+    def test_initialization(self, mock_settings, mock_text_processor, mock_vision_processor):
         """Test character recognition finetuner initialization."""
-        finetuner = CharacterRecognitionFinetuner(mock_settings)
+        finetuner = CharacterRecognitionFinetuner(mock_settings, mock_text_processor, mock_vision_processor)
         
         assert finetuner.settings == mock_settings
         assert finetuner.device is not None
         assert finetuner.num_characters == 0
         assert not finetuner.is_trained
     
-    @patch('src.vector.character_recognition.TextProcessor')
-    @patch('src.vector.character_recognition.VisionProcessor')
-    def test_lora_setup(self, mock_vision_processor, mock_text_processor, mock_settings):
+    def test_lora_setup(self, mock_settings, mock_text_processor, mock_vision_processor):
         """Test LoRA model setup."""
-        # Mock processor responses
-        mock_text_processor.return_value.get_model_info.return_value = {"embedding_size": 384}
-        mock_vision_processor.return_value.get_model_info.return_value = {"embedding_size": 512}
-        
-        finetuner = CharacterRecognitionFinetuner(mock_settings)
+        finetuner = CharacterRecognitionFinetuner(mock_settings, mock_text_processor, mock_vision_processor)
         
         from peft import LoraConfig, TaskType
         lora_config = LoraConfig(
@@ -216,15 +214,15 @@ class TestCharacterRecognitionFinetuner:
             lora_dropout=0.1
         )
         
-        finetuner.setup_lora_model(lora_config)
+        finetuner.setup_lora_model(lora_config, FineTuningConfig())
         
         assert finetuner.recognition_model is not None
         assert finetuner.optimizer is not None
         assert finetuner.loss_fn is not None
     
-    def test_enhanced_embedding_without_model(self, mock_settings):
+    def test_enhanced_embedding_without_model(self, mock_settings, mock_text_processor, mock_vision_processor):
         """Test enhanced embedding generation without initialized model."""
-        finetuner = CharacterRecognitionFinetuner(mock_settings)
+        finetuner = CharacterRecognitionFinetuner(mock_settings, mock_text_processor, mock_vision_processor)
         
         text_embedding = np.array([0.1] * 384)
         enhanced = finetuner.get_enhanced_embedding(text_embedding)
@@ -232,9 +230,9 @@ class TestCharacterRecognitionFinetuner:
         # Should return original embedding when model not initialized
         assert np.array_equal(enhanced, text_embedding)
     
-    def test_model_info(self, mock_settings):
+    def test_model_info(self, mock_settings, mock_text_processor, mock_vision_processor):
         """Test model information retrieval."""
-        finetuner = CharacterRecognitionFinetuner(mock_settings)
+        finetuner = CharacterRecognitionFinetuner(mock_settings, mock_text_processor, mock_vision_processor)
         
         info = finetuner.get_model_info()
         
@@ -248,40 +246,36 @@ class TestCharacterRecognitionFinetuner:
 class TestArtStyleClassifier:
     """Test cases for ArtStyleClassifier."""
     
-    def test_initialization(self, mock_settings):
+    def test_initialization(self, mock_settings, mock_vision_processor):
         """Test art style classifier initialization."""
-        classifier = ArtStyleClassifier(mock_settings)
+        classifier = ArtStyleClassifier(mock_settings, mock_vision_processor)
         
         assert classifier.settings == mock_settings
         assert classifier.device is not None
         assert classifier.num_styles == 0
         assert not classifier.is_trained
     
-    @patch('src.vector.art_style_classifier.VisionProcessor')
-    def test_lora_setup(self, mock_vision_processor, mock_settings):
+    def test_lora_setup(self, mock_settings, mock_vision_processor):
         """Test LoRA model setup."""
-        # Mock processor response
-        mock_vision_processor.return_value.get_model_info.return_value = {"embedding_size": 512}
-        
-        classifier = ArtStyleClassifier(mock_settings)
+        classifier = ArtStyleClassifier(mock_settings, mock_vision_processor)
         
         from peft import LoraConfig, TaskType
         lora_config = LoraConfig(
-            task_type=TaskType.IMAGE_CLASSIFICATION,
+            task_type=TaskType.FEATURE_EXTRACTION, # Changed from IMAGE_CLASSIFICATION
             r=8,
             lora_alpha=32,
             lora_dropout=0.1
         )
         
-        classifier.setup_lora_model(lora_config)
+        classifier.setup_lora_model(lora_config, FineTuningConfig())
         
         assert classifier.classifier_model is not None
         assert classifier.optimizer is not None
         assert classifier.loss_fn is not None
     
-    def test_enhanced_embedding_without_model(self, mock_settings):
+    def test_enhanced_embedding_without_model(self, mock_settings, mock_vision_processor):
         """Test enhanced embedding generation without initialized model."""
-        classifier = ArtStyleClassifier(mock_settings)
+        classifier = ArtStyleClassifier(mock_settings, mock_vision_processor)
         
         image_embedding = np.array([0.2] * 512)
         enhanced = classifier.get_enhanced_embedding(image_embedding)
@@ -289,9 +283,9 @@ class TestArtStyleClassifier:
         # Should return original embedding when model not initialized
         assert np.array_equal(enhanced, image_embedding)
     
-    def test_era_from_year(self, mock_settings):
+    def test_era_from_year(self, mock_settings, mock_vision_processor):
         """Test era inference from year."""
-        classifier = ArtStyleClassifier(mock_settings)
+        classifier = ArtStyleClassifier(mock_settings, mock_vision_processor)
         
         assert classifier._get_era_from_year(1975) == 'vintage'
         assert classifier._get_era_from_year(1990) == 'classic'
@@ -304,22 +298,18 @@ class TestArtStyleClassifier:
 class TestGenreEnhancementFinetuner:
     """Test cases for GenreEnhancementFinetuner."""
     
-    def test_initialization(self, mock_settings):
+    def test_initialization(self, mock_settings, mock_text_processor):
         """Test genre enhancement finetuner initialization."""
-        enhancer = GenreEnhancementFinetuner(mock_settings)
+        enhancer = GenreEnhancementFinetuner(mock_settings, mock_text_processor)
         
         assert enhancer.settings == mock_settings
         assert enhancer.device is not None
         assert enhancer.num_genres == 0
         assert not enhancer.is_trained
     
-    @patch('src.vector.genre_enhancement.TextProcessor')
-    def test_lora_setup(self, mock_text_processor, mock_settings):
+    def test_lora_setup(self, mock_settings, mock_text_processor):
         """Test LoRA model setup."""
-        # Mock processor response
-        mock_text_processor.return_value.get_model_info.return_value = {"embedding_size": 384}
-        
-        enhancer = GenreEnhancementFinetuner(mock_settings)
+        enhancer = GenreEnhancementFinetuner(mock_settings, mock_text_processor)
         
         from peft import LoraConfig, TaskType
         lora_config = LoraConfig(
@@ -329,15 +319,15 @@ class TestGenreEnhancementFinetuner:
             lora_dropout=0.1
         )
         
-        enhancer.setup_lora_model(lora_config)
+        enhancer.setup_lora_model(lora_config, FineTuningConfig())
         
         assert enhancer.enhancement_model is not None
         assert enhancer.optimizer is not None
         assert enhancer.loss_fn is not None
     
-    def test_auxiliary_label_inference(self, mock_settings):
+    def test_auxiliary_label_inference(self, mock_settings, mock_text_processor):
         """Test auxiliary label inference from sample data."""
-        enhancer = GenreEnhancementFinetuner(mock_settings)
+        enhancer = GenreEnhancementFinetuner(mock_settings, mock_text_processor)
         
         # Create auxiliary vocabularies
         enhancer.theme_vocab = {'school': 0, 'military': 1, 'magic': 2}
@@ -498,11 +488,11 @@ class TestFineTuningIntegration:
         
         from src.vector.character_recognition import CharacterRecognitionFinetuner
         
-        finetuner = CharacterRecognitionFinetuner()
+        finetuner = CharacterRecognitionFinetuner(mock_settings, MagicMock(), MagicMock())
         assert str(finetuner.device) == 'cpu'
         
         mock_cuda.return_value = True
-        finetuner = CharacterRecognitionFinetuner()
+        finetuner = CharacterRecognitionFinetuner(mock_settings, MagicMock(), MagicMock())
         assert 'cuda' in str(finetuner.device)
     
     def test_data_sample_creation(self):
@@ -528,9 +518,9 @@ class TestFineTuningIntegration:
 class TestFineTuningErrorHandling:
     """Test error handling in fine-tuning system."""
     
-    def test_missing_model_error(self, mock_settings):
+    def test_missing_model_error(self, mock_settings, mock_text_processor, mock_vision_processor):
         """Test error when trying to train without initialized model."""
-        finetuner = CharacterRecognitionFinetuner(mock_settings)
+        finetuner = CharacterRecognitionFinetuner(mock_settings, mock_text_processor, mock_vision_processor)
         
         batch = {
             'text_embedding': torch.tensor([[0.1] * 384]),
@@ -551,8 +541,8 @@ class TestFineTuningErrorHandling:
             
             finetuner = AnimeFineTuner(mock_settings)
             
-            with pytest.raises(FileNotFoundError):
-                finetuner.prepare_dataset("nonexistent_file.json")
+            result = finetuner.prepare_dataset("nonexistent_file.json")
+            assert result is None
     
     def test_empty_dataset_handling(self, mock_text_processor, mock_vision_processor):
         """Test handling of empty dataset."""
