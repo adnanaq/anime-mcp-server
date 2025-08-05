@@ -185,17 +185,15 @@ class ArtStyleClassifierModel(nn.Module):
 class ArtStyleClassifier:
     """Art style classifier for anime visual styles."""
     
-    def __init__(self, settings: Optional[Settings] = None):
+    def __init__(self, settings: Settings, vision_processor: Any):
         """Initialize art style classifier.
         
         Args:
             settings: Configuration settings instance
+            vision_processor: Vision processing utility
         """
-        if settings is None:
-            from ..config import get_settings
-            settings = get_settings()
-        
         self.settings = settings
+        self.vision_processor = vision_processor
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Model components
@@ -212,19 +210,18 @@ class ArtStyleClassifier:
         
         logger.info(f"Art style classifier initialized on {self.device}")
     
-    def setup_lora_model(self, lora_config: LoraConfig):
+    def setup_lora_model(self, lora_config: LoraConfig, fine_tuning_config: Any):
         """Setup LoRA model for parameter-efficient fine-tuning.
         
         Args:
             lora_config: LoRA configuration
+            fine_tuning_config: Fine-tuning configuration
         """
-        logger.info("Setting up LoRA model for art style classification")
+        self.fine_tuning_config = fine_tuning_config
         
         try:
             # Get vision model info
-            from .vision_processor import VisionProcessor
-            vision_processor = VisionProcessor(self.settings)
-            vision_info = vision_processor.get_model_info()
+            vision_info = self.vision_processor.get_model_info()
             input_dim = vision_info.get('embedding_size', 512)
             
             # Create art style classifier
@@ -293,8 +290,8 @@ class ArtStyleClassifier:
             # Setup optimizer
             self.optimizer = torch.optim.AdamW(
                 self.classifier_model.parameters(),
-                lr=1e-4,
-                weight_decay=1e-5
+                lr=self.fine_tuning_config.learning_rate,
+                weight_decay=self.fine_tuning_config.weight_decay
             )
         
         logger.info(f"Model prepared for training with {self.num_styles} art styles")

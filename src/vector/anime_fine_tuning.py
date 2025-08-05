@@ -8,7 +8,7 @@ import logging
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union, Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 import numpy as np
@@ -37,10 +37,12 @@ class FineTuningConfig:
     lora_r: int = 8
     lora_alpha: int = 32
     lora_dropout: float = 0.1
+    lora_target_modules: List[str] = field(default_factory=lambda: ["q_proj", "v_proj", "k_proj", "out_proj"])
     
     # Training configuration
     batch_size: int = 16
     learning_rate: float = 1e-4
+    weight_decay: float = 1e-5
     num_epochs: int = 3
     warmup_steps: int = 100
     
@@ -64,16 +66,12 @@ class FineTuningConfig:
 class AnimeFineTuner:
     """Main orchestrator for anime-specific fine-tuning."""
     
-    def __init__(self, settings: Optional[Settings] = None):
+    def __init__(self, settings: Settings):
         """Initialize anime fine-tuner.
         
         Args:
             settings: Configuration settings instance
         """
-        if settings is None:
-            from ..config import get_settings
-            settings = get_settings()
-            
         self.settings = settings
         self.config = FineTuningConfig()
         
@@ -82,28 +80,36 @@ class AnimeFineTuner:
         self.vision_processor = VisionProcessor(settings)
         
         # Initialize specialized fine-tuners
-        self.character_finetuner = CharacterRecognitionFinetuner(settings)
-        self.art_style_classifier = ArtStyleClassifier(settings)
-        self.genre_enhancer = GenreEnhancementFinetuner(settings)
+        self.character_finetuner = CharacterRecognitionFinetuner(settings, self.text_processor, self.vision_processor)
+        self.art_style_classifier = ArtStyleClassifier(settings, self.vision_processor)
+        self.genre_enhancer = GenreEnhancementFinetuner(settings, self.text_processor)
         
         # Training state
         self.training_stats = {}
         self.best_model_path = None
         
-    def prepare_dataset(self, data_path: str) -> AnimeDataset:
+    def prepare_dataset(self, data_path: str) -> Optional[AnimeDataset]:
         """Prepare anime dataset for fine-tuning.
         
         Args:
             data_path: Path to anime data file
             
         Returns:
-            Prepared anime dataset
+            Prepared anime dataset or None if an error occurs
         """
         logger.info(f"Preparing anime dataset from {data_path}")
-        
-        # Load anime data
-        with open(data_path, 'r', encoding='utf-8') as f:
-            anime_data = json.load(f)
+        try:
+            with open(data_path, 'r', encoding='utf-8') as f:
+                anime_data = json.load(f)
+        except FileNotFoundError:
+            logger.error(f"Data file not found at path: {data_path}")
+            return None
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON from {data_path}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"An unexpected error occurred while preparing the dataset: {e}")
+            return None
         
         # Create dataset
         dataset = AnimeDataset(
@@ -130,7 +136,7 @@ class AnimeFineTuner:
             r=self.config.lora_r,
             lora_alpha=self.config.lora_alpha,
             lora_dropout=self.config.lora_dropout,
-            target_modules=["q_proj", "v_proj", "k_proj", "out_proj"],
+            target_modules=self.config.lora_target_modules,
             bias="none",
         )
     
@@ -140,17 +146,20 @@ class AnimeFineTuner:
         
         # Setup character recognition model
         self.character_finetuner.setup_lora_model(
-            self.create_lora_config(TaskType.FEATURE_EXTRACTION)
+            self.create_lora_config(TaskType.FEATURE_EXTRACTION),
+            self.config
         )
         
         # Setup art style classification model
         self.art_style_classifier.setup_lora_model(
-            self.create_lora_config(TaskType.IMAGE_CLASSIFICATION)
+            self.create_lora_config(TaskType.IMAGE_CLASSIFICATION),
+            self.config
         )
         
         # Setup genre enhancement model
         self.genre_enhancer.setup_lora_model(
-            self.create_lora_config(TaskType.FEATURE_EXTRACTION)
+            self.create_lora_config(TaskType.FEATURE_EXTRACTION),
+            self.config
         )
     
     def train_multi_task(self, dataset: AnimeDataset) -> Dict[str, Any]:
@@ -267,21 +276,26 @@ class AnimeFineTuner:
         Args:
             epoch: Current epoch number
         """
-        output_dir = Path(self.config.model_output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Save individual models
-        self.character_finetuner.save_model(output_dir / "character_model")
-        self.art_style_classifier.save_model(output_dir / "art_style_model")
-        self.genre_enhancer.save_model(output_dir / "genre_model")
-        
-        # Save configuration
-        config_path = output_dir / "fine_tuning_config.json"
-        with open(config_path, 'w') as f:
-            json.dump(self.config.__dict__, f, indent=2)
-        
-        self.best_model_path = output_dir
-        logger.info(f"Saved best model at epoch {epoch} to {output_dir}")
+        try:
+            output_dir = Path(self.config.model_output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save individual models
+            self.character_finetuner.save_model(output_dir / "character_model")
+            self.art_style_classifier.save_model(output_dir / "art_style_model")
+            self.genre_enhancer.save_model(output_dir / "genre_model")
+            
+            # Save configuration
+            config_path = output_dir / "fine_tuning_config.json"
+            with open(config_path, 'w') as f:
+                json.dump(self.config.__dict__, f, indent=2)
+            
+            self.best_model_path = output_dir
+            logger.info(f"Saved best model at epoch {epoch} to {output_dir}")
+        except PermissionError:
+            logger.error(f"Permission denied to write to {self.config.model_output_dir}")
+        except Exception as e:
+            logger.error(f"An unexpected error occurred while saving the model: {e}")
     
     def evaluate_models(self, validation_dataset: AnimeDataset) -> Dict[str, float]:
         """Evaluate fine-tuned models on validation set.
@@ -328,24 +342,28 @@ class AnimeFineTuner:
             model_path: Path to saved models
         """
         logger.info(f"Loading fine-tuned models from {model_path}")
-        
-        model_dir = Path(model_path)
-        
-        # Load individual models
-        self.character_finetuner.load_model(model_dir / "character_model")
-        self.art_style_classifier.load_model(model_dir / "art_style_model")
-        self.genre_enhancer.load_model(model_dir / "genre_model")
-        
-        # Load configuration
-        config_path = model_dir / "fine_tuning_config.json"
-        if config_path.exists():
-            with open(config_path, 'r') as f:
-                config_data = json.load(f)
-                # Update configuration
-                for key, value in config_data.items():
-                    setattr(self.config, key, value)
-        
-        logger.info("Fine-tuned models loaded successfully")
+        try:
+            model_dir = Path(model_path)
+            
+            # Load individual models
+            self.character_finetuner.load_model(model_dir / "character_model")
+            self.art_style_classifier.load_model(model_dir / "art_style_model")
+            self.genre_enhancer.load_model(model_dir / "genre_model")
+            
+            # Load configuration
+            config_path = model_dir / "fine_tuning_config.json"
+            if config_path.exists():
+                with open(config_path, 'r') as f:
+                    config_data = json.load(f)
+                    # Update configuration
+                    for key, value in config_data.items():
+                        setattr(self.config, key, value)
+            
+            logger.info("Fine-tuned models loaded successfully")
+        except FileNotFoundError as e:
+            logger.error(f"Could not load model: {e.filename} not found.")
+        except Exception as e:
+            logger.error(f"An unexpected error occurred while loading the models: {e}")
     
     def get_enhanced_embeddings(self, text: str, image_data: Optional[str] = None) -> Dict[str, np.ndarray]:
         """Get enhanced embeddings using fine-tuned models.
